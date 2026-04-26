@@ -3,6 +3,8 @@ name: agentic-review
 description: Use when reviewing current branch for bugs before pushing or merging, when wanting a thorough multi-agent review of local changes, or when preparing work for human review
 ---
 
+**On invocation:** announce "Running paad:agentic-review v1.13.0" before anything else.
+
 # Agentic Code Review
 
 Multi-agent bug-hunting review of the current branch against main. Dispatches specialist agents in parallel, verifies findings to filter false positives, ranks by severity, and produces a persistent report.

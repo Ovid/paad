@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-digraphs check-help check-readme check-frontmatter
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter bump-version
 
 help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-digraphs check-help check-readme check-frontmatter ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -25,6 +25,44 @@ check-versions: ## Check marketplace.json and plugin.json versions match
 		exit 1; \
 	fi; \
 	echo "Versions match: $$plugin_ver"
+
+check-skill-versions: ## Check every SKILL.md announces the correct version
+	@plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
+	fail=0; \
+	for dir in $(SKILL_DIRS); do \
+		name=$$(basename "$$dir"); \
+		file="$$dir/SKILL.md"; \
+		if ! grep -qF "Running paad:$$name v$$plugin_ver\"" "$$file" 2>/dev/null; then \
+			echo "FAIL: $$name is missing or has wrong version announcement (expected v$$plugin_ver)"; \
+			fail=1; \
+		fi; \
+	done; \
+	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
+	echo "All skills announce v$$plugin_ver."
+
+bump-version: ## Bump version across plugin.json, marketplace.json, and all SKILL.md (usage: make bump-version VERSION=X.Y.Z)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make bump-version VERSION=X.Y.Z"; \
+		exit 1; \
+	fi
+	@case "$(VERSION)" in \
+		[0-9]*.[0-9]*.[0-9]*) ;; \
+		*) echo "FAIL: VERSION must be in X.Y.Z form (got $(VERSION))"; exit 1 ;; \
+	esac
+	@old_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
+	if [ "$$old_ver" = "$(VERSION)" ]; then \
+		echo "Already at $(VERSION). Nothing to do."; \
+		exit 0; \
+	fi; \
+	echo "Bumping $$old_ver -> $(VERSION)..."; \
+	sed -i.bak 's|"version": "[^"]*"|"version": "$(VERSION)"|' plugins/paad/.claude-plugin/plugin.json && rm -f plugins/paad/.claude-plugin/plugin.json.bak; \
+	sed -i.bak 's|^      "version": "[^"]*"|      "version": "$(VERSION)"|' .claude-plugin/marketplace.json && rm -f .claude-plugin/marketplace.json.bak; \
+	for dir in $(SKILL_DIRS); do \
+		name=$$(basename "$$dir"); \
+		file="$$dir/SKILL.md"; \
+		sed -i.bak "s|Running paad:$$name v$$old_ver\"|Running paad:$$name v$(VERSION)\"|g" "$$file" && rm -f "$$file.bak"; \
+	done; \
+	echo "Bumped to $(VERSION)."
 
 check-digraphs: ## Check every skill (except help) has a digraph
 	@fail=0; \

@@ -3,6 +3,8 @@ name: agentic-architecture
 description: Use when assessing the architectural health of a codebase — before a major refactor, when onboarding to an unfamiliar repo, after rapid growth, when planning a redesign, or to surface structural strengths and risks before they become expensive
 ---
 
+**On invocation:** announce "Running paad:agentic-architecture v1.13.0" before anything else.
+
 # Agentic Architecture Analysis
 
 Multi-agent architecture analysis of the current codebase. Dispatches specialist agents in parallel — each focused on a different architectural domain — verifies findings to filter false positives, and produces a balanced report of strengths and flaws with concrete evidence.
