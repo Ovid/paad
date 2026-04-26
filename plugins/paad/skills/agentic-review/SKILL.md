@@ -201,7 +201,7 @@ One-line entries only. Omit section if none.
 > its entry from `paad/code-reviews/backlog.md` by ID.
 
 ### Out-of-Scope Critical
-### [OOSC1] <title> — backlog id: `<id>`
+#### [OOSC1] <title> — backlog id: `<id>`
 - **File:** `path/to/file:line`
 - **Bug:** What's wrong
 - **Impact:** Why it matters
