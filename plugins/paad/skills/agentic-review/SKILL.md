@@ -238,6 +238,48 @@ One-line entries only. Omit section if none.
 - **Plan/design docs consulted:** <list or "none found">
 ```
 
+## The Backlog File
+
+`paad/code-reviews/backlog.md` is project-wide, append-only, and uses **explicit removal only** — agentic-review never auto-resolves entries. Created on first run if absent.
+
+**Fixed header (preserved across all updates):**
+
+```markdown
+# Out-of-Scope Findings Backlog
+
+> **These items were flagged by `/paad:agentic-review` as out of scope for the branch
+> on which they were found.** They may be stale, may already have been fixed by other
+> means, may no longer apply after refactors, or may simply have been judged not worth
+> addressing. Verify each entry against the current code before acting on it. Entries
+> are removed only when explicitly addressed — no automatic cleanup.
+
+---
+```
+
+**Per-entry shape:**
+
+```markdown
+## `<id>` — <one-line title>
+- **File (at first sighting):** `path/to/file:line`
+- **Symbol:** `<function or class name>`
+- **Bug class:** Logic | Error Handling | Contract | Concurrency | Security | Plan
+- **Description:** ...
+- **Suggested fix:** ...
+- **Confidence:** High | Medium
+- **Found by:** <specialist> (`<model>`)
+- **First seen:** YYYY-MM-DD on branch `<branch>` at `<short-sha>`
+- **Last seen:** YYYY-MM-DD on branch `<branch>` at `<short-sha>`
+- **Severity:** Critical | Important | Suggestion
+```
+
+**Update rule on re-discovery:** rewrite only the `Last seen` line. Everything else is immutable so the entry remains a stable historical record.
+
+**Removal rule:** delete the entire `## <id> — <title>` block. No tombstones, no archive.
+
+**ID format:** 8-char hex of `sha1(file + symbol + bug-class + first-seen-iso-date)`.
+
+**Soft size warning:** when the active backlog crosses **200 entries**, surface a warning in the post-review message so accumulation stays visible.
+
 ## Common Mistakes
 
 These patterns produce low-quality reviews. Avoid them:
