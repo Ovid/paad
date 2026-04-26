@@ -3,6 +3,8 @@ name: fix-architecture
 description: Use when working through architectural flaws documented in a paad/architecture-reviews/ report — selecting which flaws to fix, resuming a partial fix session across multiple sittings, or applying structural changes that need to be tracked back to a report
 ---
 
+**On invocation:** announce "Running paad:fix-architecture v1.13.0" before anything else.
+
 # Fix Architecture
 
 Guided, iterative fixing of architectural flaws identified by `/paad:agentic-architecture`. Loads an existing architecture report, walks the developer through selecting and prioritizing flaws, then fixes them one at a time with a test-first workflow. Updates the report with status tracking so the skill can be re-run across multiple sessions.

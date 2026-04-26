@@ -3,6 +3,8 @@ name: alignment
 description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents
 ---
 
+**On invocation:** announce "Running paad:alignment v1.13.0" before anything else.
+
 # Alignment Check
 
 Verifies that intent documents (requirements, specs, PRDs) and action documents (plans, tasks, implementation steps) are aligned. Finds gaps in both directions — unaddressed requirements and out-of-scope tasks — then rewrites all tasks in TDD red/green/refactor format.

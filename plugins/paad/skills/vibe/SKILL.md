@@ -3,6 +3,8 @@ name: vibe
 description: Use when making a small fix or quick change (1-3 files, same module) — bug fixes, typos, minor features, tweaks — where you want vibe-coding speed without the recklessness of skipping tests, duplicating existing code, or papering over deeper structural issues
 ---
 
+**On invocation:** announce "Running paad:vibe v1.13.0" before anything else.
+
 # Safe Vibe Coding
 
 Quick fixes and small changes with guardrails. You get the speed of vibe coding without the recklessness — mandatory TDD, architecture awareness, and reusable component detection.

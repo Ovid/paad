@@ -3,6 +3,8 @@ name: help
 description: Show help for all paad skills or a specific skill
 ---
 
+**On invocation:** announce "Running paad:help v1.13.0" before anything else.
+
 # paad Help
 
 Show help for paad skills. If `$ARGUMENTS` matches a skill name, show detailed help for that skill. Otherwise, show the overview.
