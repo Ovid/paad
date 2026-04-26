@@ -130,10 +130,15 @@ After all specialists complete, dispatch a single **Verifier** agent with all fi
 2. Confirms the bug exists and isn't handled elsewhere
 3. Drops false positives and findings below 60% confidence
 4. Assigns severity: **Critical** / **Important** / **Suggestion**
-5. Raises confidence threshold: only keeps findings >= 60% after verification
-6. Deduplicates findings flagged by multiple specialists (note which specialists agreed)
+5. Deduplicates findings flagged by multiple specialists (note which specialists agreed)
+6. **Classifies** each surviving finding as `in-scope` or `out-of-scope` using the rules in the Mechanism section. Inputs required: the touched-lines map (from Phase 1) and the diff. Apply blame default → reasoning promotion → cosmetic-touch demotion in that order.
+7. **Backlog dedup** for out-of-scope findings only. Inputs required: a **pre-filtered slice** of `paad/code-reviews/backlog.md` containing only entries whose `File (at first sighting)` path matches a file in the manifest. For each out-of-scope finding:
+   - **Match** → emit `{id, last_seen, branch, sha}` update directive.
+   - **No match** → mint a new entry with a fresh 8-char hex ID hashed from `file + symbol + bug-class + first-seen-iso-date`.
 
-**Verifier prompt must include:** "You are verifying bug reports. For each finding, read the actual code and confirm the bug exists. Be skeptical — reject anything you cannot confirm by reading the code. A finding reported by multiple specialists is more likely real."
+Verifier output is two lists: in-scope findings (with severity) and out-of-scope findings (with severity, backlog ID, and `new` vs `re-seen` flag).
+
+**Verifier prompt must include:** "You are verifying bug reports. For each finding, read the actual code and confirm the bug exists. Be skeptical — reject anything you cannot confirm by reading the code. A finding reported by multiple specialists is more likely real. Then classify each surviving finding as in-scope or out-of-scope per the Definitions and Mechanism sections, and for out-of-scope findings, dedup against the provided backlog slice."
 
 ## Phase 4: Report
 
