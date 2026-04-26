@@ -165,7 +165,8 @@ Best used in a fresh session — consumes significant context.
 
 Multi-agent bug-hunting code review of the current branch.
 
-Output: paad/code-reviews/
+Output:   paad/code-reviews/<branch>-<timestamp>.md (per-review)
+          paad/code-reviews/backlog.md (project-wide, persistent)
 
 Arguments:
   /paad:agentic-review                    Diff against main
@@ -186,9 +187,15 @@ What it does:
      - Security
   3. Dispatches Plan Alignment agent if design docs are found
   4. Verifies findings (reads actual code, filters false positives)
-  5. Writes a report with:
-     - Issues ranked: Critical / Important / Suggestion
-     - Each finding: file:line, bug, impact, suggested fix, confidence
+  5. Classifies each finding as in-scope (this branch caused/worsened it)
+     or out-of-scope (pre-existing) using blame + reasoning + cosmetic-touch
+     demotion. Out-of-scope findings persist to a project-wide backlog.
+  6. Writes a report with:
+     - In-scope issues ranked: Critical / Important / Suggestion
+     - Out-of-scope issues batched by tier with handoff instructions
+     - Each finding: file:line, bug, impact, suggested fix, confidence,
+       and the model that found it
+     - Backlog updates surfaced in metadata
 
 Best used in a fresh session — consumes significant context.
 ```
