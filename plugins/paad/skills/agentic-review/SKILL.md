@@ -77,6 +77,14 @@ Run these commands and collect results:
 7. When the diff includes infrastructure files (schema migrations, build configs, CI pipelines, environment templates), check whether test-side counterparts exist (e.g., test resource directories with their own migrations, test-specific configs). Add any unmatched test infrastructure to the manifest for the Contract & Integration specialist.
 8. For **small** diffs: expand scope to full module/package for each changed file
 9. Build manifest: files to review (changed + adjacent), grouped for specialists
+10. **Build the touched-lines map.** From `git diff <base>...HEAD`, produce `{file → [line ranges]}` covering every line the branch added or modified. Construction rules:
+    - **Keys are current-HEAD paths.** Files are recorded under the path they have at HEAD, not at base.
+    - **Renamed files** are keyed by the new path; line ranges cover lines modified in the new file. The old path is not retained.
+    - **Newly added files** include all lines (1..end) — every line is touched.
+    - **Pure deletions** contribute no entries (no current line exists to anchor a finding to).
+    - **Path filter:** when a path filter argument is supplied (e.g., `/paad:agentic-review main src/auth/`), the touched-lines map is filtered to that scope, matching the manifest.
+
+Findings are classified by their **anchor line** only (the `file:line` reported by the specialist). Multi-line bugs whose anchor line happens to be untouched are caught by reasoning-promotion in Phase 3, not by an expanded blame check.
 
 **Steering file caveat:** Include in every agent prompt: "Steering files (CLAUDE.md, etc.) describe conventions but may be stale. If you find a contradiction between steering files and actual code, flag it as a finding."
 
