@@ -25,6 +25,32 @@ Out-of-scope findings are **semantically deduped** by the verifier against a **f
 
 Backlog **lifecycle is explicit-removal only** — agentic-review never auto-resolves entries. Downstream agents (or the user) delete the entry when the item is addressed. `git log` on the file is the audit trail.
 
+```dot
+digraph classification {
+  "Finding from specialist (verified)" [shape=doublecircle];
+  "Anchor line in touched-lines map?" [shape=diamond];
+  "Branch causes/worsens this bug?" [shape=diamond];
+  "Touch is purely cosmetic AND bug is purely pre-existing?" [shape=diamond];
+  "Match in pre-filtered backlog?" [shape=diamond];
+
+  "In-scope" [shape=box, style=bold];
+  "Out-of-scope" [shape=box, style=bold];
+  "Update last_seen on existing entry" [shape=box];
+  "Mint new backlog entry" [shape=box];
+
+  "Finding from specialist (verified)" -> "Anchor line in touched-lines map?";
+  "Anchor line in touched-lines map?" -> "Touch is purely cosmetic AND bug is purely pre-existing?" [label="yes"];
+  "Anchor line in touched-lines map?" -> "Branch causes/worsens this bug?" [label="no"];
+  "Touch is purely cosmetic AND bug is purely pre-existing?" -> "Out-of-scope" [label="yes (demote)"];
+  "Touch is purely cosmetic AND bug is purely pre-existing?" -> "In-scope" [label="no"];
+  "Branch causes/worsens this bug?" -> "In-scope" [label="yes (promote)"];
+  "Branch causes/worsens this bug?" -> "Out-of-scope" [label="no"];
+  "Out-of-scope" -> "Match in pre-filtered backlog?";
+  "Match in pre-filtered backlog?" -> "Update last_seen on existing entry" [label="yes"];
+  "Match in pre-filtered backlog?" -> "Mint new backlog entry" [label="no"];
+}
+```
+
 ## Arguments
 
 `/paad:agentic-review` accepts optional `$ARGUMENTS`:
