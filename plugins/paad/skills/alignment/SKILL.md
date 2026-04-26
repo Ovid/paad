@@ -3,7 +3,7 @@ name: alignment
 description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents
 ---
 
-**On invocation:** announce "Running paad:alignment v1.13.0" before anything else.
+**On invocation:** announce "Running paad:alignment v1.13.1" before anything else.
 
 # Alignment Check
 
