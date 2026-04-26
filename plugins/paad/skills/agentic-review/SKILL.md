@@ -3,7 +3,7 @@ name: agentic-review
 description: Use when reviewing current branch for bugs before pushing or merging, when wanting a thorough multi-agent review of local changes, or when preparing work for human review
 ---
 
-**On invocation:** announce "Running paad:agentic-review v1.13.0" before anything else.
+**On invocation:** announce "Running paad:agentic-review v1.13.1" before anything else.
 
 # Agentic Code Review
 
@@ -331,7 +331,13 @@ These patterns produce low-quality reviews. Avoid them:
 After writing the report:
 1. Report path and counts: `Critical: N (in-scope) / X (out-of-scope), Important: …, Suggestion: …`.
 2. Backlog state: `Backlog: X new entries added, Y re-confirmed, Z total active.`
-3. **Security disclosure warning** (only when this run added one or more `Bug class: Security` entries to the backlog): list the count, the affected files, and tell the user: *"`paad/code-reviews/backlog.md` is committed to this repository by default. If this repo is public or shared outside your team, decide whether to commit these security entries before pushing — you can `.gitignore` the file or remove specific entries."*
-4. **Backlog-size soft warning** (only when total active entries ≥ 200): *"Backlog has N active entries — consider triaging stale items."*
-5. Tell the user: "To address in-scope findings, review each issue in the report and fix them with per-fix commits. If you have the [superpowers](https://github.com/obra/superpowers/) plugin installed, you can use the `receiving-code-review` skill and point it at this report for a guided workflow. For out-of-scope findings, the report includes batched-ask handoff instructions; any agent following them will prompt you tier-by-tier and remove backlog entries by ID as items are fixed."
-6. Do **not** auto-fix anything. The report is the deliverable.
+3. **Out-of-scope summary** — clearly announce the out-of-scope count and, when any were found, the exact locations the findings were written to. This step must not be skipped or merged into step 1; it is the user's primary signal that pre-existing bugs surfaced and where to find them.
+   - When the total out-of-scope count is **zero**, say plainly: *"No out-of-scope issues found."*
+   - When the total out-of-scope count is **greater than zero**, say (filling in the actual numbers and report path): *"Found N out-of-scope issue(s). Written to:*
+     - *The `## Out of Scope` section in `<report-path>` — with batched-ask handoff instructions for downstream agents.*
+     - *The project-wide backlog at `paad/code-reviews/backlog.md` — X new entries, Y re-confirmed.*
+     *Do not assume these should be fixed on this branch."*
+4. **Security disclosure warning** (only when this run added one or more `Bug class: Security` entries to the backlog): list the count, the affected files, and tell the user: *"`paad/code-reviews/backlog.md` is committed to this repository by default. If this repo is public or shared outside your team, decide whether to commit these security entries before pushing — you can `.gitignore` the file or remove specific entries."*
+5. **Backlog-size soft warning** (only when total active entries ≥ 200): *"Backlog has N active entries — consider triaging stale items."*
+6. Tell the user: "To address in-scope findings, review each issue in the report and fix them with per-fix commits. If you have the [superpowers](https://github.com/obra/superpowers/) plugin installed, you can use the `receiving-code-review` skill and point it at this report for a guided workflow. For out-of-scope findings, the report includes batched-ask handoff instructions; any agent following them will prompt you tier-by-tier and remove backlog entries by ID as items are fixed."
+7. Do **not** auto-fix anything. The report is the deliverable.
