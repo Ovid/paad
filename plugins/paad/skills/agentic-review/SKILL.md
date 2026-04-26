@@ -295,6 +295,8 @@ These patterns produce low-quality reviews. Avoid them:
 | Reporting without file:line references | Every finding must reference exact code location — unanchored findings are not actionable |
 | Ignoring logic duplication | New code reimplementing existing helpers is a bug waiting to happen — Contract & Integration agent must check for this |
 | Ignoring test infrastructure | When production infrastructure changes (schema migrations, build configs, environment templates), check if parallel test infrastructure exists and needs matching updates |
+| Treating out-of-scope findings as fixable on this branch | They are pre-existing — surface them, batch the ask, and let the user decide per tier |
+| Dropping out-of-scope findings on the floor | They go in the report's Out of Scope section AND in `backlog.md` — never silently discarded |
 
 ## Post-Review
 
