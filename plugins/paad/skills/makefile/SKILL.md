@@ -1,6 +1,6 @@
 ---
 name: makefile
-description: Use when creating or updating a Makefile for a project. Ensures standard targets exist and asks before modifying any existing target's implementation.
+description: Use when creating or updating a Makefile for a project, especially when standard targets (build, test, lint, format, etc.) are missing or when modifying targets that may already be wired into other tooling
 ---
 
 # Makefile Management

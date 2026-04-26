@@ -1,6 +1,6 @@
 ---
 name: alignment
-description: Check that requirements, designs, and implementation plans are aligned — finds coverage gaps, scope creep, and design mismatches, then rewrites tasks in TDD red/green/refactor format
+description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents
 ---
 
 # Alignment Check
