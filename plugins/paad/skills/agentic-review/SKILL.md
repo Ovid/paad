@@ -214,7 +214,7 @@ Create the `paad/code-reviews/` directory if it doesn't exist.
 
 ## Suggestions
 
-One-line entries only. Omit section if none.
+One-line entries only. If empty, follow the Empty-section rules above.
 
 ## Out of Scope
 
@@ -304,7 +304,7 @@ One-line entries only. Omit section if none.
 
 **ID format:** 8-char hex of `sha1(file + symbol + bug-class + first-seen-iso-date)`.
 
-**Soft size warning:** when the active backlog reaches **200 entries**, surface a warning in the post-review message so accumulation stays visible.
+**Soft size warning:** when the active backlog reaches **≥ 200 active entries**, surface a warning in the post-review message so accumulation stays visible.
 
 ## Common Mistakes
 
