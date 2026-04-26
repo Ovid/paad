@@ -278,7 +278,7 @@ One-line entries only. Omit section if none.
 
 **ID format:** 8-char hex of `sha1(file + symbol + bug-class + first-seen-iso-date)`.
 
-**Soft size warning:** when the active backlog crosses **200 entries**, surface a warning in the post-review message so accumulation stays visible.
+**Soft size warning:** when the active backlog reaches **200 entries**, surface a warning in the post-review message so accumulation stays visible.
 
 ## Common Mistakes
 
@@ -299,6 +299,9 @@ These patterns produce low-quality reviews. Avoid them:
 ## Post-Review
 
 After writing the report:
-1. Tell the user the report location and finding counts by severity
-2. Tell them: "To address these findings, review each issue in the report and fix them with per-fix commits. If you have the [superpowers](https://github.com/obra/superpowers/) plugin installed, you can use the `receiving-code-review` skill and point it at this report for a guided workflow."
-3. Do **not** auto-fix anything. The report is the deliverable.
+1. Report path and counts: `Critical: N (in-scope) / X (out-of-scope), Important: …, Suggestion: …`.
+2. Backlog state: `Backlog: X new entries added, Y re-confirmed, Z total active.`
+3. **Security disclosure warning** (only when this run added one or more `Bug class: Security` entries to the backlog): list the count, the affected files, and tell the user: *"`paad/code-reviews/backlog.md` is committed to this repository by default. If this repo is public or shared outside your team, decide whether to commit these security entries before pushing — you can `.gitignore` the file or remove specific entries."*
+4. **Backlog-size soft warning** (only when total active entries ≥ 200): *"Backlog has N active entries — consider triaging stale items."*
+5. Tell the user: "To address in-scope findings, review each issue in the report and fix them with per-fix commits. If you have the [superpowers](https://github.com/obra/superpowers/) plugin installed, you can use the `receiving-code-review` skill and point it at this report for a guided workflow. For out-of-scope findings, the report includes batched-ask handoff instructions; any agent following them will prompt you tier-by-tier and remove backlog entries by ID as items are fixed."
+6. Do **not** auto-fix anything. The report is the deliverable.
