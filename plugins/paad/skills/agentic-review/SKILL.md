@@ -146,6 +146,15 @@ Write verified findings to `paad/code-reviews/<branch>-<YYYY-MM-DD-HH-MM-SS>-<sh
 
 Create the `paad/code-reviews/` directory if it doesn't exist.
 
+**Empty-section rules:**
+
+- If there are zero out-of-scope findings of any tier, omit the entire `## Out of Scope` section *and* the handoff block. Review Metadata still records `Out-of-scope findings: 0`.
+- If there are zero in-scope findings of a tier but out-of-scope findings exist, write each empty in-scope tier section as `None found.` (existing convention) and write the Out of Scope section normally.
+
+**Failure handling:**
+
+- If writing `paad/code-reviews/backlog.md` fails for any reason (permissions, disk, malformed existing file), surface the error to the user and write the per-review report anyway. The report is the authoritative deliverable; the backlog is a convenience layer.
+
 **Report template:**
 
 ```markdown
@@ -169,7 +178,7 @@ Create the `paad/code-reviews/` directory if it doesn't exist.
 - **Impact:** Why it matters
 - **Suggested fix:** Concrete recommendation
 - **Confidence:** High/Medium
-- **Found by:** <specialist name(s)>
+- **Found by:** <specialist> (`<model>`)
 
 (Repeat for each critical issue, or "None found.")
 
@@ -180,6 +189,34 @@ Create the `paad/code-reviews/` directory if it doesn't exist.
 ## Suggestions
 
 One-line entries only. Omit section if none.
+
+## Out of Scope
+
+> **Handoff instructions for any agent processing this report:** The findings below are
+> pre-existing bugs that this branch did not cause or worsen. Do **not** assume they
+> should be fixed on this branch, and do **not** assume they should be skipped.
+> Instead, present them to the user **batched by tier**: one ask for all out-of-scope
+> Critical findings, one ask for all Important, one for Suggestions. For each tier, the
+> user decides which (if any) to address. When you fix an out-of-scope finding, remove
+> its entry from `paad/code-reviews/backlog.md` by ID.
+
+### Out-of-Scope Critical
+### [OOSC1] <title> — backlog id: `<id>`
+- **File:** `path/to/file:line`
+- **Bug:** What's wrong
+- **Impact:** Why it matters
+- **Suggested fix:** Concrete recommendation
+- **Confidence:** High/Medium
+- **Found by:** <specialist> (`<model>`)
+- **Backlog status:** new | re-seen (first logged YYYY-MM-DD)
+
+(Repeat for each, or "None found.")
+
+### Out-of-Scope Important
+(Same shape — IDs OOSI1, OOSI2, ...)
+
+### Out-of-Scope Suggestions
+(One-line entries; each carries a backlog id — IDs OOSS1, OOSS2, ...)
 
 ## Plan Alignment
 
@@ -195,6 +232,8 @@ One-line entries only. Omit section if none.
 - **Raw findings:** N (before verification)
 - **Verified findings:** M (after verification)
 - **Filtered out:** N - M
+- **Out-of-scope findings:** N (Critical: a, Important: b, Suggestion: c)
+- **Backlog:** X new entries added, Y re-confirmed (see `paad/code-reviews/backlog.md`)
 - **Steering files consulted:** <list or "none found">
 - **Plan/design docs consulted:** <list or "none found">
 ```
