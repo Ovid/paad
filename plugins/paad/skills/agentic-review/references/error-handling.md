@@ -11,7 +11,15 @@ Anchor on the **error and edge surfaces** the diff touches, then trace outward. 
 - A new parser, regex, or string-matching call that classifies untrusted output (LLM completions, API responses, user input, config text) into a control-flow decision.
 - A loop, slice, index, or arithmetic op over an externally-sized collection (potential empty, off-by-one, overflow).
 
-If the diff has none of the above and touches no error path or boundary (pure renames, comment-only edits, doc/markdown changes with no executable consequence), output `BAIL: error-handling no-surface` followed by `Error handling & edge cases: skipped — no error/edge surface in diff` and stop. Do not invent failures from purely happy-path code.
+If the diff has none of the above and touches no error path or boundary (pure renames, comment-only edits, doc/markdown changes with no executable consequence), output the `[ref-loaded:error-handling]` confirmation line followed by exactly two more lines and stop:
+
+```
+[ref-loaded:error-handling]
+BAIL: error-handling no-surface
+Error handling & edge cases: skipped — no error/edge surface in diff
+```
+
+Do not invent failures from purely happy-path code.
 
 When a surface exists, work this checklist and report only confirmed instances (confidence >= 60):
 

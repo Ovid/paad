@@ -10,14 +10,15 @@ Anchor on what the diff changed, then trace outward. Do not audit the whole code
 - New background work: timers, goroutines, threads, workers, `setInterval`, `Promise.all`, fire-and-forget tasks.
 - Lock, mutex, semaphore, atomic, transaction, or `synchronized` usage added, removed, or scope-changed.
 
-If the diff has none of the above and touches no shared state, output exactly two lines and stop:
+If the diff has none of the above and touches no shared state, output the `[ref-loaded:concurrency-state]` confirmation line followed by exactly two more lines and stop:
 
 ```
+[ref-loaded:concurrency-state]
 BAIL: concurrency-state no-surface
 Concurrency & state: skipped — no concurrency surface in diff
 ```
 
-Do not invent races from purely local code. The first line is a machine-readable status token the verifier matches; the second line is the human-readable explanation.
+Do not invent races from purely local code. The `BAIL:` line is a machine-readable status token the verifier matches; the human-readable line that follows is for diagnostic output.
 
 When a surface exists, work this checklist and report only confirmed instances (confidence >= 60):
 

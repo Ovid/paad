@@ -18,6 +18,7 @@ When a specialist's output begins with a `BAIL:` line, treat the specialist as h
 
 ## Pipeline
 
+0. **Confirm each specialist read its ref.** Each Phase 2 specialist is dispatched with an instruction to begin its output with the literal token `[ref-loaded:<lens>]` on its own line (e.g., `[ref-loaded:logic-correctness]`). Before merging a specialist's findings into your output, confirm the token appears at the top of that specialist's output. If the token is absent, treat the specialist's findings as **untrusted and unverified**: surface a `verifier-warning` line in your output naming the missing-token specialist, drop that specialist's findings from the merged set, and continue with the remaining specialists. A missing token means the subagent's path resolution probably failed and it ran on the base prompt only — its findings should not steer classification or backlog updates.
 1. For each finding, read the actual current code at the referenced `file:line`.
 2. Confirm the bug exists and isn't already handled elsewhere.
 3. Drop false positives and findings below 60% confidence.
