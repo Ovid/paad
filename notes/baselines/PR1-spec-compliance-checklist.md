@@ -141,7 +141,7 @@ zero-finding-baseline weakness rather than extraction breakage.
 **Why this is variance, not extraction breakage:**
 
 - The extracted reference at
-  `plugins/paad/skills/agentic-review/references/specialists/spec-compliance.md`
+  `plugins/paad/skills/agentic-review/references/spec-compliance.md`
   is a verbatim content copy of the original SKILL.md inline block,
   with only structural reformatting (added top-level heading +
   role-statement intro). The diff-size scaling rule, the bail-out

@@ -166,9 +166,9 @@ Each specialist agent prompt must include:
 
 **Contract & Integration additional instruction:** "Also flag: new code that reimplements logic already available in the codebase (check for existing utilities, helpers, or services that do the same thing). Flag duplicated code blocks within the diff that could be parameterized into a single function. Frame these as integration issues — duplicated logic diverges over time and causes bugs."
 
-**Spec Compliance additional instructions:** The Spec Compliance specialist's instructions live at `references/specialists/spec-compliance.md`. That file covers intent-source priority, the three finding categories (Missing / Deviation / Out-of-scope addition with `category: out-of-scope-addition` tag routing), the two attention-grade failure modes (missing artifacts, retro-edited spec contradictions), drop rules, diff-size scaling, and the no-intent-source bail-out. The dispatch prompt for the Spec Compliance specialist must include this instruction verbatim:
+**Spec Compliance additional instructions:** The Spec Compliance specialist's instructions live at `references/spec-compliance.md`. That file covers intent-source priority, the three finding categories (Missing / Deviation / Out-of-scope addition with `category: out-of-scope-addition` tag routing), the two attention-grade failure modes (missing artifacts, retro-edited spec contradictions), drop rules, diff-size scaling, and the no-intent-source bail-out. The dispatch prompt for the Spec Compliance specialist must include this instruction verbatim:
 
-> Read `references/specialists/spec-compliance.md` from this skill's directory before producing findings; treat its instructions as binding.
+> Read `references/spec-compliance.md` from this skill's directory before producing findings; treat its instructions as binding.
 
 **Scaling for large diffs (500+ lines):** Partition files across 2 instances of each specialist (e.g., Logic-A gets half the files, Logic-B gets the other half).
 

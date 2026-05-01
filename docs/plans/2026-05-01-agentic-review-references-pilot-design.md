@@ -37,12 +37,12 @@ After Phase 1 ships, a separate brainstorm + plan covers Phase 2
 
 | # | Extraction                                                        | New file                                                  |
 |---|-------------------------------------------------------------------|-----------------------------------------------------------|
-| 1 | Spec Compliance specialist (additional instructions block)        | `references/specialists/spec-compliance.md`               |
-| 2 | Logic & Correctness specialist                                    | `references/specialists/logic-correctness.md`             |
-| 3 | Error Handling & Edge Cases specialist                            | `references/specialists/error-handling.md`                |
-| 4 | Contract & Integration specialist                                 | `references/specialists/contract-integration.md`          |
-| 5 | Concurrency & State specialist                                    | `references/specialists/concurrency-state.md`             |
-| 6 | Security specialist                                               | `references/specialists/security.md`                      |
+| 1 | Spec Compliance specialist (additional instructions block)        | `references/spec-compliance.md`               |
+| 2 | Logic & Correctness specialist                                    | `references/logic-correctness.md`             |
+| 3 | Error Handling & Edge Cases specialist                            | `references/error-handling.md`                |
+| 4 | Contract & Integration specialist                                 | `references/contract-integration.md`          |
+| 5 | Concurrency & State specialist                                    | `references/concurrency-state.md`             |
+| 6 | Security specialist                                               | `references/security.md`                      |
 | 7 | Verifier (Phase 3 detailed instructions)                          | `references/verifier.md`                                  |
 | 8 | Phase 4 report template + backlog file shape                      | `references/report-template.md`                           |
 
@@ -120,7 +120,7 @@ landed extraction. Comments via `#`.
 
 ```
 # skill	ref-path-relative-to-skill	sentinel-phrase
-agentic-review	references/specialists/spec-compliance.md	Internal spec contradictions (retro-edited specs)
+agentic-review	references/spec-compliance.md	Internal spec contradictions (retro-edited specs)
 ```
 
 Each PR adds exactly one row.
@@ -188,7 +188,7 @@ In order, gated:
    `scripts/check_extracted_refs.sh`, wire into Makefile `test`
    target. Run `make test` — should fail on the new check (red).
 5. **Stage broken extraction.** Move content to
-   `references/specialists/spec-compliance.md`, leave dispatch
+   `references/spec-compliance.md`, leave dispatch
    unwired. Re-run against fixture. Spec Compliance section should
    miss checklist items (behavioral red). Document what regressed.
 6. **Wire dispatch.** Update `SKILL.md` Phase 2 dispatch to instruct
@@ -266,7 +266,7 @@ After the eight PRs land:
 
 ## Deliverables summary
 
-- `plugins/paad/skills/agentic-review/references/specialists/{spec-compliance,logic-correctness,error-handling,contract-integration,concurrency-state,security}.md`
+- `plugins/paad/skills/agentic-review/references/{spec-compliance,logic-correctness,error-handling,contract-integration,concurrency-state,security}.md`
 - `plugins/paad/skills/agentic-review/references/{verifier,report-template}.md`
 - `plugins/paad/skills/agentic-review/SKILL.md` — slimmer body, dispatches reference paths.
 - `scripts/extracted-refs.tsv` (8 rows after Phase 1 completes).

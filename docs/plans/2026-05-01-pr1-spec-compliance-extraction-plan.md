@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Move the Spec Compliance specialist's ~30-line additional-instructions block out of `plugins/paad/skills/agentic-review/SKILL.md` into `references/specialists/spec-compliance.md`, dispatched on demand. Establish the structural guardrail (`scripts/extracted-refs.tsv`, `scripts/check_extracted_refs.sh`, `make check-extracted-refs`) that all subsequent extractions reuse. Verify behavior is preserved against a known-history fixture commit.
+**Goal:** Move the Spec Compliance specialist's ~30-line additional-instructions block out of `plugins/paad/skills/agentic-review/SKILL.md` into `references/spec-compliance.md`, dispatched on demand. Establish the structural guardrail (`scripts/extracted-refs.tsv`, `scripts/check_extracted_refs.sh`, `make check-extracted-refs`) that all subsequent extractions reuse. Verify behavior is preserved against a known-history fixture commit.
 
-**Architecture:** Parent `SKILL.md` keeps a thin Spec Compliance entry in the specialist table; the dispatch prompt instructs the subagent to read `references/specialists/spec-compliance.md` for its full instructions. Structural guardrail (manifest TSV + check script + Makefile target) catches accidental regressions across this and future extractions. Behavioral test = run `/paad:agentic-review` against a fixture commit and verify the Spec Compliance section of the report matches a written behavioral checklist.
+**Architecture:** Parent `SKILL.md` keeps a thin Spec Compliance entry in the specialist table; the dispatch prompt instructs the subagent to read `references/spec-compliance.md` for its full instructions. Structural guardrail (manifest TSV + check script + Makefile target) catches accidental regressions across this and future extractions. Behavioral test = run `/paad:agentic-review` against a fixture commit and verify the Spec Compliance section of the report matches a written behavioral checklist.
 
 **Tech Stack:** bash, awk, GNU make, the existing paad plugin layout (`plugins/paad/skills/agentic-review/`), git for fixture checkout, `/paad:agentic-review` itself for behavioral verification.
 
@@ -338,7 +338,7 @@ EOF
 This is the actual extraction. Inside this task we run a structural-red → green → behavioral-green sequence; only the final state lands as a commit.
 
 **Files:**
-- Create: `plugins/paad/skills/agentic-review/references/specialists/spec-compliance.md`
+- Create: `plugins/paad/skills/agentic-review/references/spec-compliance.md`
 - Modify: `plugins/paad/skills/agentic-review/SKILL.md` — remove the Spec Compliance additional-instructions block (currently lines 169-200), add a one-line dispatch reference in its place.
 - Modify: `scripts/extracted-refs.tsv` — add the Spec Compliance row.
 
@@ -347,7 +347,7 @@ This is the actual extraction. Inside this task we run a structural-red → gree
 Edit `scripts/extracted-refs.tsv`. Append this tab-separated line:
 
 ```
-agentic-review	references/specialists/spec-compliance.md	Internal spec contradictions (retro-edited specs)
+agentic-review	references/spec-compliance.md	Internal spec contradictions (retro-edited specs)
 ```
 
 **Step 2: Run `make test` and confirm it FAILS**
@@ -358,7 +358,7 @@ make test
 
 Expected output includes:
 ```
-FAIL [row 1, agentic-review]: ref file not found at plugins/paad/skills/agentic-review/references/specialists/spec-compliance.md
+FAIL [row 1, agentic-review]: ref file not found at plugins/paad/skills/agentic-review/references/spec-compliance.md
 ```
 
 This confirms the structural test discriminates. If it passes, stop and investigate — the manifest row isn't being read correctly.
@@ -368,10 +368,10 @@ This confirms the structural test discriminates. If it passes, stop and investig
 Create the directory:
 
 ```bash
-mkdir -p plugins/paad/skills/agentic-review/references/specialists
+mkdir -p plugins/paad/skills/agentic-review/references
 ```
 
-Create `plugins/paad/skills/agentic-review/references/specialists/spec-compliance.md`. Copy the content from the current `SKILL.md` lines 169-200 verbatim, but reformat the leading `**Spec Compliance additional instructions:**` declaration into a top-level `# Spec Compliance — additional instructions` heading:
+Create `plugins/paad/skills/agentic-review/references/spec-compliance.md`. Copy the content from the current `SKILL.md` lines 169-200 verbatim, but reformat the leading `**Spec Compliance additional instructions:**` declaration into a top-level `# Spec Compliance — additional instructions` heading:
 
 ```markdown
 # Spec Compliance — additional instructions
@@ -415,7 +415,7 @@ Bail out cleanly when no intent can be inferred. If no source yields a clear sta
 In `plugins/paad/skills/agentic-review/SKILL.md`, replace the block from `**Spec Compliance additional instructions:**` (currently around line 169) through the end of the bail-out paragraph (currently around line 200) with this one-paragraph dispatch reference:
 
 ```markdown
-**Spec Compliance additional instructions:** Before producing findings, the Spec Compliance specialist reads `references/specialists/spec-compliance.md` (relative to this skill's directory). That file covers intent-source priority, the three finding categories (Missing / Deviation / Out-of-scope addition with `category: out-of-scope-addition` tag routing), the two attention-grade failure modes (missing artifacts, retro-edited spec contradictions), drop rules, diff-size scaling, and the no-intent-source bail-out. The dispatch prompt for the Spec Compliance specialist must include the instruction: "Read `references/specialists/spec-compliance.md` from this skill's directory before producing findings; treat its instructions as binding."
+**Spec Compliance additional instructions:** Before producing findings, the Spec Compliance specialist reads `references/spec-compliance.md` (relative to this skill's directory). That file covers intent-source priority, the three finding categories (Missing / Deviation / Out-of-scope addition with `category: out-of-scope-addition` tag routing), the two attention-grade failure modes (missing artifacts, retro-edited spec contradictions), drop rules, diff-size scaling, and the no-intent-source bail-out. The dispatch prompt for the Spec Compliance specialist must include the instruction: "Read `references/spec-compliance.md` from this skill's directory before producing findings; treat its instructions as binding."
 ```
 
 **Step 5: Run `make test` and confirm it now PASSES**
@@ -430,19 +430,19 @@ If it fails, debug:
 - "ref file not found" → check the file was created at the right path.
 - "sentinel still present in SKILL.md" → the inline block wasn't fully removed; grep `SKILL.md` for "Internal spec contradictions" and remove the residual.
 - "sentinel missing from ref file" → the content didn't make it into the ref file verbatim; check copy-paste.
-- "ref path not referenced in SKILL.md" → the dispatch paragraph doesn't include the literal string `references/specialists/spec-compliance.md`; add it.
+- "ref path not referenced in SKILL.md" → the dispatch paragraph doesn't include the literal string `references/spec-compliance.md`; add it.
 
 **Step 6: Commit the extraction**
 
 Commit the structural-green state (manifest row + ref file + SKILL.md dispatch update) before behavioral verification. Behavioral verification needs Task 3 and Task 4 commits to exist as named SHAs we can cherry-pick.
 
 ```bash
-git add scripts/extracted-refs.tsv plugins/paad/skills/agentic-review/SKILL.md plugins/paad/skills/agentic-review/references/specialists/spec-compliance.md
+git add scripts/extracted-refs.tsv plugins/paad/skills/agentic-review/SKILL.md plugins/paad/skills/agentic-review/references/spec-compliance.md
 git commit -m "$(cat <<'EOF'
 agentic-review: extract Spec Compliance specialist to references/
 
 The Spec Compliance specialist's ~30-line additional-instructions block
-moved out of SKILL.md into references/specialists/spec-compliance.md;
+moved out of SKILL.md into references/spec-compliance.md;
 the parent dispatch instructs the subagent to read the ref before
 producing findings. Manifest row added; structural guardrail green.
 
@@ -540,7 +540,7 @@ The extraction is functionally green. This task records the verified subagent-pa
 
 Open `notes/convert-skills.md`. Replace the `## Subagent path resolution — open question for pilot` section's "Possibilities (1)/(2)/(3)" closing paragraph with the verified answer based on Task 4 Step 8/9 observations. Examples:
 
-- If the subagent successfully read the relative path: "**Verified mechanism: relative paths from SKILL.md root work for subagents.** The dispatch prompt instructs the subagent to read `references/specialists/spec-compliance.md` and the subagent resolves it correctly."
+- If the subagent successfully read the relative path: "**Verified mechanism: relative paths from SKILL.md root work for subagents.** The dispatch prompt instructs the subagent to read `references/spec-compliance.md` and the subagent resolves it correctly."
 - If it required absolute path: "**Verified mechanism: parent must resolve to absolute path.** The dispatch prompt computed the absolute path via `<mechanism>` and embedded it in the subagent's prompt."
 
 **Step 2: Add convention entry**
@@ -554,9 +554,9 @@ Established by PR1 (Spec Compliance). Subsequent extractions copy this
 shape verbatim, swapping the lens name and ref path:
 
 > **<Lens> additional instructions:** Before producing findings, the
-> <Lens> specialist reads `references/specialists/<lens>.md` (relative
+> <Lens> specialist reads `references/<lens>.md` (relative
 > to this skill's directory). The dispatch prompt must include:
-> "Read `references/specialists/<lens>.md` from this skill's directory
+> "Read `references/<lens>.md` from this skill's directory
 > before producing findings; treat its instructions as binding."
 
 The reference file itself starts with a `# <Lens> — additional
