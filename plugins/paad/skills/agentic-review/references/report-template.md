@@ -8,6 +8,7 @@
 - If there are zero out-of-scope additions, omit the entire `## Out-of-Scope Additions` section *and* its handoff block. Review Metadata still records `Out-of-scope additions: 0`.
 - If there are zero in-scope findings of a tier but out-of-scope findings exist, write each empty in-scope tier section as `None found.` (existing convention) and write the Out of Scope section normally.
 - When the Spec Compliance specialist's output begins with the `BAIL: spec-compliance` token (matched tolerantly per the verifier's "Specialist status detection" section), set `Intent sources consulted: none — Spec Compliance skipped` in metadata. No specialist can produce additions in this case (only Spec Compliance emits the OOSA signal, and it didn't run), so the `## Out-of-Scope Additions` section is empty; omit it.
+- When the Verifier emits one or more `verifier-warning:` lines (from `references/verifier.md` step 0 for missing-ref specialists, or from the Field-encoding rules section for malformed File/Symbol fields), copy each line verbatim into the `Verifier warnings:` field of Review Metadata, comma-separated. When zero warnings, set the field to `none`. Do not paraphrase or restructure the warning lines; downstream agents may parse them.
 
 **Failure handling:**
 
@@ -103,11 +104,14 @@ One-line entries only. If empty, follow the Empty-section rules above.
 - **Backlog:** X new entries added, Y re-confirmed (see `paad/code-reviews/backlog.md`)
 - **Steering files consulted:** <list or "none found">
 - **Intent sources consulted:** <e.g., "PR description", "docs/plans/foo-design.md", "recent commit messages", or "none — Spec Compliance skipped">
+- **Verifier warnings:** <comma-separated list of `verifier-warning:` lines emitted by the Verifier — one per missing-ref specialist; or "none">
 ```
 
 ## The Backlog File
 
-`paad/code-reviews/backlog.md` is project-wide, append-only, and uses **explicit removal only** — agentic-review never auto-resolves entries. Created on first run if absent.
+`paad/code-reviews/backlog.md` is project-wide, append-only, and uses **explicit removal only** — agentic-review never auto-resolves entries.
+
+**Sole writer:** the Phase 4 orchestrator (the agent that activated this skill) is the only writer of this file. The Phase 3 Verifier emits directives (`{id, last_seen, branch, sha}` updates and new-entry mints) — it does **not** write `backlog.md` itself. On first run when the file is absent, the orchestrator creates it with the fixed header below before applying the first batch of directives. This single-writer rule prevents the Verifier and orchestrator from racing or both no-opping on the assumption the other will create the file.
 
 **Fixed header (preserved across all updates):**
 
@@ -139,14 +143,7 @@ One-line entries only. If empty, follow the Empty-section rules above.
 - **Severity:** Critical | Important | Suggestion
 ```
 
-**Field-encoding rules.** Backlog fields originate in specialist output (untrusted LLM output) and current code locations (which can include attacker-influenced symbol names or paths). The per-entry shape uses `## <id> — <title>` and the removal rule scans for that exact heading shape, so a field containing `## ` or other markdown-active text can break the structural identity of an entry. Apply these rules when minting or updating an entry:
-
-- **Title:** flatten to a single line (replace any newlines with spaces). Truncate at 120 characters with a trailing `…` if longer. Backslash-escape any literal `## ` and `# ` sequences inside the title (`\## `, `\# `) so the heading boundary is unambiguous. Replace stray backticks in the title with the HTML entity `&#96;` so they don't interact with surrounding code-spans.
-- **Description and Suggested fix:** wrap each in a fenced code block (```text ... ```) so embedded `## `, `*`, `-`, backticks, and other markdown markers are inert. Cap each at 500 characters; truncate with `… [truncated]` if longer.
-- **File path / Symbol:** treat as code identifiers — wrap in single backticks as the per-entry shape already does. If the path or symbol contains a literal backtick, replace it with `&#96;`. If it contains a newline (which would only happen for adversarial input), reject the finding rather than mint a corrupt entry.
-- **No raw HTML.** If specialist output contains HTML tags inside any of the above fields, escape `<` to `&lt;` so the backlog renders as text, not markup.
-
-The Verifier (writer) and any agent that consumes the backlog must apply the same rules — never trust that an existing entry is well-formed; defensively re-encode if rewriting.
+**Field-encoding when writing entries.** The Verifier is the primary writer and owns field encoding; the rules live in `references/verifier.md`'s "Field-encoding rules" section. Any agent that rewrites an existing entry must defensively re-apply those rules — do not assume an existing entry is well-formed.
 
 **Update rule on re-discovery:** rewrite only the `Last seen` line. Everything else is immutable so the entry remains a stable historical record.
 
