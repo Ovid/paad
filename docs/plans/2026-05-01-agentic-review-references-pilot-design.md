@@ -2,7 +2,29 @@
 
 **Date:** 2026-05-01
 **Phase:** 1 of 5 in `docs/roadmap.md` (Skill References Conversion)
-**Cross-phase notes:** `notes/convert-skills.md`
+**Status:** Done (2026-05-01) — see retrospective below.
+**Cross-phase notes:** `notes/convert-skills.md` (running source of truth for conventions).
+
+## Phase 1 retrospective (2026-05-01)
+
+Phase 1 is complete. All eight extractions landed on `ovid/skill-breakdown` across four logical commits (PR1 standalone; PR2–PR6 batched; PR7 standalone; PR8 standalone), plus version bumps from 1.14.0 to 1.16.0. SKILL.md shrank from 386 lines to 240 (~38%). The full red-green-refactor behavioral discipline this design proposed was applied to PR1; later PRs relied on the locked conventions plus structural-only verification (`make check-extracted-refs`) — see `notes/convert-skills.md` "agentic-review variance is stochastic" rationale for why per-PR behavioral verification was relaxed.
+
+**Material deviation from the original plan:**
+
+The plan assumed PRs 2–6 were "mechanical applications" of PR1's verbatim-move pattern. In practice, three of the five specialists (Logic & Correctness, Concurrency & State, Security) had **no distinctive inline instructions** in `SKILL.md` — only the common base prompt with the lens name swapped. Rather than skipping those PRs, three subagents were dispatched (one per lens) to think like that specialist and propose distinctive content. All three returned substantive recommendations that landed as **new authored content** in the corresponding ref files. The convention this established is recorded in `notes/convert-skills.md` "Finding: 'empty' specialists deserve authored content (PR2–PR6)." Phase 2+ should dispatch a similar think-like-this-specialist subagent before defaulting to "skip" on any empty lens.
+
+**Layout adjustment after PR1:**
+
+The original plan placed specialists at `references/specialists/<lens>.md`. The Agent Skills spec (https://agentskills.io/specification#file-references) says "Keep file references one level deep from SKILL.md," which the nested layout violated. Caught after PR1 landed; fixed by the flatten commit before PR2–PR8 began. All eight ref files now sit directly under `references/`. The plan tables and command snippets below were updated in the flatten commit.
+
+**Open questions resolved:**
+
+- **Subagent path resolution:** relative paths in the dispatch prompt resolve against the skill directory; no parent-side absolute-path computation needed. Recorded in `notes/convert-skills.md` "Subagent path resolution — verified mechanism (PR1)."
+- **Fixture stability:** the two PR1 fixtures (`83aa677`, synthetic of `5f03453`) held up. Synthetic-fixture synthesis instructions for older commits documented in `notes/convert-skills.md`.
+
+The original plan content below is preserved as historical record. For conventions Phase 2 should inherit, read `notes/convert-skills.md` first; this design doc second.
+
+---
 
 ## Context
 
