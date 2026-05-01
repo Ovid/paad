@@ -31,7 +31,7 @@ Each finding must name (a) the input or condition that triggers the bug, (b) the
 ## Drop rules
 
 - Do **not** report style, naming, formatting, or readability issues — that's not this lens.
-- Do **not** report findings whose only argument is "this code is hard to follow." If you can't articulate the wrong input/output pair, drop it.
+- Do **not** report findings whose only argument is "this code is hard to follow." (The articulation requirement — input, path, and output — is governed by the (a)/(b)/(c) rule above, not by this section.)
 - Do **not** report cosmetic refactors (variable renames, extracted helpers with identical behavior) as logic changes unless you can show a behavior difference.
 - If a "bug" requires a precondition the type system or earlier validation already excludes, drop it or cap confidence at 60.
 

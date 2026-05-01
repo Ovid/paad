@@ -8,7 +8,7 @@
 - If there are zero out-of-scope additions, omit the entire `## Out-of-Scope Additions` section *and* its handoff block. Review Metadata still records `Out-of-scope additions: 0`.
 - If there are zero in-scope findings of a tier but out-of-scope findings exist, write each empty in-scope tier section as `None found.` (existing convention) and write the Out of Scope section normally.
 - When the Spec Compliance specialist's output begins with the `BAIL: spec-compliance` token (matched tolerantly per the verifier's "Specialist status detection" section), set `Intent sources consulted: none — Spec Compliance skipped` in metadata. No specialist can produce additions in this case (only Spec Compliance emits the OOSA signal, and it didn't run), so the `## Out-of-Scope Additions` section is empty; omit it.
-- When the Verifier emits one or more `verifier-warning:` lines (from `references/verifier.md` step 0 for missing-ref specialists, or from the Field-encoding rules section for malformed File/Symbol fields), copy each line verbatim into the `Verifier warnings:` field of Review Metadata, comma-separated. When zero warnings, set the field to `none`. Do not paraphrase or restructure the warning lines; downstream agents may parse them.
+- When the Verifier emits one or more `verifier-warning:` lines (from `references/verifier.md` step 0 for missing-ref specialists, or from the Field-encoding rules section for malformed File/Symbol fields), render them as a **sublist** under the `Verifier warnings:` field of Review Metadata — one bullet per warning, each bullet's content verbatim from the Verifier's emitted line. The Verifier is responsible for ensuring each warning is exactly one line (the Field-encoding rules require it); do not split, rewrap, or comma-join. The `Verifier warnings:` line itself shows the count. When zero warnings, set the field to `none` and do not render a sublist.
 
 **Failure handling:**
 
@@ -104,14 +104,16 @@ One-line entries only. If empty, follow the Empty-section rules above.
 - **Backlog:** X new entries added, Y re-confirmed (see `paad/code-reviews/backlog.md`)
 - **Steering files consulted:** <list or "none found">
 - **Intent sources consulted:** <e.g., "PR description", "docs/plans/foo-design.md", "recent commit messages", or "none — Spec Compliance skipped">
-- **Verifier warnings:** <comma-separated list of `verifier-warning:` lines emitted by the Verifier — one per missing-ref specialist; or "none">
+- **Verifier warnings:** <count, or "none". When > 0, render the warnings as a sublist below this line — one bullet per warning, each verbatim from the Verifier's emitted line. Example:>
+  - `verifier-warning: spec-compliance ref-token-missing`
+  - `verifier-warning: src/auth/login.py:42 malformed-file`
 ```
 
 ## The Backlog File
 
 `paad/code-reviews/backlog.md` is project-wide, append-only, and uses **explicit removal only** — agentic-review never auto-resolves entries.
 
-**Sole writer:** the Phase 4 orchestrator (the agent that activated this skill) is the only writer of this file. The Phase 3 Verifier emits directives (`{id, last_seen, branch, sha}` updates and new-entry mints) — it does **not** write `backlog.md` itself. On first run when the file is absent, the orchestrator creates it with the fixed header below before applying the first batch of directives. This single-writer rule prevents the Verifier and orchestrator from racing or both no-opping on the assumption the other will create the file.
+**Sole writer:** the Phase 4 orchestrator (the agent that activated this skill) is the only writer of this file. The Phase 3 Verifier emits directives (`{id, last_seen, branch, sha}` updates and new-entry mints) — it does **not** write `backlog.md` itself. On first run when the file is absent, the orchestrator creates it with the fixed header below — **always, even when the directives list is empty.** A clean review with zero out-of-scope bugs still leaves a header-only `backlog.md` behind, so subsequent runs and downstream tooling can depend on the file existing. Subsequent runs hit the file-exists path and skip creation. This single-writer rule prevents the Verifier and orchestrator from racing or both no-opping on the assumption the other will create the file.
 
 **Fixed header (preserved across all updates):**
 

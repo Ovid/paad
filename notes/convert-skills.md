@@ -213,6 +213,127 @@ X) to give the test set a finding-producing signal. Hold this in
 reserve — don't reach for it unless the current pair of fixtures
 proves insufficient at green time.
 
+## Expected baseline drift after commit `29f213c` (references-package hardening)
+
+Commit `29f213c` ("agentic-review: tighten contracts in references
+package") landed eleven contract tweaks to the references package
+*after* the PR1 baselines (`paad/code-reviews/pr1-*-2026-05-01-*.md`)
+were captured. Future verify-side runs against the same fixtures will
+diverge from those PR1 baselines in predictable ways. **Treat the
+following as expected drift, not regression.**
+
+- **Universal:** every Review Metadata block now ends with an
+  additional bullet `- **Verifier warnings:** none` (or with a
+  sublist of warning lines when any were emitted). PR1 baselines end
+  metadata at `Intent sources consulted:`. Diff this in.
+- **Likely on multi-specialist findings:** the merged categorical
+  confidence is now the max of contributing specialists' numeric
+  confidences (per `references/verifier.md` step 5). Previously
+  unspecified — the verifier may have averaged or otherwise picked.
+  Findings whose merged confidence flips Medium↔High should be
+  inspected once but not treated as regressions.
+- **Possible on Logic & Correctness findings:** the (a)/(b)/(c)
+  anchor rule in `references/logic-correctness.md` requires every
+  finding to articulate input + path + observable wrong output. A
+  stricter specialist may now drop findings that previously passed
+  on the looser "input/output pair" rule. Before re-capturing, scan
+  baseline Logic findings for ones that don't articulate the path —
+  if they now drop, that's intended.
+- **Cosmetic:** `Field-encoding rules` now live in
+  `references/verifier.md` (not `report-template.md`). Citations of
+  rule location may shift; rule content unchanged.
+
+If the next phase's baseline-verify diff shows *only* drifts on this
+list, treat as expected. Anything else needs root-cause analysis.
+
+## One-at-a-time decision flows: label scope, not just severity
+
+**Discovered:** During the review pass that produced commit `29f213c`,
+findings were presented to the user one-at-a-time in C/I/S severity
+tiers (Critical / Important / Suggestion). The tier signaled *impact
+if unaddressed* but not *blast radius of the fix*. Two findings tiered
+as "Important" had vastly different scopes:
+
+- **I2** ("BAIL detection ordering") — single-sentence prose edit,
+  one file, ~30 seconds.
+- **I4** ("verifier-warning format and rendering") — three
+  coordinated edits across `verifier.md`, `report-template.md`,
+  and `SKILL.md`; new output channel; renumbered Post-Review steps;
+  new metadata field; two warning subtypes. Effectively a small
+  feature.
+
+From the user's chair, both decisions present the same approve/reject
+affordance. A quick "yes" to I4 implicitly authorized a multi-file
+mini-feature; the framing didn't surface the cross-file blast radius
+upfront.
+
+**Cross-flow implication:** when presenting findings one-at-a-time
+for approval, label scope explicitly alongside severity. A simple
+prefix works: *"I4 (cross-file, 3 edits)"* vs. *"I2 (single-line
+edit)"*. Severity tier ≠ scope; conflating them costs the user
+clarity on what they're authorizing per click. This applies to any
+review-pass flow, not just the references-package work.
+
+## Runtime contracts (untested)
+
+Commit `29f213c` added several cross-file semantic contracts to the
+agentic-review references package that the existing structural
+guardrails (`scripts/check_extracted_refs.sh`,
+`scripts/extracted-refs.tsv`) cannot verify. These are LLM-driven
+runtime invariants — a maintainer changing any of the listed
+sections must hand-verify the others stay in sync. Build a behavioral
+test harness or add static greps if/when one of these silently breaks
+in the wild.
+
+**Contracts to grep before editing the named sections:**
+
+1. **`verifier-warning:` channel exists in three places.** Defined in
+   `references/verifier.md` (step 0 and the Field-encoding rules
+   File/Symbol bullet); rendered by the orchestrator per
+   `references/report-template.md`'s empty-section rules and Review
+   Metadata block; surfaced to the user in
+   `plugins/paad/skills/agentic-review/SKILL.md`'s Post-Review step
+   6. Renaming the prefix or the metadata field in any one place
+   without updating the others silently breaks the channel.
+   Grep: `verifier-warning` should appear across all four files.
+
+2. **"Sole writer" rule cross-reference.** The rule lives in
+   `references/report-template.md` ("The Backlog File" section);
+   `references/verifier.md` step 7 back-references it ("see
+   `references/report-template.md`'s 'Sole writer' rule"). Renaming
+   the section heading rots the back-reference. Grep: `Sole writer`
+   should appear in both files.
+
+3. **`[ref-loaded:<lens>]` echo-back tokens.** Each specialist ref's
+   dispatch in `SKILL.md` Phase 2 instructs the subagent to emit
+   `[ref-loaded:<lens-name>]`. The verifier's pipeline step 0 and
+   "Specialist status detection" table key on these tokens.
+   Adding/renaming a specialist requires updating the dispatch
+   prompt, the verifier's table, and the specialist's BAIL block
+   (which also embeds the lens name in the ref-loaded line).
+
+4. **`BAIL: <lens> <reason>` token shape.** Each specialist ref with
+   a bail-out clause emits `BAIL: <lens-name> <reason>` as line 2 of
+   a bail output. The verifier's "Specialist status detection" table
+   and pipeline matches them tolerantly. The
+   `report-template.md` empty-section rule keys on
+   `BAIL: spec-compliance` specifically for the "Intent sources
+   consulted: none — Spec Compliance skipped" metadata branch.
+   Renaming a lens or its reason string requires updates in the ref,
+   the verifier's table, and (for spec-compliance specifically) the
+   report-template empty-section rule.
+
+5. **Idempotent HTML escape and variable-length CommonMark fence.**
+   The Field-encoding rules in `references/verifier.md` are
+   load-bearing for backlog write/rewrite safety. Any agent that
+   rewrites an existing entry must re-apply the rules; a future
+   refactor that introduces a separate "rewrite" path must read the
+   rules section.
+
+If a future PR touches any named section, walk this list and
+hand-verify the linked sites still agree. None of this is enforced
+by `make test` today.
+
 ## Working branch
 
 Phase 1 work lands on the existing `ovid/skill-breakdown` branch, **not**
