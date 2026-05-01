@@ -104,6 +104,53 @@ After the eight `agentic-review` PRs land, identify candidates in:
 This list is a first cut; the full plan after the pilot will revisit it
 with whatever the pilot teaches us.
 
+## Behavioral verification must use `--plugin-dir`
+
+**Discovered:** During PR1 Task 2 baseline-capture attempt, the fresh
+Claude Code session loaded the marketplace-cached paad version
+(`~/.claude/plugins/cache/paad/paad/1.11.0/`) instead of the
+working-tree version (`1.14.0`). Cached v1.11.0 predates the Spec
+Compliance specialist entirely, so any "baseline" captured against it
+would be useless as an acceptance criterion for the extraction.
+
+**Mitigation:** Every behavioral verification session in this pilot —
+baselines, broken-extraction reds, post-extraction greens, refactor
+re-verifications, and equivalent verifications in Phases 2–5 — must
+launch the Claude Code session with `--plugin-dir`:
+
+```
+claude --plugin-dir /Users/ovid/projects/paad/plugins/paad
+```
+
+(or the relative form `claude --plugin-dir ./plugins/paad` from the
+repo root). This is already documented in `CLAUDE.md` under "Adding a
+new skill" step 6 ("Test locally with `claude --plugin-dir
+./plugins/paad`"). The pilot adopts it as a standing requirement, not
+an optional flag.
+
+**Cross-PR implication:** Update PR1 Task 4 Step 8/9 procedures and
+the equivalent steps in any future-phase plan to mention the
+`--plugin-dir` launch explicitly. Future contributors who skim the
+plan without reading this notes file will otherwise reproduce the
+same staleness trap.
+
+**Optional belt-and-braces verification:** Inside the launched
+session, before invoking `/paad:agentic-review`, ask: "What version
+will `/paad:agentic-review` announce on invocation?" The skill's
+announce line carries the version literal. If the answer is the
+expected version, the right SKILL.md is loaded. If it's the cached
+older version, the `--plugin-dir` flag wasn't honored.
+
+**Working-tree state hazard.** The pilot uses temporary branches
+(`pr1-baseline-behaviors`, `pr1-baseline-bailout`, etc.) checked out
+at fixture commits. These checkouts mutate the *shared* working tree
+on disk, so an in-progress session in the same checkout sees the
+fixture's historical state — including missing recent files like
+`notes/` itself. When orchestrating across two sessions, complete the
+fixture run and clean up the temp branch *before* the orchestrating
+session writes anything to working-tree paths that didn't exist at
+the fixture commit.
+
 ## Working branch
 
 Phase 1 work lands on the existing `ovid/skill-breakdown` branch, **not**
