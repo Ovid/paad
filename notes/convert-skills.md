@@ -65,7 +65,15 @@ to option (i) — a hand-crafted synthetic fixture under `paad/test-fixtures/`.
 
 (populated as PRs land)
 
-- PR1 (Spec Compliance): _to be selected_
+- **PR1 behaviors fixture:** `83aa677` — `agentic-review: plug Phase 2/3 contract gaps (S5, S6, S10)`. Intent
+  source: commit body (three named findings S5/S6/S10, each listing concrete artifacts the change must
+  produce — e.g., a Symbol-field contract, the literal `<file-scope>` sentinel, prompt-injection language
+  for Phase 2 specialists). Expected Spec Compliance behaviors: plausible `Missing` finding (one of the
+  S5/S6/S10 sub-bullets not landing in the +5/-3 single-file diff, e.g., the Symbol contract or
+  prompt-injection wording underspecified), and a possible `out-of-scope-addition` for any wording change
+  in the diff not anchored to S5/S6/S10.
+- **PR1 bail-out fixture:** `5f03453` — `Update PAAD logo with cleaner style`. No intent
+  source. Expected Spec Compliance behavior: skipped output.
 
 ## Order of attack
 
