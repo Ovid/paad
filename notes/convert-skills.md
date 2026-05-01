@@ -18,22 +18,30 @@ here, not the per-PR commit messages.
   layout in `superpowers:writing-skills`. Our pattern is the same one,
   applied to subagent dispatch.
 
-## Subagent path resolution — open question for pilot
+## Subagent path resolution — verified mechanism (PR1)
 
-The spec covers the agent that activates the skill. It does **not**
-explicitly cover subagents dispatched via the Task tool. Possibilities:
+The Agent Skills spec covers the agent that activates the skill but
+does not explicitly cover subagents dispatched via the Task tool. PR1
+locked this down.
 
-1. The subagent inherits "skill dir as command root" — relative paths
-   in the dispatch prompt Just Work. Cleanest case.
-2. The subagent lands in the user's repo CWD with no skill awareness.
-   Parent must resolve to absolute path before embedding in the prompt.
-3. Some middle ground (env var, prompt-time substitution).
+**Mechanism:** The dispatched subagent inherits "skill dir as command
+root" — relative paths in the dispatch prompt resolve against the
+skill's directory and Just Work. The parent does *not* need to compute
+an absolute path before embedding it in the dispatch prompt.
 
-**Pilot must lock this down.** If (1) holds, the design stays as
-written. If (2), every dispatch site needs a resolution step (likely a
-Bash `pwd`/`realpath` inside the parent's skill dir, captured into a
-shell variable, embedded in the prompt). Update this note with the
-verified answer after PR1 lands.
+**Evidence:** PR1's dispatch prompt instructs the Spec Compliance
+subagent to "Read `references/specialists/spec-compliance.md` from
+this skill's directory before producing findings; treat its
+instructions as binding." During post-extraction verification, the
+subagent successfully read the reference file and produced output
+faithful to its instructions (e.g., the bail-out output explicitly
+cites "Per the reference's instruction not to invent intent from the
+diff itself"), confirming the relative path resolved correctly without
+any parent-side absolute-path computation.
+
+**Cross-PR implication:** Future extractions copy the same
+dispatch-prompt shape (see "Conventions established by the pilot").
+No prompt-time path manipulation is needed.
 
 ## TDD for skill extractions = subagent pressure scenarios
 
@@ -72,7 +80,8 @@ to option (i) — a hand-crafted synthetic fixture under `paad/test-fixtures/`.
   S5/S6/S10 sub-bullets not landing in the +5/-3 single-file diff, e.g., the Symbol contract or
   prompt-injection wording underspecified), and a possible `out-of-scope-addition` for any wording change
   in the diff not anchored to S5/S6/S10.
-- **PR1 bail-out fixture:** `5f03453` — `Update PAAD logo with cleaner style`. No intent
+- **PR1 bail-out fixture:** `5f03453` — `Update PAAD logo with cleaner style` (binary-only diff,
+  subject-only body, no PR — nothing for Spec Compliance to infer intent from). No intent
   source. Expected Spec Compliance behavior: skipped output.
 
 ## Order of attack
@@ -219,3 +228,48 @@ level so partial pushes / stacked PRs remain an option.
 
 (populated as PRs land — directory layout, naming, dispatch-prompt
 wording, anything mechanical that future PRs should copy verbatim)
+
+### Dispatch prompt template (PR1)
+
+Established by PR1 (Spec Compliance). Subsequent extractions copy this
+shape verbatim, swapping the lens name and ref path. In the parent
+`SKILL.md`, the entry for each extracted lens reads:
+
+```markdown
+**<Lens> additional instructions:** The <Lens> specialist's
+instructions live at `references/specialists/<lens>.md`. That file
+covers <one-line inventory of the ref's contents — intended as a
+TOC for SKILL.md readers, not duplicated content>. The dispatch
+prompt for the <Lens> specialist must include this instruction
+verbatim:
+
+> Read `references/specialists/<lens>.md` from this skill's
+> directory before producing findings; treat its instructions as
+> binding.
+```
+
+Notes on the shape:
+
+- The path appears twice in SKILL.md: once in the prose ("instructions
+  live at..."), once in the binding-instruction blockquote. Both are
+  required — the prose makes the path discoverable when reading
+  SKILL.md, the blockquote is the literal text the dispatch prompt
+  must inject into the subagent.
+- The inventory sentence is a TOC, not a paraphrase of the ref's
+  content. Keep it short. If you find yourself duplicating the ref's
+  prose into the inventory, prefer the ref.
+- The structural-guardrail check (`scripts/check_extracted_refs.sh`)
+  enforces both: that the ref path is referenced in SKILL.md, and
+  that the chosen sentinel phrase is *only* in the ref file.
+
+### Reference file shape (PR1)
+
+Each `references/specialists/<lens>.md` file starts with:
+
+1. A `# <Lens> — additional instructions` top-level heading.
+2. A short blockquoted role-statement orienting the subagent: name
+   the role, the dispatching skill+phase, the parent-vs-this-file
+   boundary, and the imperative to read before writing findings.
+   One paragraph.
+3. The body — verbatim content move from the prior inline block in
+   `SKILL.md`, no edits beyond the structural reformatting above.

@@ -103,9 +103,75 @@ finding entries are persisted under `## Critical Issues`,
       Compliance".
 - [ ] [REPORT] No `## Out-of-Scope Additions` section.
 
-## Optional: post-extraction divergence note
+## Post-extraction divergence note (filled in 2026-05-01)
 
-After the post-extraction run, fill in a short note here recording
-any acceptable divergences from the baseline (e.g. minor wording
-shifts that don't affect any checklist item). If the extraction
-landed cleanly, leave this section empty.
+Post-extraction verification was performed by a fresh `claude
+--plugin-dir ./plugins/paad` session on 2026-05-01 (reports
+captured at `paad/code-reviews/pr1-verify-{behaviors,bailout}-...md`,
+findings summary in `findings.md`). Result: bail-out fixture fully
+green; behaviors fixture green except for two items that the
+baseline made literal acceptance criteria but that we now read as
+zero-finding-baseline weakness rather than extraction breakage.
+
+**Items that did not match the literal text (behaviors fixture):**
+
+1. *"Spec Compliance produces a clean summary."* — Post-extraction
+   run produced one Deviation finding at SKILL.md:327 (the
+   per-entry Symbol shape contract drops "method" while the
+   algorithm rule on lines 188/193 keeps it). This is a genuine
+   internal-spec contradiction, identified by both Spec Compliance
+   and Contract & Integration; the verifier merged them into one
+   entry [S2]. The baseline's Spec Compliance was silent on this
+   drift, but Contract & Integration caught the same drift as
+   baseline [I3] at the same lines (358 in the pre-extraction line
+   numbering, which is line 327 post-extraction after the ~30-line
+   shrinkage). So the bug *was* in the baseline report; the
+   post-extraction run merely surfaces it from one additional
+   specialist. The Deviation is exactly the failure-mode (b)
+   ("Internal spec contradictions / retro-edited specs") that the
+   extracted reference teaches the specialist to surface.
+
+2. *"Clean summary ends with the literal sentence 'Spec compliance:
+   clean.'"* — Not produced. The reference's diff-size scaling
+   rule says "Small (<50 lines): one-line summary unless something
+   is wrong. Default: 'Spec compliance: clean.'" — the "unless
+   something is wrong" qualifier applies; the specialist correctly
+   did not declare clean when it had a Deviation to report.
+
+**Why this is variance, not extraction breakage:**
+
+- The extracted reference at
+  `plugins/paad/skills/agentic-review/references/specialists/spec-compliance.md`
+  is a verbatim content copy of the original SKILL.md inline block,
+  with only structural reformatting (added top-level heading +
+  role-statement intro). The diff-size scaling rule, the bail-out
+  paragraph, the failure-mode (b) paragraph, and the no-Implemented/
+  Not-yet lists rule all carry over unchanged. There is nothing in
+  the extraction to amend — the reference is faithful.
+- All extraction-specific behaviors are preserved: intent source
+  named correctly (commit body, not PR/plan/branch); no
+  Implemented / Not yet implemented lists; bail-out fixture's
+  exact bail-out phrase used; six intent sources enumerated with
+  reasons in the bail-out output.
+- The verifier-prompt-prompt-injection finding ([C1] in baseline,
+  [I3] in this run) was demoted from Critical to Important — a
+  judgment-call severity assignment, both ratings defensible. Not
+  an extraction signal.
+
+**What this teaches us for future PRs (PR2–PR8):**
+
+The checklist preamble already warns that zero-finding baselines
+are weaker tests. PR1 is the first instance where that warning
+materialized. For lenses that genuinely produce findings on the
+behaviors fixture (Logic & Correctness, Error Handling, etc.),
+the checklist will compare actual finding content. For lenses
+where the baseline produces zero findings, future checklists
+should add an explicit "and may catch additional findings the
+baseline missed, provided they fall within the lens's scope and
+follow the reference's rules" allowance, rather than treating
+silence as a literal acceptance criterion.
+
+**Verdict:** Task 4 behavioral verification → **accepted as ✓**.
+The extraction is faithful and the post-extraction skill behaves
+equivalently to the baseline plus one true-positive finding the
+baseline missed.
