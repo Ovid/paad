@@ -22,10 +22,14 @@ Cross-phase learnings live in `notes/convert-skills.md`.
 <!-- plan: 2026-05-01-agentic-review-references-pilot-design.md -->
 
 Validate the references-pattern conversion on `agentic-review` via eight
-small PRs (one per extraction): six specialists, the verifier, and the
-Phase 4 report template. Lock down subagent path resolution, fixture
-strategy, and red-green-refactor mechanics so later phases inherit the
-conventions.
+extractions: six specialists, the verifier, and the Phase 4 report
+template. Lock down subagent path resolution, fixture strategy, and
+red-green-refactor mechanics so later phases inherit the conventions.
+
+Done 2026-05-01: 8 extractions landed across 4 commits, SKILL.md shrank
+~38%, plugin v1.14.0 → v1.16.0. See `notes/convert-skills.md` for the
+locked conventions and the Phase 1 design doc's retrospective for what
+deviated from the original plan.
 
 ### Dependencies
 None.
@@ -39,11 +43,14 @@ Other paad skills. Behavior changes to agentic-review.
 
 Apply the validated pattern to `agentic-architecture`. Likely similar
 shape to agentic-review (multi-specialist + verifier + report) but with
-different lenses; each lens needs its own ref file with content drawn
-from the existing inline instructions.
+different lenses. Each lens gets its own ref file — content drawn from
+existing inline instructions, or authored by think-like-this-specialist
+subagents where no distinctive inline content exists (Phase 1 finding;
+see `notes/convert-skills.md`).
 
 ### Dependencies
-Phase 1 must be merged so the conventions are stable.
+Phase 1 must be done — its conventions in `notes/convert-skills.md`
+are what Phase 2 inherits. Merge to main is preferred but not blocking.
 
 ---
 
@@ -54,7 +61,7 @@ Sequenced after Phase 2 only because there's no value in running them in
 parallel; either could come first.
 
 ### Dependencies
-Phase 1 must be merged.
+Phase 1 must be done. Merge to main is preferred but not blocking.
 
 ---
 
