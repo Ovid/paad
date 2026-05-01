@@ -190,25 +190,11 @@ Each specialist agent prompt must include:
 
 ## Phase 3: Verification
 
-After all specialists complete, dispatch a single **Verifier** agent with all findings. The verifier:
+After all specialists complete, dispatch a single **Verifier** agent with all findings and a pre-filtered slice of `paad/code-reviews/backlog.md` (only entries whose `File (at first sighting)` path matches a file in the current review's manifest).
 
-1. For each finding, reads the actual current code at the referenced file:line
-2. Confirms the bug exists and isn't handled elsewhere
-3. Drops false positives and findings below 60% confidence
-4. Assigns severity: **Critical** / **Important** / **Suggestion**
-5. Merges duplicates into one entry; the `Found by:` field lists every specialist that flagged it
-6. **Classifies** each surviving finding as `in-scope`, `out-of-scope`, or `out-of-scope-addition`:
-   - Findings carrying the tag `category: out-of-scope-addition` (emitted by the Spec Compliance specialist) skip the blame check and route directly to the report's Out-of-Scope Additions section. Rationale: the addition was made by this branch, so blame would say "in-scope" — but spec-wise the addition is out-of-scope, which is the relevant axis here.
-   - All other findings: apply blame default → reasoning promotion → cosmetic-touch demotion in that order, using the touched-lines map (from Phase 1) and the diff. Result is `in-scope` or `out-of-scope`.
-7. **Backlog dedup** for out-of-scope **bug** findings only (not for out-of-scope additions — those are ephemeral per-PR decisions, not persistent issues). Inputs required: a **pre-filtered slice** of `paad/code-reviews/backlog.md` containing only entries whose `File (at first sighting)` path matches a file in the manifest. For each out-of-scope bug:
-   - **Match** → emit `{id, last_seen, branch, sha}` update directive.
-   - **No match** → mint a new entry with a fresh 8-char hex ID hashed from `file + symbol + bug-class + first-seen-iso-date`.
-   - **Symbol field.** Specialists are not asked to emit a symbol. The verifier derives it: enclosing function, class, or method name at the finding's anchor line. When the finding has no enclosing symbol (module-level code, top-of-file imports, top-level constants), use the literal sentinel `<file-scope>`. The sentinel is stable, so the ID hash is stable across runs.
-   - **Known limitation: file renames.** The path-based pre-filter compares against `File (at first sighting)`, so a rename between runs can mint a duplicate entry under the new path while the old entry remains. This is accepted as a rare event; downstream agents (or the user) can collapse the duplicates when triaging the backlog.
+The Verifier's detailed instructions — its 7-step pipeline (read code, drop false positives, assign severity, merge duplicates, classify in-scope/out-of-scope/out-of-scope-addition, dedup out-of-scope bugs against the backlog), output format, and verification discipline — live at `references/verifier.md`. The dispatch prompt for the Verifier must include this instruction verbatim:
 
-Verifier output is three lists: in-scope findings (with severity), out-of-scope bug findings (with severity, backlog ID, and `new` vs `re-seen` flag), and out-of-scope additions (no severity, no backlog ID — flagged for per-PR user decision).
-
-**Verifier prompt must include:** "You are verifying bug reports. For each finding, read the actual code and confirm the bug exists. Be skeptical — reject anything you cannot confirm by reading the code. A finding reported by multiple specialists is more likely real. Then classify each surviving finding per the Definitions and Mechanism sections: bugs go through blame default → reasoning promotion → cosmetic-touch demotion to land as in-scope or out-of-scope; findings tagged `category: out-of-scope-addition` (from Spec Compliance) skip blame and route to Out-of-Scope Additions. For out-of-scope bug findings, dedup against the provided backlog slice. When minting a new backlog entry, derive the Symbol from the enclosing function/class/method at the finding's line; if there is no enclosing symbol, use the literal sentinel `<file-scope>`."
+> Read `references/verifier.md` from this skill's directory before classifying findings or producing backlog directives; treat its instructions as binding.
 
 ## Phase 4: Report
 
