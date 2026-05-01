@@ -30,7 +30,7 @@ skill's directory and Just Work. The parent does *not* need to compute
 an absolute path before embedding it in the dispatch prompt.
 
 **Evidence:** PR1's dispatch prompt instructs the Spec Compliance
-subagent to "Read `references/specialists/spec-compliance.md` from
+subagent to "Read `references/spec-compliance.md` from
 this skill's directory before producing findings; treat its
 instructions as binding." During post-extraction verification, the
 subagent successfully read the reference file and produced output
@@ -237,13 +237,13 @@ shape verbatim, swapping the lens name and ref path. In the parent
 
 ```markdown
 **<Lens> additional instructions:** The <Lens> specialist's
-instructions live at `references/specialists/<lens>.md`. That file
+instructions live at `references/<lens>.md`. That file
 covers <one-line inventory of the ref's contents — intended as a
 TOC for SKILL.md readers, not duplicated content>. The dispatch
 prompt for the <Lens> specialist must include this instruction
 verbatim:
 
-> Read `references/specialists/<lens>.md` from this skill's
+> Read `references/<lens>.md` from this skill's
 > directory before producing findings; treat its instructions as
 > binding.
 ```
@@ -264,7 +264,7 @@ Notes on the shape:
 
 ### Reference file shape (PR1)
 
-Each `references/specialists/<lens>.md` file starts with:
+Each `references/<lens>.md` file starts with:
 
 1. A `# <Lens> — additional instructions` top-level heading.
 2. A short blockquoted role-statement orienting the subagent: name
