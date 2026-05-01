@@ -31,11 +31,12 @@ Scale rigor to diff size (from Phase 1's classification):
 - Medium (50–500 lines): full deviation analysis; expect 0–3 findings.
 - Large (500+ lines): full deviation analysis; expect 0–8 findings, partition focus by feature area.
 
-Bail out cleanly when no intent can be inferred. If no source yields a clear statement of what this PR was supposed to do, output exactly two lines and stop:
+Bail out cleanly when no intent can be inferred. If no source yields a clear statement of what this PR was supposed to do, output the `[ref-loaded:spec-compliance]` confirmation line followed by exactly two more lines and stop:
 
 ```
+[ref-loaded:spec-compliance]
 BAIL: spec-compliance no-intent
 Spec compliance: skipped — no intent source identified
 ```
 
-Do not invent intent from the diff itself. The first line is a machine-readable status token the verifier matches; the second line is the human-readable explanation.
+Do not invent intent from the diff itself. The `BAIL:` line is a machine-readable status token the verifier matches; the human-readable line that follows is for diagnostic output.

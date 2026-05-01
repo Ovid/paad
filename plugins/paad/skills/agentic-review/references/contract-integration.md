@@ -11,7 +11,15 @@ Anchor on the **contracts the diff changed**, then trace outward to every consum
 - New code that re-implements logic available elsewhere, or duplicates a block already present in the diff.
 - An infrastructure asset edited where a parallel test asset exists (production migration without test-side migration, prod config without test config, prod schema without fixture update).
 
-If the diff has none of the above and touches no integration surface (pure internal helper rename within a single module, formatter-only changes, comment-only edits), output `BAIL: contract-integration no-surface` followed by `Contract & integration: skipped — no contract surface in diff` and stop. Do not invent contract issues from purely local edits.
+If the diff has none of the above and touches no integration surface (pure internal helper rename within a single module, formatter-only changes, comment-only edits), output the `[ref-loaded:contract-integration]` confirmation line followed by exactly two more lines and stop:
+
+```
+[ref-loaded:contract-integration]
+BAIL: contract-integration no-surface
+Contract & integration: skipped — no contract surface in diff
+```
+
+Do not invent contract issues from purely local edits.
 
 When a surface exists, work this checklist and report only confirmed instances (confidence >= 60):
 

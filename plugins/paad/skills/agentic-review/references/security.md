@@ -11,14 +11,15 @@ Anchor on **trust boundaries**, not files. A trust boundary is any point where d
 - Untrusted user → privileged operation (admin route, file write, shell, eval, SQL, template render)
 - Cross-tenant / cross-user data access
 
-If the diff touches no trust boundary (pure UI, styling, internal refactor with no new I/O, test-only changes), output exactly two lines and stop:
+If the diff touches no trust boundary (pure UI, styling, internal refactor with no new I/O, test-only changes), output the `[ref-loaded:security]` confirmation line followed by exactly two more lines and stop:
 
 ```
+[ref-loaded:security]
 BAIL: security no-boundary
 Security: no security-relevant changes in this diff
 ```
 
-Do not invent risks. The first line is a machine-readable status token the verifier matches; the second line is the human-readable explanation.
+Do not invent risks. The `BAIL:` line is a machine-readable status token the verifier matches; the human-readable line that follows is for diagnostic output.
 
 For each boundary the diff touches, walk the relevant OWASP Top 10 categories and state presence/absence explicitly in your head before writing findings: injection (SQL/command/template/LDAP/header/log), broken auth, sensitive data exposure, XXE/SSRF, broken access control, security misconfig, XSS, insecure deserialization, vulnerable deps, insufficient logging. You don't have to report "absent" for each — but the walk prevents tunnel vision on the most obvious category.
 
