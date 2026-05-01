@@ -345,7 +345,7 @@ One-line entries only. If empty, follow the Empty-section rules above.
 ## `<id>` — <one-line title>
 - **File (at first sighting):** `path/to/file:line`
 - **Symbol:** `<function or class name>`
-- **Bug class:** Logic | Error Handling | Contract | Concurrency | Security | Plan
+- **Bug class:** Logic | Error Handling | Contract | Concurrency | Security
 - **Description:** ...
 - **Suggested fix:** ...
 - **Confidence:** High | Medium
