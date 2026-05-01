@@ -3,7 +3,7 @@ name: help
 description: Show help for all paad skills or a specific skill
 ---
 
-**On invocation:** announce "Running paad:help v1.13.1" before anything else.
+**On invocation:** announce "Running paad:help v1.14.0" before anything else.
 
 # paad Help
 
@@ -187,14 +187,20 @@ What it does:
      - Contract & Integration
      - Concurrency & State
      - Security
-  3. Dispatches Plan Alignment agent if design docs are found
+  3. Dispatches Spec Compliance agent — pulls intent from PR description,
+     plan/design docs, recent commits, or branch name; flags missing
+     features, deviations, and out-of-scope additions (replaces the old
+     Plan Alignment agent)
   4. Verifies findings (reads actual code, filters false positives)
-  5. Classifies each finding as in-scope (this branch caused/worsened it)
-     or out-of-scope (pre-existing) using blame + reasoning + cosmetic-touch
-     demotion. Out-of-scope findings persist to a project-wide backlog.
+  5. Classifies each finding as in-scope (this branch caused/worsened it),
+     out-of-scope (pre-existing bug — persists to project-wide backlog),
+     or out-of-scope-addition (this branch added it but the spec didn't
+     promise it — flagged for per-PR user decision)
   6. Writes a report with:
      - In-scope issues ranked: Critical / Important / Suggestion
-     - Out-of-scope issues batched by tier with handoff instructions
+     - Out-of-scope bugs batched by tier with handoff instructions
+     - Out-of-scope additions in a separate section for keep/split/revert
+       decisions (no backlog persistence)
      - Each finding: file:line, bug, impact, suggested fix, confidence,
        and the model that found it
      - Backlog updates surfaced in metadata

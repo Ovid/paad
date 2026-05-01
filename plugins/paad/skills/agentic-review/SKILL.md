@@ -3,7 +3,7 @@ name: agentic-review
 description: Use when reviewing current branch for bugs before pushing or merging, when wanting a thorough multi-agent review of local changes, or when preparing work for human review
 ---
 
-**On invocation:** announce "Running paad:agentic-review v1.13.1" before anything else.
+**On invocation:** announce "Running paad:agentic-review v1.14.0" before anything else.
 
 # Agentic Code Review
 
@@ -13,41 +13,55 @@ Multi-agent bug-hunting review of the current branch against main. Dispatches sp
 
 ## Definitions
 
-**In-scope** for the current branch means: this branch's changes either *caused* the bug or *worsened* it (made it more likely to fire, expanded its blast radius, removed a guard that was masking it, added a new caller into broken code, etc.). Pre-existing bugs that the branch does not reach differently are **out-of-scope**, even when they live in files the branch touches.
+Findings land in one of three buckets:
+
+**In-scope** for the current branch means: this branch's changes either *caused* the bug or *worsened* it (made it more likely to fire, expanded its blast radius, removed a guard that was masking it, added a new caller into broken code, etc.).
+
+**Out-of-scope (bug)** means: a pre-existing bug that the branch does not reach differently, even when it lives in files the branch touches. These persist to a project-wide backlog so they aren't lost.
+
+**Out-of-scope addition** means: code this branch added that the spec did not promise — possibly a legitimate "while I'm here" fix for an issue exposed by the work, possibly scope creep that should live in a separate PR. Surfaced by the Spec Compliance specialist for per-PR user decision (keep / split out / revert). Does not persist to the backlog.
 
 ## Mechanism
 
-Classification is **hybrid blame + reasoning**:
+Findings land in one of three buckets — **in-scope**, **out-of-scope (bug)**, or **out-of-scope addition** — via two distinct routing rules:
+
+**Rule 0 (specialist tag short-circuit).** If a finding carries `category: out-of-scope-addition` (emitted by the Spec Compliance specialist), route directly to **Out-of-Scope Addition**. These are deliberate code adds the branch made that the spec did not promise; the blame check below would mark them in-scope (the branch *did* add them) but that's the wrong axis — the relevant question is scope vs spec, not who caused them. Out-of-scope additions are ephemeral per-PR decisions and **do not touch the backlog**.
+
+**Bug findings** (everything not tagged as an out-of-scope addition) go through **hybrid blame + reasoning**:
 
 1. **Blame default.** Every finding's `file:line` is checked against a pre-computed touched-lines map (see Phase 1). If the line falls within a touched range → tentatively **in-scope**. Otherwise → tentatively **out-of-scope**.
-2. **Reasoning promotion.** For tentatively out-of-scope findings only, the verifier asks: "Does this branch's diff cause this bug to fire when it didn't before, or measurably increase its probability/blast radius?" If yes → promote to **in-scope**. If the bug is purely pre-existing and the branch doesn't reach it differently → confirmed **out-of-scope**.
-3. **Cosmetic-touch demotion.** A finding on touched lines defaults to in-scope, but the verifier may demote to out-of-scope when **both** of the following hold: (a) the branch's edits to those specific lines are purely cosmetic (whitespace, comment additions, line splits, identifier renames that don't change semantics), and (b) the bug itself is purely pre-existing — the cosmetic touch did not introduce, expose, or alter the bug's behavior. If either condition fails (semantic edit on the line, or the touch interacts with the bug), the finding stays in-scope.
+2. **Reasoning promotion.** For tentatively out-of-scope findings only, the verifier asks: "Does this branch's diff cause this bug to fire when it didn't before, or measurably increase its probability/blast radius?" If yes → promote to **in-scope**. If the bug is purely pre-existing and the branch doesn't reach it differently → confirmed **out-of-scope (bug)**.
+3. **Cosmetic-touch demotion.** A finding on touched lines defaults to in-scope, but the verifier may demote to **out-of-scope (bug)** when **both** of the following hold: (a) the branch's edits to those specific lines are purely cosmetic (whitespace, comment additions, line splits, identifier renames that don't change semantics), and (b) the bug itself is purely pre-existing — the cosmetic touch did not introduce, expose, or alter the bug's behavior. If either condition fails (semantic edit on the line, or the touch interacts with the bug), the finding stays in-scope.
 
-Out-of-scope findings are **semantically deduped** by the verifier against a **file-filtered slice** of `paad/code-reviews/backlog.md`. Before invoking the verifier, the orchestrator pre-filters the backlog to entries whose `File (at first sighting)` path matches a file in the current review's manifest (changed + adjacent). Match → emit an update directive (`{id, last_seen, branch, sha}`). No match → mint a new entry with a stable 8-char hex ID hashed from `file + symbol + bug-class + first-seen-iso-date`.
+Out-of-scope **bug** findings are **semantically deduped** by the verifier against a **file-filtered slice** of `paad/code-reviews/backlog.md`. Before invoking the verifier, the orchestrator pre-filters the backlog to entries whose `File (at first sighting)` path matches a file in the current review's manifest (changed + adjacent). Match → emit an update directive (`{id, last_seen, branch, sha}`). No match → mint a new entry with a stable 8-char hex ID hashed from `file + symbol + bug-class + first-seen-iso-date`.
 
-Backlog **lifecycle is explicit-removal only** — agentic-review never auto-resolves entries. Downstream agents (or the user) delete the entry when the item is addressed. `git log` on the file is the audit trail.
+Backlog **lifecycle is explicit-removal only** — agentic-review never auto-resolves entries. Downstream agents (or the user) delete the entry when the item is addressed. `git log` on the file is the audit trail. **Out-of-scope additions never enter the backlog** — they are surfaced for per-PR decision and forgotten after the review.
 
 ```dot
 digraph classification {
   "Finding from specialist (verified)" [shape=doublecircle];
+  "Tagged category: out-of-scope-addition?" [shape=diamond];
   "Anchor line in touched-lines map?" [shape=diamond];
   "Branch causes/worsens this bug?" [shape=diamond];
   "Touch is purely cosmetic AND bug is purely pre-existing?" [shape=diamond];
   "Match in pre-filtered backlog?" [shape=diamond];
 
   "In-scope" [shape=box, style=bold];
-  "Out-of-scope" [shape=box, style=bold];
+  "Out-of-scope (bug)" [shape=box, style=bold];
+  "Out-of-Scope Addition" [shape=box, style=bold];
   "Update last_seen on existing entry" [shape=box];
   "Mint new backlog entry" [shape=box];
 
-  "Finding from specialist (verified)" -> "Anchor line in touched-lines map?";
+  "Finding from specialist (verified)" -> "Tagged category: out-of-scope-addition?";
+  "Tagged category: out-of-scope-addition?" -> "Out-of-Scope Addition" [label="yes (Spec Compliance)"];
+  "Tagged category: out-of-scope-addition?" -> "Anchor line in touched-lines map?" [label="no"];
   "Anchor line in touched-lines map?" -> "Touch is purely cosmetic AND bug is purely pre-existing?" [label="yes"];
   "Anchor line in touched-lines map?" -> "Branch causes/worsens this bug?" [label="no"];
-  "Touch is purely cosmetic AND bug is purely pre-existing?" -> "Out-of-scope" [label="yes (demote)"];
+  "Touch is purely cosmetic AND bug is purely pre-existing?" -> "Out-of-scope (bug)" [label="yes (demote)"];
   "Touch is purely cosmetic AND bug is purely pre-existing?" -> "In-scope" [label="no"];
   "Branch causes/worsens this bug?" -> "In-scope" [label="yes (promote)"];
-  "Branch causes/worsens this bug?" -> "Out-of-scope" [label="no"];
-  "Out-of-scope" -> "Match in pre-filtered backlog?";
+  "Branch causes/worsens this bug?" -> "Out-of-scope (bug)" [label="no"];
+  "Out-of-scope (bug)" -> "Match in pre-filtered backlog?";
   "Match in pre-filtered backlog?" -> "Update last_seen on existing entry" [label="yes"];
   "Match in pre-filtered backlog?" -> "Mint new backlog entry" [label="no"];
 }
@@ -127,14 +141,9 @@ Dispatch these agents simultaneously using the Agent tool. Each receives: the di
 | **Contract & Integration** | Signature vs callers, type mismatches, broken API contracts, data shape drift, logic duplication | Changed code + callers/callees one level |
 | **Concurrency & State** | Races, shared mutable state, cache invalidation, ordering assumptions | Changed code + shared state access |
 | **Security** | Injection, auth gaps, data exposure, OWASP top 10 | Changed code + input/output boundaries |
+| **Spec Compliance** | Missing features, deviations from intent, out-of-scope additions | Diff + intent sources (PR description, plan/design docs, recent commit messages, branch name) |
 
-**Conditionally (if plan/design docs found):**
-
-| Agent | Lens | Input |
-|-------|------|-------|
-| **Plan Alignment** | Changes vs plan, deviations, partial completion | Diff + plan docs |
-
-Plan Alignment must use neutral tone for unimplemented items — partial implementation is expected.
+The Spec Compliance specialist replaces the older Plan Alignment specialist. It runs unconditionally — every PR has at least commit messages — but bails cleanly when no intent source can be inferred.
 
 **Agent prompt template:**
 
@@ -148,6 +157,39 @@ Each specialist agent prompt must include:
 
 **Contract & Integration additional instruction:** "Also flag: new code that reimplements logic already available in the codebase (check for existing utilities, helpers, or services that do the same thing). Flag duplicated code blocks within the diff that could be parameterized into a single function. Frame these as integration issues — duplicated logic diverges over time and causes bugs."
 
+**Spec Compliance additional instructions:**
+
+> Establish intent first. Identify the source of intent in priority order:
+> 1. Explicit spec file passed via `$ARGUMENTS`.
+> 2. PR description (via `gh pr view --json title,body` if the branch has an open PR).
+> 3. Plan/design docs found in Phase 1 reconnaissance (`docs/plans/`, `aidlc-docs/`, etc.).
+> 4. Recent commit messages on the branch since base.
+> 5. Branch name.
+>
+> Use the most specific source available. Prefer recent and specific (PR description > plan doc > commits > branch name). When sources contradict, name the contradiction.
+>
+> Produce findings in exactly three categories:
+> 1. **Missing** — spec called for X, diff doesn't deliver X. Format as a regular finding (`file:line`, severity Critical/Important/Suggestion). The verifier routes these through the in-scope severity ladder.
+> 2. **Deviation** — diff implements X but contradicts the spec (different shape, opposite behavior, wrong invariant, missing default). Same format and routing.
+> 3. **Out-of-scope addition** — diff adds substantive new code the spec did not promise. Tag the finding with `category: out-of-scope-addition` so the verifier routes it to the report's Out-of-Scope Additions section. Do not decide whether the addition is justified ("while I'm here" fix) or scope creep — flag and let the user decide.
+>
+> Two failure modes worth special attention:
+>
+> (a) **Missing artifacts.** When the spec names a concrete code artifact — a constant in a `STRINGS` or similar named table, a type, an exported function, a route, a config key, a string literal, a file — verify the artifact appears in the diff. Grep the diff for the named symbol; if absent or referenced but never defined/added, flag as Missing. Classic example: spec writes "use `STRINGS.error.somekey`" but no `somekey` is added to the strings table.
+>
+> (b) **Internal spec contradictions (retro-edited specs).** Specs sometimes get edited to ratify implementation choices, leaving residual contradictions between the spec's algorithm/code block (recently edited to match code) and its surrounding prose, named invariants, or string tables (older, describing original intent). When the algorithm block describes behavior X but the prose, "Key invariants," or named strings/types describe behavior Y, treat that contradiction as a deviation from original intent. Surface both readings to the user — let them decide which is canonical.
+>
+> Do not report:
+> - "Implemented" lists (the diff IS the implementation).
+> - "Not yet implemented" multi-PR pending items (partial implementation across PRs is expected).
+>
+> Scale rigor to diff size (from Phase 1's classification):
+> - Small (<50 lines): one-line summary unless something is wrong. Default: "Spec compliance: clean."
+> - Medium (50–500 lines): full deviation analysis; expect 0–3 findings.
+> - Large (500+ lines): full deviation analysis; expect 0–8 findings, partition focus by feature area.
+>
+> Bail out cleanly when no intent can be inferred. If no source yields a clear statement of what this PR was supposed to do, output "Spec compliance: skipped — no intent source identified" and stop. Do not invent intent from the diff itself.
+
 **Scaling for large diffs (500+ lines):** Partition files across 2 instances of each specialist (e.g., Logic-A gets half the files, Logic-B gets the other half).
 
 ## Phase 3: Verification
@@ -159,14 +201,16 @@ After all specialists complete, dispatch a single **Verifier** agent with all fi
 3. Drops false positives and findings below 60% confidence
 4. Assigns severity: **Critical** / **Important** / **Suggestion**
 5. Deduplicates findings flagged by multiple specialists (note which specialists agreed)
-6. **Classifies** each surviving finding as `in-scope` or `out-of-scope` using the rules in the Mechanism section. Inputs required: the touched-lines map (from Phase 1) and the diff. Apply blame default → reasoning promotion → cosmetic-touch demotion in that order.
-7. **Backlog dedup** for out-of-scope findings only. Inputs required: a **pre-filtered slice** of `paad/code-reviews/backlog.md` containing only entries whose `File (at first sighting)` path matches a file in the manifest. For each out-of-scope finding:
+6. **Classifies** each surviving finding as `in-scope`, `out-of-scope`, or `out-of-scope-addition`:
+   - Findings carrying the tag `category: out-of-scope-addition` (emitted by the Spec Compliance specialist) skip the blame check and route directly to the report's Out-of-Scope Additions section. Rationale: the addition was made by this branch, so blame would say "in-scope" — but spec-wise the addition is out-of-scope, which is the relevant axis here.
+   - All other findings: apply blame default → reasoning promotion → cosmetic-touch demotion in that order, using the touched-lines map (from Phase 1) and the diff. Result is `in-scope` or `out-of-scope`.
+7. **Backlog dedup** for out-of-scope **bug** findings only (not for out-of-scope additions — those are ephemeral per-PR decisions, not persistent issues). Inputs required: a **pre-filtered slice** of `paad/code-reviews/backlog.md` containing only entries whose `File (at first sighting)` path matches a file in the manifest. For each out-of-scope bug:
    - **Match** → emit `{id, last_seen, branch, sha}` update directive.
    - **No match** → mint a new entry with a fresh 8-char hex ID hashed from `file + symbol + bug-class + first-seen-iso-date`.
 
-Verifier output is two lists: in-scope findings (with severity) and out-of-scope findings (with severity, backlog ID, and `new` vs `re-seen` flag).
+Verifier output is three lists: in-scope findings (with severity), out-of-scope bug findings (with severity, backlog ID, and `new` vs `re-seen` flag), and out-of-scope additions (no severity, no backlog ID — flagged for per-PR user decision).
 
-**Verifier prompt must include:** "You are verifying bug reports. For each finding, read the actual code and confirm the bug exists. Be skeptical — reject anything you cannot confirm by reading the code. A finding reported by multiple specialists is more likely real. Then classify each surviving finding as in-scope or out-of-scope per the Definitions and Mechanism sections, and for out-of-scope findings, dedup against the provided backlog slice."
+**Verifier prompt must include:** "You are verifying bug reports. For each finding, read the actual code and confirm the bug exists. Be skeptical — reject anything you cannot confirm by reading the code. A finding reported by multiple specialists is more likely real. Then classify each surviving finding per the Definitions and Mechanism sections: bugs go through blame default → reasoning promotion → cosmetic-touch demotion to land as in-scope or out-of-scope; findings tagged `category: out-of-scope-addition` (from Spec Compliance) skip blame and route to Out-of-Scope Additions. For out-of-scope bug findings, dedup against the provided backlog slice."
 
 ## Phase 4: Report
 
@@ -176,8 +220,10 @@ Create the `paad/code-reviews/` directory if it doesn't exist.
 
 **Empty-section rules:**
 
-- If there are zero out-of-scope findings of any tier, omit the entire `## Out of Scope` section *and* the handoff block. Review Metadata still records `Out-of-scope findings: 0`.
+- If there are zero out-of-scope bug findings of any tier, omit the entire `## Out of Scope` section *and* its handoff block. Review Metadata still records `Out-of-scope findings: 0`.
+- If there are zero out-of-scope additions, omit the entire `## Out-of-Scope Additions` section *and* its handoff block. Review Metadata still records `Out-of-scope additions: 0`.
 - If there are zero in-scope findings of a tier but out-of-scope findings exist, write each empty in-scope tier section as `None found.` (existing convention) and write the Out of Scope section normally.
+- When Spec Compliance bails out (no intent source identified), set `Intent sources consulted: none — Spec Compliance skipped` in metadata. The `## Out-of-Scope Additions` section is then omitted regardless of count.
 
 **Failure handling:**
 
@@ -246,12 +292,20 @@ One-line entries only. If empty, follow the Empty-section rules above.
 ### Out-of-Scope Suggestions
 (One-line entries; each carries a backlog id — IDs OOSS1, OOSS2, ...)
 
-## Plan Alignment
+## Out-of-Scope Additions
 
-(Only if plan/design docs were found)
-- **Implemented:** Plan items reflected in this diff
-- **Not yet implemented:** Remaining items (neutral — partial is expected)
-- **Deviations:** Anything contradicting the plan
+> **Handoff instructions for any agent processing this report:** The entries below are code this branch added that the spec did not promise. They may be legitimate "while I'm here" fixes for issues exposed by this work, or scope creep that should live in a separate PR. Do **not** assume they should stay on this branch, and do **not** assume they should be reverted. Present them to the user **as a single batched ask**: "These M additions weren't promised by the spec — keep, split into a separate PR, or revert?" The user decides per item.
+>
+> Out-of-scope additions are flagged for this PR only — they do not persist to `paad/code-reviews/backlog.md`.
+
+### [OOSA1] <title>
+- **File:** `path/to/file:line`
+- **Addition:** What was added that the spec did not promise
+- **Suggested intent source:** What the agent treated as the spec (PR description / plan doc / commits / branch name)
+- **Confidence:** High/Medium
+- **Found by:** Spec Compliance (`<model>`)
+
+(Repeat for each, or "None found.")
 
 ## Review Metadata
 
@@ -261,9 +315,10 @@ One-line entries only. If empty, follow the Empty-section rules above.
 - **Verified findings:** M (after verification)
 - **Filtered out:** N - M
 - **Out-of-scope findings:** N (Critical: a, Important: b, Suggestion: c)
+- **Out-of-scope additions:** K
 - **Backlog:** X new entries added, Y re-confirmed (see `paad/code-reviews/backlog.md`)
 - **Steering files consulted:** <list or "none found">
-- **Plan/design docs consulted:** <list or "none found">
+- **Intent sources consulted:** <e.g., "PR description", "docs/plans/foo-design.md", "recent commit messages", or "none — Spec Compliance skipped">
 ```
 
 ## The Backlog File
@@ -325,19 +380,22 @@ These patterns produce low-quality reviews. Avoid them:
 | Ignoring test infrastructure | When production infrastructure changes (schema migrations, build configs, environment templates), check if parallel test infrastructure exists and needs matching updates |
 | Treating out-of-scope findings as fixable on this branch | They are pre-existing — surface them, batch the ask, and let the user decide per tier |
 | Dropping out-of-scope findings on the floor | They go in the report's Out of Scope section AND in `backlog.md` — never silently discarded |
+| Reporting "Implemented" or "Not yet implemented" lists from a plan | Drop them. The diff IS the implementation; later items in a multi-PR plan are not this PR's concern. The Spec Compliance specialist should produce only Missing / Deviation / Out-of-scope addition findings. |
+| Treating an out-of-scope addition as a bug | It's a scope question, not a correctness question. Route via the `category: out-of-scope-addition` tag to the report's Out-of-Scope Additions section for a per-PR user decision (keep / split out / revert). |
 
 ## Post-Review
 
 After writing the report:
 1. Report path and counts: `Critical: N (in-scope) / X (out-of-scope), Important: …, Suggestion: …`.
 2. Backlog state: `Backlog: X new entries added, Y re-confirmed, Z total active.`
-3. **Out-of-scope summary** — clearly announce the out-of-scope count and, when any were found, the exact locations the findings were written to. This step must not be skipped or merged into step 1; it is the user's primary signal that pre-existing bugs surfaced and where to find them.
-   - When the total out-of-scope count is **zero**, say plainly: *"No out-of-scope issues found."*
-   - When the total out-of-scope count is **greater than zero**, say (filling in the actual numbers and report path): *"Found N out-of-scope issue(s). Written to:*
-     - *The `## Out of Scope` section in `<report-path>` — with batched-ask handoff instructions for downstream agents.*
-     - *The project-wide backlog at `paad/code-reviews/backlog.md` — X new entries, Y re-confirmed.*
-     *Do not assume these should be fixed on this branch."*
+3. **Out-of-scope summary** — clearly announce the out-of-scope counts and, when any were found, the exact locations they were written to. This step must not be skipped or merged into step 1; it is the user's primary signal that pre-existing bugs or scope-creep additions surfaced and where to find them. Cover both flavors:
+   - **Out-of-scope bugs** (pre-existing, persist to backlog).
+     - When zero, say plainly: *"No out-of-scope bugs found."*
+     - When greater than zero, say (filling in actual numbers and report path): *"Found N out-of-scope bug(s). Written to: the `## Out of Scope` section in `<report-path>` (with batched-ask handoff instructions) and the project-wide backlog at `paad/code-reviews/backlog.md` (X new entries, Y re-confirmed). Do not assume these should be fixed on this branch."*
+   - **Out-of-scope additions** (this branch added them but the spec didn't promise them; ephemeral — no backlog).
+     - When zero or when Spec Compliance was skipped, say nothing about additions.
+     - When greater than zero, say: *"Found K out-of-scope addition(s). Written to the `## Out-of-Scope Additions` section in `<report-path>`. These are decisions for this PR — keep, split into a separate PR, or revert (per item)."*
 4. **Security disclosure warning** (only when this run added one or more `Bug class: Security` entries to the backlog): list the count, the affected files, and tell the user: *"`paad/code-reviews/backlog.md` is committed to this repository by default. If this repo is public or shared outside your team, decide whether to commit these security entries before pushing — you can `.gitignore` the file or remove specific entries."*
 5. **Backlog-size soft warning** (only when total active entries ≥ 200): *"Backlog has N active entries — consider triaging stale items."*
-6. Tell the user: "To address in-scope findings, review each issue in the report and fix them with per-fix commits. If you have the [superpowers](https://github.com/obra/superpowers/) plugin installed, you can use the `receiving-code-review` skill and point it at this report for a guided workflow. For out-of-scope findings, the report includes batched-ask handoff instructions; any agent following them will prompt you tier-by-tier and remove backlog entries by ID as items are fixed."
+6. Tell the user: "To address in-scope findings, review each issue in the report and fix them with per-fix commits. If you have the [superpowers](https://github.com/obra/superpowers/) plugin installed, you can use the `receiving-code-review` skill and point it at this report for a guided workflow. For out-of-scope bug findings, the report's `## Out of Scope` section includes batched-ask handoff instructions; any agent following them will prompt you tier-by-tier and remove backlog entries by ID as items are fixed. For out-of-scope additions, the `## Out-of-Scope Additions` section asks per-item: keep, split into a separate PR, or revert."
 7. Do **not** auto-fix anything. The report is the deliverable.
