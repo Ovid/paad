@@ -35,7 +35,7 @@ Findings land in one of three buckets — **in-scope**, **out-of-scope (bug)**, 
 
 Out-of-scope **bug** findings are **semantically deduped** by the verifier against a **file-filtered slice** of `paad/code-reviews/backlog.md`. Before invoking the verifier, the orchestrator pre-filters the backlog to entries whose `File (at first sighting)` path matches a file in the current review's manifest (changed + adjacent). Match → emit an update directive (`{id, last_seen, branch, sha}`). No match → mint a new entry with a stable 8-char hex ID hashed from `file + symbol + bug-class + first-seen-iso-date`.
 
-Backlog **lifecycle is explicit-removal only** — agentic-review never auto-resolves entries. Downstream agents (or the user) delete the entry when the item is addressed. `git log` on the file is the audit trail. **Out-of-scope additions never enter the backlog** — they are surfaced for per-PR decision and forgotten after the review.
+Backlog **lifecycle is explicit-removal only** — agentic-review never auto-resolves entries. Downstream agents (or the user) delete the entry when the item is addressed. `git log` on the file is the audit trail. **Out-of-scope additions never enter `backlog.md`** — they live only in this review's report and surface a per-PR keep / split / revert decision per item.
 
 ```dot
 digraph classification {
@@ -99,7 +99,7 @@ digraph preflight {
 }
 ```
 
-1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This review consumes significant context. Start a fresh session with `/paad:agentic-review` to avoid context rot." Stop and wait.
+1. **Context window:** If conversation has substantive history beyond invocations of this skill (other prior work in this session counts; prior runs of `/paad:agentic-review` on the same branch don't), tell the user: "This review consumes significant context. Start a fresh session with `/paad:agentic-review` to avoid context rot." Stop and wait.
 2. **Branch:** Must not be on main/master. If so, stop.
 3. **Clean state:** If uncommitted changes exist, ask: review committed state only, or wait to commit?
 
@@ -200,7 +200,7 @@ After all specialists complete, dispatch a single **Verifier** agent with all fi
 2. Confirms the bug exists and isn't handled elsewhere
 3. Drops false positives and findings below 60% confidence
 4. Assigns severity: **Critical** / **Important** / **Suggestion**
-5. Deduplicates findings flagged by multiple specialists (note which specialists agreed)
+5. Merges duplicates into one entry; the `Found by:` field lists every specialist that flagged it
 6. **Classifies** each surviving finding as `in-scope`, `out-of-scope`, or `out-of-scope-addition`:
    - Findings carrying the tag `category: out-of-scope-addition` (emitted by the Spec Compliance specialist) skip the blame check and route directly to the report's Out-of-Scope Additions section. Rationale: the addition was made by this branch, so blame would say "in-scope" — but spec-wise the addition is out-of-scope, which is the relevant axis here.
    - All other findings: apply blame default → reasoning promotion → cosmetic-touch demotion in that order, using the touched-lines map (from Phase 1) and the diff. Result is `in-scope` or `out-of-scope`.
@@ -223,7 +223,7 @@ Create the `paad/code-reviews/` directory if it doesn't exist.
 - If there are zero out-of-scope bug findings of any tier, omit the entire `## Out of Scope` section *and* its handoff block. Review Metadata still records `Out-of-scope findings: 0`.
 - If there are zero out-of-scope additions, omit the entire `## Out-of-Scope Additions` section *and* its handoff block. Review Metadata still records `Out-of-scope additions: 0`.
 - If there are zero in-scope findings of a tier but out-of-scope findings exist, write each empty in-scope tier section as `None found.` (existing convention) and write the Out of Scope section normally.
-- When Spec Compliance bails out (no intent source identified), set `Intent sources consulted: none — Spec Compliance skipped` in metadata. The `## Out-of-Scope Additions` section is then omitted regardless of count.
+- When Spec Compliance bails out (no intent source identified), set `Intent sources consulted: none — Spec Compliance skipped` in metadata. No specialist can produce additions in this case (only Spec Compliance emits the tag, and it didn't run), so the `## Out-of-Scope Additions` section is empty; omit it.
 
 **Failure handling:**
 
