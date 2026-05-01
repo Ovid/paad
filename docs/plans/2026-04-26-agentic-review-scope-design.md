@@ -4,6 +4,11 @@
 **Status:** Design (brainstormed, not yet implemented)
 **Targets:** `plugins/paad/skills/agentic-review/SKILL.md`
 
+> **Amendments since original design:**
+> - The Plan Alignment specialist was replaced with a richer **Spec Compliance** specialist that emits Missing / Deviation / Out-of-scope-addition categories.
+> - A separate `## Out-of-Scope Additions` report section was added for findings the branch added but the spec didn't promise; these are ephemeral (no backlog persistence) and surface a per-PR keep / split / revert decision per item.
+> - The live behavior is in `plugins/paad/skills/agentic-review/SKILL.md`; this doc reflects the original scope-classification design only and notes deltas inline.
+
 ## Problem
 
 `/paad:agentic-review` deliberately expands review scope beyond changed lines (callers/callees one level deep, full module on small diffs) so specialists can catch integration bugs. This expansion is also the source of a recurring failure mode:
@@ -49,7 +54,7 @@ Everything else in Phase 1 stays as-is (diff stats, manifest construction, calle
 
 - Each specialist's prompt is appended with: *"Include the model name you are running as in every finding under a `model:` field."* This carries through to the report so the user knows which model produced each finding.
 
-Specialist lenses, scopes, and dispatch behavior are unchanged.
+Specialist lenses, scopes, and dispatch behavior were unchanged at design time. (Subsequently amended: the Plan Alignment specialist was replaced with Spec Compliance — see amendments at top.)
 
 ### Phase 3 (Verification) — expanded responsibilities
 
@@ -69,7 +74,7 @@ Verifier output to Phase 4 is two lists:
 
 ### Phase 4 (Report) — new section + new metadata
 
-In-scope sections (`## Critical Issues`, `## Important Issues`, `## Suggestions`) are unchanged structurally; they now implicitly mean "in-scope." A new section is inserted *after* Suggestions and *before* Plan Alignment:
+In-scope sections (`## Critical Issues`, `## Important Issues`, `## Suggestions`) are unchanged structurally; they now implicitly mean "in-scope." A new section is inserted *after* Suggestions and *before* the (then-named) Plan Alignment section. (Plan Alignment was subsequently replaced by Spec Compliance, which emits its own `## Out-of-Scope Additions` section after this `## Out of Scope` section — see amendments at top.):
 
 ```markdown
 ## Out of Scope
@@ -134,7 +139,7 @@ Project-wide, append-only, explicit removal. Created on first run if absent.
 ## `<id>` — <one-line title>
 - **File (at first sighting):** `path/to/file:line`
 - **Symbol:** `<function or class name>`
-- **Bug class:** Logic | Error Handling | Contract | Concurrency | Security | Plan
+- **Bug class:** Logic | Error Handling | Contract | Concurrency | Security
 - **Description:** ...
 - **Suggested fix:** ...
 - **Confidence:** High | Medium
@@ -156,7 +161,7 @@ After writing the report, tell the user in this order:
 
 1. Report path and counts: `Critical: N (in-scope) / X (out-of-scope), Important: …, Suggestion: …`.
 2. Backlog state: `Backlog: X new entries added, Y re-confirmed, Z total active.`
-3. **Security disclosure warning** (only when this run added one or more `Bug class: Security` entries to the backlog): list the count, the affected files, and the line: *"`paad/code-reviews/backlog.md` is committed to this repository by default. If this repo is public or shared outside your team, decide whether to commit these security entries before pushing — you can `.gitignore` the file or remove specific entries."*
+3. **Security disclosure warning** (only when this run added one or more `Bug class: Security` entries to the backlog): list the count, the affected files, and the line: *"`paad/code-reviews/backlog.md` is committed to this repository by default. If this repo is public or shared outside your team, decide whether to commit these security entries before pushing — you can `.gitignore` the file before the next run or remove specific entries from the current file. Note: if the backlog was already committed in a previous run, `.gitignore` alone does not remove entries from git history — you must rewrite history (e.g. `git filter-repo`) or accept the leak."*
 4. **Backlog-size soft warning** (only when total active entries ≥ 200): *"Backlog has N active entries — consider triaging stale items."*
 5. Pointer to `superpowers:receiving-code-review` for in-scope fixes, with: *"For out-of-scope findings, the report includes batched-ask handoff instructions; any agent following them will prompt you tier-by-tier and remove backlog entries by ID as items are fixed."*
 6. Do not auto-fix anything. (Unchanged.)
