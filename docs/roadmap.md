@@ -10,7 +10,7 @@ Cross-phase learnings live in `notes/convert-skills.md`.
 
 | Phase | Title                                                        | Status      |
 |-------|--------------------------------------------------------------|-------------|
-| 1     | Pilot — agentic-review references conversion                 | In Progress |
+| 1     | Pilot — agentic-review references conversion                 | Done        |
 | 2     | agentic-architecture references conversion                   | Planned     |
 | 3     | agentic-a11y references conversion                           | Planned     |
 | 4     | Audit non-agentic skills for references-pattern candidates   | Planned     |

@@ -267,9 +267,67 @@ Notes on the shape:
 Each `references/<lens>.md` file starts with:
 
 1. A `# <Lens> — additional instructions` top-level heading.
-2. A short blockquoted role-statement orienting the subagent: name
+2. A short blockquoted role-statement orienting the reader: name
    the role, the dispatching skill+phase, the parent-vs-this-file
    boundary, and the imperative to read before writing findings.
    One paragraph.
-3. The body — verbatim content move from the prior inline block in
-   `SKILL.md`, no edits beyond the structural reformatting above.
+3. The body — distinctive content for the lens, either a verbatim
+   move from the prior inline block in `SKILL.md` or new content
+   authored specifically for the lens (see "Finding: empty
+   specialists" below).
+
+### Parent-self-read variant (PR8)
+
+PRs 1–7 dispatch a subagent that reads the ref. PR8's pattern is
+different: there is no subagent — the orchestrator (the agent that
+activated the skill) reads the ref itself when it enters the
+relevant phase. The dispatch shape adapts:
+
+- The parent `SKILL.md`'s section keeps essential parent-side state
+  (file paths, directory creation, anything the parent does
+  immediately before reading the ref).
+- The dispatch sentence becomes "**Before [phase action], read
+  [the ref]**" rather than "the dispatch prompt for the subagent
+  must include..."
+- The ref's role-statement quote names the parent agent as the
+  reader, not a subagent ("This is parent-side material... The
+  orchestrator reads these instructions when entering [phase]").
+
+Use this variant when the content being extracted is consumed by
+the orchestrator itself — report templates, output formats,
+parent-side rules — rather than by a dispatched subagent.
+
+### Finding: "empty" specialists deserve authored content (PR2–PR6)
+
+The Phase 1 design assumed every specialist had distinctive inline
+instructions to extract. When Phase 1's `SKILL.md` was inspected at
+PR2 time, the actual situation was:
+
+- **Spec Compliance** had a substantial ~30-line inline block
+  (PR1 verbatim move).
+- **Error Handling & Edge Cases** and **Contract & Integration**
+  had one-paragraph instructions (PR3, PR4 verbatim moves).
+- **Logic & Correctness**, **Concurrency & State**, and
+  **Security** had no distinctive inline content — just the
+  common base prompt with the lens name swapped.
+
+Rather than skipping the three "empty" lenses, we dispatched three
+subagents (one per lens) to think like that specialist and propose
+distinctive instructions that would meaningfully improve the lens's
+reviews beyond the base prompt. All three returned substantive,
+defensible recommendations (sibling-path comparison + finding
+subtypes for Logic; anchor-on-changed-surface + bail-out + 7-item
+checklist for Concurrency; trust-boundary anchoring + OWASP walk +
+LLM-miss patterns + severity floor for Security). PRs 2, 5, 6
+landed those drafts as new content; PRs 3, 4 were verbatim moves.
+
+Both flavors are extractions in the structural sense (ref file
+under `references/`, manifest row, dispatch paragraph in
+`SKILL.md`). They differ only in whether content existed
+previously.
+
+**Cross-phase implication:** when an extracted skill has lenses
+with no distinctive inline content, dispatch a "think-like-this-
+specialist" subagent before defaulting to "skip." The base prompt
+is general; lens-specific structure (taxonomies, anchoring rules,
+bail-outs, drop rules) measurably improves consistency.
