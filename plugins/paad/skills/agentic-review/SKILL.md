@@ -77,16 +77,22 @@ digraph classification {
 
 When a base branch is provided, use it instead of `main` in all `git diff` commands. When a path is provided, filter the diff and manifest to only include files within that scope.
 
+**Single-argument disambiguation.** When exactly one argument is provided, decide by shape: if the argument contains `/` or matches a path that exists on disk, treat it as a path filter against `main`; otherwise treat it as a base branch. Example: `/paad:agentic-review src/auth/` → path filter; `/paad:agentic-review develop` → base branch.
+
 ## Pre-flight Checks
+
+The on-invocation announce (top of this skill) fires before pre-flight runs, so even when a pre-flight check stops the skill the user still sees which skill version was loaded.
 
 ```dot
 digraph preflight {
   "Conversation has history?" [shape=diamond];
   "On main/master?" [shape=diamond];
   "Uncommitted changes?" [shape=diamond];
+  "Diff against base is empty?" [shape=diamond];
   "Proceed to Phase 1" [shape=box];
   "STOP: recommend new session" [shape=box, style=bold];
   "STOP: nothing to review" [shape=box, style=bold];
+  "STOP: no changes to review" [shape=box, style=bold];
   "WARN: ask user" [shape=box];
 
   "Conversation has history?" -> "STOP: recommend new session" [label="yes"];
@@ -94,14 +100,17 @@ digraph preflight {
   "On main/master?" -> "STOP: nothing to review" [label="yes"];
   "On main/master?" -> "Uncommitted changes?" [label="no"];
   "Uncommitted changes?" -> "WARN: ask user" [label="yes"];
-  "Uncommitted changes?" -> "Proceed to Phase 1" [label="no"];
-  "WARN: ask user" -> "Proceed to Phase 1" [label="user decides"];
+  "Uncommitted changes?" -> "Diff against base is empty?" [label="no"];
+  "WARN: ask user" -> "Diff against base is empty?" [label="user decides"];
+  "Diff against base is empty?" -> "STOP: no changes to review" [label="yes"];
+  "Diff against base is empty?" -> "Proceed to Phase 1" [label="no"];
 }
 ```
 
 1. **Context window:** If conversation has substantive history beyond invocations of this skill (other prior work in this session counts; prior runs of `/paad:agentic-review` on the same branch don't), tell the user: "This review consumes significant context. Start a fresh session with `/paad:agentic-review` to avoid context rot." Stop and wait.
 2. **Branch:** Must not be on main/master. If so, stop.
 3. **Clean state:** If uncommitted changes exist, ask: review committed state only, or wait to commit?
+4. **Empty diff:** If `git diff <base>...HEAD` returns no output (the branch has zero commits ahead of base, or all changes are already merged), stop with: "No changes to review on this branch." Do not dispatch specialists against an empty manifest.
 
 ## Phase 1: Reconnaissance
 
