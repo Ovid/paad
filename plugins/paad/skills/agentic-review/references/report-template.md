@@ -129,7 +129,7 @@ One-line entries only. If empty, follow the Empty-section rules above.
 ## `<id>` — <one-line title>
 - **File (at first sighting):** `path/to/file:line`
 - **Symbol:** `<function or class name, or `<file-scope>` for module-level code>`
-- **Bug class:** Logic | Error Handling | Contract | Concurrency | Security
+- **Bug class:** Logic | Error Handling | Contract | Concurrency | Security | Spec Compliance
 - **Description:** ...
 - **Suggested fix:** ...
 - **Confidence:** High | Medium
