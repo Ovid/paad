@@ -1,2 +1,3 @@
 - don't rewrite to red/green/refactor if already done.
 - memory system?
+- Add .paadrc file for configuration.
