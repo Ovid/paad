@@ -2,6 +2,18 @@
 
 > **Read this file before classifying findings or producing backlog directives.** You are the Verifier dispatched by `/paad:agentic-review` Phase 3. You receive all findings from the parallel specialists in Phase 2, plus a pre-filtered slice of `paad/code-reviews/backlog.md`. Your job is to verify each finding, classify the survivors, and emit backlog directives for out-of-scope bugs. The standing inputs (diff, file contents, manifest) and the basic finding-report format come from the parent `SKILL.md`; this file covers the verification pipeline, output shape, and discipline.
 
+## Specialist status detection
+
+Specialist outputs use stable machine-readable prefix tokens so this verifier and the Phase 4 orchestrator can route them deterministically without depending on free-form prose. Match them tolerantly: case-insensitive, ignoring leading whitespace, surrounding markdown formatting (`**bold**`, `*italic*`, backticks), and trailing punctuation. Match on the structured token first; the human-readable line that follows is a fallback for diagnostic output, not the routing key.
+
+| Status | Token shape | Where it appears |
+|--------|-------------|------------------|
+| Bail-out | `BAIL: <lens> <reason>` | First line of a specialist's output when its lens has no surface to review (e.g., `BAIL: spec-compliance no-intent`, `BAIL: security no-boundary`). |
+| Out-of-scope addition | `[OOSA]` at the start of a finding's first line, *and* `category: out-of-scope-addition` inside the finding body | Spec Compliance specialist only. Match either signal — `[OOSA]` first, then fall back to a tolerant regex on the category tag (allow case variation, optional `**bold**`/backtick wrapping, optional whitespace around `:`, hyphenated and unhyphenated `out-of-scope addition`). |
+| Findings | Standard finding format, no special prefix | Default. |
+
+When a specialist's output begins with a `BAIL:` line, treat the specialist as having produced zero findings and pass the bail-out reason to Phase 4 metadata population. When parsing the OOSA tag, never require an exact-string match on `category: out-of-scope-addition` — paraphrase variants, case shifts, or markdown wrappers must still route correctly. The `[OOSA]` first-line sentinel is the primary signal for that reason.
+
 ## Pipeline
 
 1. For each finding, read the actual current code at the referenced `file:line`.
@@ -10,7 +22,7 @@
 4. Assign severity: **Critical** / **Important** / **Suggestion**.
 5. Merge duplicates into one entry; the `Found by:` field lists every specialist that flagged it.
 6. **Classify** each surviving finding as `in-scope`, `out-of-scope`, or `out-of-scope-addition`:
-   - Findings carrying the tag `category: out-of-scope-addition` (emitted by the Spec Compliance specialist) skip the blame check and route directly to the report's Out-of-Scope Additions section. Rationale: the addition was made by this branch, so blame would say "in-scope" — but spec-wise the addition is out-of-scope, which is the relevant axis here.
+   - Findings carrying the OOSA signal (the `[OOSA]` first-line sentinel **or** the tag `category: out-of-scope-addition` matched per the tolerant rule above; see "Specialist status detection") skip the blame check and route directly to the report's Out-of-Scope Additions section. Only the Spec Compliance specialist emits this signal. Rationale: the addition was made by this branch, so blame would say "in-scope" — but spec-wise the addition is out-of-scope, which is the relevant axis here.
    - All other findings: apply blame default → reasoning promotion → cosmetic-touch demotion in that order, using the touched-lines map (from Phase 1) and the diff. Result is `in-scope` or `out-of-scope`.
 7. **Backlog dedup** for out-of-scope **bug** findings only (not for out-of-scope additions — those are ephemeral per-PR decisions, not persistent issues). For each out-of-scope bug:
    - **Match** in the pre-filtered backlog slice → emit `{id, last_seen, branch, sha}` update directive.

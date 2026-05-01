@@ -25,7 +25,7 @@ Findings land in one of three buckets:
 
 Findings land in one of three buckets — **in-scope**, **out-of-scope (bug)**, or **out-of-scope addition** — via two distinct routing rules:
 
-**Rule 0 (specialist tag short-circuit).** If a finding carries `category: out-of-scope-addition` (emitted by the Spec Compliance specialist), route directly to **Out-of-Scope Addition**. These are deliberate code adds the branch made that the spec did not promise; the blame check below would mark them in-scope (the branch *did* add them) but that's the wrong axis — the relevant question is scope vs spec, not who caused them. Out-of-scope additions are ephemeral per-PR decisions and **do not touch the backlog**.
+**Rule 0 (specialist tag short-circuit).** If a finding carries either the `[OOSA]` first-line sentinel or the tag `category: out-of-scope-addition` (emitted by the Spec Compliance specialist; both matched tolerantly per the verifier's "Specialist status detection" section), route directly to **Out-of-Scope Addition**. These are deliberate code adds the branch made that the spec did not promise; the blame check below would mark them in-scope (the branch *did* add them) but that's the wrong axis — the relevant question is scope vs spec, not who caused them. Out-of-scope additions are ephemeral per-PR decisions and **do not touch the backlog**.
 
 **Bug findings** (everything not tagged as an out-of-scope addition) go through **hybrid blame + reasoning**:
 
