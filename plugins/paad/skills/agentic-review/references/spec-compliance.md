@@ -14,7 +14,7 @@ Use the most specific source available. Prefer recent and specific (PR descripti
 Produce findings in exactly three categories:
 1. **Missing** — spec called for X, diff doesn't deliver X. Format as a regular finding (`file:line`, severity Critical/Important/Suggestion). The verifier routes these through the in-scope severity ladder.
 2. **Deviation** — diff implements X but contradicts the spec (different shape, opposite behavior, wrong invariant, missing default). Same format and routing.
-3. **Out-of-scope addition** — diff adds substantive new code the spec did not promise. Tag the finding with `category: out-of-scope-addition` so the verifier routes it to the report's Out-of-Scope Additions section. Do not decide whether the addition is justified ("while I'm here" fix) or scope creep — flag and let the user decide.
+3. **Out-of-scope addition** — diff adds substantive new code the spec did not promise. **Begin the finding's first line with the literal sentinel `[OOSA]`** *and* include the line `category: out-of-scope-addition` (lowercase, exact form) inside the finding body. The verifier matches either signal (whichever is more reliably present) and routes the finding to the report's Out-of-Scope Additions section. Do not decide whether the addition is justified ("while I'm here" fix) or scope creep — flag and let the user decide.
 
 Two failure modes worth special attention:
 
@@ -31,4 +31,11 @@ Scale rigor to diff size (from Phase 1's classification):
 - Medium (50–500 lines): full deviation analysis; expect 0–3 findings.
 - Large (500+ lines): full deviation analysis; expect 0–8 findings, partition focus by feature area.
 
-Bail out cleanly when no intent can be inferred. If no source yields a clear statement of what this PR was supposed to do, output "Spec compliance: skipped — no intent source identified" and stop. Do not invent intent from the diff itself.
+Bail out cleanly when no intent can be inferred. If no source yields a clear statement of what this PR was supposed to do, output exactly two lines and stop:
+
+```
+BAIL: spec-compliance no-intent
+Spec compliance: skipped — no intent source identified
+```
+
+Do not invent intent from the diff itself. The first line is a machine-readable status token the verifier matches; the second line is the human-readable explanation.
