@@ -8,7 +8,9 @@
 - **Report file:** `paad/code-reviews/pr1-baseline-bailout-2026-05-01-12-30-32-f9c9230.md`
 - **Date captured:** 2026-05-01
 
-## Spec Compliance specialist output (verbatim)
+## Spec Compliance specialist output (captured from live stdout during original run)
+
+*This block was captured from the live `Spec Compliance` specialist's stdout during the fresh-session run on 2026-05-01. The persistent report file at `paad/code-reviews/...` does NOT contain this content — only its summary line in Review Metadata. Verifying this content in a post-extraction re-run requires watching the live specialist output, not just reading the new report file.*
 
 ```
 Intent source: no intent source identified.
@@ -41,10 +43,10 @@ The verifier was not dispatched — zero raw findings to verify. This is per the
 
 - **Agents dispatched:** Logic & Correctness, Error Handling & Edge Cases, Contract & Integration, Concurrency & State, Security, Spec Compliance (verifier not dispatched — 0 raw findings to verify)
 - **Scope:** `images/paad.png` (binary file, no anchorable lines)
-- **Raw findings:** 0
-- **Verified findings:** 0
+- **Raw findings:** 0 (before verification)
+- **Verified findings:** 0 (after verification)
 - **Filtered out:** 0
-- **Out-of-scope findings:** 0
+- **Out-of-scope findings:** 0 (Critical: 0, Important: 0, Suggestion: 0)
 - **Out-of-scope additions:** 0
 - **Backlog:** 0 new entries added, 0 re-confirmed
 - **Steering files consulted:** `CLAUDE.md`
