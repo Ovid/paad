@@ -23,10 +23,12 @@ paad/
 │           │   └── SKILL.md       ← /paad:agentic-review skill
 │           ├── alignment/
 │           │   └── SKILL.md       ← /paad:alignment skill
+│           ├── fix-architecture/
+│           │   └── SKILL.md       ← /paad:fix-architecture skill
 │           ├── help/
 │           │   └── SKILL.md       ← /paad:help skill
 │           ├── makefile/
-│           │   └── SKILL.md       ← /paad:help skill
+│           │   └── SKILL.md       ← /paad:makefile skill
 │           ├── pushback/
 │           │   └── SKILL.md       ← /paad:pushback skill
 │           └── vibe/
@@ -40,19 +42,22 @@ paad/
 - **Marketplace name**: `paad`
 - **Plugin name**: `paad` (so all skills are invoked as `/paad:<skill-name>`)
 - **Skill naming**: skill folder names become the suffix after `paad:` — e.g., `skills/agentic-architecture/` → `/paad:agentic-architecture`
-- **Versioning**: both `marketplace.json` and `plugin.json` use semver. Bump the plugin version in `plugin.json` (it takes precedence). Keep `marketplace.json` version in sync.
+- **Versioning**: both `marketplace.json` and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. Run `make bump-version VERSION=X.Y.Z` to update all three places at once; `make check-skill-versions` (run as part of `make test`) catches drift.
 - **Validation**: run `claude plugin validate .` (marketplace) and `claude plugin validate ./plugins/paad` (plugin) before committing
+- **Announce on invocation**: every `SKILL.md` must begin its body with the line `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` so users see which skill ran and which version produced the behavior. The literal version string must match `plugin.json`.
 
 ## Adding a new skill
 
 1. Create `plugins/paad/skills/<skill-name>/SKILL.md` with frontmatter (`name`, `description`) and instructions
-2. Consider `$ARGUMENTS` support — if the skill could benefit from user-provided scope (a file path, directory, branch name, etc.), add an Arguments section documenting usage. Users shouldn't need to remember flags; keep arguments positional and intuitive (e.g., `/paad:skillname path/to/scope`).
-3. Add a graphviz digraph (```dot block) covering the skill's decision points and flow. The only exception is `paad:help`, which is a simple display skill. See "Digraph requirements" below.
-4. Validate with `claude plugin validate ./plugins/paad`
-5. Test locally with `claude --plugin-dir ./plugins/paad`
-6. Bump the version in both `plugins/paad/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`
-7. Update `README.md` to document the new skill under "Available Skills", including argument syntax in the heading
-8. Add the new skill to `paad:help` — both the overview table and a detailed help section
+2. Add the on-invocation announce line as the very first line of the body (after the closing `---` of frontmatter): `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` — the version literal must match `plugin.json`
+3. Consider `$ARGUMENTS` support — if the skill could benefit from user-provided scope (a file path, directory, branch name, etc.), add an Arguments section documenting usage. Users shouldn't need to remember flags; keep arguments positional and intuitive (e.g., `/paad:skillname path/to/scope`).
+4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow. The only exception is `paad:help`, which is a simple display skill. See "Digraph requirements" below.
+5. Validate with `claude plugin validate ./plugins/paad`
+6. Test locally with `claude --plugin-dir ./plugins/paad`
+7. Bump the version with `make bump-version VERSION=X.Y.Z` (updates `plugin.json`, `marketplace.json`, and every SKILL.md announce line in one shot)
+8. Update `README.md` to document the new skill under "Available Skills", including argument syntax in the heading
+9. Add the new skill to `paad:help` — both the overview table and a detailed help section
+10. Run `make test` to verify all checks pass (validate, version sync, skill-version announce, digraphs, help, README, frontmatter)
 
 ## Modifying an existing skill
 

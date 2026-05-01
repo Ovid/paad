@@ -256,9 +256,10 @@ Discipline means reviewing before merging, every time. `agentic-review` uses mul
 Where typical AI review features tend to provide shallow, opportunistic feedback, `agentic-review` is designed as a deliberate pre-merge quality gate: parallel analysis, finding verification, deduplication, and severity ranking.
 
 * **Arguments:** `/paad:agentic-review` (diff against `main`) or `/paad:agentic-review develop` (diff against `develop`) or `/paad:agentic-review main src/auth/` (scoped to a directory)
-* **Parallel review** — five specialists examine your branch simultaneously, then findings are verified against actual code and deduplicated
+* **Parallel review** — six specialists examine your branch simultaneously (Logic & Correctness, Error Handling & Edge Cases, Contract & Integration, Concurrency & State, Security, Spec Compliance), then findings are verified against actual code and deduplicated
 * **Severity ranking** — Critical / Important / Suggestion
-* **Plan alignment** (conditional) — if design docs are found, checks implementation against the plan
+* **Spec Compliance** — pulls intent from PR description, plan/design docs, recent commits, or branch name; flags missing features, deviations, and out-of-scope additions (replaces the older Plan Alignment agent)
+* **Out-of-scope handling** — pre-existing bugs persist to `paad/code-reviews/backlog.md`; out-of-scope additions are flagged for per-PR decision (keep / split / revert) without backlog persistence
 * **Report** — written to `paad/code-reviews/`
 
 Requires a feature branch (not `main` or `master`) with committed changes.

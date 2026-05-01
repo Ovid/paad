@@ -3,6 +3,8 @@ name: help
 description: Show help for all paad skills or a specific skill
 ---
 
+**On invocation:** announce "Running paad:help v1.14.0" before anything else.
+
 # paad Help
 
 Show help for paad skills. If `$ARGUMENTS` matches a skill name, show detailed help for that skill. Otherwise, show the overview.
@@ -165,7 +167,8 @@ Best used in a fresh session — consumes significant context.
 
 Multi-agent bug-hunting code review of the current branch.
 
-Output: paad/code-reviews/
+Output:   paad/code-reviews/<branch>-<timestamp>.md (per-review)
+          paad/code-reviews/backlog.md (project-wide, persistent)
 
 Arguments:
   /paad:agentic-review                    Diff against main
@@ -178,17 +181,29 @@ Requirements:
 
 What it does:
   1. Reconnaissance: diff stats, file manifest, callers/callees
-  2. Dispatches 5 specialist agents in parallel:
+  2. Dispatches 6 specialist agents in parallel:
      - Logic & Correctness
      - Error Handling & Edge Cases
      - Contract & Integration
      - Concurrency & State
      - Security
-  3. Dispatches Plan Alignment agent if design docs are found
-  4. Verifies findings (reads actual code, filters false positives)
+     - Spec Compliance — pulls intent from PR description, plan/design
+       docs, recent commits, or branch name; flags missing features,
+       deviations, and out-of-scope additions (replaces the older
+       Plan Alignment agent)
+  3. Verifies findings (reads actual code, filters false positives)
+  4. Classifies each finding as in-scope (this branch caused/worsened it),
+     out-of-scope (pre-existing bug — persists to project-wide backlog),
+     or out-of-scope-addition (this branch added it but the spec didn't
+     promise it — flagged for per-PR user decision)
   5. Writes a report with:
-     - Issues ranked: Critical / Important / Suggestion
-     - Each finding: file:line, bug, impact, suggested fix, confidence
+     - In-scope issues ranked: Critical / Important / Suggestion
+     - Out-of-scope bugs batched by tier with handoff instructions
+     - Out-of-scope additions in a separate section for keep/split/revert
+       decisions (no backlog persistence)
+     - Each finding: file:line, bug, impact, suggested fix, confidence,
+       and the model that found it
+     - Backlog updates surfaced in metadata
 
 Best used in a fresh session — consumes significant context.
 ```
