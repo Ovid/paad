@@ -5,3 +5,4 @@ agentic-review	references/error-handling.md	trailing punctuation, extra whitespa
 agentic-review	references/contract-integration.md	duplicated logic diverges over time
 agentic-review	references/concurrency-state.md	Check-then-act / TOCTOU
 agentic-review	references/security.md	SSRF via URL parsing
+agentic-review	references/verifier.md	Be skeptical — reject anything you cannot confirm
