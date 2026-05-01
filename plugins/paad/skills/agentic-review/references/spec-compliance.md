@@ -11,6 +11,16 @@ Establish intent first. Identify the source of intent in priority order:
 
 Use the most specific source available. Prefer recent and specific (PR description > plan doc > commits > branch name). When sources contradict, name the contradiction.
 
+If none of the five sources yields a clear statement of what this PR was supposed to do, output the `[ref-loaded:spec-compliance]` confirmation line followed by exactly two more lines and stop:
+
+```
+[ref-loaded:spec-compliance]
+BAIL: spec-compliance no-intent
+Spec compliance: skipped — no intent source identified
+```
+
+Do not invent intent from the diff itself. The `BAIL:` line is a machine-readable status token the verifier matches; the human-readable line that follows is for diagnostic output.
+
 Produce findings in exactly three categories:
 1. **Missing** — spec called for X, diff doesn't deliver X. Format as a regular finding (`file:line`, severity Critical/Important/Suggestion). The verifier routes these through the in-scope severity ladder.
 2. **Deviation** — diff implements X but contradicts the spec (different shape, opposite behavior, wrong invariant, missing default). Same format and routing.
@@ -30,13 +40,3 @@ Scale rigor to diff size (from Phase 1's classification):
 - Small (<50 lines): one-line summary unless something is wrong. Default: "Spec compliance: clean."
 - Medium (50–500 lines): full deviation analysis; expect 0–3 findings.
 - Large (500+ lines): full deviation analysis; expect 0–8 findings, partition focus by feature area.
-
-Bail out cleanly when no intent can be inferred. If no source yields a clear statement of what this PR was supposed to do, output the `[ref-loaded:spec-compliance]` confirmation line followed by exactly two more lines and stop:
-
-```
-[ref-loaded:spec-compliance]
-BAIL: spec-compliance no-intent
-Spec compliance: skipped — no intent source identified
-```
-
-Do not invent intent from the diff itself. The `BAIL:` line is a machine-readable status token the verifier matches; the human-readable line that follows is for diagnostic output.
