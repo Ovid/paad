@@ -6,3 +6,4 @@ agentic-review	references/contract-integration.md	duplicated logic diverges over
 agentic-review	references/concurrency-state.md	Check-then-act / TOCTOU
 agentic-review	references/security.md	SSRF via URL parsing
 agentic-review	references/verifier.md	Be skeptical — reject anything you cannot confirm
+agentic-review	references/report-template.md	Soft size warning
