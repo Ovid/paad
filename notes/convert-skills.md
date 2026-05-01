@@ -151,6 +151,29 @@ fixture run and clean up the temp branch *before* the orchestrating
 session writes anything to working-tree paths that didn't exist at
 the fixture commit.
 
+**Working-tree version drift = older skill at older commit.** Because
+`plugins/paad/.claude-plugin/plugin.json` is part of the working tree,
+checking out a historical commit also rolls the *plugin's* version
+back. If the fixture commit predates the feature being baselined
+(e.g., bail-out fixture `5f03453` is at plugin v1.11.0, before Spec
+Compliance existed), the SKILL.md the loader reads at that working
+tree won't have the feature at all — `--plugin-dir` doesn't help,
+because the plugin dir's contents *are* the historical SKILL.md.
+
+**Mitigation: synthesize older fixtures on top of HEAD.** Cherry-pick
+just the file changes (e.g., `git checkout <fixture-SHA> -- <path>`),
+re-commit on a temp branch from current HEAD with the original
+fixture's commit-message shape (subject only, no body, no PR). The
+synthetic commit is content-equivalent to the original but the
+working tree stays at the current plugin version. Run
+`/paad:agentic-review` with the temp branch's parent as base.
+
+**Cross-PR implication:** Any future-phase fixture commit older than
+the working-tree version of the skill being tested needs the
+synthesis treatment. Recent fixtures (post the relevant feature's
+landing) can be checked out directly. Each phase's PR1 should pick
+fixtures with this gotcha in mind.
+
 ## Working branch
 
 Phase 1 work lands on the existing `ovid/skill-breakdown` branch, **not**
