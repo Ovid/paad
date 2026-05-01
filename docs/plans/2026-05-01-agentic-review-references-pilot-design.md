@@ -130,6 +130,17 @@ guardrail), smoke-test once more before opening the PR.
 
 ## Structural guardrails
 
+> **Retrospective deviation (2026-05-01):** The design below promises
+> per-PR behavioral subagent tests as "the test of record." In
+> practice, only PR1 captured baselines (`notes/baselines/PR1-*.md`);
+> PR2–PR8 relied on the structural Makefile guardrail plus the locked
+> conventions documented in `notes/convert-skills.md`. See the Phase 1
+> retrospective at the top of this document for the rationale (skill
+> output is stochastic; zero-finding fixtures are weak regression
+> tests). The `notes/baselines/PR{1..8}-*.md` line in the deliverables
+> summary should be read as PR1-only. The text below is preserved as
+> historical record of the original design.
+
 The behavioral subagent test is the test of record. The Makefile
 addition is a CI guardrail — cheap, repeatable, catches accidental
 regressions (someone re-inlines content during a future edit, deletes

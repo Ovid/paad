@@ -22,7 +22,7 @@ When a specialist's output begins with a `BAIL:` line, treat the specialist as h
 1. For each finding, read the actual current code at the referenced `file:line`.
 2. Confirm the bug exists and isn't already handled elsewhere.
 3. Drop false positives and findings below 60% confidence.
-4. Assign severity: **Critical** / **Important** / **Suggestion**.
+4. Assign severity: **Critical** / **Important** / **Suggestion**. The numeric specialist confidence (0–100) maps to the categorical confidence shown in the per-finding entry as: **80–100 → High**, **60–79 → Medium**. Findings below 60 were dropped in step 3 and never reach a category. This mapping is independent of severity (which is about blast radius and likelihood) — a `Suggestion` can be `High` confidence and a `Critical` can be `Medium`.
 5. Merge duplicates into one entry; the `Found by:` field lists every specialist that flagged it.
 6. **Classify** each surviving finding as `in-scope`, `out-of-scope`, or `out-of-scope-addition`:
    - Findings carrying the OOSA signal (the `[OOSA]` first-line sentinel **or** the tag `category: out-of-scope-addition` matched per the tolerant rule above; see "Specialist status detection") skip the blame check and route directly to the report's Out-of-Scope Additions section. Only the Spec Compliance specialist emits this signal. Rationale: the addition was made by this branch, so blame would say "in-scope" — but spec-wise the addition is out-of-scope, which is the relevant axis here.
