@@ -181,22 +181,22 @@ Requirements:
 
 What it does:
   1. Reconnaissance: diff stats, file manifest, callers/callees
-  2. Dispatches 5 specialist agents in parallel:
+  2. Dispatches 6 specialist agents in parallel:
      - Logic & Correctness
      - Error Handling & Edge Cases
      - Contract & Integration
      - Concurrency & State
      - Security
-  3. Dispatches Spec Compliance agent — pulls intent from PR description,
-     plan/design docs, recent commits, or branch name; flags missing
-     features, deviations, and out-of-scope additions (replaces the old
-     Plan Alignment agent)
-  4. Verifies findings (reads actual code, filters false positives)
-  5. Classifies each finding as in-scope (this branch caused/worsened it),
+     - Spec Compliance — pulls intent from PR description, plan/design
+       docs, recent commits, or branch name; flags missing features,
+       deviations, and out-of-scope additions (replaces the older
+       Plan Alignment agent)
+  3. Verifies findings (reads actual code, filters false positives)
+  4. Classifies each finding as in-scope (this branch caused/worsened it),
      out-of-scope (pre-existing bug — persists to project-wide backlog),
      or out-of-scope-addition (this branch added it but the spec didn't
      promise it — flagged for per-PR user decision)
-  6. Writes a report with:
+  5. Writes a report with:
      - In-scope issues ranked: Critical / Important / Suggestion
      - Out-of-scope bugs batched by tier with handoff instructions
      - Out-of-scope additions in a separate section for keep/split/revert
