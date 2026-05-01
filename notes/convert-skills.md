@@ -174,6 +174,36 @@ synthesis treatment. Recent fixtures (post the relevant feature's
 landing) can be checked out directly. Each phase's PR1 should pick
 fixtures with this gotcha in mind.
 
+**Synthesis edge case: byte-identical file across history.** When
+synthesizing a fixture by cherry-picking a single file (`git checkout
+<fixture-SHA> -- <path>`), the operation no-ops if the file's bytes
+at HEAD are already identical to the fixture commit's version.
+Discovered with `images/paad.png`: at HEAD it was already byte-
+identical to its state at `5f03453`. Workaround: reach one further
+back (`<fixture-SHA>^:<path>`) to get the *previous* version, bring
+it forward instead, and accept that the synthetic diff goes in the
+opposite direction byte-wise. Content properties match (binary diff,
+no body, no PR), which is what the bail-out test cares about.
+
+**Caveat: zero-finding baselines are weaker tests.** PR1's fixture 1
+(`83aa677`) produced "Spec compliance: clean" with zero findings —
+substantively rich (the summary cites S5/S6/S10 by name and locates
+each in the diff) but no actual `Missing` or `Deviation` finding.
+Fixture 2 bails out. Both are valid signals but neither catches an
+extraction that subtly produces *wrong* findings (false positives,
+mis-categorized findings, lost `category: out-of-scope-addition`
+tag). The behavioral checklist must lean on *content of the
+explanations* (intent source named, S5/S6/S10 explicitly addressed,
+bail-out enumeration of intent sources checked), not finding counts.
+
+**Cross-PR implication:** If a future-phase post-extraction baseline
+diverges only in surface phrasing while passing all checklist items,
+consider adding a third fixture that synthesizes a deliberate
+deviation (e.g., a commit whose body promises X but whose diff omits
+X) to give the test set a finding-producing signal. Hold this in
+reserve — don't reach for it unless the current pair of fixtures
+proves insufficient at green time.
+
 ## Working branch
 
 Phase 1 work lands on the existing `ovid/skill-breakdown` branch, **not**
