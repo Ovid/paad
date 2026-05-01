@@ -23,10 +23,12 @@ paad/
 │           │   └── SKILL.md       ← /paad:agentic-review skill
 │           ├── alignment/
 │           │   └── SKILL.md       ← /paad:alignment skill
+│           ├── fix-architecture/
+│           │   └── SKILL.md       ← /paad:fix-architecture skill
 │           ├── help/
 │           │   └── SKILL.md       ← /paad:help skill
 │           ├── makefile/
-│           │   └── SKILL.md       ← /paad:help skill
+│           │   └── SKILL.md       ← /paad:makefile skill
 │           ├── pushback/
 │           │   └── SKILL.md       ← /paad:pushback skill
 │           └── vibe/
