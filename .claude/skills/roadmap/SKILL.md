@@ -125,6 +125,16 @@ Every step ends with "update the checklist (frontmatter `last_updated` + the rel
 
 Marking step 4 done requires `design_file` to exist at the recorded path and be non-empty. Step 5 requires that 5a's plan comment is present exactly once in `roadmap.md` at the expected position, and that 5b's Phase Structure table status flips actually landed. Step 8 requires `plan_file`. Step 10 requires `decision_log`. This is `verification-before-completion` applied to checklist updates.
 
+#### "Non-empty" file check
+
+Steps 4, 8, and 10 each verify that an artifact file exists and is non-empty before ticking. **Use this check** (not bare `test -s`):
+
+```sh
+test -s "<path>" && grep -q '[^[:space:]]' -- "<path>"
+```
+
+`test -s` accepts any file with size > 0 — including a one-byte `\n` or a stray-whitespace-only file. The whole point of the verification gate is to catch silent writer failures, and a truncated or whitespace-only artifact passes `test -s` while being functionally missing. The combined check requires at least one non-whitespace byte, which is what "non-empty Markdown document" really means in this context. Surface and stop on either failure.
+
 ### Brainstorming non-resumability
 
 If interrupted mid-step-4, re-run brainstorming. Step 4's box flips only when the design file is written.
@@ -595,7 +605,7 @@ Follow the brainstorming skill's process completely. It will explore requirement
 
 When brainstorming, apply the PR scope rules in CLAUDE.md (§Pull Request Scope) — flag to the user if this phase bundles more than one feature or refactor and should be split before a plan is written.
 
-After the design doc is written, **verify it exists and is non-empty** (`test -s <path>`); if either check fails, surface to the user and stop. Then set `design_file: <path>` in the checklist frontmatter and tick `- [x] 4. Brainstorm → design saved`.
+After the design doc is written, **verify it exists and is non-empty** per §Per-Phase Checklist File / "Non-empty" file check (rejects whitespace-only files, not just zero-byte ones); if either check fails, surface to the user and stop. Then set `design_file: <path>` in the checklist frontmatter and tick `- [x] 4. Brainstorm → design saved`.
 
 ## 5. Record the Plan Filename
 
@@ -706,7 +716,7 @@ When invoking writing-plans, provide:
 
 The plan must honor the PR scope rules: a single roadmap phase is a single PR. If the plan would naturally span multiple PRs (for example, a refactor followed by a feature), split at the phase boundary in the roadmap first and re-run this skill against each sub-phase.
 
-After the plan doc is written, **verify it exists and is non-empty** (`test -s <path>`); if either check fails, surface to the user and stop. Then set `plan_file: <path>` in the checklist frontmatter and tick `- [x] 8. Write implementation plan`.
+After the plan doc is written, **verify it exists and is non-empty** per §Per-Phase Checklist File / "Non-empty" file check (rejects whitespace-only files, not just zero-byte ones); if either check fails, surface to the user and stop. Then set `plan_file: <path>` in the checklist frontmatter and tick `- [x] 8. Write implementation plan`.
 
 ## 9. Alignment Check
 
@@ -750,7 +760,7 @@ If a /roadmap run produced zero pushback issues *and* zero alignment issues, sti
 
 **Severity-count sanity check.** Counts come from a single source — the checklist's findings sections — so `critical + important + minor` summing to `total` is by construction once derived from one scan. If the sum disagrees, the cause is a malformed finding entry on disk (e.g. a missing `Severity:` line, or a `Severity:` value outside the closed Critical/Important/Minor set). Do **not** adjust counts; fix the malformed checklist entry and re-derive.
 
-After the decision log is written, **verify it exists and is non-empty** (`test -s <path>`); if either check fails, surface to the user and stop. Then set `decision_log: <path>` in the checklist frontmatter and tick `- [x] 10. Write decision log entry`.
+After the decision log is written, **verify it exists and is non-empty** per §Per-Phase Checklist File / "Non-empty" file check (rejects whitespace-only files, not just zero-byte ones); if either check fails, surface to the user and stop. Then set `decision_log: <path>` in the checklist frontmatter and tick `- [x] 10. Write decision log entry`.
 
 ## 11. Announce Completion
 
