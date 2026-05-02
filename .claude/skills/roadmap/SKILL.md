@@ -351,6 +351,21 @@ gate brainstorming. The four checks above are all local.
 
 Call the resulting branch name `<PRIMARY>` for the rest of this section.
 
+### Pre-check the working tree (runs on every branch path)
+
+**Before** the branch-case handling below, run `git status --porcelain`.
+If the output is non-empty, the working tree is dirty. Stop and surface
+the paths to the user; ask them to commit, stash, or explicitly confirm
+the carry-over before continuing. Do **not** silently proceed to step 3
+brainstorming over a dirty tree.
+
+This check runs on **every** §2a path — primary, non-primary, and
+detached-HEAD — because every path leads to artifact writes (design doc
+in step 4, plan in step 8, decision log in step 10). On a non-primary
+branch with uncommitted WIP, those writes would interleave with the WIP
+in the next commit; on `<PRIMARY>`, the WIP would ride along to the new
+feature branch. Both are silent footguns.
+
 ### Inspect the current branch
 
 Run `git branch --show-current` and inspect the result. There are three
@@ -363,24 +378,19 @@ cases:
   explicitly confirm they want to land artifacts on a detached commit.
   Do not silently fall through — empty is "not the primary branch", but
   it is also not a safe place to commit.
-- **Named branch other than `<PRIMARY>`**: skip the rest of this step.
-  The working branch is already chosen.
+- **Named branch other than `<PRIMARY>`**: the working branch is already
+  chosen. Skip the slug derivation, suggestion-and-wait, and
+  `git checkout -b` sub-sections below; jump straight to "Create the run
+  checklist" using the current branch as the recorded `branch:` value.
+  (The pre-check above has already run.)
 - **`<PRIMARY>`**: **refuse to brainstorm on the primary branch.** The
   artifacts produced by this skill (design doc, implementation plan,
   decision log) MUST land on a feature branch. The primary branch is
   never a valid working directory for /roadmap output — even a solo
   developer needs the safety of an isolable branch. The only paths out
   of `<PRIMARY>` from here are creating a feature branch (suggested or
-  override) or cancelling the run. Continue with the pre-check and
+  override) or cancelling the run. Continue with the slug derivation and
   suggestion below.
-
-### Pre-check the working tree
-
-Before suggesting any branch, run `git status --porcelain`. If the output
-is non-empty, `<PRIMARY>` has uncommitted changes that would ride to the
-new branch. Stop and surface the dirty paths to the user; ask them to
-commit, stash, or explicitly confirm the carry-over before continuing. Do
-**not** silently `git checkout -b` over a dirty tree.
 
 ### Derive a candidate slug
 
