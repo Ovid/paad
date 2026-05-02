@@ -44,6 +44,8 @@ The `phase_slug` frontmatter field on the checklist is the phase filename slug v
 
 ### Schema
 
+The example below shows a **mid-run** state (steps 1-4 complete, `design_file` populated, step 5 next). The §2a "Create the run checklist" sub-section creates the file with steps 1, 2, 2a pre-checked and `design_file: null`; subsequent steps fill in path fields and tick boxes as their work lands. Treat the §2a creation block — not this example — as the canonical write-template.
+
 ```markdown
 ---
 phase: 'Phase 2: agentic-architecture references conversion'
@@ -362,15 +364,28 @@ succeeds:
 4. `git show-ref --verify --quiet refs/heads/master` — if the local
    repo has a `master` branch (and step 3 did not match), treat it as
    primary.
+5. `git show-ref --verify --quiet refs/heads/develop` — if the local
+   repo has a `develop` branch (and steps 3–4 did not match), treat it
+   as primary. (Common in git-flow repos.)
+6. `git show-ref --verify --quiet refs/heads/trunk` — if the local
+   repo has a `trunk` branch (and steps 3–5 did not match), treat it
+   as primary.
 
-If all four checks fail, **stop and ask the user**: "Couldn't auto-detect
+The §"Stay on the primary branch" attempts and §Override rejection
+lists below treat `main`, `master`, `develop`, and `trunk` as
+primary-branch names; the detection list above mirrors them so a
+`develop`-primary repo without `origin/HEAD` is auto-detected rather
+than dropped to the manual prompt.
+
+If all six checks fail, **stop and ask the user**: "Couldn't auto-detect
 the primary branch in this repository (no `origin/HEAD` symref, no
-`upstream/HEAD`, no local `main` or `master`). Tell me which branch is
-primary, or `cancel` to stop." Wait for a branch name; do not guess.
+`upstream/HEAD`, no local `main`, `master`, `develop`, or `trunk`).
+Tell me which branch is primary, or `cancel` to stop." Wait for a
+branch name; do not guess.
 
 Do **not** use `git remote show origin` to detect the primary branch.
 That command hits the network, and a slow or offline remote should never
-gate brainstorming. The four checks above are all local.
+gate brainstorming. The six checks above are all local.
 
 Call the resulting branch name `<PRIMARY>` for the rest of this section.
 
@@ -618,7 +633,7 @@ Follow the brainstorming skill's process completely. It will explore requirement
 
 When brainstorming, apply the PR scope rules in CLAUDE.md (§Pull Request Scope) — flag to the user if this phase bundles more than one feature or refactor and should be split before a plan is written.
 
-After the design doc is written, **verify it exists and is non-empty** per §Per-Phase Checklist File / "Non-empty" file check (rejects whitespace-only files, not just zero-byte ones); if either check fails, surface to the user and stop. Then set `design_file: <path>` in the checklist frontmatter and tick `- [x] 4. Brainstorm → design saved`.
+After the design doc is written, **verify it exists and is non-empty** per §Per-Phase Checklist File / "Non-empty" file check (rejects whitespace-only files, not just zero-byte ones); if either check fails, surface to the user and stop. Then set `design_file: <path>` in the checklist frontmatter, tick `- [x] 4. Brainstorm → design saved`, and bump `last_updated`.
 
 ## 5. Record the Plan Filename
 
@@ -714,7 +729,7 @@ Re-read `CLAUDE.md` with the final design in mind and check each section for dri
 
 If any section needs updating, discuss the proposed change with the user and fold the `CLAUDE.md` edit into the design document as an explicit deliverable of the phase (a task in the plan, not an afterthought). If no section needs updating, state that explicitly so the check is visible.
 
-Tick `- [x] 7. CLAUDE.md review` after the discussion concludes, regardless of whether CLAUDE.md was edited.
+Tick `- [x] 7. CLAUDE.md review` and bump `last_updated` after the discussion concludes, regardless of whether CLAUDE.md was edited.
 
 ## 8. Write the Implementation Plan
 
@@ -729,7 +744,7 @@ When invoking writing-plans, provide:
 
 The plan must honor the PR scope rules: a single roadmap phase is a single PR. If the plan would naturally span multiple PRs (for example, a refactor followed by a feature), split at the phase boundary in the roadmap first and re-run this skill against each sub-phase.
 
-After the plan doc is written, **verify it exists and is non-empty** per §Per-Phase Checklist File / "Non-empty" file check (rejects whitespace-only files, not just zero-byte ones); if either check fails, surface to the user and stop. Then set `plan_file: <path>` in the checklist frontmatter and tick `- [x] 8. Write implementation plan`.
+After the plan doc is written, **verify it exists and is non-empty** per §Per-Phase Checklist File / "Non-empty" file check (rejects whitespace-only files, not just zero-byte ones); if either check fails, surface to the user and stop. Then set `plan_file: <path>` in the checklist frontmatter, tick `- [x] 8. Write implementation plan`, and bump `last_updated`.
 
 ## 9. Alignment Check
 
@@ -773,7 +788,7 @@ If a /roadmap run produced zero pushback issues *and* zero alignment issues, sti
 
 **Severity-count sanity check.** Counts come from a single source — the checklist's findings sections — so `critical + important + minor` summing to `total` is by construction once derived from one scan. If the sum disagrees, the cause is a malformed finding entry on disk (e.g. a missing `Severity:` line, or a `Severity:` value outside the closed Critical/Important/Minor set). Do **not** adjust counts; fix the malformed checklist entry and re-derive.
 
-After the decision log is written, **verify it exists and is non-empty** per §Per-Phase Checklist File / "Non-empty" file check (rejects whitespace-only files, not just zero-byte ones); if either check fails, surface to the user and stop. Then set `decision_log: <path>` in the checklist frontmatter and tick `- [x] 10. Write decision log entry`.
+After the decision log is written, **verify it exists and is non-empty** per §Per-Phase Checklist File / "Non-empty" file check (rejects whitespace-only files, not just zero-byte ones); if either check fails, surface to the user and stop. Then set `decision_log: <path>` in the checklist frontmatter, tick `- [x] 10. Write decision log entry`, and bump `last_updated`.
 
 ## 11. Announce Completion
 
