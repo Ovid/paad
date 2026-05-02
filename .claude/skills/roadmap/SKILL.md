@@ -39,7 +39,43 @@ If **all** phases have plan comments, announce:
 
 …and stop.
 
-## 2a. Suggest a Working Branch (if on `main`)
+## 2a. Suggest a Working Branch (if on the primary branch)
+
+### Determine the primary branch name
+
+The "primary branch" is whatever the repository treats as the integration
+target — usually `main`, but `master`, `trunk`, `develop`, or any other
+name is equally valid. /roadmap must not run on it, so we have to detect
+the name first.
+
+Run these checks **in order**, locally, and stop at the first that
+succeeds:
+
+1. `git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null` —
+   succeeds when the repo was cloned from a remote that exposed a
+   default branch. Output is `<remote>/<branch>` (typically
+   `origin/main`); split on the first `/` and take the right side as
+   the primary branch name.
+2. `git symbolic-ref --short refs/remotes/upstream/HEAD 2>/dev/null` —
+   common in fork workflows. Same parsing.
+3. `git show-ref --verify --quiet refs/heads/main` — if the local repo
+   has a `main` branch, treat it as primary.
+4. `git show-ref --verify --quiet refs/heads/master` — if the local
+   repo has a `master` branch (and step 3 did not match), treat it as
+   primary.
+
+If all four checks fail, **stop and ask the user**: "Couldn't auto-detect
+the primary branch in this repository (no `origin/HEAD` symref, no
+`upstream/HEAD`, no local `main` or `master`). Tell me which branch is
+primary, or `cancel` to stop." Wait for a branch name; do not guess.
+
+Do **not** use `git remote show origin` to detect the primary branch.
+That command hits the network, and a slow or offline remote should never
+gate brainstorming. The four checks above are all local.
+
+Call the resulting branch name `<PRIMARY>` for the rest of this section.
+
+### Inspect the current branch
 
 Run `git branch --show-current` and inspect the result. There are three
 cases:
@@ -49,25 +85,26 @@ cases:
   skill produces would be reachable only via reflog and pruned by the next
   `git gc`. Ask them to either check out a named branch first or
   explicitly confirm they want to land artifacts on a detached commit.
-  Do not silently fall through — empty is "not main", but it is also not
-  a safe place to commit.
-- **Named branch other than `main`**: skip the rest of this step. The
-  working branch is already chosen.
-- **`main`**: **refuse to brainstorm on `main`.** The artifacts produced
-  by this skill (design doc, implementation plan, decision log) MUST
-  land on a feature branch. `main` is never a valid working directory
-  for /roadmap output — even a solo developer needs the safety of an
-  isolable branch. The only paths out of `main` from here are creating
-  a feature branch (suggested or override) or cancelling the run.
-  Continue with the pre-check and suggestion below.
+  Do not silently fall through — empty is "not the primary branch", but
+  it is also not a safe place to commit.
+- **Named branch other than `<PRIMARY>`**: skip the rest of this step.
+  The working branch is already chosen.
+- **`<PRIMARY>`**: **refuse to brainstorm on the primary branch.** The
+  artifacts produced by this skill (design doc, implementation plan,
+  decision log) MUST land on a feature branch. The primary branch is
+  never a valid working directory for /roadmap output — even a solo
+  developer needs the safety of an isolable branch. The only paths out
+  of `<PRIMARY>` from here are creating a feature branch (suggested or
+  override) or cancelling the run. Continue with the pre-check and
+  suggestion below.
 
 ### Pre-check the working tree
 
 Before suggesting any branch, run `git status --porcelain`. If the output
-is non-empty, `main` has uncommitted changes that would ride to the new
-branch. Stop and surface the dirty paths to the user; ask them to commit,
-stash, or explicitly confirm the carry-over before continuing. Do **not**
-silently `git checkout -b` over a dirty tree.
+is non-empty, `<PRIMARY>` has uncommitted changes that would ride to the
+new branch. Stop and surface the dirty paths to the user; ask them to
+commit, stash, or explicitly confirm the carry-over before continuing. Do
+**not** silently `git checkout -b` over a dirty tree.
 
 ### Derive a candidate slug
 
@@ -104,9 +141,9 @@ convention adds a prefix, let them apply it via the override path below.
 
 Show the user the candidate name and ask them to accept or override:
 
-> Currently on `main`. /roadmap will not run on `main` — it needs a
-> feature branch so the design doc, plan, and decision log land off
-> `main`.
+> Currently on `<PRIMARY>` (the primary branch). /roadmap will not run
+> on the primary branch — it needs a feature branch so the design doc,
+> plan, and decision log land off `<PRIMARY>`.
 >
 > Suggested branch: `<candidate-slug>`. Accept, give me a different
 > name, or `cancel` to stop the run.
@@ -121,25 +158,37 @@ a trailing `.`, `!`, or `,` is ignored before matching):
   input into the shell command.
 - **Cancel** — exactly one of: `cancel`, `abort`. Stop the /roadmap run
   entirely. Do not check out a branch, do not start brainstorming.
-- **"Stay on main" attempts** — exactly one of: `stay`, `stay on main`,
-  `no branch`, `keep main`, `on main`. The user is trying to keep
-  working on `main`, but /roadmap refuses. Print: "/roadmap does not
-  run on `main`. Reply with `cancel` to stop, or a branch name to
-  create." Re-prompt; do **not** treat the response as a branch name
-  (otherwise `stay` silently becomes `git checkout -b 'stay'`, which
-  is not what the user meant).
+- **"Stay on the primary branch" attempts** — any of:
+  - `stay`, `stay here`, `no branch` (branch-agnostic phrasings); or
+  - `stay on <X>`, `keep <X>`, `on <X>` where `<X>` is `<PRIMARY>` **or**
+    any common primary-branch name (`main`, `master`, `trunk`,
+    `develop`). Users frequently type the wrong name out of habit, so
+    accept these literals regardless of what `<PRIMARY>` is — `keep
+    main` on a `master`-primary repo is still a stay-attempt, not a
+    branch name.
+
+  The user is trying to keep working on the primary branch, but /roadmap
+  refuses. Print: "/roadmap does not run on `<PRIMARY>` (the primary
+  branch). Reply with `cancel` to stop, or a branch name to create."
+  Re-prompt; do **not** treat the response as a branch name (otherwise
+  `stay` silently becomes `git checkout -b 'stay'`, which is not what
+  the user meant).
 - **Decline (ambiguous, ask)** — exactly one of: `no`, `nope`, `nah`,
   `n`. A bare negative is too ambiguous to interpret as the literal
   branch name `no`. Ask the user to clarify: "Did you mean cancel the
   brainstorming run entirely, or use a specific branch name? Reply
   with `cancel` or a branch name." Do **not** treat the bare negative
   as Override — `git checkout -b 'no'` is almost certainly not what
-  the user wants. Do **not** offer staying on `main`; this skill does
-  not run on `main`.
+  the user wants. Do **not** offer staying on `<PRIMARY>`; this skill
+  does not run on the primary branch.
 - **Override** — anything else. Treat the entire response as a candidate
   branch name and run it through the slug rule above (lowercase, collapse
   non-`[a-z0-9]` to hyphens, strip leading/trailing) **before** passing it
-  to git. Then run `git checkout -b '<sanitized-name>'` with the
+  to git. If the sanitized result equals `<PRIMARY>`, or any common
+  primary-branch name (`main`, `master`, `trunk`, `develop`), reject it:
+  print "Cannot create a feature branch named `<sanitized>` — that's a
+  primary-branch name. Choose a different name, or `cancel`." and
+  re-prompt. Otherwise run `git checkout -b '<sanitized-name>'` with the
   sanitized result, single-quoted. If the sanitized result is empty, or
   if the response mixes accept tokens with other text in a way that's
   ambiguous (e.g. `yeah call it foo`), ask the user to clarify rather
@@ -161,10 +210,10 @@ On any non-zero exit:
   choose a different name, or `cancel` the run?" Wait for the user's
   decision; do not switch silently — the existing branch may carry
   unrelated WIP that the user does not want to land roadmap artifacts
-  on. Staying on `main` is not an option.
+  on. Staying on `<PRIMARY>` is not an option.
 - **Any other failure** — surface the full git error and stop. Do not
-  fall through to step 3 brainstorming on `main`; that is the very
-  thing §2a was designed to prevent.
+  fall through to step 3 brainstorming on `<PRIMARY>`; that is the
+  very thing §2a was designed to prevent.
 
 Only proceed to step 3 after the branch decision is made *and* the
 checkout succeeded.
@@ -225,7 +274,7 @@ The valid statuses are:
 
 - **Planned** — not yet started
 - **In Progress** — brainstorming or implementation underway
-- **Done** — shipped and merged to main
+- **Done** — shipped and merged to the primary branch
 
 ## 6. Pushback Review
 
