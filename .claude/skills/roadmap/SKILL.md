@@ -129,10 +129,12 @@ digraph step0 {
   "current step 1" [shape=doublecircle];
 
   "start" -> "old layout?";
-  "old layout?" -> "prompt to migrate" [label="docs/roadmap.md exists\n+ docs/roadmap/ doesn't"];
-  "old layout?" -> "scan active plans/*-checklist.md with unchecked steps" [label="already migrated\nor fresh project"];
-  "prompt to migrate" -> "scan active plans/*-checklist.md with unchecked steps" [label="yes (run git mv)"];
-  "prompt to migrate" -> "abort run" [label="no/cancel"];
+  "old layout?" -> "abort run" [label="no roadmap anywhere\n(prompt: create docs/roadmap/roadmap.md)"];
+  "old layout?" -> "abort run" [label="both layouts coexist\n(prompt: reconcile manually)"];
+  "old layout?" -> "prompt to migrate" [label="legacy only:\ndocs/roadmap.md exists\n+ docs/roadmap/ doesn't"];
+  "old layout?" -> "scan active plans/*-checklist.md with unchecked steps" [label="already migrated"];
+  "prompt to migrate" -> "scan active plans/*-checklist.md with unchecked steps" [label="yes (clean tree → run git mv)"];
+  "prompt to migrate" -> "abort run" [label="no/cancel\nor dirty tree without confirmation"];
   "scan active plans/*-checklist.md with unchecked steps" -> "candidates";
   "candidates" -> "fresh run" [label="0"];
   "candidates" -> "verify branch" [label="1"];
@@ -160,15 +162,40 @@ digraph step0 {
 
 ### Layout migration
 
-First thing step 0 checks: if `docs/roadmap.md` exists at the repo root AND `docs/roadmap/roadmap.md` does not, the project is on the legacy layout. Prompt:
+Step 0's first action is a layout sanity check across three locations: `docs/roadmap.md` (legacy roadmap), `docs/roadmap/roadmap.md` (new roadmap), `docs/plans/` (legacy plans dir), `docs/roadmap/plans/` (new plans dir), and `docs/roadmap-decisions/` (legacy decisions dir, named by earlier versions of this skill).
 
-> Old roadmap layout detected:
->   - `docs/roadmap.md` (will move to `docs/roadmap/roadmap.md`)
->   - `docs/plans/` (will move to `docs/roadmap/plans/`)
->
-> Run the migration now? `yes` / `no` / `cancel`
+There are four cases:
 
-On `yes`, run the `git mv`s and continue to the scan. On `no` or `cancel`, abort the run and tell the user the new skill cannot operate on the legacy layout. Once `docs/roadmap/roadmap.md` exists, this prompt never fires again for the project. Detection is by presence — no marker file needed.
+1. **No roadmap anywhere** — neither `docs/roadmap.md` nor `docs/roadmap/roadmap.md` exists. **Stop and prompt:**
+
+   > No roadmap found. /roadmap operates on `docs/roadmap/roadmap.md`. Create that file first (a minimal H1 + Phase Structure table is enough), then re-run.
+
+   Do not silently fall through to step 1 — step 1 reads `docs/roadmap/roadmap.md`, and a missing-file error there is less actionable than this prompt.
+
+2. **Both layouts coexist** — both `docs/roadmap.md` AND `docs/roadmap/roadmap.md` exist (or both `docs/plans/` AND `docs/roadmap/plans/` exist, or both `docs/roadmap-decisions/` AND `docs/roadmap/decisions/` exist). A half-migrated state, an accidental hand-creation, or independent files. **Stop and prompt:**
+
+   > Roadmap layout looks half-migrated:
+   >   - both `docs/roadmap.md` and `docs/roadmap/roadmap.md` exist (one will be canonical, the other should be removed/merged)
+   >   - <list any other coexisting pairs>
+   >
+   > Reconcile manually (which is canonical?) and re-run /roadmap.
+
+   Do not pick one silently — the user's actual roadmap content can be in either file, and silent abandonment of the other is the I4 footgun this guard exists to prevent.
+
+3. **Legacy layout only** — `docs/roadmap.md` exists, `docs/roadmap/roadmap.md` does not, and (any of `docs/plans/` or `docs/roadmap-decisions/` exists OR neither does). Run the migration prompt:
+
+   > Old roadmap layout detected:
+   >   - `docs/roadmap.md` (will move to `docs/roadmap/roadmap.md`)
+   >   - `docs/plans/` (will move to `docs/roadmap/plans/`) [if present]
+   >   - `docs/roadmap-decisions/` (will move to `docs/roadmap/decisions/`) [if present]
+   >
+   > Run the migration now? `yes` / `no` / `cancel`
+
+   **Before running any `git mv`, run `git status --porcelain`.** If output is non-empty, the working tree is dirty — surface the paths and ask the user to commit, stash, or explicitly confirm the carry-over before continuing. Layout migration is a one-time, irrevocable structural change that should land in a clean, intentional commit; running it over WIP entrains unrelated changes into the staged moves. Do **not** silently `git mv` over a dirty tree.
+
+   On `yes` (after the dirty-tree gate passes), run `git mv -- <src> <dst>` for each pair that is present. On `no` or `cancel`, abort the run and tell the user the new skill cannot operate on the legacy layout. Once `docs/roadmap/roadmap.md` exists, this prompt never fires again for the project (case 4 takes over). Detection is by presence — no marker file needed.
+
+4. **New layout only (or already migrated)** — `docs/roadmap/roadmap.md` exists, `docs/roadmap.md` does not, and no legacy `docs/plans/` or `docs/roadmap-decisions/` linger. Skip the migration prompt and continue to the scan.
 
 Once layout migration succeeds and resume detection finds no in-progress checklist, fall through to step 1 → step 2; the archive prompt fires from step 2 if applicable.
 
