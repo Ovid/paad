@@ -191,6 +191,12 @@ designed to fix.
 > The next unplanned phase is **Phase N+1: \<title\>**. I'll start
 > brainstorming that phase now.
 
+Note: Scenarios A and C surface the *same* observable failure mode —
+silent skip to Phase N+1 because §2's plan-comment check is the
+proximate cause in both. The scenarios differ only in *what session
+state is lost* (in-session pushback discussion vs prior-day pushback
+findings).
+
 ### Rationalizations / honest gaps
 
 - "I have no record of yesterday's pushback findings. I have no record that
@@ -240,60 +246,60 @@ the three scenarios surfaced. Each one is a target for the resume-checklist
 REFACTOR phase (rationalization-table additions and/or skill prose changes):
 
 1. **"The roadmap's `<!-- plan: -->` comment is the source of truth for
-   whether a phase is done."** — False once the plan comment can be
+   whether a phase is done."** **[high confidence]** — False once the plan comment can be
    present while pushback / CLAUDE.md review / plan / alignment / decision
    log are still in flight. The skill needs a separate signal (a checklist
    file) to distinguish "brainstormed, plan filename written" from
    "fully completed including decision log."
 
-2. **"If there had been an in-flight run, the user would have told me."** —
+2. **"If there had been an in-flight run, the user would have told me."** **[predicted]** —
    Inverts the agent/user contract. The user invokes /roadmap to *offload*
    the resume question. The skill must detect in-flight state itself.
 
-3. **"I'll mentally track findings until step 10."** — Direct quote of the
+3. **"I'll mentally track findings until step 10."** **[high confidence]** — Direct quote of the
    §6 / §9 instrumentation prose. Survives one Claude turn. Does not
    survive `/clear`, `/compact`, a session restart, a subagent error, or a
    user stepping away. The skill must persist findings to disk as they are
    generated, not after-the-fact.
 
 4. **"I'll just re-run pushback from scratch — the user will tell me which
-   findings are still open."** — Two failures: pushback output is partly
+   findings are still open."** **[predicted]** — Two failures: pushback output is partly
    stochastic so findings won't match, and prior resolutions (from the
    user's discussion) are unrecoverable from a re-run. Re-litigating
    resolutions wastes user time and corrupts the decision-log evidence
    trail.
 
-5. **"Let me just ask the user what we decided yesterday."** — Pushes
+5. **"Let me just ask the user what we decided yesterday."** **[predicted]** — Pushes
    cognitive load back onto the user that the skill exists to absorb. Also
    relies on user memory across a 24-hour gap, which is the worst possible
    substrate for "what severity did we assign finding #2?"
 
-6. **"I'll diff the design doc against git to recover findings."** — Only
+6. **"I'll diff the design doc against git to recover findings."** **[predicted]** — Only
    recovers `fixed-in-design` resolutions; loses everything else
    (`dismissed-invalid`, `accepted-as-is`, `deferred`, etc.) and the
    category classifications. Also: not in SKILL.md, so it's a
    hallucinated recovery procedure.
 
 7. **"The §6 failure-handling block told me to stop and surface — so the
-   in-flight state is the user's problem now."** — The block does say
+   in-flight state is the user's problem now."** **[high confidence]** — The block does say
    "stop and surface," but it is silent on persisting partial state.
    Surfacing once, in a session that's about to end, is not a durable
    handoff to a future session.
 
 8. **"Want me to defer pushback / alignment / the decision log until after
-   the meeting?"** — Time-pressure rationalization that produces the
+   the meeting?"** **[predicted]** — Time-pressure rationalization that produces the
    exact session-boundary case Scenarios A and C cover. Deferral without a
    resumable artifact is just "lose the work."
 
 9. **"Step 2 said scan for the first phase without a plan comment, and that
-   phase already has one — therefore I move on."** — Mechanical
+   phase already has one — therefore I move on."** **[high confidence]** — Mechanical
    compliance with §2 that produces the silent-skip failure in Scenarios
    A and C. The check needs an additional gate: *also* verify the in-
    flight phase is fully completed (decision-log entry written) before
    skipping it.
 
 10. **"There's no checklist file because SKILL.md doesn't say to make
-    one — so the absence of a checklist is fine."** — The literal-minded
+    one — so the absence of a checklist is fine."** **[predicted]** — The literal-minded
     executor's rationalization for not inventing persistence. Correct
     given the current skill; the fix has to come from the skill, not from
     the agent extemporizing.
