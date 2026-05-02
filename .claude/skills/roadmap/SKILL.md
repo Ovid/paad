@@ -210,6 +210,8 @@ Example of an incomplete phase (no comment, or no `<!-- plan: … -->` line):
 ## Phase 3: Export
 ```
 
+Tick `- [x] 1. Read roadmap` and bump `last_updated`.
+
 ## 2. Identify the Next Unplanned Phase
 
 Scan phases in order (Phase 1, 2, 3, … 7). The first phase whose section does **not** have a `<!-- plan: … -->` comment is the target.
@@ -218,6 +220,8 @@ If **all** phases have plan comments, announce:
 > **All roadmap phases have been brainstormed.** Nothing to do.
 
 …and stop.
+
+Tick `- [x] 2. Identified next unplanned phase` and bump `last_updated`. *Note:* if step 2 detects "every phase has a `<!-- plan: ... -->` comment," do NOT tick — instead invoke the archive lifecycle (Task 8 / §4 of the design) before continuing.
 
 ## 2a. Suggest a Working Branch (if on the primary branch)
 
@@ -463,6 +467,8 @@ Also note:
 - Which earlier phases it depends on (listed under ### Dependencies).
 - The current date (for the plan filename).
 
+Tick `- [x] 3. Extract phase context` and bump `last_updated`.
+
 ## 4. Brainstorm
 
 Invoke the `superpowers:brainstorming` skill. When the brainstorming skill asks what you're building, provide:
@@ -474,6 +480,8 @@ Invoke the `superpowers:brainstorming` skill. When the brainstorming skill asks 
 Follow the brainstorming skill's process completely. It will explore requirements, ask the user questions, and produce a design document. Also, think of the design from the standpoint of a writer. Is it truly useful for them? If you think it could be more useful, discuss this with the user.
 
 When brainstorming, apply the PR scope rules in CLAUDE.md (§Pull Request Scope) — flag to the user if this phase bundles more than one feature or refactor and should be split before a plan is written.
+
+After the design doc is written, **verify it exists and is non-empty** (`test -s <path>`); if either check fails, surface to the user and stop. Then set `design_file: <path>` in the checklist frontmatter and tick `- [x] 4. Brainstorm → design saved`.
 
 ## 5. Record the Plan Filename
 
@@ -512,6 +520,8 @@ The valid statuses are:
 - **Planned** — not yet started
 - **In Progress** — brainstorming or implementation underway
 - **Done** — shipped and merged to the primary branch
+
+After updating roadmap.md, tick `- [x] 5. Record plan filename in roadmap` and bump `last_updated`.
 
 ## 6. Pushback Review
 
@@ -556,6 +566,8 @@ Re-read `CLAUDE.md` with the final design in mind and check each section for dri
 
 If any section needs updating, discuss the proposed change with the user and fold the `CLAUDE.md` edit into the design document as an explicit deliverable of the phase (a task in the plan, not an afterthought). If no section needs updating, state that explicitly so the check is visible.
 
+Tick `- [x] 7. CLAUDE.md review` after the discussion concludes, regardless of whether CLAUDE.md was edited.
+
 ## 8. Write the Implementation Plan
 
 Invoke the `superpowers:writing-plans` skill against the finalized design document. The writing-plans skill will produce a bite-sized TDD task list that turns the design into concrete, reviewable commits.
@@ -568,6 +580,8 @@ When invoking writing-plans, provide:
 - That the plan should be saved alongside the design in `docs/roadmap/plans/` with filename pattern `YYYY-MM-DD-<topic>-plan.md`.
 
 The plan must honor the PR scope rules: a single roadmap phase is a single PR. If the plan would naturally span multiple PRs (for example, a refactor followed by a feature), split at the phase boundary in the roadmap first and re-run this skill against each sub-phase.
+
+After the plan doc is written, **verify it exists and is non-empty** (`test -s <path>`); if either check fails, surface to the user and stop. Then set `plan_file: <path>` in the checklist frontmatter and tick `- [x] 8. Write implementation plan`.
 
 ## 9. Alignment Check
 
@@ -611,6 +625,8 @@ If a /roadmap run produced zero pushback issues *and* zero alignment issues, sti
 > Next unplanned phase: Phase M: [Name] (or "all phases planned").
 
 Offer to move to implementing the plan (via `superpowers:subagent-driven-development` or `superpowers:executing-plans` in a separate session), or to review the updated roadmap.
+
+After announce, tick `- [x] 11. Announce completion`. The checklist is now fully ticked and serves as the historical record of the run.
 
 ## Appendix: Decision Log Entry Schema
 
