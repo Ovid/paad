@@ -46,7 +46,7 @@ The `phase_slug` frontmatter field on the checklist is the phase filename slug v
 
 ```markdown
 ---
-phase: "Phase 2: agentic-architecture references conversion"
+phase: 'Phase 2: agentic-architecture references conversion'
 phase_slug: agentic-architecture-references
 branch: ovid/agentic-architecture-refs
 roadmap: docs/roadmap/roadmap.md
@@ -105,6 +105,7 @@ decision_log: null
 - **Status vocabulary** (closed set): `open | closed`. While `open`, the finding is still being discussed. When `closed`, the `Resolution:` line uses one of the existing decision-log resolution values verbatim: `fixed-in-design`, `fixed-in-plan`, `dismissed-invalid`, `dismissed-out-of-scope`, `accepted-as-is`, `deferred`. Status itself has no decision-log analog (every entry there is closed by definition); step 10's transcription drops the `Status:` line and is otherwise a literal copy.
 - **Severity / Category** vocabularies are the existing ones from the pushback and alignment sections of the current SKILL.md.
 - **Sub-checkboxes for steps 6 and 9.** Each has a `Na` sub-checkbox (`6a. Pushback returned all findings`, `9a. Alignment returned all findings`) flipped only when the corresponding subagent returns cleanly. The top-level `- [x] N` is checked when **both** Na is checked AND no `Status: open` entries remain in the corresponding findings section. The "no open findings" half is a derived condition computed from the file, not a separate checkbox.
+- **`phase` field YAML escaping.** Use **single-quoted** YAML scalars: `phase: '<heading>'`. Embedded apostrophes are doubled (`Editor's` → `Editor''s`). Reject literal newlines — if the H2 heading wraps to multiple lines (it shouldn't), take the first line only. No other escaping is required. Why single-quoted: a phase title is contributor-controlled and can contain `"` or `\`; double-quoted YAML would treat both specially, and a crafted title (e.g., one ending with `"` followed by a newline and `design_file: /etc/passwd`) could inject a sibling frontmatter key. Single-quoted scalars require only the `''` doubling, which is harder to weaponize and trivial to apply correctly.
 
 ### Update obligations
 
@@ -551,7 +552,7 @@ Populate the frontmatter:
 
 ```yaml
 ---
-phase: "<full Phase N: Title text from the roadmap heading>"
+phase: '<full Phase N: Title text from the roadmap heading — single-quoted; double any embedded apostrophe>'
 phase_slug: <phase-slug>
 branch: <branch name created above>
 roadmap: docs/roadmap/roadmap.md
@@ -800,7 +801,7 @@ If a phase is brainstormed more than once on different days, each run produces i
 ```yaml
 ---
 date: 2026-04-26
-phase: "Phase 3a: Export Foundation"
+phase: 'Phase 3a: Export Foundation'
 model: claude-opus-4-7
 design_file: docs/roadmap/plans/2026-04-26-export-foundation-design.md
 plan_file: docs/roadmap/plans/2026-04-26-export-foundation-plan.md
