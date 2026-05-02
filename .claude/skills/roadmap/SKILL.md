@@ -9,6 +9,100 @@ Announce: **"Checking roadmap for next unplanned phase…"**
 
 Read @CLAUDE.md.
 
+## Per-Phase Checklist File
+
+One checklist per `/roadmap` run, created right after step 2a (branch checkout succeeded), updated at the end of every subsequent step. The checklist lives at `docs/roadmap/plans/YYYY-MM-DD-<topic>-checklist.md` — alongside the design and plan files for the same run.
+
+### Filename
+
+`YYYY-MM-DD-<topic>-checklist.md`, where `<topic>` is the existing phase slug rule from §2a of the current SKILL.md (lowercase phase title, drop apostrophes without separator, collapse non-`[a-z0-9]` to hyphens, fall back to `phase-N`). Date is the day step 0 → step 1 fires (start date), so the design / plan / checklist for one run sit alphabetic- ally adjacent in `plans/`.
+
+### Schema
+
+```markdown
+---
+phase: "Phase 2: agentic-architecture references conversion"
+phase_slug: agentic-architecture-references
+branch: ovid/agentic-architecture-refs
+roadmap: docs/roadmap/roadmap.md
+started: 2026-05-02
+last_updated: 2026-05-02
+design_file: docs/roadmap/plans/2026-05-02-agentic-architecture-references-design.md
+plan_file: null
+decision_log: null
+---
+
+# Phase 2: agentic-architecture references conversion — Run Checklist
+
+## Steps
+- [x] 1. Read roadmap
+- [x] 2. Identified next unplanned phase
+- [x] 2a. Working branch created: `ovid/agentic-architecture-refs`
+- [x] 3. Extract phase context
+- [x] 4. Brainstorm → design saved
+- [ ] 5. Record plan filename in roadmap
+- [ ] 6. Pushback review
+  - [ ] 6a. Pushback returned all findings
+- [ ] 7. CLAUDE.md review
+- [ ] 8. Write implementation plan
+- [ ] 9. Alignment check
+  - [ ] 9a. Alignment returned all findings
+- [ ] 10. Write decision log entry
+- [ ] 11. Announce completion
+
+## Pushback Findings
+(populated during step 6, transcribed by step 10)
+
+### [1] Lens 3 spec contradicts §Key Architecture Decisions
+- **Severity:** Critical
+- **Category:** Contradiction
+- **Summary:** The Lens 3 spec requires X, but §Key Architecture Decisions in CLAUDE.md mandates Y for cross-cutting consistency. The two cannot both hold; one must yield.
+- **Status:** open
+- **Resolution:** _(pending)_
+
+### [2] Phase scope bundles refactor + new feature
+- **Severity:** Important
+- **Category:** Scope
+- **Summary:** This phase combines the references-package extraction (refactor) with new lens content (feature), violating the one-refactor-OR-one-feature PR rule from CLAUDE.md.
+- **Status:** closed
+- **Resolution:** fixed-in-design — split into 2a (refactor) + 2b (feature)
+
+## Alignment Findings
+(populated during step 9, transcribed by step 10)
+```
+
+### Field rules
+
+- `branch` is the working branch name from §2a; resume verifies it matches the current branch.
+- `design_file`, `plan_file`, `decision_log` go from `null` to a path the moment each artifact is written.
+- `last_updated` is bumped on every write (lets stale-checklist detection work without filesystem mtime).
+- **Summary** is a one-paragraph description of the finding, written by pushback (or alignment) at the moment the issue is first raised — while the context is still in head. It is *not* generated at transcription time. This is the only field step 10 carries forward as written prose, so writing it now (not later) is what eliminates the "mentally tracked" failure mode the design exists to fix.
+- **Status vocabulary** (closed set): `open | closed`. While `open`, the finding is still being discussed. When `closed`, the `Resolution:` line uses one of the existing decision-log resolution values verbatim: `fixed-in-design`, `fixed-in-plan`, `dismissed-invalid`, `dismissed-out-of-scope`, `accepted-as-is`, `deferred`. Status itself has no decision-log analog (every entry there is closed by definition); step 10's transcription drops the `Status:` line and is otherwise a literal copy.
+- **Severity / Category** vocabularies are the existing ones from the pushback and alignment sections of the current SKILL.md.
+- **Sub-checkboxes for steps 6 and 9.** Each has a `Na` sub-checkbox (`6a. Pushback returned all findings`, `9a. Alignment returned all findings`) flipped only when the corresponding subagent returns cleanly. The top-level `- [x] N` is checked when **both** Na is checked AND no `Status: open` entries remain in the corresponding findings section. The "no open findings" half is a derived condition computed from the file, not a separate checkbox.
+
+### Update obligations
+
+Every step ends with "update the checklist (frontmatter `last_updated` + the relevant box + any frontmatter path field) before announcing or moving on." No exceptions.
+
+### Rationalization table
+
+| Excuse | Reality |
+|---|---|
+| "This step is obvious, I'll skip the box" | Resume detection scans boxes, not artifacts. The box is the source of truth. |
+| "I'll batch the checklist updates at the end" | A `/clear` between now and the end loses the run. Update before moving on. |
+| "I'll keep the open pushback issues in my head" | The next session won't have a head. The checklist *is* the memory. |
+| "The artifact exists on disk, the checkbox is redundant" | Both must agree; mismatch means the run is in an unknown state. |
+| "Branch mismatch is fine, I know what I'm doing" | The recorded branch is the safety net. Update or override explicitly — never ignore. |
+
+### Verification before ticking
+
+Marking step 4 done requires `design_file` to exist at the recorded path and be non-empty. Step 8 requires `plan_file`. Step 10 requires `decision_log`. This is `verification-before-completion` applied to checklist updates.
+
+### Brainstorming non-resumability
+
+If interrupted mid-step-4, re-run brainstorming. Step 4's box flips only when the design file is written.
+
 ## 1. Read the Roadmap
 
 Read `docs/roadmap/roadmap.md` in full. Each phase heading (## Phase N: …) may have a `<!-- plan: filename.md -->` comment on the line immediately after the `---` separator that follows that phase's section. This comment marks the phase as already brainstormed.
