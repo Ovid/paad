@@ -674,7 +674,7 @@ Then update `docs/roadmap/decisions/INDEX.md` by **prepending** one row to the `
 
 If a /roadmap run produced zero pushback issues *and* zero alignment issues, still write the entry and the index row — a clean run is evidence too. The body sections are the empty-section single-line form from the §Appendix schema (`Pushback raised no issues.` / `Alignment raised no issues.`).
 
-**Severity-count reconciliation.** Severity counts in frontmatter (`pushback.critical` + `important` + `minor` = `pushback.total`, and likewise for `alignment`) must equal the number of findings of each severity in the corresponding checklist section. If the counts derived from the checklist do not sum to `total`, **stop** and reconcile with the user before writing the entry. Because findings are now written to the checklist as they arise, the most likely cause of a mismatch is a finding whose `Severity` was edited mid-discussion without re-scanning the section, or two checklist entries that should have been merged into one but were left separate. Do **not** adjust counts to satisfy the invariant; the invariant is an integrity check, not a target — fix the checklist (the source of truth) and re-derive.
+**Severity-count sanity check.** Counts come from a single source — the checklist's findings sections — so `critical + important + minor` summing to `total` is by construction once derived from one scan. If the sum disagrees, the cause is a malformed finding entry on disk (e.g. a missing `Severity:` line, or a `Severity:` value outside the closed Critical/Important/Minor set). Do **not** adjust counts; fix the malformed checklist entry and re-derive.
 
 After the decision log is written, **verify it exists and is non-empty** (`test -s <path>`); if either check fails, surface to the user and stop. Then set `decision_log: <path>` in the checklist frontmatter and tick `- [x] 10. Write decision log entry`.
 
@@ -725,19 +725,7 @@ alignment:
 
 All fields are required. Severity counts under `pushback` and `alignment` must sum to `total`. For a clean run with no findings, set `total: 0` and omit the severity fields.
 
-**If the per-issue tracking from steps 6 or 9 produces severity
-counts that do not sum to `total`** (e.g. an issue was downgraded
-mid-discussion and the running tally was not updated), **stop** and
-reconcile with the user before writing the entry. Do **not** adjust
-counts to satisfy the invariant; the invariant is an integrity check,
-not a target. Common causes: a finding presented as Important got
-re-categorized as Minor during discussion (decrement Important,
-increment Minor); a finding was dismissed as a duplicate of another
-already-counted item (decrement the original tier, do not add); the
-user split one finding into two (increment the relevant tier). In
-each case the reconciliation has to be explicit — silently padding
-counts to make `total` match would hide the original transition and
-corrupt the year-of-entries view that the index supports.
+Counts come from a single scan of the checklist findings, so the sum holding is by construction; see step 10's "Severity-count sanity check" for the malformed-input case.
 
 ### Body sections
 
