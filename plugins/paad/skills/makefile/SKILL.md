@@ -3,7 +3,7 @@ name: makefile
 description: Use when creating or updating a Makefile for a project, especially when standard targets (build, test, lint, format, etc.) are missing or when modifying targets that may already be wired into other tooling
 ---
 
-**On invocation:** announce "Running paad:makefile v1.14.0" before anything else.
+**On invocation:** announce "Running paad:makefile v1.17.0" before anything else.
 
 # Makefile Management
 

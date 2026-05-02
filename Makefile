@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter bump-version
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs bump-version
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter test-check-extracted-refs check-extracted-refs ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -129,3 +129,9 @@ check-frontmatter: ## Check every SKILL.md has name/description and name matches
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All SKILL.md files have valid frontmatter."
+
+check-extracted-refs: ## Check every row in scripts/extracted-refs.tsv represents a correctly extracted reference
+	@bash scripts/check_extracted_refs.sh
+
+test-check-extracted-refs: ## Self-test the check_extracted_refs.sh script against synthetic fixtures
+	@bash scripts/test_check_extracted_refs.sh

@@ -1,0 +1,9 @@
+# skill	ref-path-relative-to-skill	sentinel-phrase
+agentic-review	references/spec-compliance.md	Internal spec contradictions (retro-edited specs)
+agentic-review	references/logic-correctness.md	sort/search invariant violation
+agentic-review	references/error-handling.md	trailing punctuation, extra whitespace, mixed casing
+agentic-review	references/contract-integration.md	duplicated logic diverges over time
+agentic-review	references/concurrency-state.md	Check-then-act / TOCTOU
+agentic-review	references/security.md	SSRF via URL parsing
+agentic-review	references/verifier.md	Be skeptical — reject anything you cannot confirm
+agentic-review	references/report-template.md	Soft size warning
