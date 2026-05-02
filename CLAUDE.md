@@ -4,6 +4,10 @@
 
 This is a **Claude Code plugin marketplace** hosted at `github.com/Ovid/paad`. It distributes the `paad` plugin, which provides skills for architecture analysis, code quality, and development workflows.
 
+After this file is read, announce "CLAUDE.md loaded."
+
+Also, address me as "Ovid" for further verification that you have read this file.
+
 ## Project structure
 
 ```
@@ -79,3 +83,15 @@ When modifying a skill's flow, check that the digraph still matches. When review
 - Skill files must be named `SKILL.md` (uppercase) inside a folder whose name becomes the skill name
 - Plugin sources in `marketplace.json` use paths relative to the marketplace root (start with `./`)
 - Keep marketplace.json plugin descriptions in sync with plugin.json descriptions
+
+## Project-local skills under `.claude/skills/`
+
+The repo also hosts **project-local** skills at `.claude/skills/<name>/SKILL.md` (e.g. `.claude/skills/roadmap/SKILL.md`). These are **not** part of the `paad` plugin and follow a different lifecycle:
+
+- **Not distributed** — they live in this repo only and are picked up automatically by Claude Code when it runs in this working directory. There is no marketplace, no `claude plugin validate` step, no `plugin.json`, no version field.
+- **No `make bump-version` impact** — `make bump-version` rewrites `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line. Project-local SKILL.md files are skipped on purpose. They have no announce-line version, no `paad:<name>` namespace.
+- **No `make test` checks** — the Makefile's check-frontmatter / check-digraphs / check-help / check-readme / check-skill-versions targets all walk `plugins/paad/skills/`. They do not enforce anything against `.claude/skills/`.
+- **Edit-and-commit only** — change the SKILL.md, commit, you're done. No version bump, no help table edit, no README entry, no `paad:help` cross-reference.
+- **Naming** — invoke as `/<name>` (no `paad:` prefix), because they're not in a plugin. `/roadmap`, not `/paad:roadmap`.
+
+When reviewing or modifying a `.claude/skills/<name>/SKILL.md`, do not chase the paad-plugin conventions (announce lines, version literals, help / README cross-references). They don't apply here.
