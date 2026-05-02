@@ -53,10 +53,13 @@ cases:
   a safe place to commit.
 - **Named branch other than `main`**: skip the rest of this step. The
   working branch is already chosen.
-- **`main`**: do not start brainstorming yet. The artifacts produced by
-  the rest of this skill (design doc, implementation plan, decision log)
-  should land on a feature branch, not on `main`. Continue with the
-  pre-check and suggestion below.
+- **`main`**: **refuse to brainstorm on `main`.** The artifacts produced
+  by this skill (design doc, implementation plan, decision log) MUST
+  land on a feature branch. `main` is never a valid working directory
+  for /roadmap output — even a solo developer needs the safety of an
+  isolable branch. The only paths out of `main` from here are creating
+  a feature branch (suggested or override) or cancelling the run.
+  Continue with the pre-check and suggestion below.
 
 ### Pre-check the working tree
 
@@ -101,30 +104,38 @@ convention adds a prefix, let them apply it via the override path below.
 
 Show the user the candidate name and ask them to accept or override:
 
-> Currently on `main`. Before brainstorming, I'd like to create a feature
-> branch so the design doc, plan, and decision log land off `main`.
+> Currently on `main`. /roadmap will not run on `main` — it needs a
+> feature branch so the design doc, plan, and decision log land off
+> `main`.
 >
-> Suggested branch: `<candidate-slug>`. Accept, or give me a different name?
+> Suggested branch: `<candidate-slug>`. Accept, give me a different
+> name, or `cancel` to stop the run.
 
 Parse the response per this explicit grammar (matches are case-insensitive;
 a trailing `.`, `!`, or `,` is ignored before matching):
 
 - **Accept** — exactly one of: `yes`, `y`, `yeah`, `yep`, `yup`, `ok`,
-  `okay`, `sure`, `lgtm`, `looks good`, `go ahead`, `do it`, `proceed`.
-  Run `git checkout -b '<candidate-slug>'`. Always pass the branch name
-  inside single quotes — never interpolate raw user input into the shell
-  command.
-- **Stay on `main`** — exactly one of: `stay`, `stay on main`, `no branch`,
-  `keep main`, `on main`. Continue on `main`, but warn the user that
-  every commit produced by this skill will land directly on `main`.
+  `okay`, `sure`, `lgtm`, `looks good`, `go ahead`, `do it`, `proceed`,
+  `accept`, `accepted`. Run `git checkout -b '<candidate-slug>'`. Always
+  pass the branch name inside single quotes — never interpolate raw user
+  input into the shell command.
+- **Cancel** — exactly one of: `cancel`, `abort`. Stop the /roadmap run
+  entirely. Do not check out a branch, do not start brainstorming.
+- **"Stay on main" attempts** — exactly one of: `stay`, `stay on main`,
+  `no branch`, `keep main`, `on main`. The user is trying to keep
+  working on `main`, but /roadmap refuses. Print: "/roadmap does not
+  run on `main`. Reply with `cancel` to stop, or a branch name to
+  create." Re-prompt; do **not** treat the response as a branch name
+  (otherwise `stay` silently becomes `git checkout -b 'stay'`, which
+  is not what the user meant).
 - **Decline (ambiguous, ask)** — exactly one of: `no`, `nope`, `nah`,
-  `n`, `cancel`, `abort`. A bare negative is too ambiguous to interpret
-  as either Stay-on-main or as the literal branch name `no`. Ask the
-  user to clarify: "Did you mean stay on `main` (no feature branch),
-  or cancel the brainstorming run entirely, or use a specific branch
-  name? Reply with one of: `stay`, `cancel`, or a branch name." Do
-  **not** treat the bare negative as Override — `git checkout -b 'no'`
-  is almost certainly not what the user wants.
+  `n`. A bare negative is too ambiguous to interpret as the literal
+  branch name `no`. Ask the user to clarify: "Did you mean cancel the
+  brainstorming run entirely, or use a specific branch name? Reply
+  with `cancel` or a branch name." Do **not** treat the bare negative
+  as Override — `git checkout -b 'no'` is almost certainly not what
+  the user wants. Do **not** offer staying on `main`; this skill does
+  not run on `main`.
 - **Override** — anything else. Treat the entire response as a candidate
   branch name and run it through the slug rule above (lowercase, collapse
   non-`[a-z0-9]` to hyphens, strip leading/trailing) **before** passing it
@@ -147,10 +158,10 @@ On any non-zero exit:
 
 - **"already exists"** — surface the exact message and ask: "Branch
   `<name>` already exists. Switch to it (`git checkout '<name>'`),
-  choose a different name, or stay on `main`?" Wait for the user's
+  choose a different name, or `cancel` the run?" Wait for the user's
   decision; do not switch silently — the existing branch may carry
   unrelated WIP that the user does not want to land roadmap artifacts
-  on.
+  on. Staying on `main` is not an option.
 - **Any other failure** — surface the full git error and stop. Do not
   fall through to step 3 brainstorming on `main`; that is the very
   thing §2a was designed to prevent.
