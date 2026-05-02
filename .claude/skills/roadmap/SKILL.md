@@ -307,7 +307,7 @@ Example of an incomplete phase (no comment, or no `<!-- plan: … -->` line):
 ## Phase 3: Export
 ```
 
-Tick `- [x] 1. Read roadmap` and bump `last_updated`.
+**On a fresh run, the checklist file does not exist yet** — it is created at step 2a after the working branch is established, and steps 1, 2, 2a are written *pre-checked* there (the work to reach step 2a has been done by then). Do **not** invent a checklist before step 2a. On a resume, the checklist already exists; tick `- [x] 1. Read roadmap` in place and bump `last_updated`.
 
 ## 2. Identify the Next Unplanned Phase
 
@@ -323,7 +323,7 @@ Parse the response (case-insensitive, leniently as the §2a accept-grammar):
 - **`no`** — write a marker file `docs/roadmap/.archive-declined` containing the SHA-1 of the H1 title. On future runs, if the marker file exists and matches the current H1 hash, skip the archive prompt entirely. Announce the no-op and stop.
 - **`later`** — leave everything in place; do not write a marker. Announce the no-op and stop.
 
-Tick `- [x] 2. Identified next unplanned phase` and bump `last_updated`. *Note:* if step 2 detects "every phase has a `<!-- plan: ... -->` comment," do NOT tick — instead surface the archive prompt described above before continuing.
+Same caveat as step 1: on a **fresh run**, no checklist file exists yet (step 2a creates it with steps 1, 2, 2a pre-checked); do not invent one early. On a **resume** where the checklist already exists, tick `- [x] 2. Identified next unplanned phase` in place and bump `last_updated`. *Note:* if step 2 detects "every phase has a `<!-- plan: ... -->` comment," do NOT tick — instead surface the archive prompt described above before continuing.
 
 ## 2a. Suggest a Working Branch (if on the primary branch)
 
