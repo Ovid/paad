@@ -442,6 +442,17 @@ a trailing `.`, `!`, or `,` is ignored before matching):
   `accept`, `accepted`. Run `git checkout -b '<candidate-slug>'`. Always
   pass the branch name inside single quotes — never interpolate raw user
   input into the shell command.
+
+  **Accept-token-prefix-with-extras → re-prompt, do NOT silently
+  Override.** If the response *starts with* an Accept token followed by
+  any non-empty trailing words (e.g. `yes please`, `sounds good`, `go
+  for it`, `ok let's go`, `ship it`, `yeah looks great`), the natural
+  reading is "I'm accepting" — but Override sanitization would silently
+  turn `yes please` into the literal branch name `yes-please`. That is
+  almost certainly not what the user meant. Re-prompt: "I read that as
+  acceptance with extra words. Reply `yes` to accept the suggested
+  `<candidate-slug>`, or give me an explicit branch name." Do **not**
+  fall through to Override.
 - **Cancel** — exactly one of: `cancel`, `abort`. Stop the /roadmap run
   entirely. Do not check out a branch, do not start brainstorming.
 - **"Stay on the primary branch" attempts** — any of:
