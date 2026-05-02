@@ -15,7 +15,7 @@ One checklist per `/roadmap` run, created right after step 2a (branch checkout s
 
 ### Filename
 
-`YYYY-MM-DD-<topic>-checklist.md`, where `<topic>` is the existing phase slug rule from §2a of the current SKILL.md (lowercase phase title, drop apostrophes without separator, collapse non-`[a-z0-9]` to hyphens, fall back to `phase-N`). Date is the day step 0 → step 1 fires (start date), so the design / plan / checklist for one run sit alphabetic- ally adjacent in `plans/`.
+`YYYY-MM-DD-<topic>-checklist.md`, where `<topic>` is the existing phase slug rule from §2a of the current SKILL.md (lowercase phase title, drop apostrophes without separator, collapse non-`[a-z0-9]` to hyphens, fall back to `phase-N`). Date is the day step 0 → step 1 fires (start date), so the design / plan / checklist for one run sit alphabetically adjacent in `plans/`.
 
 ### Schema
 
