@@ -4,6 +4,10 @@
 
 This is a **Claude Code plugin marketplace** hosted at `github.com/Ovid/paad`. It distributes the `paad` plugin, which provides skills for architecture analysis, code quality, and development workflows.
 
+After this file is read, announce "CLAUDE.md loaded."
+
+Also, address me as "Ovid" for further verification that you have read this file.
+
 ## Project structure
 
 ```
