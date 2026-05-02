@@ -398,6 +398,63 @@ On any non-zero exit:
 Only proceed to step 3 after the branch decision is made *and* the
 checkout succeeded.
 
+#### Create the run checklist
+
+After `git checkout -b` succeeds, write a new checklist file to:
+
+```
+docs/roadmap/plans/<YYYY-MM-DD>-<phase-slug>-checklist.md
+```
+
+where `<YYYY-MM-DD>` is today's date and `<phase-slug>` is the slug
+derived from the phase title (per the §Per-Phase Checklist File
+filename rule — same rule used for the branch name above; reuse the
+slug, do not re-derive).
+
+Populate the frontmatter:
+
+```yaml
+---
+phase: "<full Phase N: Title text from the roadmap heading>"
+phase_slug: <phase-slug>
+branch: <branch name created above>
+roadmap: docs/roadmap/roadmap.md
+started: <YYYY-MM-DD>
+last_updated: <YYYY-MM-DD>
+design_file: null
+plan_file: null
+decision_log: null
+---
+```
+
+Initialize the body with:
+
+- The H1: `# <full phase title> — Run Checklist`
+- The `## Steps` block (all 11 step boxes including the `6a` and `9a`
+  sub-checkboxes), with steps **1, 2, and 2a pre-checked** (the work
+  to reach this point is done):
+
+  ```
+  - [x] 1. Read roadmap
+  - [x] 2. Identified next unplanned phase
+  - [x] 2a. Working branch created: `<branch>`
+  - [ ] 3. Extract phase context
+  - [ ] 4. Brainstorm → design saved
+  - [ ] 5. Record plan filename in roadmap
+  - [ ] 6. Pushback review
+    - [ ] 6a. Pushback returned all findings
+  - [ ] 7. CLAUDE.md review
+  - [ ] 8. Write implementation plan
+  - [ ] 9. Alignment check
+    - [ ] 9a. Alignment returned all findings
+  - [ ] 10. Write decision log entry
+  - [ ] 11. Announce completion
+  ```
+
+- Empty `## Pushback Findings` and `## Alignment Findings` sections,
+  each with the placeholder line `(populated during step N,
+  transcribed by step 10)`.
+
 ## 3. Extract the Phase Context
 
 Collect the full text of the target phase section from the roadmap (everything between its `## Phase N` heading and the next `## Phase` heading or end of file). This is the spec input for brainstorming.
