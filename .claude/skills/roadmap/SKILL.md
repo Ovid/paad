@@ -160,6 +160,8 @@ First thing step 0 checks: if `docs/roadmap.md` exists at the repo root AND `doc
 
 On `yes`, run the `git mv`s and continue to the scan. On `no` or `cancel`, abort the run and tell the user the new skill cannot operate on the legacy layout. Once `docs/roadmap/roadmap.md` exists, this prompt never fires again for the project. Detection is by presence — no marker file needed.
 
+Once layout migration succeeds and resume detection finds no in-progress checklist, fall through to step 1 → step 2; the archive prompt fires from step 2 if applicable.
+
 ### Scan scope
 
 The scan reads `docs/roadmap/plans/*-checklist.md` exclusively. It never recurses into `docs/roadmap/archive/` — once a roadmap is archived, its in-progress runs are intentionally abandoned and should not surface as resume candidates.
@@ -216,12 +218,17 @@ Tick `- [x] 1. Read roadmap` and bump `last_updated`.
 
 Scan phases in order (Phase 1, 2, 3, … 7). The first phase whose section does **not** have a `<!-- plan: … -->` comment is the target.
 
-If **all** phases have plan comments, announce:
-> **All roadmap phases have been brainstormed.** Nothing to do.
+If **all** phases have plan comments, the roadmap is fully planned. Surface the archive prompt:
 
-…and stop.
+> All phases of this roadmap have been planned. Archive to `docs/roadmap/archive/<slug>/` and start fresh? `yes` / `no` / `later`
 
-Tick `- [x] 2. Identified next unplanned phase` and bump `last_updated`. *Note:* if step 2 detects "every phase has a `<!-- plan: ... -->` comment," do NOT tick — instead invoke the archive lifecycle (Task 8 / §4 of the design) before continuing.
+Parse the response (case-insensitive, leniently as the §2a accept-grammar):
+
+- **`yes`** — derive `<slug>` from the roadmap.md H1 title using the existing slug rule. Run `git mv` to move every entry under `docs/roadmap/` (excluding `archive/` itself) into `docs/roadmap/archive/<slug>/`. Then write a fresh stub `docs/roadmap/roadmap.md` (a minimal H1 + empty Phase Structure table — the user fills it in). Announce: "Archived to `docs/roadmap/archive/<slug>/`. Start a new roadmap by editing `docs/roadmap/roadmap.md`." Stop.
+- **`no`** — write a marker file `docs/roadmap/.archive-declined` containing the SHA-1 of the H1 title. On future runs, if the marker file exists and matches the current H1 hash, skip the archive prompt entirely. Announce the no-op and stop.
+- **`later`** — leave everything in place; do not write a marker. Announce the no-op and stop.
+
+Tick `- [x] 2. Identified next unplanned phase` and bump `last_updated`. *Note:* if step 2 detects "every phase has a `<!-- plan: ... -->` comment," do NOT tick — instead surface the archive prompt described above before continuing.
 
 ## 2a. Suggest a Working Branch (if on the primary branch)
 
