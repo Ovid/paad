@@ -286,6 +286,14 @@ For steps 6 and 9, the sub-checkbox `Na` distinguishes two recovery modes:
 - **`Na` unchecked** → the subagent never returned a complete findings list (never invoked, errored, or timed out). Wipe the corresponding `## Pushback Findings` (or `## Alignment Findings`) section, re-invoke the subagent from scratch, and start over for that step.
 - **`Na` checked, top-level `N` unchecked** → findings list is complete; at least one entry has `Status: open`. Resume the discussion from those open findings; do not re-invoke the subagent.
 
+### Re-validate recorded artifact paths on resume
+
+Before announcing "Resuming Phase X at step N" and handing control back to the per-step prose, **re-check each path-bearing frontmatter field whose corresponding step is ticked**: `design_file` (step 4), `plan_file` (step 8), `decision_log` (step 10). For each ticked-with-recorded-path tuple, run the §"Non-empty" file check (`test -s` + non-whitespace grep) against the recorded path.
+
+On any mismatch — file missing, file zero-size, or file whitespace-only — **stop** and surface to the user. Do **not** auto-recover by clearing the path field or re-running the writing step: the recorded path is part of the run's evidence trail, and silently overwriting it would mask the original loss.
+
+Why this is here: a checklist with `- [x] 4. Brainstorm → design saved` and `design_file: foo.md` ticked means the agent reported step 4 done at some point. If `foo.md` was deleted, moved, or truncated between sessions, downstream steps key off a path that no longer points to the artifact they expect — step 5's plan-comment insertion would point at a non-existent file; step 8 would build on a missing design; step 10's decision log would record a broken `design_file`. Catching this at §0 is cheaper than letting any of those downstream failures land first.
+
 ## 1. Read the Roadmap
 
 Read `docs/roadmap/roadmap.md` in full. Each phase heading (## Phase N: …) may have a `<!-- plan: filename.md -->` comment on the line immediately after the `---` separator that follows that phase's section. This comment marks the phase as already brainstormed.
