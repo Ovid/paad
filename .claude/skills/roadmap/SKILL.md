@@ -94,6 +94,7 @@ Every step ends with "update the checklist (frontmatter `last_updated` + the rel
 | "I'll keep the open pushback issues in my head" | The next session won't have a head. The checklist *is* the memory. |
 | "The artifact exists on disk, the checkbox is redundant" | Both must agree; mismatch means the run is in an unknown state. |
 | "Branch mismatch is fine, I know what I'm doing" | The recorded branch is the safety net. Update or override explicitly — never ignore. |
+| "There are partial findings on disk — let me merge yesterday's into today's pushback output instead of wiping." | Pushback is partly stochastic — yesterday's findings are not a guaranteed subset of today's. Merging silently corrupts the evidence trail. §0's wipe-and-re-invoke is the only safe recovery when 6a is unchecked. |
 
 ### Verification before ticking
 
