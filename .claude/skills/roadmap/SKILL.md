@@ -529,16 +529,9 @@ Invoke the `paad:pushback` skill against the design document just created in `do
 
 After pushback completes, discuss the findings with the user and update the design document to address any valid concerns before moving on.
 
-**Instrumentation for the decision log.** While the pushback discussion happens, mentally track each issue presented so you can write it to the decision log in step 10:
+**Instrumentation for the decision log.** For each issue pushback raises, append a finding entry to the checklist's `## Pushback Findings` section with `Severity` (Critical / Important / Minor — pushback assigns these), `Category` (Contradiction / Feasibility / Scope / Omission / Ambiguity / Security / Other — taken from which check fired), `Summary` (one paragraph written *now* while the context is fresh — this is the prose step 10 will copy verbatim), `Status: open`, and `Resolution: _(pending)_`. When the pushback subagent returns cleanly, tick `6a. Pushback returned all findings`. When discussion closes a finding, flip `Status: closed` and write the resolution using the closed vocabulary (`fixed-in-design`, `fixed-in-plan`, `dismissed-invalid`, `dismissed-out-of-scope`, `accepted-as-is`, `deferred`) followed by a one-sentence detail of what changed or why it was dismissed. Tick top-level step 6 only when **both** 6a is checked AND every finding has `Status: closed`.
 
-- Title (one line, taken from how pushback presented the issue)
-- Severity (Critical / Important / Minor — pushback assigns these)
-- Category (Contradiction / Feasibility / Scope / Omission / Ambiguity / Security / Other — taken from which check fired)
-- One-paragraph summary in your own words
-- Resolution after discussion with the user — exactly one of: `fixed-in-design`, `fixed-in-plan`, `dismissed-invalid`, `dismissed-out-of-scope`, `accepted-as-is`, `deferred`
-- One-sentence resolution detail (what was changed, or why it was dismissed)
-
-If pushback raises zero issues, record that — a clean pushback is itself evidence.
+If pushback raises zero issues, tick 6a and step 6 immediately — a clean pushback is itself evidence, and the empty `## Pushback Findings` section (with the placeholder line preserved) is what step 10 will transcribe.
 
 **Failure handling.** If the `paad:pushback` invocation itself errors,
 times out, or returns malformed output (anything that is not a usable
@@ -548,7 +541,11 @@ last output (or error text). Do **not** record "no issues" or "clean
 pushback" in the decision log: that wording is reserved for runs
 where the skill returned successfully with zero findings. The
 decision log's purpose is evidence; a failed pushback recorded as a
-clean pushback corrupts the evidence trail.
+clean pushback corrupts the evidence trail. If pushback fails on
+retry, leave the (possibly partial) findings in `## Pushback Findings`
+as-is. The 6a sub-checkbox stays unchecked, which signals a future
+resume to wipe the section and re-invoke pushback per §0 (resume
+detection).
 
 ## 7. CLAUDE.md Review
 
@@ -594,13 +591,18 @@ Pass the alignment skill both documents:
 
 After alignment completes, discuss any findings with the user and update the plan (and occasionally the design) to close the gaps. Do not proceed to announcement until the plan and design are aligned, or the user explicitly accepts any remaining gaps.
 
-**Instrumentation for the decision log.** Same as step 6: mentally track each alignment issue (title, severity, category, one-paragraph summary, resolution from the closed vocabulary, one-sentence resolution detail). Alignment categories are: `missing-coverage`, `out-of-scope`, `design-gap`, `tdd-format`. If alignment raises zero issues, record that.
+**Instrumentation for the decision log.** For each issue alignment raises, append a finding entry to the checklist's `## Alignment Findings` section with `Severity` (Critical / Important / Minor — alignment assigns these), `Category` (one of `missing-coverage`, `out-of-scope`, `design-gap`, `tdd-format`), `Summary` (one paragraph written *now* while the context is fresh — this is the prose step 10 will copy verbatim), `Status: open`, and `Resolution: _(pending)_`. When the alignment subagent returns cleanly, tick `9a. Alignment returned all findings`. When discussion closes a finding, flip `Status: closed` and write the resolution using the closed vocabulary (`fixed-in-design`, `fixed-in-plan`, `dismissed-invalid`, `dismissed-out-of-scope`, `accepted-as-is`, `deferred`) followed by a one-sentence detail of what changed or why it was dismissed. Tick top-level step 9 only when **both** 9a is checked AND every finding has `Status: closed`.
+
+If alignment raises zero issues, tick 9a and step 9 immediately — a clean alignment is itself evidence, and the empty `## Alignment Findings` section (with the placeholder line preserved) is what step 10 will transcribe.
 
 **Failure handling.** Same as step 6: if `paad:alignment` errors,
 times out, or returns malformed output, retry **once**, then stop and
 surface to the user. Do **not** record "no issues" or "clean
 alignment" in the decision log unless the skill returned successfully
-with zero findings.
+with zero findings. If alignment fails on retry, leave the (possibly
+partial) findings in `## Alignment Findings` as-is. The 9a
+sub-checkbox stays unchecked, which signals a future resume to wipe
+the section and re-invoke alignment per §0 (resume detection).
 
 ## 10. Write the Decision Log Entry
 
@@ -610,11 +612,17 @@ Write a single Markdown file to `docs/roadmap/decisions/YYYY-MM-DD-<phase-slug>.
 
 **Model field:** read from your own system context (the system prompt always identifies the model you are running on, e.g., `claude-opus-4-7`). Use the bare model ID, no version suffixes.
 
+Transcribe `## Pushback Findings` and `## Alignment Findings` from the checklist into the decision log file. Transcription is a literal copy of every finding minus the `Status:` line (decision log entries are always closed by definition). Severity counts in the decision log frontmatter come from counting the checklist's findings — single source of truth eliminates the "mentally tracked counts don't sum" reconciliation hazard the prior version of this skill warned about.
+
 Follow the schema in §Appendix: Decision Log Entry Schema (at the bottom of this skill) exactly — YAML frontmatter, then the body sections.
 
-Then update `docs/roadmap/decisions/INDEX.md` by **prepending** one row to the `## Entries` table (newest entry on top). The row contains: date, phase title, model, pushback C/I/M counts, alignment C/I/M counts, and a relative link to the entry file just written.
+Then update `docs/roadmap/decisions/INDEX.md` by **prepending** one row to the `## Entries` table (newest entry on top). The row contains: date, phase title, model, pushback C/I/M counts (counted from the checklist's `## Pushback Findings`), alignment C/I/M counts (counted from the checklist's `## Alignment Findings`), and a relative link to the entry file just written.
 
-If a /roadmap run produced zero pushback issues *and* zero alignment issues, still write the entry and the index row — a clean run is evidence too.
+If a /roadmap run produced zero pushback issues *and* zero alignment issues, still write the entry and the index row — a clean run is evidence too. The body sections are the empty-section single-line form from the §Appendix schema (`Pushback raised no issues.` / `Alignment raised no issues.`).
+
+**Severity-count reconciliation.** Severity counts in frontmatter (`pushback.critical` + `important` + `minor` = `pushback.total`, and likewise for `alignment`) must equal the number of findings of each severity in the corresponding checklist section. If the counts derived from the checklist do not sum to `total`, **stop** and reconcile with the user before writing the entry. Because findings are now written to the checklist as they arise, the most likely cause of a mismatch is a finding whose `Severity` was edited mid-discussion without re-scanning the section, or two checklist entries that should have been merged into one but were left separate. Do **not** adjust counts to satisfy the invariant; the invariant is an integrity check, not a target — fix the checklist (the source of truth) and re-derive.
+
+After the decision log is written, **verify it exists and is non-empty** (`test -s <path>`); if either check fails, surface to the user and stop. Then set `decision_log: <path>` in the checklist frontmatter and tick `- [x] 10. Write decision log entry`.
 
 ## 11. Announce Completion
 
