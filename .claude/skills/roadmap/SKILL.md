@@ -111,6 +111,10 @@ decision_log: null
 
 Every step ends with "update the checklist (frontmatter `last_updated` + the relevant box + any frontmatter path field) before announcing or moving on." No exceptions.
 
+### Shell-command hardening
+
+Whenever this skill invokes `git mv`, **always** include the `--` separator: `git mv -- <src> <dst>`. Without it, a path that begins with `-` (`-foo.md`, `-checklist.md` written by an unusual brainstorming output) is parsed as a flag and either errors or, worse, causes git to act on something else. The `--` separator is a one-character hardening cost; document it as the project convention so no `git mv` invocation in this skill silently omits it.
+
 ### Rationalization table
 
 | Excuse | Reality |
@@ -328,7 +332,7 @@ If **all** phases have plan comments, the roadmap is fully planned. Surface the 
 
 Parse the response (case-insensitive, leniently as the §2a accept-grammar):
 
-- **`yes`** — derive `<slug>` from the roadmap.md H1 title using the §Appendix slug rule. **Before any `git mv`, check whether `docs/roadmap/archive/<slug>/` already exists** (e.g., a recycled roadmap title or a restored earlier roadmap). On collision, append a disambiguator until the path is free — first try `<slug>-<YYYY-MM-DD>` using today's date; if that also exists, append a numeric counter (`<slug>-<YYYY-MM-DD>-2`, `-3`, …). Surface the chosen disambiguated path to the user *before* moving so they know where the archive landed. Then run `git mv` to move every entry under `docs/roadmap/` (excluding `archive/` itself) into `docs/roadmap/archive/<chosen-slug>/`. Write a fresh stub `docs/roadmap/roadmap.md` (a minimal H1 + empty Phase Structure table — the user fills it in). Announce: "Archived to `docs/roadmap/archive/<chosen-slug>/`. Start a new roadmap by editing `docs/roadmap/roadmap.md`." Stop.
+- **`yes`** — derive `<slug>` from the roadmap.md H1 title using the §Appendix slug rule. **Before any `git mv`, check whether `docs/roadmap/archive/<slug>/` already exists** (e.g., a recycled roadmap title or a restored earlier roadmap). On collision, append a disambiguator until the path is free — first try `<slug>-<YYYY-MM-DD>` using today's date; if that also exists, append a numeric counter (`<slug>-<YYYY-MM-DD>-2`, `-3`, …). Surface the chosen disambiguated path to the user *before* moving so they know where the archive landed. Then run `git mv -- <src> <dst>` for every entry under `docs/roadmap/` (excluding `archive/` itself) into `docs/roadmap/archive/<chosen-slug>/`. Write a fresh stub `docs/roadmap/roadmap.md` (a minimal H1 + empty Phase Structure table — the user fills it in). Announce: "Archived to `docs/roadmap/archive/<chosen-slug>/`. Start a new roadmap by editing `docs/roadmap/roadmap.md`." Stop.
 - **`no`** — write a marker file `docs/roadmap/.archive-declined` containing the SHA-1 of the H1 title. On future runs, if the marker file exists and matches the current H1 hash, skip the archive prompt entirely. Announce the no-op and stop. **Compute the hash without piping the title through a shell command line** — the H1 is contributor-controlled and can contain `$(...)`, backticks, `;`, or other shell metacharacters. Two safe methods, in order of preference: (a) compute SHA-1 in the agent's runtime (e.g., a Python `hashlib.sha1(title.encode()).hexdigest()` call invoked through the in-process tool surface), or (b) write the title to a temporary file with no shell interpolation (heredoc with a single-quoted delimiter, e.g. `<<'__H1__'`), then run `sha1sum < /tmp/h1.txt`. Do **not** use `echo "$H1" | sha1sum` or `printf '%s' "$H1" | sha1sum` — both interpolate `$H1` through the shell.
 - **`later`** — leave everything in place; do not write a marker. Announce the no-op and stop.
 
