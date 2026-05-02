@@ -206,6 +206,7 @@ digraph step0 {
   "stale check" [shape=diamond];
   "prompt resume vs archive" [shape=box];
   "jump to first unchecked step" [shape=doublecircle];
+  "current step 1" [shape=doublecircle];
 
   "start" -> "old layout?";
   "old layout?" -> "prompt to migrate" [label="docs/roadmap.md exists\n+ docs/roadmap/ doesn't"];
