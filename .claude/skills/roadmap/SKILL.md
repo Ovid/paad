@@ -104,8 +104,8 @@ decision_log: null
 - `design_file`, `plan_file`, `decision_log` go from `null` to a path the moment each artifact is written.
 - `last_updated` is bumped on every write (lets stale-checklist detection work without filesystem mtime).
 - **Summary** is a one-paragraph description of the finding, written by pushback (or alignment) at the moment the issue is first raised — while the context is still in head. It is *not* generated at transcription time. This is the only field step 10 carries forward as written prose, so writing it now (not later) is what eliminates the "mentally tracked" failure mode the design exists to fix.
-- **Status vocabulary** (closed set): `open | closed`. While `open`, the finding is still being discussed. When `closed`, the `Resolution:` line uses one of the existing decision-log resolution values verbatim: `fixed-in-design`, `fixed-in-plan`, `dismissed-invalid`, `dismissed-out-of-scope`, `accepted-as-is`, `deferred`. Status itself has no decision-log analog (every entry there is closed by definition); step 10's transcription drops the `Status:` line and is otherwise a literal copy.
-- **Severity / Category** vocabularies are the existing ones from the pushback and alignment sections of the current SKILL.md.
+- **Status vocabulary** (closed set): `open | closed`. While `open`, the finding is still being discussed. When `closed`, the `Resolution:` line uses one of the values from the §Appendix Resolution vocabulary verbatim. Status itself has no decision-log analog (every entry there is closed by definition); step 10's transcription drops the `Status:` line and is otherwise a literal copy.
+- **Severity / Category** vocabularies are defined authoritatively in §Appendix Vocabularies (Severity, Pushback Category, Alignment Category). When the values listed there change, they change here — do not duplicate the lists.
 - **Sub-checkboxes for steps 6 and 9.** Each has a `Na` sub-checkbox (`6a. Pushback returned all findings`, `9a. Alignment returned all findings`) flipped only when the corresponding subagent returns cleanly. The top-level `- [x] N` is checked when **both** Na is checked AND no `Status: open` entries remain in the corresponding findings section. The "no open findings" half is a derived condition computed from the file, not a separate checkbox.
 - **`phase` field YAML escaping.** Use **single-quoted** YAML scalars: `phase: '<heading>'`. Embedded apostrophes are doubled (`Editor's` → `Editor''s`). Reject literal newlines — if the H2 heading wraps to multiple lines (it shouldn't), take the first line only. No other escaping is required. Why single-quoted: a phase title is contributor-controlled and can contain `"` or `\`; double-quoted YAML would treat both specially, and a crafted title (e.g., one ending with `"` followed by a newline and `design_file: /etc/passwd`) could inject a sibling frontmatter key. Single-quoted scalars require only the `''` doubling, which is harder to weaponize and trivial to apply correctly.
 
@@ -695,7 +695,7 @@ Invoke the `paad:pushback` skill against the design document just created in `do
 
 After pushback completes, discuss the findings with the user and update the design document to address any valid concerns before moving on.
 
-**Instrumentation for the decision log.** For each issue pushback raises, append a finding entry to the checklist's `## Pushback Findings` section with `Severity` (Critical / Important / Minor — pushback assigns these), `Category` (Contradiction / Feasibility / Scope / Omission / Ambiguity / Security / Other — taken from which check fired), `Summary` (one paragraph written *now* while the context is fresh — this is the prose step 10 will copy verbatim), `Status: open`, and `Resolution: _(pending)_`. When the pushback subagent returns cleanly, tick `6a. Pushback returned all findings`. When discussion closes a finding, flip `Status: closed` and write the resolution using the closed vocabulary (`fixed-in-design`, `fixed-in-plan`, `dismissed-invalid`, `dismissed-out-of-scope`, `accepted-as-is`, `deferred`) followed by a one-sentence detail of what changed or why it was dismissed. Tick top-level step 6 only when **both** 6a is checked AND every finding has `Status: closed`.
+**Instrumentation for the decision log.** For each issue pushback raises, append a finding entry to the checklist's `## Pushback Findings` section with `Severity` (per §Appendix Vocabularies / Severity — pushback assigns these), `Category` (per §Appendix Vocabularies / Pushback Category — taken from which check fired), `Summary` (one paragraph written *now* while the context is fresh — this is the prose step 10 will copy verbatim), `Status: open`, and `Resolution: _(pending)_`. When the pushback subagent returns cleanly, tick `6a. Pushback returned all findings`. When discussion closes a finding, flip `Status: closed` and write the resolution using a value from the §Appendix Vocabularies / Resolution set, followed by a one-sentence detail of what changed or why it was dismissed. Tick top-level step 6 only when **both** 6a is checked AND every finding has `Status: closed`.
 
 If pushback raises zero issues, tick 6a and step 6 immediately — a clean pushback is itself evidence, and the empty `## Pushback Findings` section (with the placeholder line preserved) is what step 10 will transcribe.
 
@@ -757,7 +757,7 @@ Pass the alignment skill both documents:
 
 After alignment completes, discuss any findings with the user and update the plan (and occasionally the design) to close the gaps. Do not proceed to announcement until the plan and design are aligned, or the user explicitly accepts any remaining gaps.
 
-**Instrumentation for the decision log.** For each issue alignment raises, append a finding entry to the checklist's `## Alignment Findings` section with `Severity` (Critical / Important / Minor — alignment assigns these), `Category` (one of `missing-coverage`, `out-of-scope`, `design-gap`, `tdd-format`), `Summary` (one paragraph written *now* while the context is fresh — this is the prose step 10 will copy verbatim), `Status: open`, and `Resolution: _(pending)_`. When the alignment subagent returns cleanly, tick `9a. Alignment returned all findings`. When discussion closes a finding, flip `Status: closed` and write the resolution using the closed vocabulary (`fixed-in-design`, `fixed-in-plan`, `dismissed-invalid`, `dismissed-out-of-scope`, `accepted-as-is`, `deferred`) followed by a one-sentence detail of what changed or why it was dismissed. Tick top-level step 9 only when **both** 9a is checked AND every finding has `Status: closed`.
+**Instrumentation for the decision log.** For each issue alignment raises, append a finding entry to the checklist's `## Alignment Findings` section with `Severity` (per §Appendix Vocabularies / Severity — alignment assigns these), `Category` (per §Appendix Vocabularies / Alignment Category), `Summary` (one paragraph written *now* while the context is fresh — this is the prose step 10 will copy verbatim), `Status: open`, and `Resolution: _(pending)_`. When the alignment subagent returns cleanly, tick `9a. Alignment returned all findings`. When discussion closes a finding, flip `Status: closed` and write the resolution using a value from the §Appendix Vocabularies / Resolution set, followed by a one-sentence detail of what changed or why it was dismissed. Tick top-level step 9 only when **both** 9a is checked AND every finding has `Status: closed`.
 
 If alignment raises zero issues, tick 9a and step 9 immediately — a clean alignment is itself evidence, and the empty `## Alignment Findings` section (with the placeholder line preserved) is what step 10 will transcribe.
 
@@ -843,6 +843,8 @@ Counts come from a single scan of the checklist findings, so the sum holding is 
 
 ### Body sections
 
+The inline alternation lists below mirror §Appendix Vocabularies. If a vocabulary value changes, update §Appendix Vocabularies first; this template tracks it.
+
 ```markdown
 # <Phase title> — Decision Log
 
@@ -852,7 +854,7 @@ Counts come from a single scan of the checklist findings, so the sum holding is 
 - **Severity:** Critical | Important | Minor
 - **Category:** Contradiction | Feasibility | Scope | Omission | Ambiguity | Security | Other
 - **Summary:** <one paragraph in your own words>
-- **Resolution:** <one of the resolution values below> — <one sentence: what was changed, or why it was dismissed>
+- **Resolution:** <one of the §Appendix Vocabularies / Resolution values> — <one sentence: what was changed, or why it was dismissed>
 
 (Repeat per issue. If pushback raised no issues, replace this whole section with the single line: "Pushback raised no issues.")
 
@@ -862,7 +864,7 @@ Counts come from a single scan of the checklist findings, so the sum holding is 
 - **Severity:** Critical | Important | Minor
 - **Category:** missing-coverage | out-of-scope | design-gap | tdd-format
 - **Summary:** <one paragraph in your own words>
-- **Resolution:** <one of the resolution values below> — <one sentence: what was changed, or why it was dismissed>
+- **Resolution:** <one of the §Appendix Vocabularies / Resolution values> — <one sentence: what was changed, or why it was dismissed>
 
 (Repeat per issue. If alignment raised no issues, replace this whole section with the single line: "Alignment raised no issues.")
 
@@ -872,7 +874,36 @@ Counts come from a single scan of the checklist findings, so the sum holding is 
 - Alignment raised N issues; M resulted in plan changes, ... .
 ```
 
-### Resolution vocabulary (closed set)
+### Vocabularies (authoritative — referenced from §Field rules and steps 6 / 9)
+
+These three closed-set vocabularies are defined here once and referenced from every other location in the skill that needs them. If a value is added or changed, change it **here** — every cross-reference resolves to this section.
+
+#### Severity (closed set)
+
+- `Critical` — fundamental defect; must be fixed before progressing
+- `Important` — meaningful concern; should be fixed unless explicitly deferred
+- `Minor` — nice-to-fix or stylistic; safe to ship as-is
+
+(Pushback and alignment both use the same severity values.)
+
+#### Pushback Category (closed set)
+
+- `Contradiction` — internal contradiction in the design
+- `Feasibility` — implementability, performance, or constraint concerns
+- `Scope` — too large, too small, or bundling unrelated work
+- `Omission` — required content missing
+- `Ambiguity` — under-specified prose
+- `Security` — security-relevant issue
+- `Other` — does not fit the above (use sparingly; prefer one of the named values)
+
+#### Alignment Category (closed set)
+
+- `missing-coverage` — design requirement not traced to any plan task
+- `out-of-scope` — plan task not traced to any design requirement
+- `design-gap` — plan reveals a hole in the design itself
+- `tdd-format` — task is not expressed as red/green/refactor
+
+#### Resolution vocabulary (closed set)
 
 - `fixed-in-design` — the design document was edited to address the issue
 - `fixed-in-plan` — the implementation plan was edited to address the issue
