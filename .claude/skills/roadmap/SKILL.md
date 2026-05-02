@@ -5,7 +5,7 @@ description: Read the feature roadmap, find the next unplanned phase, brainstorm
 
 ## Start
 
-Announce: **"Checking roadmap for next unplanned phase…"**
+Announce: **"Checking for in-progress runs and roadmap layout…"**
 
 Read @CLAUDE.md.
 
@@ -102,6 +102,92 @@ Marking step 4 done requires `design_file` to exist at the recorded path and be 
 ### Brainstorming non-resumability
 
 If interrupted mid-step-4, re-run brainstorming. Step 4's box flips only when the design file is written.
+
+## 0. Resume Detection
+
+A new step that runs before everything else. Before reading the roadmap or doing any phase work, the skill checks for an in-progress run that needs to be resumed and verifies the project is on the current directory layout.
+
+```dot
+digraph step0 {
+  "start" [shape=doublecircle];
+  "old layout?" [shape=diamond];
+  "prompt to migrate" [shape=box];
+  "abort run" [shape=box];
+  "scan active plans/*-checklist.md with unchecked steps" [shape=box];
+  "candidates" [shape=diamond];
+  "fresh run" [shape=box];
+  "ask which" [shape=box];
+  "verify branch" [shape=diamond];
+  "branch matches" [shape=box];
+  "branch differs" [shape=box];
+  "recorded branch missing" [shape=box];
+  "stale check" [shape=diamond];
+  "prompt resume vs archive" [shape=box];
+  "jump to first unchecked step" [shape=doublecircle];
+
+  "start" -> "old layout?";
+  "old layout?" -> "prompt to migrate" [label="docs/roadmap.md exists\n+ docs/roadmap/ doesn't"];
+  "old layout?" -> "scan active plans/*-checklist.md with unchecked steps" [label="already migrated\nor fresh project"];
+  "prompt to migrate" -> "scan active plans/*-checklist.md with unchecked steps" [label="yes (run git mv)"];
+  "prompt to migrate" -> "abort run" [label="no/cancel"];
+  "scan active plans/*-checklist.md with unchecked steps" -> "candidates";
+  "candidates" -> "fresh run" [label="0"];
+  "candidates" -> "verify branch" [label="1"];
+  "candidates" -> "ask which" [label="2+"];
+  "ask which" -> "verify branch";
+  "verify branch" -> "branch matches" [label="match"];
+  "verify branch" -> "branch differs" [label="mismatch"];
+  "verify branch" -> "recorded branch missing" [label="gone"];
+  "branch matches" -> "stale check";
+  "branch differs" -> "stale check" [label="user picked continue/switch"];
+  "recorded branch missing" -> "stale check" [label="user picked recreate/archive"];
+  "stale check" -> "prompt resume vs archive" [label="last_updated > 30d"];
+  "stale check" -> "jump to first unchecked step" [label="recent"];
+  "prompt resume vs archive" -> "jump to first unchecked step" [label="resume"];
+  "fresh run" -> "current step 1";
+}
+```
+
+### Layout migration
+
+First thing step 0 checks: if `docs/roadmap.md` exists at the repo root AND `docs/roadmap/roadmap.md` does not, the project is on the legacy layout. Prompt:
+
+> Old roadmap layout detected:
+>   - `docs/roadmap.md` (will move to `docs/roadmap/roadmap.md`)
+>   - `docs/plans/` (will move to `docs/roadmap/plans/`)
+>
+> Run the migration now? `yes` / `no` / `cancel`
+
+On `yes`, run the `git mv`s and continue to the scan. On `no` or `cancel`, abort the run and tell the user the new skill cannot operate on the legacy layout. Once `docs/roadmap/roadmap.md` exists, this prompt never fires again for the project. Detection is by presence — no marker file needed.
+
+### Scan scope
+
+The scan reads `docs/roadmap/plans/*-checklist.md` exclusively. It never recurses into `docs/roadmap/archive/` — once a roadmap is archived, its in-progress runs are intentionally abandoned and should not surface as resume candidates.
+
+### Branch verification
+
+| Recorded `branch` vs `git branch --show-current` | Action |
+|---|---|
+| Match | Silently proceed; announce "Resuming Phase X at step N" |
+| Mismatch | Prompt: switch to recorded, continue here (updates `branch` field), or cancel |
+| Recorded branch no longer exists locally | Prompt: archive the stale checklist, recreate on current branch, or cancel |
+
+### Multiple candidates
+
+If scan returns two or more checklists with unchecked steps, list them and ask which to resume; offer "none — start fresh" as a fourth option.
+
+### Stale-checklist threshold
+
+If `last_updated` is more than 30 days ago, prompt before resuming. Threshold lives as a one-line constant in the SKILL.md so it is easy to tune.
+
+### Jumping to the right step
+
+The first unchecked `- [ ]` in `## Steps` (treating a top-level step as unchecked if either it or any of its sub-checkboxes is unchecked) is the target. The label after the number identifies which step's prose to load.
+
+For steps 6 and 9, the sub-checkbox `Na` distinguishes two recovery modes:
+
+- **`Na` unchecked** → the subagent never returned a complete findings list (never invoked, errored, or timed out). Wipe the corresponding `## Pushback Findings` (or `## Alignment Findings`) section, re-invoke the subagent from scratch, and start over for that step.
+- **`Na` checked, top-level `N` unchecked** → findings list is complete; at least one entry has `Status: open`. Resume the discussion from those open findings; do not re-invoke the subagent.
 
 ## 1. Read the Roadmap
 
