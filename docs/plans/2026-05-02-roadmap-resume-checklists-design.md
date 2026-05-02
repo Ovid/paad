@@ -124,9 +124,11 @@ decision_log: null
 - [x] 4. Brainstorm → design saved
 - [ ] 5. Record plan filename in roadmap
 - [ ] 6. Pushback review
+  - [ ] 6a. Pushback returned all findings
 - [ ] 7. CLAUDE.md review
 - [ ] 8. Write implementation plan
 - [ ] 9. Alignment check
+  - [ ] 9a. Alignment returned all findings
 - [ ] 10. Write decision log entry
 - [ ] 11. Announce completion
 
@@ -136,12 +138,14 @@ decision_log: null
 ### [1] Lens 3 spec contradicts §Key Architecture Decisions
 - **Severity:** Critical
 - **Category:** Contradiction
+- **Summary:** The Lens 3 spec requires X, but §Key Architecture Decisions in CLAUDE.md mandates Y for cross-cutting consistency. The two cannot both hold; one must yield.
 - **Status:** open
 - **Resolution:** _(pending)_
 
 ### [2] Phase scope bundles refactor + new feature
 - **Severity:** Important
 - **Category:** Scope
+- **Summary:** This phase combines the references-package extraction (refactor) with new lens content (feature), violating the one-refactor-OR-one-feature PR rule from CLAUDE.md.
 - **Status:** closed
 - **Resolution:** fixed-in-design — split into 2a (refactor) + 2b (feature)
 
@@ -157,14 +161,29 @@ decision_log: null
   moment each artifact is written.
 - `last_updated` is bumped on every write (lets stale-checklist detection
   work without filesystem mtime).
+- **Summary** is a one-paragraph description of the finding, written by
+  pushback (or alignment) at the moment the issue is first raised — while
+  the context is still in head. It is *not* generated at transcription
+  time. This is the only field step 10 carries forward as written prose,
+  so writing it now (not later) is what eliminates the "mentally tracked"
+  failure mode the design exists to fix.
 - **Status vocabulary** (closed set): `open | closed`. While `open`, the
   finding is still being discussed. When `closed`, the `Resolution:` line
   uses one of the existing decision-log resolution values verbatim:
   `fixed-in-design`, `fixed-in-plan`, `dismissed-invalid`,
-  `dismissed-out-of-scope`, `accepted-as-is`, `deferred`. This keeps
-  step 10's transcription a literal copy.
+  `dismissed-out-of-scope`, `accepted-as-is`, `deferred`. Status itself
+  has no decision-log analog (every entry there is closed by definition);
+  step 10's transcription drops the `Status:` line and is otherwise a
+  literal copy.
 - **Severity / Category** vocabularies are the existing ones from the
   pushback and alignment sections of the current SKILL.md.
+- **Sub-checkboxes for steps 6 and 9.** Each has a `Na` sub-checkbox
+  (`6a. Pushback returned all findings`, `9a. Alignment returned all
+  findings`) flipped only when the corresponding subagent returns
+  cleanly. The top-level `- [x] N` is checked when **both** Na is
+  checked AND no `Status: open` entries remain in the corresponding
+  findings section. The "no open findings" half is a derived condition
+  computed from the file, not a separate checkbox.
 
 ### 3. Resume detection (new step 0)
 
@@ -173,7 +192,10 @@ A new step that runs before everything else.
 ```dot
 digraph step0 {
   "start" [shape=doublecircle];
-  "scan plans/*-checklist.md with unchecked steps" [shape=box];
+  "old layout?" [shape=diamond];
+  "prompt to migrate" [shape=box];
+  "abort run" [shape=box];
+  "scan active plans/*-checklist.md with unchecked steps" [shape=box];
   "candidates" [shape=diamond];
   "fresh run" [shape=box];
   "ask which" [shape=box];
@@ -185,8 +207,12 @@ digraph step0 {
   "prompt resume vs archive" [shape=box];
   "jump to first unchecked step" [shape=doublecircle];
 
-  "start" -> "scan plans/*-checklist.md with unchecked steps";
-  "scan plans/*-checklist.md with unchecked steps" -> "candidates";
+  "start" -> "old layout?";
+  "old layout?" -> "prompt to migrate" [label="docs/roadmap.md exists\n+ docs/roadmap/ doesn't"];
+  "old layout?" -> "scan active plans/*-checklist.md with unchecked steps" [label="already migrated\nor fresh project"];
+  "prompt to migrate" -> "scan active plans/*-checklist.md with unchecked steps" [label="yes (run git mv)"];
+  "prompt to migrate" -> "abort run" [label="no/cancel"];
+  "scan active plans/*-checklist.md with unchecked steps" -> "candidates";
   "candidates" -> "fresh run" [label="0"];
   "candidates" -> "verify branch" [label="1"];
   "candidates" -> "ask which" [label="2+"];
@@ -204,6 +230,27 @@ digraph step0 {
 }
 ```
 
+**Layout migration (first thing step 0 checks):** if `docs/roadmap.md`
+exists at the repo root AND `docs/roadmap/roadmap.md` does not, the
+project is on the legacy layout. Prompt:
+
+> Old roadmap layout detected:
+>   - `docs/roadmap.md` (will move to `docs/roadmap/roadmap.md`)
+>   - `docs/plans/` (will move to `docs/roadmap/plans/`)
+>
+> Run the migration now? `yes` / `no` / `cancel`
+
+On `yes`, run the `git mv`s and continue to the scan. On `no` or
+`cancel`, abort the run and tell the user the new skill cannot operate
+on the legacy layout. Once `docs/roadmap/roadmap.md` exists, this prompt
+never fires again for the project. Detection is by presence — no marker
+file needed.
+
+**Scan scope:** the scan reads `docs/roadmap/plans/*-checklist.md`
+exclusively. It never recurses into `docs/roadmap/archive/` — once a
+roadmap is archived, its in-progress runs are intentionally abandoned
+and should not surface as resume candidates.
+
 **Branch verification:**
 
 | Recorded `branch` vs `git branch --show-current` | Action |
@@ -220,20 +267,43 @@ fresh" as a fourth option.
 ago, prompt before resuming. Threshold lives as a one-line constant in
 the SKILL.md so it is easy to tune.
 
-**Jumping to the right step:** the first `- [ ]` in `## Steps` is the
-target. The label after the number identifies which step's prose to
-load. Steps 6 and 9 have a special re-entry: if any finding has
-`Status: open`, resume the discussion from the open finding rather than
-re-invoking the whole subagent.
+**Jumping to the right step:** the first unchecked `- [ ]` in `## Steps`
+(treating a top-level step as unchecked if either it or any of its
+sub-checkboxes is unchecked) is the target. The label after the number
+identifies which step's prose to load.
+
+For steps 6 and 9, the sub-checkbox `Na` distinguishes two recovery
+modes:
+
+- **`Na` unchecked** → the subagent never returned a complete findings
+  list (never invoked, errored, or timed out). Wipe the corresponding
+  `## Pushback Findings` (or `## Alignment Findings`) section, re-invoke
+  the subagent from scratch, and start over for that step.
+- **`Na` checked, top-level `N` unchecked** → findings list is complete;
+  at least one entry has `Status: open`. Resume the discussion from
+  those open findings; do not re-invoke the subagent.
 
 ### 4. Lifecycle: archive on completion
 
-The Phase Structure table in `roadmap.md` already tracks per-phase status
-(`Planned` / `In Progress` / `Done`). When `/roadmap` is invoked and
-every row is `Done`, instead of the current "all phases brainstormed"
-no-op, prompt:
+**Trigger:** the existing skill's step 2 already detects "every phase
+has a `<!-- plan: ... -->` comment" — today it produces the no-op message
+*"All roadmap phases have been brainstormed. Nothing to do."* That is
+the trigger. When the condition is true, replace the no-op with the
+archive prompt.
 
-> All phases of this roadmap are `Done`. Archive to
+**Why "all planned" and not "all Done":** the existing step 5b only
+flips the *previous* phase to `Done` when starting brainstorming on the
+next phase. The last phase in a roadmap is therefore never auto-marked
+`Done` by `/roadmap`; reaching "all Done" requires the user to manually
+edit the table and re-run `/roadmap` purely to see the prompt — a
+footgun that would mean the prompt rarely fires. "Every phase has a
+plan comment" is a signal `/roadmap` actually owns and writes itself
+(at step 5a). The Phase Structure table's `Done` column remains useful
+as human-visible status, but the archive trigger is decoupled from it.
+
+**Prompt:**
+
+> All phases of this roadmap have been planned. Archive to
 > `docs/roadmap/archive/<slug>/` and start fresh? `yes` / `no` / `later`
 
 - **`yes`**: `git mv` the contents of `docs/roadmap/` (excluding
@@ -241,8 +311,11 @@ no-op, prompt:
   from the roadmap's H1 title using the existing slug rule. Then drop a
   fresh `roadmap.md` template (a stub the user fills in for the next
   initiative).
-- **`no`** / **`later`**: leave everything in place. `no` suppresses the
-  prompt for this run; `later` re-prompts on the next run.
+- **`no`**: suppress the prompt until the active roadmap changes (a
+  marker — e.g., a `.archive-declined` sibling file in `docs/roadmap/`
+  with the H1 title's hash — lets subsequent runs see "archive
+  previously declined for this roadmap" and skip).
+- **`later`**: leave everything in place; re-prompt on the next run.
 
 ### 5. Skill compliance additions
 
@@ -285,21 +358,28 @@ Concrete edits the implementation phase will make:
 - **Step 4**: After brainstorming writes the design doc, set
   `design_file` in frontmatter and tick step 4.
 - **Step 5**: After updating `roadmap.md`, tick step 5.
-- **Step 6**: Replace "mentally track each issue" with "for each issue
-  pushback raises, append a finding entry to the checklist's `## Pushback
-  Findings` section with `Status: open` and `Resolution: _(pending)_`.
-  When discussion closes a finding, flip `Status: closed` and write the
-  resolution using the closed vocabulary." Tick step 6 only when every
-  finding has `Status: closed`.
+- **Step 6**: Replace "mentally track each issue" with: for each issue
+  pushback raises, append a finding entry to the checklist's
+  `## Pushback Findings` section with `Severity`, `Category`, `Summary`
+  (one paragraph written *now* while the context is fresh — this is the
+  prose step 10 will copy verbatim), `Status: open`, and
+  `Resolution: _(pending)_`. When the pushback subagent returns cleanly,
+  tick `6a. Pushback returned all findings`. When discussion closes a
+  finding, flip `Status: closed` and write the resolution using the
+  closed vocabulary. Tick top-level step 6 only when **both** 6a is
+  checked AND every finding has `Status: closed`.
 - **Step 7**: Tick after the CLAUDE.md review discussion concludes.
 - **Step 8**: After plan written, set `plan_file` and tick step 8.
-- **Step 9**: Same pattern as step 6, against `## Alignment Findings`.
+- **Step 9**: Same pattern as step 6, against `## Alignment Findings`
+  and the `9a. Alignment returned all findings` sub-checkbox.
 - **Step 10**: Transcribe `## Pushback Findings` and `## Alignment
-  Findings` from the checklist into the decision log file. Severity
-  counts in the decision log frontmatter come from counting the
-  checklist's findings — single source of truth eliminates the
-  "mentally tracked counts don't sum" reconciliation hazard the current
-  skill warns about. Set `decision_log` and tick step 10.
+  Findings` from the checklist into the decision log file. Transcription
+  is a literal copy of every finding minus the `Status:` line (decision
+  log entries are always closed by definition). Severity counts in the
+  decision log frontmatter come from counting the checklist's findings
+  — single source of truth eliminates the "mentally tracked counts
+  don't sum" reconciliation hazard the current skill warns about. Set
+  `decision_log` and tick step 10.
 - **Step 11**: After announce, tick step 11. The checklist is now fully
   ticked and serves as the historical record of the run.
 
@@ -320,10 +400,14 @@ written by the updated skill lands in `docs/roadmap/plans/`.
 The skill's hard-coded path `docs/roadmap.md` becomes
 `docs/roadmap/roadmap.md` everywhere it is referenced (one prose change).
 
-For other projects using `/roadmap`: the migration is the same shape but
-the user runs it manually the first time the updated skill encounters
-their repo. Step 0 detects the old layout, prompts, and runs the moves on
-acceptance.
+For other projects using `/roadmap`: step 0's first action is the
+"Layout migration" check described in §3 — if `docs/roadmap.md` exists
+at the repo root AND `docs/roadmap/roadmap.md` does not, the skill
+prompts the user, runs the `git mv`s on acceptance, and then proceeds
+to resume detection. Detection is by presence; once
+`docs/roadmap/roadmap.md` exists, the prompt never fires again for that
+project. The user does not need to edit any config or run any
+out-of-band commands.
 
 ## Open questions / future work
 
@@ -350,8 +434,10 @@ RED-GREEN-REFACTOR:
    rationalization table, re-test until the agent complies under
    pressure.
 
-The migration step (`git mv docs/roadmap.md docs/roadmap/roadmap.md`) is
-a one-time housekeeping change separable from the SKILL.md edits — the
-plan should consider whether to land them in one PR or two. PR scope
-rule (one refactor or one feature) suggests two: a structural-move PR
-followed by a behavior-change PR.
+**PR scope decision:** the work bundles a directory restructure (refactor)
+with the resume-checklist mechanism and the archive lifecycle (two new
+features). Strict CLAUDE.md PR scope (one refactor OR one feature per
+PR) would suggest 2–3 PRs. The user has explicitly opted for a **single
+PR** because this is blocking other work; the override is a deliberate
+trade-off (faster ship, larger review surface) and should be noted in
+the PR description so reviewers know the size is intentional.
