@@ -345,16 +345,25 @@ Before treating Phase N as the brainstorm target, look up the immediately-previo
 
 - **Phase N is Phase 1** (no predecessor) — skip this check; proceed.
 - **Phase N-1 status is `Done`** — proceed.
-- **Phase N-1 status is `In Progress`** — likely shipped but not yet marked. Ask:
+- **Phase N-1 status is `In Progress`** — pick up where you left off. Two scenarios:
 
-  > Phase N-1 (`<title>`) is `In Progress` in the Phase Structure table. Did you ship and merge it? If so, I can mark it `Done` and continue with Phase N planning.
+  - Phase N-1 was shipped and merged but the table wasn't updated → flip to `Done`, advance to Phase N planning.
+  - Phase N-1 implementation is still underway → resume it via `superpowers:executing-plans`.
+
+  /roadmap is supposed to be the always-correct entry point; refusing to advance is not a substitute for resuming. Ask:
+
+  > Phase N-1 (`<title>`) is `In Progress` in the Phase Structure table.
   >
-  > Reply `yes` to flip Phase N-1 to `Done` and proceed, `no` if Phase N-1 isn't actually shipped (cancels /roadmap so you can finish it), or `cancel` to stop without changing anything.
+  > - `done` — Phase N-1 was shipped and merged. I'll flip it to `Done` and continue with Phase N planning.
+  > - `resume` — Phase N-1 implementation is still underway. Pick it up via `superpowers:executing-plans`.
+  > - `cancel` — stop without changes.
 
   Parse the response case-insensitively (trailing `.`/`!`/`,` ignored):
-  - `yes`, `y`, `done`, `mark it`, `flip it`, `ship it` → edit `docs/roadmap/roadmap.md` to change the Phase N-1 row's status cell from `In Progress` to `Done`, re-read the table to verify the change landed, then proceed.
-  - `no`, `n`, `not yet`, `not done` → stop the /roadmap run; tell the user to finish Phase N-1 first and re-run.
+
+  - `done`, `mark it`, `flip it`, `ship it`, `shipped` → edit `docs/roadmap/roadmap.md` to change the Phase N-1 row's status cell from `In Progress` to `Done`, re-read the table to verify the change landed, then proceed with Phase N planning.
+  - `resume`, `pick up`, `continue`, `keep going`, `still in progress` → derive the Phase N-1 plan path: read the `<!-- plan: <filename> -->` comment after Phase N-1's heading and replace the `-design.md` suffix with `-plan.md`. Verify the resulting path exists and is non-empty per §"Non-empty" file check. If the suffix swap fails (filename doesn't end in `-design.md`) or the plan file is missing, stop and ask the user for the plan path. Otherwise invoke `superpowers:executing-plans` against the plan path; /roadmap stops after the handoff (executing-plans takes over the session).
   - `cancel`, `abort` → stop the /roadmap run with no edits.
+  - `yes`, `y`, `no`, `n` → too ambiguous in this 3-way prompt; re-prompt: "Reply specifically `done` (shipped), `resume` (still implementing), or `cancel`."
   - anything else → re-prompt.
 
 - **Phase N-1 status is `Planned`** — data inconsistency (Phase N-1 has a plan comment but its table status was never advanced). Stop and surface: "Phase N-1 (`<title>`) is `Planned` despite having a plan comment. Fix the table manually in `docs/roadmap/roadmap.md` (most likely `Done` if shipped, `In Progress` otherwise), then re-run /roadmap."
