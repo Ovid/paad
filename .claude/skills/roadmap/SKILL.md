@@ -11,7 +11,7 @@ Read @CLAUDE.md.
 
 ## 1. Read the Roadmap
 
-Read `docs/roadmap.md` in full. Each phase heading (## Phase N: …) may have a `<!-- plan: filename.md -->` comment on the line immediately after the `---` separator that follows that phase's section. This comment marks the phase as already brainstormed.
+Read `docs/roadmap/roadmap.md` in full. Each phase heading (## Phase N: …) may have a `<!-- plan: filename.md -->` comment on the line immediately after the `---` separator that follows that phase's section. This comment marks the phase as already brainstormed.
 
 Example of a completed phase:
 
@@ -232,7 +232,7 @@ Invoke the `superpowers:brainstorming` skill. When the brainstorming skill asks 
 
 - The phase name and goal from the roadmap.
 - The full phase section text as context.
-- That the output should be a **design document** saved to `docs/plans/`.
+- That the output should be a **design document** saved to `docs/roadmap/plans/`.
 
 Follow the brainstorming skill's process completely. It will explore requirements, ask the user questions, and produce a design document. Also, think of the design from the standpoint of a writer. Is it truly useful for them? If you think it could be more useful, discuss this with the user.
 
@@ -240,7 +240,7 @@ When brainstorming, apply the PR scope rules in CLAUDE.md (§Pull Request Scope)
 
 ## 5. Record the Plan Filename
 
-After brainstorming produces a document in `docs/plans/`, update `docs/roadmap.md` in **two places**:
+After brainstorming produces a document in `docs/roadmap/plans/`, update `docs/roadmap/roadmap.md` in **two places**:
 
 ### 5a. Insert the plan comment
 
@@ -278,7 +278,7 @@ The valid statuses are:
 
 ## 6. Pushback Review
 
-Invoke the `paad:pushback` skill against the design document just created in `docs/plans/`. If English is the new programming language, pushback is code review for the plan — catch contradictions, feasibility issues, scope problems, and ambiguity before any implementation begins.
+Invoke the `paad:pushback` skill against the design document just created in `docs/roadmap/plans/`. If English is the new programming language, pushback is code review for the plan — catch contradictions, feasibility issues, scope problems, and ambiguity before any implementation begins.
 
 After pushback completes, discuss the findings with the user and update the design document to address any valid concerns before moving on.
 
@@ -328,7 +328,7 @@ When invoking writing-plans, provide:
 - The path to the finalized design document from step 4.
 - The constraints captured during steps 6 and 7 (pushback findings, any CLAUDE.md edits that must land as part of the phase).
 - Repository-specific constraints from `CLAUDE.md` (§Testing Philosophy coverage floors, §Pull Request Scope one-refactor / one-feature rule, zero-warnings rule).
-- That the plan should be saved alongside the design in `docs/plans/` with filename pattern `YYYY-MM-DD-<topic>-plan.md`.
+- That the plan should be saved alongside the design in `docs/roadmap/plans/` with filename pattern `YYYY-MM-DD-<topic>-plan.md`.
 
 The plan must honor the PR scope rules: a single roadmap phase is a single PR. If the plan would naturally span multiple PRs (for example, a refactor followed by a feature), split at the phase boundary in the roadmap first and re-run this skill against each sub-phase.
 
@@ -353,7 +353,7 @@ with zero findings.
 
 ## 10. Write the Decision Log Entry
 
-Write a single Markdown file to `docs/roadmap-decisions/YYYY-MM-DD-<phase-slug>.md` capturing this run.
+Write a single Markdown file to `docs/roadmap/decisions/YYYY-MM-DD-<phase-slug>.md` capturing this run.
 
 **Filename slug rule:** lowercase the phase heading, drop apostrophes (no separator inserted), replace any run of non-`[a-z0-9]` characters with a single hyphen, strip leading/trailing hyphens, and fall back to `phase-N` (using the phase number, including any sub-letter, from the heading) if the result would otherwise be empty. `Phase 7: Editor's Polish & Polish` → `phase-7-editors-polish-polish`. Combine with today's date in `YYYY-MM-DD` form.
 
@@ -361,16 +361,16 @@ Write a single Markdown file to `docs/roadmap-decisions/YYYY-MM-DD-<phase-slug>.
 
 Follow the schema in §Appendix: Decision Log Entry Schema (at the bottom of this skill) exactly — YAML frontmatter, then the body sections.
 
-Then update `docs/roadmap-decisions/INDEX.md` by **prepending** one row to the `## Entries` table (newest entry on top). The row contains: date, phase title, model, pushback C/I/M counts, alignment C/I/M counts, and a relative link to the entry file just written.
+Then update `docs/roadmap/decisions/INDEX.md` by **prepending** one row to the `## Entries` table (newest entry on top). The row contains: date, phase title, model, pushback C/I/M counts, alignment C/I/M counts, and a relative link to the entry file just written.
 
 If a /roadmap run produced zero pushback issues *and* zero alignment issues, still write the entry and the index row — a clean run is evidence too.
 
 ## 11. Announce Completion
 
 > **Roadmap updated.** Phase N: [Name] brainstormed and planned.
-> - Design: `docs/plans/<filename>-design.md`
-> - Plan: `docs/plans/<filename>-plan.md`
-> - Decision log: `docs/roadmap-decisions/<filename>.md`
+> - Design: `docs/roadmap/plans/<filename>-design.md`
+> - Plan: `docs/roadmap/plans/<filename>-plan.md`
+> - Decision log: `docs/roadmap/decisions/<filename>.md`
 > Next unplanned phase: Phase M: [Name] (or "all phases planned").
 
 Offer to move to implementing the plan (via `superpowers:subagent-driven-development` or `superpowers:executing-plans` in a separate session), or to review the updated roadmap.
@@ -381,8 +381,8 @@ The decision log captures, for every /roadmap run, what `paad:pushback` and `paa
 
 ### File location
 
-- Entries: `docs/roadmap-decisions/YYYY-MM-DD-<phase-slug>.md` (one per /roadmap run)
-- Index: `docs/roadmap-decisions/INDEX.md` (one row per entry, newest on top)
+- Entries: `docs/roadmap/decisions/YYYY-MM-DD-<phase-slug>.md` (one per /roadmap run)
+- Index: `docs/roadmap/decisions/INDEX.md` (one row per entry, newest on top)
 
 If a phase is brainstormed more than once on different days, each run produces its own dated entry — the history is preserved.
 
@@ -393,8 +393,8 @@ If a phase is brainstormed more than once on different days, each run produces i
 date: 2026-04-26
 phase: "Phase 3a: Export Foundation"
 model: claude-opus-4-7
-design_file: docs/plans/2026-04-26-export-foundation-design.md
-plan_file: docs/plans/2026-04-26-export-foundation-plan.md
+design_file: docs/roadmap/plans/2026-04-26-export-foundation-design.md
+plan_file: docs/roadmap/plans/2026-04-26-export-foundation-plan.md
 pushback:
   total: 5
   critical: 1
