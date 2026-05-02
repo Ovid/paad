@@ -339,6 +339,28 @@ Parse the response (case-insensitive, leniently as the §2a accept-grammar):
 - **`no`** — write a marker file `docs/roadmap/.archive-declined` containing the SHA-1 of the H1 title. On future runs, if the marker file exists and matches the current H1 hash, skip the archive prompt entirely. Announce the no-op and stop. **Compute the hash without piping the title through a shell command line** — the H1 is contributor-controlled and can contain `$(...)`, backticks, `;`, or other shell metacharacters. Two safe methods, in order of preference: (a) compute SHA-1 in the agent's runtime (e.g., a Python `hashlib.sha1(title.encode()).hexdigest()` call invoked through the in-process tool surface), or (b) write the title to a temporary file with no shell interpolation (heredoc with a single-quoted delimiter, e.g. `<<'__H1__'`), then run `sha1sum < /tmp/h1.txt`. Do **not** use `echo "$H1" | sha1sum` or `printf '%s' "$H1" | sha1sum` — both interpolate `$H1` through the shell.
 - **`later`** — leave everything in place; do not write a marker. Announce the no-op and stop.
 
+### Verify the previous phase is Done
+
+Before treating Phase N as the brainstorm target, look up the immediately-previous phase (Phase N-1) in the Phase Structure table. The skill is more reliable than memory at remembering Phase N-1 needs its status advanced; the prompts below lean on that asymmetry — when in doubt, ask the user.
+
+- **Phase N is Phase 1** (no predecessor) — skip this check; proceed.
+- **Phase N-1 status is `Done`** — proceed.
+- **Phase N-1 status is `In Progress`** — likely shipped but not yet marked. Ask:
+
+  > Phase N-1 (`<title>`) is `In Progress` in the Phase Structure table. Did you ship and merge it? If so, I can mark it `Done` and continue with Phase N planning.
+  >
+  > Reply `yes` to flip Phase N-1 to `Done` and proceed, `no` if Phase N-1 isn't actually shipped (cancels /roadmap so you can finish it), or `cancel` to stop without changing anything.
+
+  Parse the response case-insensitively (trailing `.`/`!`/`,` ignored):
+  - `yes`, `y`, `done`, `mark it`, `flip it`, `ship it` → edit `docs/roadmap/roadmap.md` to change the Phase N-1 row's status cell from `In Progress` to `Done`, re-read the table to verify the change landed, then proceed.
+  - `no`, `n`, `not yet`, `not done` → stop the /roadmap run; tell the user to finish Phase N-1 first and re-run.
+  - `cancel`, `abort` → stop the /roadmap run with no edits.
+  - anything else → re-prompt.
+
+- **Phase N-1 status is `Planned`** — data inconsistency (Phase N-1 has a plan comment but its table status was never advanced). Stop and surface: "Phase N-1 (`<title>`) is `Planned` despite having a plan comment. Fix the table manually in `docs/roadmap/roadmap.md` (most likely `Done` if shipped, `In Progress` otherwise), then re-run /roadmap."
+
+Only proceed past this check when Phase N-1 is `Done` (or Phase N has no predecessor). This is what prevents /roadmap from silently advancing past a phase whose plan exists but whose implementation hasn't shipped.
+
 Same caveat as step 1: on a **fresh run**, no checklist file exists yet (step 2a creates it with steps 1, 2, 2a pre-checked); do not invent one early. On a **resume** where the checklist already exists, tick `- [x] 2. Identified next unplanned phase` in place and bump `last_updated`. *Note:* if step 2 detects "every phase has a `<!-- plan: ... -->` comment," do NOT tick — instead surface the archive prompt described above before continuing.
 
 ## 2a. Suggest a Working Branch (if on the primary branch)
@@ -669,12 +691,11 @@ The filename is whatever the brainstorming skill created (it follows the pattern
 
 **Verification.** After the insertion (or after the idempotency skip), re-read `docs/roadmap/roadmap.md` and confirm exactly one `<!-- plan: <filename> -->` line appears on the line immediately after the `---` separator preceding the target phase heading, and that the filename matches the design doc just created. If zero or two-plus matches, **stop** and surface to the user — do **not** tick step 5.
 
-### 5b. Update the Phase Structure table statuses
+### 5b. Update the Phase Structure table status
 
-In the **Phase Structure** table near the top of the roadmap, make two updates:
+In the **Phase Structure** table near the top of the roadmap, mark the current (target) phase as `In Progress` — change its status from `Planned` to `In Progress`. **§5b touches only the target phase's row.**
 
-1. **Mark the current phase as "In Progress"** — change its status from `Planned` to `In Progress`.
-2. **Mark the previous phase as "Done"** — if the phase immediately before the current one has status `In Progress`, change it to `Done` (it must have been completed if we're moving on to brainstorm the next phase).
+Phase N-1's status was already verified at step 2's "Verify the previous phase is Done" check (with an optional flip-from-`In Progress` happening there if the user confirmed Phase N-1 had shipped). §5b does not re-touch Phase N-1.
 
 The valid statuses are:
 
@@ -682,9 +703,9 @@ The valid statuses are:
 - **In Progress** — brainstorming or implementation underway
 - **Done** — shipped and merged to the primary branch
 
-**Idempotency guard.** Re-applying 5b on resume is naturally idempotent: setting a row already at `In Progress` to `In Progress` is a no-op, and the previous-phase flip from `In Progress` → `Done` is a no-op once it has already been done. No duplicate-edit hazard exists here.
+**Idempotency guard.** Re-applying 5b on resume is a no-op (a row already at `In Progress` stays at `In Progress`).
 
-**Verification.** After the table edit, re-read the **Phase Structure** table and confirm: (a) the target phase row's status is exactly `In Progress`; (b) if the prior phase row was `In Progress` before the edit, it is now exactly `Done`. If either check fails, **stop** and surface to the user — do **not** tick step 5.
+**Verification.** After the table edit, re-read the **Phase Structure** table and confirm the target phase row's status is exactly `In Progress`. If the check fails, **stop** and surface to the user — do **not** tick step 5.
 
 ### Tick step 5
 
