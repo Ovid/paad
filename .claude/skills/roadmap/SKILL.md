@@ -15,7 +15,32 @@ One checklist per `/roadmap` run, created right after step 2a (branch checkout s
 
 ### Filename
 
-`YYYY-MM-DD-<topic>-checklist.md`, where `<topic>` is the existing phase slug rule from §2a of the current SKILL.md (lowercase phase title, drop apostrophes without separator, collapse non-`[a-z0-9]` to hyphens, fall back to `phase-N`). Date is the day step 0 → step 1 fires (start date), so the design / plan / checklist for one run sit alphabetically adjacent in `plans/`.
+`YYYY-MM-DD-<phase-slug>-checklist.md`, where `<phase-slug>` is the **phase filename slug** (defined immediately below), and `YYYY-MM-DD` is the day step 0 → step 1 fires (start date) — so the design / plan / checklist for one run sit alphabetically adjacent in `plans/`.
+
+#### Phase filename slug
+
+A single rule, used by checklist filenames here and referenced from §2a and §Appendix:
+
+1. Take the phase title text (everything after the `Phase N:` or `Phase Na:` prefix in the roadmap heading).
+2. Lowercase.
+3. Drop apostrophes (`'`, `'`, `'`) **without** inserting a separator (so `Editor's` becomes `editors`, not `editor-s`).
+4. Replace any run of non-`[a-z0-9]` characters with a single hyphen.
+5. Strip leading and trailing hyphens.
+6. If the result is empty (e.g. the title was only Unicode/CJK characters that collapsed to nothing), fall back to `phase-N` using the phase number — including any sub-letter — from the heading. `Phase 3a: 漢字` → `phase-3a`.
+
+Examples:
+
+| Phase heading                                  | Phase filename slug                  |
+|------------------------------------------------|--------------------------------------|
+| `Phase 1: Backend Foundation`                  | `backend-foundation`                 |
+| `Phase 3a: Movie Data Cleaning`                | `movie-data-cleaning`                |
+| `Phase 7: User Authentication implementation`  | `user-authentication-implementation` |
+| `Phase 9: Editor's Polish`                     | `editors-polish`                     |
+| `Phase 12: Implementation`                     | `implementation`                     |
+
+**This rule does NOT drop the trailing `implementation`/`impl`/`feature` word.** The §2a branch slug is this same rule with one extra step (drop that trailing word) — branch names benefit from terseness; filenames benefit from accuracy. The decision-log filename slug (§Appendix) is also separate (heading-based with phase-N prefix for year-at-a-glance browsability); see §Appendix Slug rule.
+
+The `phase_slug` frontmatter field on the checklist is the phase filename slug verbatim — it is the linkable name future tooling can use to correlate the checklist with its sibling design / plan files in `plans/`.
 
 ### Schema
 
@@ -359,34 +384,34 @@ commit, stash, or explicitly confirm the carry-over before continuing. Do
 
 ### Derive a candidate slug
 
-From the target phase heading, take the title text (everything after the
-`Phase N:` or `Phase Na:` prefix), then:
+The §2a **branch slug** is the §Per-Phase Filename / phase filename slug
+(defined in §Per-Phase Checklist File / Filename / Phase filename slug),
+plus one branch-specific modifier:
 
-1. Lowercase the title.
-2. Drop apostrophes (`'`, `'`, `'`) **without** inserting a separator, so
-   `Editor's` becomes `editors`, not `editor-s`.
-3. If the trailing word is `implementation`, `impl`, or `feature`, drop it —
-   it adds nothing to a branch name.
-4. Replace any run of non-`[a-z0-9]` characters with a single hyphen.
-5. Strip leading and trailing hyphens.
-6. If the result is empty (e.g. the title was only `implementation`, or
-   only Unicode/CJK characters that collapsed to nothing), fall back to
-   `phase-N` using the phase number — including any sub-letter — from
-   the heading. `Phase 12: Implementation` → `phase-12`.
-   `Phase 3a: 漢字` → `phase-3a`.
+- **Drop the trailing word** if it is `implementation`, `impl`, or
+  `feature`. Branch names benefit from terseness; the filename slug keeps
+  it for accuracy. If dropping leaves the slug empty (e.g. `Phase 12:
+  Implementation`), the §Per-Phase fallback (`phase-N`) applies.
 
-Examples:
+Apply the drop step *between* steps 3 and 4 of the §Per-Phase rule (after
+apostrophe handling, before non-`[a-z0-9]` collapse). The drop is
+case-insensitive on the lowercased title.
 
-| Phase heading                                  | Candidate slug         |
+Examples (compare against the §Per-Phase Phase filename slug table):
+
+| Phase heading                                  | Branch slug            |
 |------------------------------------------------|------------------------|
 | `Phase 1: Backend Foundation`                  | `backend-foundation`   |
 | `Phase 3a: Movie Data Cleaning`                | `movie-data-cleaning`  |
 | `Phase 7: User Authentication implementation`  | `user-authentication`  |
 | `Phase 9: Editor's Polish`                     | `editors-polish`       |
 | `Phase 12: Implementation`                     | `phase-12`             |
+| `Phase 3a: 漢字`                                | `phase-3a`             |
 
 The slug is bare — no `feat/`, no `<username>/` prefix. If the user's
 convention adds a prefix, let them apply it via the override path below.
+
+**Branch slug ≠ filename slug.** When step 2a's "Create the run checklist" sub-section runs below, the checklist filename uses the §Per-Phase **filename** slug (which keeps the trailing `implementation`/`impl`/`feature`), not this branch slug. Re-derive the filename slug from the title cleanly; do not reuse `<branch-slug>` directly.
 
 ### Present the suggestion and wait
 
@@ -477,10 +502,11 @@ After `git checkout -b` succeeds, write a new checklist file to:
 docs/roadmap/plans/<YYYY-MM-DD>-<phase-slug>-checklist.md
 ```
 
-where `<YYYY-MM-DD>` is today's date and `<phase-slug>` is the slug
-derived from the phase title (per the §Per-Phase Checklist File
-filename rule — same rule used for the branch name above; reuse the
-slug, do not re-derive).
+where `<YYYY-MM-DD>` is today's date and `<phase-slug>` is the **phase
+filename slug** (§Per-Phase Checklist File / Filename / Phase filename
+slug). **Do not reuse `<branch-slug>`** — the branch slug drops the
+trailing `implementation`/`impl`/`feature` word; the filename slug keeps
+it. Re-derive cleanly from the phase title.
 
 Populate the frontmatter:
 
@@ -816,11 +842,26 @@ Prepend new rows to the table so the newest entry is always at the top.
 
 ### Slug rule
 
-Lowercase the phase heading, drop apostrophes (`'`, `'`, `'`) without inserting a separator, replace any run of non-`[a-z0-9]` characters with a single hyphen, strip leading and trailing hyphens, and fall back to `phase-N` (using the phase number — including any sub-letter — from the heading) if the result would otherwise be empty. Examples:
+The decision-log filename slug is **deliberately distinct** from the §Per-Phase phase filename slug used by `plans/` artifacts:
+
+- **Input** is the full phase **heading** including the `Phase N:` prefix (so the resulting slug carries the phase number — useful when scanning a year of decision-log filenames at a glance in `decisions/`). The §Per-Phase filename slug is title-only.
+- **Trailing-word handling** matches the §Per-Phase rule (keeps `implementation`/`impl`/`feature`); only the §2a branch slug drops them.
+
+Procedure: lowercase the phase heading, drop apostrophes (`'`, `'`, `'`) without inserting a separator, replace any run of non-`[a-z0-9]` characters with a single hyphen, strip leading and trailing hyphens, and fall back to `phase-N` (using the phase number — including any sub-letter — from the heading) if the result would otherwise be empty.
+
+Examples:
 
 - `Phase 3a: Export Foundation` → `phase-3a-export-foundation`
 - `Phase 7: Editor's Polish & Polish` → `phase-7-editors-polish-polish`
-- `Phase 12: Implementation` → `phase-12-implementation` (filename slug keeps the `implementation` suffix; only the §2a branch slug drops it)
+- `Phase 12: Implementation` → `phase-12-implementation`
+
+Cross-reference summary for one phase (`Phase 7: User Authentication implementation`):
+
+| Artifact                                           | Slug                                          | Rule                            |
+|----------------------------------------------------|-----------------------------------------------|---------------------------------|
+| Branch (§2a)                                       | `user-authentication`                         | filename slug + drop suffix     |
+| Design / plan / checklist filename in `plans/`     | `user-authentication-implementation`          | §Per-Phase phase filename slug  |
+| Decision-log filename in `decisions/`              | `phase-7-user-authentication-implementation`  | §Appendix slug rule (this one)  |
 
 ### Why this schema
 
