@@ -680,6 +680,10 @@ After the decision log is written, **verify it exists and is non-empty** (`test 
 
 ## 11. Announce Completion
 
+Per §Update obligations ("update the checklist before announcing or moving on. No exceptions"), tick `- [x] 11. Announce completion` and bump `last_updated` **before** printing the announcement block. The checklist is now fully ticked and serves as the historical record of the run.
+
+Then print:
+
 > **Roadmap updated.** Phase N: [Name] brainstormed and planned.
 > - Design: `docs/roadmap/plans/<filename>-design.md`
 > - Plan: `docs/roadmap/plans/<filename>-plan.md`
@@ -687,8 +691,6 @@ After the decision log is written, **verify it exists and is non-empty** (`test 
 > Next unplanned phase: Phase M: [Name] (or "all phases planned").
 
 Offer to move to implementing the plan (via `superpowers:subagent-driven-development` or `superpowers:executing-plans` in a separate session), or to review the updated roadmap.
-
-After announce, tick `- [x] 11. Announce completion`. The checklist is now fully ticked and serves as the historical record of the run.
 
 ## Appendix: Decision Log Entry Schema
 
