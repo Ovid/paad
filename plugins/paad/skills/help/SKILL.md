@@ -3,7 +3,7 @@ name: help
 description: Show help for all paad skills or a specific skill
 ---
 
-**On invocation:** announce "Running paad:help v1.17.0" before anything else.
+**On invocation:** announce "Running paad:help v1.18.0" before anything else.
 
 # paad Help
 
