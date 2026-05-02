@@ -11,7 +11,7 @@ Cross-phase learnings live in `notes/convert-skills.md`.
 | Phase | Title                                                        | Status      |
 |-------|--------------------------------------------------------------|-------------|
 | 1     | Pilot — agentic-review references conversion                 | Done        |
-| 2     | agentic-architecture references conversion                   | Planned     |
+| 2     | agentic-architecture references conversion                   | In Progress |
 | 3     | agentic-a11y references conversion                           | Planned     |
 | 4     | Audit non-agentic skills for references-pattern candidates   | Planned     |
 | 5     | Convert non-agentic candidates identified in Phase 4         | Planned     |
@@ -40,6 +40,7 @@ Other paad skills. Behavior changes to agentic-review.
 ---
 
 ## Phase 2: agentic-architecture references conversion
+<!-- plan: 2026-05-02-agentic-architecture-references-conversion-design.md -->
 
 Apply the validated pattern to `agentic-architecture`. Likely similar
 shape to agentic-review (multi-specialist + verifier + report) but with
