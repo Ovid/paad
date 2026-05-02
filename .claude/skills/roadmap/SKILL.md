@@ -98,7 +98,7 @@ Every step ends with "update the checklist (frontmatter `last_updated` + the rel
 
 ### Verification before ticking
 
-Marking step 4 done requires `design_file` to exist at the recorded path and be non-empty. Step 8 requires `plan_file`. Step 10 requires `decision_log`. This is `verification-before-completion` applied to checklist updates.
+Marking step 4 done requires `design_file` to exist at the recorded path and be non-empty. Step 5 requires that 5a's plan comment is present exactly once in `roadmap.md` at the expected position, and that 5b's Phase Structure table status flips actually landed. Step 8 requires `plan_file`. Step 10 requires `decision_log`. This is `verification-before-completion` applied to checklist updates.
 
 ### Brainstorming non-resumability
 
@@ -527,9 +527,15 @@ After the design doc is written, **verify it exists and is non-empty** (`test -s
 
 After brainstorming produces a document in `docs/roadmap/plans/`, update `docs/roadmap/roadmap.md` in **two places**:
 
+Step 5 mutates `roadmap.md` — the source of truth for "next unplanned phase" — in two places. It must be **idempotent on resume** (5a re-running must not duplicate the comment) and **verified before ticking** (a partial 5a/5b must not flip the box). Both halves run before the single `- [x] 5` tick. If a `/clear` lands between 5a and 5b, the box stays unchecked, resume re-enters step 5, 5a's idempotency guard skips the already-inserted comment, and 5b re-runs to completion.
+
 ### 5a. Insert the plan comment
 
-Insert a plan comment on the line immediately after the `---` separator that precedes the phase heading:
+The plan comment lives on the line immediately after the `---` separator that precedes the phase heading.
+
+**Idempotency guard.** Before inserting, read `docs/roadmap/roadmap.md` and check whether a `<!-- plan: ... -->` line already appears immediately after the `---` separator preceding the target phase heading. If one is present, skip the insertion (a prior interrupted run already wrote it). Do **not** insert a second comment — `## 2. Identify the Next Unplanned Phase` keys off the first such comment per phase, and a duplicate makes downstream parsing undefined.
+
+**Insertion (when no comment is present yet):**
 
 **Before:**
 ```markdown
@@ -548,6 +554,8 @@ Insert a plan comment on the line immediately after the `---` separator that pre
 
 The filename is whatever the brainstorming skill created (it follows the pattern `YYYY-MM-DD-<topic>-design.md`).
 
+**Verification.** After the insertion (or after the idempotency skip), re-read `docs/roadmap/roadmap.md` and confirm exactly one `<!-- plan: <filename> -->` line appears on the line immediately after the `---` separator preceding the target phase heading, and that the filename matches the design doc just created. If zero or two-plus matches, **stop** and surface to the user — do **not** tick step 5.
+
 ### 5b. Update the Phase Structure table statuses
 
 In the **Phase Structure** table near the top of the roadmap, make two updates:
@@ -561,7 +569,13 @@ The valid statuses are:
 - **In Progress** — brainstorming or implementation underway
 - **Done** — shipped and merged to the primary branch
 
-After updating roadmap.md, tick `- [x] 5. Record plan filename in roadmap` and bump `last_updated`.
+**Idempotency guard.** Re-applying 5b on resume is naturally idempotent: setting a row already at `In Progress` to `In Progress` is a no-op, and the previous-phase flip from `In Progress` → `Done` is a no-op once it has already been done. No duplicate-edit hazard exists here.
+
+**Verification.** After the table edit, re-read the **Phase Structure** table and confirm: (a) the target phase row's status is exactly `In Progress`; (b) if the prior phase row was `In Progress` before the edit, it is now exactly `Done`. If either check fails, **stop** and surface to the user — do **not** tick step 5.
+
+### Tick step 5
+
+Tick `- [x] 5. Record plan filename in roadmap` and bump `last_updated` **only after both 5a and 5b verifications above pass**. A failed verification (zero/duplicate plan comment, or the table row didn't actually flip) leaves the box unchecked, which is the resume signal to re-enter step 5 — 5a's idempotency guard ensures the second run lands cleanly.
 
 ## 6. Pushback Review
 
