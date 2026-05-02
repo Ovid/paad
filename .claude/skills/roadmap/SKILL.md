@@ -113,7 +113,7 @@ digraph step0 {
   "start" [shape=doublecircle];
   "old layout?" [shape=diamond];
   "prompt to migrate" [shape=box];
-  "abort run" [shape=box];
+  "abort run" [shape=doublecircle];
   "scan active plans/*-checklist.md with unchecked steps" [shape=box];
   "candidates" [shape=diamond];
   "fresh run" [shape=box];
@@ -124,6 +124,7 @@ digraph step0 {
   "recorded branch missing" [shape=box];
   "stale check" [shape=diamond];
   "prompt resume vs archive" [shape=box];
+  "archive stale checklist" [shape=box];
   "jump to first unchecked step" [shape=doublecircle];
   "current step 1" [shape=doublecircle];
 
@@ -136,16 +137,23 @@ digraph step0 {
   "candidates" -> "fresh run" [label="0"];
   "candidates" -> "verify branch" [label="1"];
   "candidates" -> "ask which" [label="2+"];
-  "ask which" -> "verify branch";
+  "ask which" -> "verify branch" [label="picked one"];
+  "ask which" -> "fresh run" [label="none — start fresh"];
   "verify branch" -> "branch matches" [label="match"];
   "verify branch" -> "branch differs" [label="mismatch"];
   "verify branch" -> "recorded branch missing" [label="gone"];
   "branch matches" -> "stale check";
-  "branch differs" -> "stale check" [label="user picked continue/switch"];
-  "recorded branch missing" -> "stale check" [label="user picked recreate/archive"];
+  "branch differs" -> "stale check" [label="continue/switch"];
+  "branch differs" -> "abort run" [label="cancel"];
+  "recorded branch missing" -> "stale check" [label="recreate"];
+  "recorded branch missing" -> "archive stale checklist" [label="archive"];
+  "recorded branch missing" -> "abort run" [label="cancel"];
   "stale check" -> "prompt resume vs archive" [label="last_updated > 30d"];
   "stale check" -> "jump to first unchecked step" [label="recent"];
   "prompt resume vs archive" -> "jump to first unchecked step" [label="resume"];
+  "prompt resume vs archive" -> "archive stale checklist" [label="archive"];
+  "prompt resume vs archive" -> "abort run" [label="cancel"];
+  "archive stale checklist" -> "fresh run";
   "fresh run" -> "current step 1";
 }
 ```
@@ -182,7 +190,30 @@ If scan returns two or more checklists with unchecked steps, list them and ask w
 
 ### Stale-checklist threshold
 
-If `last_updated` is more than 30 days ago, prompt before resuming. Threshold lives as a one-line constant in the SKILL.md so it is easy to tune.
+**Stale threshold:** 30 days (single labeled constant — change here, nowhere else).
+
+If `last_updated` is more than the stale threshold ago, prompt before resuming:
+
+> Checklist `<filename>` was last updated <N> days ago. Resume the run, archive this checklist (rename out of the scan glob and treat the §0 flow as fresh), or cancel?
+
+Acceptable answers (case-insensitive, exact-match): `resume`, `archive`, `cancel`. Anything else → re-prompt.
+
+- **`resume`** — proceed to "jump to first unchecked step".
+- **`archive`** — see §Archiving a stale checklist below; the file is renamed out of scan scope, then §0 falls through to "fresh run" → step 1.
+- **`cancel`** — stop the /roadmap run.
+
+### Archiving a stale checklist
+
+When the user picks "archive" — for a stale checklist (this section) **or** for a checklist whose recorded branch no longer exists locally (per the branch-verification table above) — rename the single checklist file out of the `*-checklist.md` scan glob without moving directories:
+
+```
+git mv -- docs/roadmap/plans/<original>-checklist.md \
+          docs/roadmap/plans/<original>-checklist.stale-<YYYY-MM-DD>.md
+```
+
+The `.stale-<YYYY-MM-DD>` infix breaks the `*-checklist.md` scan match (the glob is anchored — files ending in `.stale-…md` no longer surface), so the file no longer appears as a resume candidate but stays alongside the run's design / plan / decision-log artifacts as historical evidence. Use today's date.
+
+After the rename succeeds, treat the §0 flow as a fresh run: fall through to step 1. Do **not** re-scan within the same /roadmap invocation — one archived checklist per /roadmap run keeps the flow predictable.
 
 ### Jumping to the right step
 
