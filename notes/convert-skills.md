@@ -452,3 +452,89 @@ with no distinctive inline content, dispatch a "think-like-this-
 specialist" subagent before defaulting to "skip." The base prompt
 is general; lens-specific structure (taxonomies, anchoring rules,
 bail-outs, drop rules) measurably improves consistency.
+
+## Phase 2 / Commit 1 — Integration & Data extraction
+
+### Dispatch shape transfer (agentic-review → agentic-architecture)
+
+The Phase 1 dispatch shape — `**<Lens> additional instructions:**
+The X specialist's instructions live at \`references/<lens>.md\`.
+That file covers <inventory>. The dispatch prompt for the X
+specialist must include this instruction verbatim:` followed by a
+blockquote `> Read \`references/<lens>.md\` ... [ref-loaded:<lens>]
+... binding.` — applied to `agentic-architecture/SKILL.md` line 98
+unchanged. Sentinel `deploy-coupling vector` migrated cleanly:
+0 in SKILL.md, 1 in ref. `make check-extracted-refs` went red at
+the manifest-add step and green after the dispatch rewrite, on
+both first attempts. No path-resolution edge cases surfaced. The
+shape transfers verbatim across parent skills with no per-skill
+adaptation needed.
+
+### Tournament-dispatched enrichment (Pushback Issue [7] discipline)
+
+For Phase 2, pre-extraction enrichment used the new tournament
+discipline: two `general-purpose` subagents dispatched in parallel
+with identical prompts, both told they're competing for "five
+points." The two proposals overlapped on ~90% of structure (same
+8 flaw subtypes + 2 strength subtypes, similar drop-rule taxonomy,
+similar severity floors) but diverged meaningfully on bail-out
+(Proposal A: single `BAIL:` token + escape hatch in prose;
+Proposal B: tiered ladder with `BAIL-PARTIAL` for monolith-with-
+egress) and on bonus content (A: 2-of-5 evidence-requirement
+supplement; B: cross-lens routing table).
+
+Ovid picked Proposal A wholesale on the bail-out simplicity
+trade-off (single token + escape hatch reads cleaner than tiered
+encoding for this lens's most common case — pure CLI tools). The
+landed ref is Proposal A's content with no modifications.
+
+**Observation, not yet a cross-phase rule:** tournament dispatch
+costs roughly 2× the wall-clock of a single dispatch but produces
+two independent proposals to compare side-by-side, which exposes
+trade-offs the orchestrator must surface for judgment (here: the
+bail-out simplicity-vs-rigor decision). Whether this depth pays
+its cost across the remaining four lenses is the open question for
+commit 2.
+
+### Existing inline rule modifications
+
+Proposal A's authored enrichment preserved the existing inline
+rule in the `## Verbatim from SKILL.md` block but layered sharper
+semantics on top:
+
+- "If this is not a distributed system…" → formalized as `BAIL:
+  integration-data not-distributed` machine-readable token, with
+  explicit escape hatch for single-service backends with public
+  API surface (the case the original rule glosses over).
+- "Services coupled through shared schemas" → split into
+  `data-ownership-violation` (concurrent writers, flaw 17) and
+  `shared-database` (cross-unit reads of private tables, flaw 18).
+  The conflated phrasing produced findings that didn't map cleanly
+  to either flaw number.
+- "Non-idempotent operations" → added inverse drop rule (must-not-
+  retry operations like payment capture should *not* be flagged
+  for missing idempotency).
+- "API contracts without compatibility discipline" → absorbed into
+  `contract-drift` subtype with sharper criteria (evidence of
+  producer/consumer disagreement, not merely absence of a
+  registry).
+
+The verbatim block stays unchanged; the authored enrichment
+overrides via sharper rules.
+
+### Smoke test outcome (paad-as-fixture)
+
+Token present + bail-out fires = **Pass** (row 1 of the four-
+outcome verdict table). The Integration & Data lens correctly
+recognized paad as Tier-0 (single deployment unit, no inter-unit
+communication surface) and emitted `BAIL: integration-data
+not-distributed`. The verifier classified the bail as legitimate
+in its Analysis Metadata. Coverage Checklist marked flaws
+14, 15, 16, 17, 18, 19, 24, 26 and strengths S6, S12 all as "Not
+applicable (single deploy unit)." No findings were produced for
+this lens, exactly as the new ref instructs.
+
+The bail-out shape that landed in the report (`BAILED legitimately:
+not-distributed`) shows the verifier surfaces the bail reason
+verbatim in the report's metadata — useful for downstream
+debugging if a future bail is ever called into question.
