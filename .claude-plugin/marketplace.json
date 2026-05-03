@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Ovid's plugin marketplace for Claude Code — impractical tools for software architecture, code quality, and development workflows.",
-    "version": "1.0.0"
+    "version": "1.19.0"
   },
   "plugins": [
     {

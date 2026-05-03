@@ -17,14 +17,19 @@ validate: ## Validate marketplace and all plugins
 		claude plugin validate "$$dir" || exit 1; \
 	done
 
-check-versions: ## Check marketplace.json and plugin.json versions match
-	@marketplace_ver=$$(python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version'])"); \
+check-versions: ## Check marketplace.json (metadata + plugin entry) and plugin.json versions all match
+	@marketplace_meta_ver=$$(python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['metadata']['version'])"); \
+	marketplace_plugin_ver=$$(python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version'])"); \
 	plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
-	if [ "$$marketplace_ver" != "$$plugin_ver" ]; then \
-		echo "FAIL: Version mismatch — marketplace.json ($$marketplace_ver) != plugin.json ($$plugin_ver)"; \
+	if [ "$$marketplace_meta_ver" != "$$plugin_ver" ]; then \
+		echo "FAIL: Version mismatch — marketplace.json metadata.version ($$marketplace_meta_ver) != plugin.json ($$plugin_ver)"; \
 		exit 1; \
 	fi; \
-	echo "Versions match: $$plugin_ver"
+	if [ "$$marketplace_plugin_ver" != "$$plugin_ver" ]; then \
+		echo "FAIL: Version mismatch — marketplace.json plugins[0].version ($$marketplace_plugin_ver) != plugin.json ($$plugin_ver)"; \
+		exit 1; \
+	fi; \
+	echo "Versions match: $$plugin_ver (metadata, plugin entry, plugin.json)"
 
 check-skill-versions: ## Check every SKILL.md announces the correct version
 	@plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
