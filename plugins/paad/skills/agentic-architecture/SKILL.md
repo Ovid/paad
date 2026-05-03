@@ -117,17 +117,11 @@ Each specialist agent prompt must include:
 
 ## Phase 3: Verification
 
-After all specialists complete, dispatch a single **Verifier** agent with all findings. The verifier:
+After all specialists complete, dispatch a single **Verifier** agent with all findings.
 
-1. For each finding, reads the actual current code at the referenced file:line
-2. Confirms the strength or flaw exists and is accurately described
-3. Drops false positives and findings below 60% confidence
-4. Validates that the impact level (High/Medium/Low) is appropriate
-5. Checks that the correct flaw type or strength category is assigned
-6. Deduplicates findings flagged by multiple specialists (note which specialists agreed — cross-specialist agreement increases confidence)
-7. Ensures every finding has concrete evidence (file path, symbol, excerpt) — drops findings without evidence
+The Verifier's detailed instructions live at `references/verifier.md`. That file covers ref-token-missing handling, the eight-step verification pipeline, what counts as verified, the per-lens evidence inventory consolidating the "at least two of N" rule from each specialist ref, the closed-set subtype catalog across all five lenses, cross-specialist dedup with max-confidence/max-impact rules and a subtype equivalence table, drop rules consolidated across lenses (16 false-positive shapes), evidence-quality drop rule, impact-tiebreaker, git-log-based severity calibration, and the three-list output (verified strengths / verified flaws / bail-outs and warnings) feeding into the Phase 4 report. The dispatch prompt for the Verifier must include this instruction verbatim:
 
-**Verifier prompt must include:** "You are verifying architecture findings. For each finding, read the actual code and confirm the strength or flaw exists. Be skeptical — file size alone doesn't make a god object, and many imports don't necessarily mean tight coupling. Check git history for context. A finding reported by multiple specialists is more likely real. Drop anything you cannot confirm by reading the code."
+> Read `references/verifier.md` from this skill's directory before classifying findings; treat its instructions as binding. Begin your output with the literal token `[ref-loaded:verifier]` on its own line so the orchestrator can confirm the ref was read.
 
 ## Phase 4: Report
 

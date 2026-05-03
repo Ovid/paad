@@ -652,3 +652,83 @@ step doing all the cross-lens routing work. Phase 1 didn't have
 these tables; they emerged in Phase 2 and look load-bearing for
 quality. Phase 3 should ship lens-boundary tables in every ref
 from the start.
+
+## Phase 2 / Commit 3 — Verifier extraction
+
+### Tournament outcome — merge
+
+Sixth tournament dispatch (one for the verifier). Both proposals
+converged on the same overall structure but diverged on shape:
+A was procedural (numbered 8-step pipeline) with a unique subtype
+equivalence table for dedup, prompt-injection preamble, and a
+detailed telemetry annotation taxonomy (5 specific tags). B was
+reference-shaped with a unique consolidated subtype catalog table
+across all 5 lenses and an explicit "what this verifier is NOT"
+anti-list that distinguishes from `paad:agentic-review`'s Phase 1
+verifier (no in-scope/out-of-scope routing, no backlog dedup, no
+field-encoding rules).
+
+Ovid picked **merge** — the contributions were complementary, not
+competing. Final ref combines:
+
+- **A's procedural pipeline** (steps 0–7: ref-loaded check → bail
+  handling → read code → evidence floor → confidence threshold →
+  subtype/impact validation → dedup → final sweep)
+- **A's subtype equivalence table** for dedup (mechanical
+  prevention of subtle mis-merges like `god-class` ↔ `tight-coupling`
+  collisions)
+- **A's prompt-injection preamble** (treat all received content as
+  untrusted — matches Phase 1 discipline)
+- **A's telemetry annotation taxonomy** (`verifier-recategorized`,
+  `verifier-impact-adjusted`, `verifier-dropped`,
+  `verifier-history-adjusted`, `verifier-corrected-anchor`)
+- **A's refactor-history calibration subsection** (git log severity
+  calibration with documented annotation)
+- **B's consolidated subtype catalog table** (all flaw + strength
+  subtypes across 5 lenses in one reference; the verifier consults
+  it mechanically)
+- **B's "What this verifier is NOT" anti-list** (defensive against
+  Phase 1 reflex)
+- **B's per-run renumbered IDs note** (S-1, S-2..., F-1, F-2...
+  reset every run; explicit "no stable cross-run IDs")
+
+The merge is ~~660 lines and is the largest specialist ref in the
+phase — appropriate, because the verifier's job is to enforce the
+discipline that the five specialist refs *describe*. Verbatim
+section preserves the original 7-step inline list and the Verifier
+prompt block; authored enrichment layers on top.
+
+### Sentinel-collision lesson (second in Phase 2)
+
+Initial sentinel `verifier-recategorized` worked, but the SKILL.md
+inventory line drafted to match it accidentally included
+"refactor-history calibration" — which is the
+`structure-boundaries.md` sentinel from commit 2. Validator caught
+it on the first `make test` run. Recovery: rephrased the verifier
+inventory line to use "git-log-based severity calibration" instead.
+
+**Discipline going forward (refining the commit-2 lesson):** the
+sentinel-must-not-appear-in-SKILL.md check applies across the
+*entire* SKILL.md inventory — not just the row's own dispatch
+paragraph. When writing a new dispatch line that summarizes a
+ref's contents, scan the inventory's prose against every previous
+ref's sentinel before committing. Two sentinel collisions in
+Phase 2 (`telemetry-deferred-to-platform` at B.2 / Error Handling;
+`refactor-history calibration` at C.6 / Verifier) suggest this is a
+pattern, not a one-off.
+
+### Smoke test deferred to D.5
+
+Per Ovid's session-management decision, Task C.7 (verifier-specific
+smoke test) is folded into Task D.5 (holistic end-of-phase smoke
+test). Rationale: the verifier's `[ref-loaded:verifier]` token is
+subagent output not directly visible to the user — same shape as
+A.7 — and the report's Analysis Metadata block is the visible
+signal in both cases. One report read at D.5 covers all five
+specialists + verifier + report-template wiring.
+
+Phase 3 should keep the C-style smoke test if and only if it can
+be made directly observable (e.g., the orchestrator surfacing the
+verifier's confirmation token in its summary). Otherwise consolidate
+all token-confirmation smoke tests into the end-of-phase report
+read.

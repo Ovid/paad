@@ -12,3 +12,4 @@ agentic-architecture	references/coupling-dependencies.md	abstraction-by-anticipa
 agentic-architecture	references/error-handling-observability.md	fails-open
 agentic-architecture	references/security-code-quality.md	build-time bake-in
 agentic-architecture	references/structure-boundaries.md	refactor-history calibration
+agentic-architecture	references/verifier.md	verifier-recategorized
