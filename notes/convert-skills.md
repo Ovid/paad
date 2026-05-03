@@ -538,3 +538,117 @@ The bail-out shape that landed in the report (`BAILED legitimately:
 not-distributed`) shows the verifier surfaces the bail reason
 verbatim in the report's metadata — useful for downstream
 debugging if a future bail is ever called into question.
+
+## Phase 2 / Commit 2 — Four remaining specialists
+
+### Tournament cadence held; sequential at lens level
+
+Four lenses extracted in sequence (Coupling & Dependencies →
+Error Handling & Observability → Security & Code Quality →
+Structure & Boundaries), each with a tournament dispatch
+(two parallel `general-purpose` subagents, identical prompts).
+Per-lens outcomes:
+
+- **Coupling & Dependencies:** Ovid picked **B**. Distinguishing
+  feature was a dedicated lens-boundary table (8 rows) explicitly
+  routing diagnostics out to Structure / Integration. Loser had
+  a "git log on the file before flagging" calibration rule and a
+  typestate drop-rule that B lacked.
+- **Error Handling & Observability:** Ovid picked **A**. A's
+  three-way split of flaw 21 (`missing-emission` / `no-correlation`
+  / `log-without-trace`) mapped to three different fix patterns;
+  loser's two-way split was leaner but lost distinguishability.
+  Bonus: A's `wrong-error-type` and `config-unsafe-default` are
+  named flaws unique to that proposal.
+- **Security & Code Quality:** Ovid picked **B**. B added
+  `supply-chain-discipline` as an S10 strength (covers
+  vuln-scanning + SBOM + signed artifacts) that A missed. B's
+  drop-rule 6 (dynamic imports / plugin registries / framework
+  auto-discovery) prevents the most common false-positive class
+  for dead-code findings.
+- **Structure & Boundaries:** Ovid picked **A**. A's anchor 7
+  ("refactor-history calibration" — `git log` patterns calibrate
+  severity: recent restructure → caveat or drop, long quiescence
+  → severity ↓, frequent firefighting → severity ↑) was the
+  unique contribution. B had finer subtype granularity
+  (`singleton-mutable`, `god-module`) but lacked the calibration.
+
+### Cross-lens consistency emerging
+
+By lens 4, the Phase 2 enrichment shape has **stabilized into
+a 9-section template** that every lens shares:
+
+1. Inline-rule scoping preamble (3–5 sharpenings of the verbatim).
+2. Anchoring (5–7 numbered facts to enumerate).
+3. Bail-out (3–5 reasons + escape hatch).
+4. Finding subtypes (closed-set table per flaw + per strength).
+5. Drop rules (8–13 false-positive guards).
+6. Severity floor (High / Medium / Low minima per subtype).
+7. Lens-boundary discipline (table routing to sibling lenses).
+8. Evidence requirements (at-least-two-of-N checklist).
+9. Scale rigor (Trivial / Small / Medium / Large guidance).
+
+This template was not specified up front — it emerged from
+the Integration & Data ref (commit 1) and propagated through
+the four B-commit lenses via subagent template-study. Phase 3
+(`agentic-a11y` references conversion) should adopt the
+template as the explicit starting point rather than re-deriving
+it.
+
+### Sentinel-collision lesson (logged once for future phases)
+
+Commit 2 hit one sentinel collision: `telemetry-deferred-to-platform`
+was both a bail-out reason in `error-handling-observability.md`
+and named in the SKILL.md inventory line that summarized the ref's
+bail-outs. The structural validator caught it (sentinel must NOT
+appear in SKILL.md), and the recovery was to pick a different
+sentinel from the body (`fails-open` from the severity-floor
+section).
+
+**Discipline going forward:** pick a sentinel that names a
+*diagnostic detail* in the ref body, not a *labeled subtype or
+bail-out reason* that the inventory line will likely summarize.
+Internal phrases like `deploy-coupling vector` (Phase 2 commit 1),
+`abstraction-by-anticipation` (commit 2 / coupling), `fails-open`
+(commit 2 / error-handling), `build-time bake-in` (commit 2 /
+security), and `refactor-history calibration` (commit 2 /
+structure) all met this bar — none are subtype labels, none
+appear in inventory lines.
+
+### Tournament-dispatch cost vs. value (preliminary)
+
+Five tournaments dispatched (one per lens, plus the Phase A lead).
+Wall-clock cost: each tournament adds 2–3 minutes of subagent
+time plus 1–2 minutes of orchestrator surfacing + Ovid judgment.
+Net per lens: ~5–8 minutes of human-in-the-loop time.
+
+Value: in three of five tournaments, Ovid picked the proposal
+that had a *unique structural contribution* the loser lacked
+(B.1 lens-boundary table; B.3 supply-chain strength; B.4
+refactor-history calibration). In one (A.2 / Integration &
+Data), Ovid picked the simpler bail-out (single token + escape
+hatch) over the more rigorous tiered ladder. In one (B.2 /
+Error Handling), Ovid picked the more granular subtype taxonomy.
+
+**Pattern:** tournaments produce *visibly different* trade-offs
+that Ovid can judge in seconds once surfaced tightly. The cost
+is mainly in surfacing — pre-tournament concern was subagent
+cost, but the actual bottleneck is the orchestrator's
+side-by-side compression. Tighter compression (after Ovid's
+"wall of text" feedback on the first surfacing) cut surfacing
+time roughly in half from B.1 onward.
+
+**Recommendation for Phase 3:** keep tournaments per lens but
+budget the surfacing as the dominant cost; subagents are cheap
+relative to human-judgment latency. The five-section side-by-side
+format that emerged in B.2–B.4 is the working baseline.
+
+### Lens-boundary discipline value
+
+The lens-boundary tables added in B.1–B.4 explicitly route
+diagnostics out: "if it's about X, it's owned by lens Y." This is
+the single biggest defense against the verifier's deduplication
+step doing all the cross-lens routing work. Phase 1 didn't have
+these tables; they emerged in Phase 2 and look load-bearing for
+quality. Phase 3 should ship lens-boundary tables in every ref
+from the start.
