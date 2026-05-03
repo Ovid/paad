@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version bump-version vendored check-vendored
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version bump-version vendored check-vendored check-confidence-floor test-check-confidence-floor
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter test-check-extracted-refs check-extracted-refs test-bump-version check-vendored ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter test-check-extracted-refs check-extracted-refs test-bump-version check-vendored test-check-confidence-floor check-confidence-floor ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -129,6 +129,12 @@ test-bump-version: ## Self-test the bump_version.py script against synthetic fix
 
 vendored: ## Regenerate the Cursor/Kiro/Antigravity vendored skills under kiro_and_antigravity/
 	@python3 scripts/convert_skills.py
+
+check-confidence-floor: ## Verify the confidence-floor literal (currently 60) is consistent across all sites
+	@python3 scripts/check_confidence_floor.py
+
+test-check-confidence-floor: ## Self-test the check_confidence_floor.py script against synthetic fixtures
+	@bash scripts/test_check_confidence_floor.sh
 
 check-vendored: ## Verify kiro_and_antigravity/ is in sync with the converter's current output
 	@tmp=$$(mktemp -d); \
