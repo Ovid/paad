@@ -6,6 +6,7 @@
 SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
+VENDORED_KIRO_SKILLS_DIR := kiro_and_antigravity/skills/.kiro/skills
 MAIN_BRANCH ?= main
 
 .PHONY: help all test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version test-convert-skills check-prompt-injection-defense test-check-prompt-injection-defense bump-version vendored check-vendored check-confidence-floor test-check-confidence-floor loc release
@@ -39,26 +40,39 @@ check-versions: ## Check marketplace.json (metadata + plugin entry) and plugin.j
 	fi; \
 	echo "Versions match: $$plugin_ver (metadata, plugin entry, plugin.json)"
 
-check-skill-versions: ## Check every SKILL.md announces the correct version
+check-skill-versions: ## Check every SKILL.md (source + vendored kiro) announces the correct version
 	@plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
 	fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
 		file="$$dir/SKILL.md"; \
 		if ! grep -qF "Running paad:$$name v$$plugin_ver\"" "$$file" 2>/dev/null; then \
-			echo "FAIL: $$name is missing or has wrong version announcement (expected v$$plugin_ver)"; \
+			echo "FAIL: $$name is missing or has wrong version announcement (expected v$$plugin_ver) at $$file"; \
 			fail=1; \
 		fi; \
 	done; \
+	if [ -d "$(VENDORED_KIRO_SKILLS_DIR)" ]; then \
+		for dir in $(VENDORED_KIRO_SKILLS_DIR)/*; do \
+			[ -d "$$dir" ] || continue; \
+			name=$$(basename "$$dir"); \
+			file="$$dir/SKILL.md"; \
+			[ -f "$$file" ] || continue; \
+			if ! grep -qF "Running paad:$$name v$$plugin_ver\"" "$$file" 2>/dev/null; then \
+				echo "FAIL: vendored $$name is missing or has wrong version announcement (expected v$$plugin_ver) at $$file — run 'make vendored' after a version bump"; \
+				fail=1; \
+			fi; \
+		done; \
+	fi; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
-	echo "All skills announce v$$plugin_ver."
+	echo "All skills announce v$$plugin_ver (source + vendored)."
 
-bump-version: ## Bump version across plugin.json, marketplace.json (metadata + plugin entries), and all SKILL.md (usage: make bump-version VERSION=X.Y.Z)
+bump-version: ## Bump version across plugin.json, marketplace.json (metadata + plugin entries), all SKILL.md, and the vendored kiro/agent output (usage: make bump-version VERSION=X.Y.Z)
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Usage: make bump-version VERSION=X.Y.Z"; \
 		exit 1; \
 	fi
 	@python3 scripts/bump_version.py "$(VERSION)"
+	@$(MAKE) --no-print-directory vendored
 
 check-digraphs: ## Check every skill (except help) has a digraph
 	@fail=0; \
@@ -174,7 +188,6 @@ release: ## Prepare a release: bump version, regenerate vendored, run all checks
 		exit 1; \
 	fi
 	@$(MAKE) bump-version VERSION=$(VERSION)
-	@$(MAKE) vendored
 	@$(MAKE) test
 	@echo ""
 	@echo "Release v$(VERSION) prepared. Review the diff, then:"

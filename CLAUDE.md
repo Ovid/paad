@@ -48,7 +48,7 @@ paad/
 - **Marketplace name**: `paad`
 - **Plugin name**: `paad` (so all skills are invoked as `/paad:<skill-name>`)
 - **Skill naming**: skill folder names become the suffix after `paad:` — e.g., `skills/agentic-architecture/` → `/paad:agentic-architecture`
-- **Versioning**: both `marketplace.json` and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. Run `make bump-version VERSION=X.Y.Z` to update all three places at once; `make check-skill-versions` (run as part of `make test`) catches drift.
+- **Versioning**: both `marketplace.json` and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. Run `make bump-version VERSION=X.Y.Z` to update plugin.json, marketplace.json (metadata + plugin entry), every source SKILL.md announce line, and the vendored kiro/agent output in one shot; `make check-skill-versions` (run as part of `make test`) catches drift in source and vendored copies alike.
 - **Validation**: run `claude plugin validate .` (marketplace) and `claude plugin validate ./plugins/paad` (plugin) before committing
 - **Announce on invocation**: every `SKILL.md` must begin its body with the line `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` so users see which skill ran and which version produced the behavior. The literal version string must match `plugin.json`.
 
@@ -60,7 +60,7 @@ paad/
 4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow. The only exception is `paad:help`, which is a simple display skill. See "Digraph requirements" below.
 5. Validate with `claude plugin validate ./plugins/paad`
 6. Test locally with `claude --plugin-dir ./plugins/paad`
-7. Bump the version with `make bump-version VERSION=X.Y.Z` (updates `plugin.json`, `marketplace.json`, and every SKILL.md announce line in one shot)
+7. Bump the version with `make bump-version VERSION=X.Y.Z` (updates `plugin.json`, `marketplace.json`, every source SKILL.md announce line, and regenerates the vendored kiro/agent output in one shot)
 8. Update `README.md` to document the new skill under "Available Skills", including argument syntax in the heading
 9. Add the new skill to `paad:help` — both the overview table and a detailed help section
 10. Run `make test` to verify all checks pass (validate, version sync, skill-version announce, digraphs, help, README, frontmatter)
