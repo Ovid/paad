@@ -73,7 +73,7 @@ A typical workflow looks like this:
 
 1. Write your spec.
 2. Run `pushback` to critically review the spec before implementation.
-3. Create your final implementnation plan from the spec.
+3. Create your final implementation plan from the spec.
 4. Run `alignment` to verify that requirements, design, and planned work are aligned with decisions.
 5. Implement the change.
 6. Run `agentic-review` on the working branch before merging (often more than once).
