@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version bump-version
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version bump-version vendored check-vendored
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter test-check-extracted-refs check-extracted-refs test-bump-version ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter test-check-extracted-refs check-extracted-refs test-bump-version check-vendored ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -126,3 +126,22 @@ test-check-extracted-refs: ## Self-test the check_extracted_refs.sh script again
 
 test-bump-version: ## Self-test the bump_version.py script against synthetic fixtures
 	@bash scripts/test_bump_version.sh
+
+vendored: ## Regenerate the Cursor/Kiro/Antigravity vendored skills under kiro_and_antigravity/
+	@python3 scripts/convert_skills.py
+
+check-vendored: ## Verify kiro_and_antigravity/ is in sync with the converter's current output
+	@tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	TARGET_DIR="$$tmp" python3 scripts/convert_skills.py >/dev/null; \
+	if ! diff -r "$$tmp/.kiro" kiro_and_antigravity/skills/.kiro >/dev/null 2>&1 \
+	   || ! diff -r "$$tmp/.agent" kiro_and_antigravity/skills/.agent >/dev/null 2>&1; then \
+		echo "FAIL: kiro_and_antigravity/ is out of sync with scripts/convert_skills.py output."; \
+		echo "Run 'make vendored' to regenerate, then commit."; \
+		echo "--- diff (.kiro) ---"; \
+		diff -r "$$tmp/.kiro" kiro_and_antigravity/skills/.kiro || true; \
+		echo "--- diff (.agent) ---"; \
+		diff -r "$$tmp/.agent" kiro_and_antigravity/skills/.agent || true; \
+		exit 1; \
+	fi; \
+	echo "Vendored output is in sync with scripts/convert_skills.py."

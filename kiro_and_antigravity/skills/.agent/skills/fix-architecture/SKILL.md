@@ -1,6 +1,6 @@
 ---
 name: fix-architecture
-description: Guided fixing of architectural flaws from an agentic-architecture report — validates findings, writes tests, applies fixes with developer approval, and tracks status in the report
+description: Use when working through architectural flaws documented in a paad/architecture-reviews/ report — selecting which flaws to fix, resuming a partial fix session across multiple sittings, or applying structural changes that need to be tracked back to a report
 ---
 
 # Fix Architecture (Antigravity Wrapper)

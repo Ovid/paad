@@ -1,7 +1,9 @@
 ---
 name: agentic-a11y
-description: Comprehensive multi-agent accessibility audit of user-facing code — supports web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, and games — dispatches specialists for screen readers, vision, motor, cognitive, and multimedia concerns, verifies findings, and produces an actionable report with WCAG 2.2 AA/AAA ratings
+description: Use when auditing a user-facing app — web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, or games — for accessibility barriers or WCAG 2.2 conformance, before shipping UI changes, or in response to concerns about screen-reader, keyboard, low-vision, motor, cognitive, or photosensitive users
 ---
+
+**On invocation:** announce "Running paad:agentic-a11y v1.19.0" before anything else.
 
 # Accessibility Audit
 
@@ -221,9 +223,9 @@ After all specialists complete, dispatch a single **Verifier** agent with all fi
 
 ## Phase 4: Report
 
-Write verified findings to `.reviews/a11y-reviews/a11y-<YYYY-MM-DD-HH-MM-SS>.md`.
+Write verified findings to `.reviews/a11y/a11y-<YYYY-MM-DD-HH-MM-SS>.md`.
 
-Create the `.reviews/a11y-reviews/` directory if it doesn't exist.
+Create the `.reviews/a11y/` directory if it doesn't exist.
 
 **Report template:**
 

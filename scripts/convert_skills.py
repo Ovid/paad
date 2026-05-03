@@ -1,96 +1,122 @@
 #!/usr/bin/env python3
+"""Convert paad SKILL.md files into the vendored Cursor/Kiro/Antigravity
+shapes under kiro_and_antigravity/skills/.
+
+For refs-using skills (e.g. agentic-architecture, agentic-review), the
+references/*.md files are appended as Appendix sections to the converted
+SKILL.md, since non-Claude-Code consumers have no subagent dispatch
+mechanism — inlining keeps the specialist instructions readable rather
+than referenced through a binding-read pattern that won't apply.
+
+Set TARGET_DIR env var to override the output root (used by
+make check-vendored).
+"""
 
 import os
 import re
 from pathlib import Path
 
-# Paths relative to repository root
 SOURCE_DIR = "plugins/paad/skills"
-TARGET_DIR = "kiro_and_antigravity/skills"
+DEFAULT_TARGET_DIR = "kiro_and_antigravity/skills"
 
-def convert_skills():
-    # Detect root if possible, but assume relative to cwd
-    kiro_skills_root = Path(TARGET_DIR) / ".kiro" / "skills"
-    agent_skills_root = Path(TARGET_DIR) / ".agent" / "skills"
-    
+# Paths inside SKILL.md that point at paad-Code-only output dirs need
+# rewriting to a tool-neutral shape. Each entry is added BEFORE the
+# catch-all `paad/` -> `.reviews/`. The rename table must enumerate every
+# review-output prefix used by skills under SOURCE_DIR.
+PATH_RENAMES = (
+    ("paad/architecture-reviews/", ".reviews/architecture/"),
+    ("paad/code-reviews/",         ".reviews/code/"),
+    ("paad/pushback-reviews/",     ".reviews/pushback/"),
+    ("paad/alignment-reviews/",    ".reviews/alignment/"),
+    ("paad/a11y-reviews/",         ".reviews/a11y/"),
+    ("paad/",                      ".reviews/"),  # catch-all; keep last
+)
+
+UNWANTED_HEADERS = ("Arguments", "Input Resolution", "Pre-flight Checks", "Document classification")
+SKIP_SKILL_NAMES = ("makefile", "help")
+
+
+def _neutralize(body: str) -> str:
+    """Apply path renames and strip /paad: references from a body chunk."""
+    for old, new in PATH_RENAMES:
+        body = body.replace(old, new)
+    # Remove entire lines containing /paad:<name> (follow-up suggestions, command examples).
+    body = re.sub(r'^.*\/paad:[a-z0-9-]+.*$', '', body, flags=re.MULTILINE)
+    # Clean up any remaining inline /paad:<name> mentions.
+    body = re.sub(r'\(?/paad:[a-z0-9-]+\)?', '', body)
+    return body
+
+
+def _convert_skill_md(content: str) -> str:
+    """Convert a single SKILL.md body: split by ## headers, strip
+    unwanted sections, neutralize each kept body."""
+    parts = re.split(r'\n(##+ .*)', content)
+    cleaned = parts[0]
+    for i in range(1, len(parts), 2):
+        header_line = parts[i]
+        body = parts[i + 1]
+        header_text = re.sub(r'^##+\s*', '', header_line).strip()
+        if any(uh in header_text for uh in UNWANTED_HEADERS):
+            continue
+        body = _neutralize(body)
+        body = body.rstrip() + "\n"
+        cleaned += "\n" + header_line + body
+    return cleaned
+
+
+def _append_references(cleaned_content: str, skill_path: Path) -> str:
+    """If the skill has a references/ subdir, append each ref file as an
+    Appendix section. Non-CC consumers have no subagent dispatch so the
+    binding-read pattern doesn't work — inline the ref content instead."""
+    refs_dir = skill_path / "references"
+    if not refs_dir.is_dir():
+        return cleaned_content
+    appendix_chunks: list[str] = []
+    for ref_file in sorted(refs_dir.glob("*.md")):
+        ref_text = _neutralize(ref_file.read_text(encoding="utf-8"))
+        appendix_chunks.append(
+            f"\n## Appendix: {ref_file.name}\n\n{ref_text.rstrip()}\n"
+        )
+    if not appendix_chunks:
+        return cleaned_content
+    return cleaned_content.rstrip() + "\n" + "".join(appendix_chunks)
+
+
+def convert_skills(target_dir: str | None = None) -> None:
+    target_root = Path(target_dir or os.environ.get("TARGET_DIR") or DEFAULT_TARGET_DIR)
+    kiro_skills_root = target_root / ".kiro" / "skills"
+    agent_skills_root = target_root / ".agent" / "skills"
     kiro_skills_root.mkdir(parents=True, exist_ok=True)
     agent_skills_root.mkdir(parents=True, exist_ok=True)
-    
-    skip_names = ["makefile", "help"]
-    unwanted_headers = ["Arguments", "Input Resolution", "Pre-flight Checks", "Document classification"]
 
-    for skill_path in Path(SOURCE_DIR).iterdir():
-        if not skill_path.is_dir() or skill_path.name in skip_names:
+    for skill_path in sorted(Path(SOURCE_DIR).iterdir()):
+        if not skill_path.is_dir() or skill_path.name in SKIP_SKILL_NAMES:
             continue
-            
         skill_file = skill_path / "SKILL.md"
         if not skill_file.exists():
             continue
-            
-        print(f"Converting {skill_path.name}...")
-        
-        with open(skill_file, "r", encoding="utf-8") as f:
-            content = f.read()
 
-        # Extract frontmatter for wrapper
+        print(f"Converting {skill_path.name}...")
+        content = skill_file.read_text(encoding="utf-8")
+
         name_match = re.search(r"name:\s*(.*)", content)
         desc_match = re.search(r"description:\s*(.*)", content)
         skill_name = name_match.group(1).strip() if name_match else skill_path.name
         description = desc_match.group(1).strip() if desc_match else ""
 
-        # Split into sections by headers (##)
-        # We use a non-capturing group for the split but keep the header as part of the next chunk
-        # Actually splitting by \n## works better if we prepend \n to content
-        parts = re.split(r'\n(##+ .*)', content)
-        
-        # parts[0] is everything before the first ##
-        cleaned_content = parts[0]
-        
-        # Process header/body pairs
-        for i in range(1, len(parts), 2):
-            header_line = parts[i]
-            body = parts[i+1]
-            
-            header_text = re.sub(r'^##+\s*', '', header_line).strip()
-            
-            # Skip unwanted sections
-            if any(uh in header_text for uh in unwanted_headers):
-                continue
-                
-            # Neutralize "paad/" paths to ".reviews/" or ".reports/"
-            body = body.replace("paad/architecture-reviews/", ".reviews/architecture/")
-            body = body.replace("paad/code-reviews/", ".reviews/code/")
-            body = body.replace("paad/pushback-reviews/", ".reviews/pushback/")
-            body = body.replace("paad/alignment-reviews/", ".reviews/alignment/")
-            body = body.replace("paad/", ".reviews/")
-            
-            # Remove entire lines containing /paad: (usually follow-up suggestions or command examples)
-            body = re.sub(r'^.*\/paad:[a-z0-9-]+.*$', '', body, flags=re.MULTILINE)
-            
-            # Additional cleanup for any remaining /paad: mentions just in case
-            body = re.sub(r'\(?/paad:[a-z0-9-]+\)?', '', body)
-            
-            # Clean up trailing whitespace and excessive newlines
-            body = body.rstrip() + "\n"
-            
-            cleaned_content += "\n" + header_line + body
-            
-        # Final cleanup for consecutive empty lines
+        cleaned_content = _convert_skill_md(content)
+        cleaned_content = _append_references(cleaned_content, skill_path)
         cleaned_content = re.sub(r'\n{3,}', '\n\n', cleaned_content).strip() + "\n"
-        
-        # Write Kiro Skill
+
         kiro_skill_dir = kiro_skills_root / skill_path.name
         kiro_skill_dir.mkdir(exist_ok=True)
-        with open(kiro_skill_dir / "SKILL.md", "w", encoding="utf-8") as f:
-            f.write(cleaned_content)
-            
-        # Write Antigravity wrapper
+        (kiro_skill_dir / "SKILL.md").write_text(cleaned_content, encoding="utf-8")
+
         h1_match = re.search(r'^#\s*(.*)', cleaned_content, re.MULTILINE)
         title = h1_match.group(1).strip() if h1_match else skill_path.name.replace("-", " ").title()
-        
+
         agent_skill_dir = agent_skills_root / skill_path.name
         agent_skill_dir.mkdir(exist_ok=True)
-        
         wrapper = f"""---
 name: {skill_name}
 description: {description}
@@ -103,10 +129,10 @@ This is a project-specific skill. The detailed checklist and procedures are in:
 
 Please refer to that file for the full criteria.
 """
-        with open(agent_skill_dir / "SKILL.md", "w", encoding="utf-8") as f:
-            f.write(wrapper)
+        (agent_skill_dir / "SKILL.md").write_text(wrapper, encoding="utf-8")
 
     print("Conversion complete.")
+
 
 if __name__ == "__main__":
     convert_skills()

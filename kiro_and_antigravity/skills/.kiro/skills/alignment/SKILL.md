@@ -1,7 +1,9 @@
 ---
 name: alignment
-description: Check that requirements, designs, and implementation plans are aligned — finds coverage gaps, scope creep, and design mismatches, then rewrites tasks in TDD red/green/refactor format
+description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents
 ---
+
+**On invocation:** announce "Running paad:alignment v1.19.0" before anything else.
 
 # Alignment Check
 
@@ -179,9 +181,14 @@ Create the `.reviews/alignment/` directory if it doesn't exist.
 **If documents came from conversation history:**
 Ask: "The documents aren't saved to files yet. Where should I write them?" Suggest a reasonable path based on project structure.
 
-### Step 2: TDD task rewrite (mandatory)
+### Step 2: TDD task rewrite (when applicable)
 
-Once alignment is confirmed, rewrite all action items in red/green/refactor format. This is not optional — it produces better implementations.
+Once alignment is confirmed, check whether tasks should be rewritten in red/green/refactor format. **Skip this step if:**
+
+- Tasks are already in red/green/refactor format
+- Tasks don't involve code implementation (e.g., infrastructure provisioning, documentation, design work, data migrations, manual processes)
+
+If neither condition applies, rewrite action items in red/green/refactor format — it produces better implementations.
 
 **Why this works:**
 

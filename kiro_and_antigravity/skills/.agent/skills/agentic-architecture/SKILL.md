@@ -1,6 +1,6 @@
 ---
 name: agentic-architecture
-description: Multi-agent architecture analysis — dispatches specialists for structure, coupling, integration, error handling, and security, verifies findings, and produces a comprehensive report of strengths and flaws with evidence
+description: Use when assessing the architectural health of a codebase — before a major refactor, when onboarding to an unfamiliar repo, after rapid growth, when planning a redesign, or to surface structural strengths and risks before they become expensive
 ---
 
 # Agentic Architecture Analysis (Antigravity Wrapper)

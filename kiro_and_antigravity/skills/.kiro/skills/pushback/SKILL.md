@@ -1,7 +1,9 @@
 ---
 name: pushback
-description: Push back on specs, PRDs, requirements, and design documents — finds unrelated features, oversized scope, contradictions, feasibility issues, scope imbalance, omissions, ambiguity, and security concerns, with source control reality checks
+description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling
 ---
+
+**On invocation:** announce "Running paad:pushback v1.19.0" before anything else.
 
 # Spec Pushback
 
