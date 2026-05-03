@@ -1,11 +1,18 @@
+# lint, format, and cover targets are intentionally absent: this project is
+# 95% Markdown specs with a small Python/Bash tooling surface, no test
+# framework supports coverage for the bash-fixture-driven checks, and no
+# linter/formatter is configured. `make test` is the integration surface.
+
 SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version bump-version vendored check-vendored check-confidence-floor test-check-confidence-floor
+.PHONY: help all test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version bump-version vendored check-vendored check-confidence-floor test-check-confidence-floor loc
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
+
+all: test ## Full CI pass (currently equivalent to `test`; see header comment)
 
 test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter test-check-extracted-refs check-extracted-refs test-bump-version check-vendored test-check-confidence-floor check-confidence-floor ## Run all checks
 	@echo "All checks passed."
@@ -135,6 +142,9 @@ check-confidence-floor: ## Verify the confidence-floor literal (currently 60) is
 
 test-check-confidence-floor: ## Self-test the check_confidence_floor.py script against synthetic fixtures
 	@bash scripts/test_check_confidence_floor.sh
+
+loc: ## Count lines of code in our own files (excludes vendored output, skill outputs, scratch)
+	@cloc --exclude-dir=kiro_and_antigravity,architecture-reviews,code-reviews,notes,scratch,docs,images,.kiro .
 
 check-vendored: ## Verify kiro_and_antigravity/ is in sync with the converter's current output
 	@tmp=$$(mktemp -d); \
