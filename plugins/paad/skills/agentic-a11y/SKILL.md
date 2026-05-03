@@ -3,7 +3,7 @@ name: agentic-a11y
 description: Use when auditing a user-facing app — web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, or games — for accessibility barriers or WCAG 2.2 conformance, before shipping UI changes, or in response to concerns about screen-reader, keyboard, low-vision, motor, cognitive, or photosensitive users
 ---
 
-**On invocation:** announce "Running paad:agentic-a11y v1.18.0" before anything else.
+**On invocation:** announce "Running paad:agentic-a11y v1.19.0" before anything else.
 
 # Accessibility Audit
 

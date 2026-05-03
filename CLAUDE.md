@@ -22,9 +22,11 @@ paad/
 │           ├── agentic-a11y/
 │           │   └── SKILL.md       ← /paad:agentic-a11y skill
 │           ├── agentic-architecture/
-│           │   └── SKILL.md       ← /paad:agentic-architecture skill
+│           │   ├── SKILL.md       ← /paad:agentic-architecture skill
+│           │   └── references/    ← on-demand specialist + verifier + report-template content
 │           ├── agentic-review/
-│           │   └── SKILL.md       ← /paad:agentic-review skill
+│           │   ├── SKILL.md       ← /paad:agentic-review skill
+│           │   └── references/    ← on-demand specialist + verifier + report-template content
 │           ├── alignment/
 │           │   └── SKILL.md       ← /paad:alignment skill
 │           ├── fix-architecture/
