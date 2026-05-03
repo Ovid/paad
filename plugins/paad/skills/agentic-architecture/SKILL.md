@@ -127,7 +127,13 @@ The Verifier's detailed instructions live at `references/verifier.md`. That file
 
 ## Phase 4: Report
 
-Write verified findings to `paad/architecture-reviews/<YYYY-MM-DD>-<git-repo-name>-architecture-report.md`.
+Write verified findings to `paad/architecture-reviews/<YYYY-MM-DD>-<repo-slug>-architecture-report.md`.
+
+**Filename rules:**
+- `<YYYY-MM-DD>` — current local date.
+- `<repo-slug>` — derive from the repo name detected in Phase 1. Replace any character that is not `[a-zA-Z0-9._-]` with `-`, collapse runs of `-`, and trim leading/trailing `-`. If the slug is empty after sanitization, fall back to `unknown-repo`. Never let the slug contain `/`, `..`, leading `.`, or shell metacharacters — Phase 4 writes the file by literal path, and a malformed slug must fail safely rather than escape the target directory.
+- **Collision handling:** before writing, check whether the target file already exists. If it does, append `-<HH-MM-SS>` (current local time, hyphen-separated) to the date prefix to disambiguate (`<YYYY-MM-DD>-<HH-MM-SS>-<repo-slug>-architecture-report.md`). Same-day re-runs must produce distinct files; do **not** overwrite. If the time-suffixed path also exists (sub-second double-run), append `-2`, `-3`, etc. until a free path is found.
+- **Writable check:** verify `paad/architecture-reviews/` is writable before producing the report. If the directory exists but is not writable, abort Phase 4 with a clear message naming the directory and exit code; do **not** proceed to assemble the report content only to fail at write time.
 
 Create the `paad/architecture-reviews/` directory if it doesn't exist.
 

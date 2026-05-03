@@ -7,3 +7,5 @@
 > are removed only when explicitly addressed — no automatic cleanup.
 
 ---
+
+(no entries)
