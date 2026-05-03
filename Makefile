@@ -6,8 +6,9 @@
 SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
+MAIN_BRANCH ?= main
 
-.PHONY: help all test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version bump-version vendored check-vendored check-confidence-floor test-check-confidence-floor loc
+.PHONY: help all test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version bump-version vendored check-vendored check-confidence-floor test-check-confidence-floor loc release
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -145,6 +146,32 @@ test-check-confidence-floor: ## Self-test the check_confidence_floor.py script a
 
 loc: ## Count lines of code in our own files (excludes vendored output, skill outputs, scratch)
 	@cloc --exclude-dir=kiro_and_antigravity,architecture-reviews,code-reviews,notes,scratch,docs,images,.kiro .
+
+release: ## Prepare a release: bump version, regenerate vendored, run all checks. Usage: make release VERSION=X.Y.Z. Must be on main with a clean tree. Does NOT commit, tag, or push.
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make release VERSION=X.Y.Z"; \
+		exit 1; \
+	fi
+	@current_branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$current_branch" != "$(MAIN_BRANCH)" ]; then \
+		echo "FAIL: release must run from '$(MAIN_BRANCH)' (currently on '$$current_branch')."; \
+		echo "Switch with: git checkout $(MAIN_BRANCH)"; \
+		echo "Override the expected branch with: make release VERSION=$(VERSION) MAIN_BRANCH=<name>"; \
+		exit 1; \
+	fi
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "FAIL: working tree is not clean — release must start from a clean state."; \
+		echo "Run 'git status' to see what's pending; commit or stash before releasing."; \
+		exit 1; \
+	fi
+	@$(MAKE) bump-version VERSION=$(VERSION)
+	@$(MAKE) vendored
+	@$(MAKE) test
+	@echo ""
+	@echo "Release v$(VERSION) prepared. Review the diff, then:"
+	@echo "  git add -A && git commit -m 'Release v$(VERSION)'"
+	@echo "  git tag v$(VERSION)"
+	@echo "  git push origin $(MAIN_BRANCH) --tags"
 
 check-vendored: ## Verify kiro_and_antigravity/ is in sync with the converter's current output
 	@tmp=$$(mktemp -d); \

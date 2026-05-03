@@ -69,6 +69,14 @@ paad/
 
 When changing a skill's behavior, arguments, or output, review `plugins/paad/skills/help/SKILL.md` and update the corresponding help text to match.
 
+## Releasing
+
+Releases run from `main` with a clean working tree:
+
+    make release VERSION=X.Y.Z
+
+This composes `bump-version` + `vendored` + `make test` and prints the git commands for the release commit, tag, and push. The Makefile blocks runs from non-`main` branches and from dirty trees. After `make release` completes, review the diff, then commit, tag (`vX.Y.Z`), and push as instructed.
+
 ## Digraph requirements
 
 Every skill (except `paad:help`) must include at least one graphviz digraph (`\`\`\`dot` block) that visualizes the skill's decision points and flow. Digraphs must be:
