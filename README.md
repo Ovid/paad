@@ -8,7 +8,7 @@ Modern software teams rely on multiple layers of protection: specifications, tes
 
 AI coding assistants can compress that process dramatically, but they do not reliably challenge weak requirements, detect drift from the plan, or protect long-term code quality on their own.
 
-**PAAD** (pronounced "pad") adds those missing safeguards.
+**PAAD** (pronounced "pad") adds those missing safeguards. It does not replace your current AI-Assisted Development tools; PAAD complements them. You like [Superpowers](https://github.com/obra/superpowers/)? Use it with PAAD for even better results!
 
 PAAD is a system of AI agent skills designed to address four common failure modes in AI-assisted development:
 
