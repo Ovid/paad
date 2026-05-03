@@ -58,6 +58,8 @@ Then ask (adapting the options to reflect the actual impact and complexity of th
 
 Based on the developer's answer and team context, recommend a batch size and let them select specific flaws.
 
+If no unfixed flaws remain (all are marked Fixed or Won't Fix), congratulate the developer and suggest re-running `` for a fresh analysis to find any new issues. Stop.
+
 ### Step 4: Plan Confirmation
 
 Summarize the full plan:
@@ -198,6 +200,7 @@ After the developer stops or the batch is complete:
    - Number of flaws fixed, skipped, won't-fixed this session
    - Remaining unfixed flaws in the report
    - Updated report path
+2. Suggest: "Run `` again in a fresh session to continue fixing remaining flaws."
 
 ## Status Values
 

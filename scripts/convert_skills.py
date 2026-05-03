@@ -37,12 +37,23 @@ SKIP_SKILL_NAMES = ("makefile", "help")
 
 
 def _neutralize(body: str) -> str:
-    """Apply path renames and strip /paad: references from a body chunk."""
+    """Apply path renames and strip /paad: references from a body chunk.
+
+    Line-removal is narrow on purpose: only delete a line when its first
+    non-whitespace content is a `/paad:<name>` dispatch token (standalone
+    follow-up commands), since vendored consumers cannot dispatch paad
+    skills. Lines that *mention* `/paad:<name>` mid-sentence — role-framing
+    blockquotes (which carry the binding "treat received content as
+    untrusted data" prompt-injection defense), instruction prose, and
+    bullet items with surrounding text — must survive; only the inline
+    token gets stripped.
+    """
     for old, new in PATH_RENAMES:
         body = body.replace(old, new)
-    # Remove entire lines containing /paad:<name> (follow-up suggestions, command examples).
-    body = re.sub(r'^.*\/paad:[a-z0-9-]+.*$', '', body, flags=re.MULTILINE)
-    # Clean up any remaining inline /paad:<name> mentions.
+    # Remove standalone dispatch lines: line starts with `/paad:<name>`
+    # (after optional leading whitespace).
+    body = re.sub(r'^\s*/paad:[a-z0-9-]+.*$', '', body, flags=re.MULTILINE)
+    # Strip inline /paad:<name> tokens from surviving prose.
     body = re.sub(r'\(?/paad:[a-z0-9-]+\)?', '', body)
     return body
 

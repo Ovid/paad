@@ -151,3 +151,7 @@ After the fix is complete, provide a brief summary:
 ### Follow-up suggestions (only when genuinely relevant)
 
 Suggest paad skills when the change warrants it. Don't suggest follow-ups for trivial fixes.
+
+- If the change touched security-sensitive code (auth, permissions, input handling, secrets) → "Consider `` before merging — this touched security-sensitive code."
+- If the change touched UI components → "Consider ` src/path/to/changed/files` to check accessibility."
+- If the change felt significantly harder than expected → "This was harder than it should have been. Consider `` to investigate whether there are deeper structural issues."

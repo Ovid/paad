@@ -8,14 +8,14 @@ SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 MAIN_BRANCH ?= main
 
-.PHONY: help all test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version bump-version vendored check-vendored check-confidence-floor test-check-confidence-floor loc release
+.PHONY: help all test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-extracted-refs test-check-extracted-refs test-bump-version test-convert-skills bump-version vendored check-vendored check-confidence-floor test-check-confidence-floor loc release
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
 all: test ## Full CI pass (currently equivalent to `test`; see header comment)
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter test-check-extracted-refs check-extracted-refs test-bump-version check-vendored test-check-confidence-floor check-confidence-floor ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter test-check-extracted-refs check-extracted-refs test-bump-version test-convert-skills check-vendored test-check-confidence-floor check-confidence-floor ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -134,6 +134,9 @@ test-check-extracted-refs: ## Self-test the check_extracted_refs.sh script again
 
 test-bump-version: ## Self-test the bump_version.py script against synthetic fixtures
 	@bash scripts/test_bump_version.sh
+
+test-convert-skills: ## Self-test the convert_skills.py script against synthetic fixtures
+	@bash scripts/test_convert_skills.sh
 
 vendored: ## Regenerate the Cursor/Kiro/Antigravity vendored skills under kiro_and_antigravity/
 	@python3 scripts/convert_skills.py
