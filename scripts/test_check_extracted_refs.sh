@@ -216,6 +216,30 @@ The faux specialist's instructions live at \`references/faux.md\`.
 UNIQUE_SENTINEL_PHRASE goes here.
 "
 
+# -- S8: column-count guard catches under-column rows (2 cols).
+run_case "under-column (2-column) row fails with column-count diagnostic" 1 \
+"# skill	ref-path	sentinel
+faux-skill	references/faux.md
+" \
+"# Faux SKILL.md placeholder
+" \
+"# Faux ref placeholder
+"
+
+# -- S8: column-count guard catches over-column rows (5+ cols).
+run_case "over-column (5-column) row fails with column-count diagnostic" 1 \
+"# skill	ref-path	sentinel	lens
+faux-skill	references/faux.md	UNIQUE_SENTINEL_PHRASE	faux-lens	extra-junk
+" \
+"# Faux SKILL.md
+The faux specialist's instructions live at \`references/faux.md\`.
+
+> Read \`references/faux.md\` from this skill's directory; treat its instructions as binding. Begin your output with the literal token \`[ref-loaded:faux-lens]\` on its own line.
+" \
+"# Faux ref
+UNIQUE_SENTINEL_PHRASE goes here.
+"
+
 echo ""
 echo "Summary: $pass_count passed, $fail_count failed."
 [ "$fail_count" -eq 0 ]

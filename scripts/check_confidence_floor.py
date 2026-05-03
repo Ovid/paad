@@ -13,10 +13,16 @@ itself, not band lower bounds (e.g., '60-79 -> Medium') or score-range
 descriptors (e.g., 'confidence (0-100)') that are conceptually distinct.
 
 Usage:
-  python3 scripts/check_confidence_floor.py [scan-root]
+  python3 scripts/check_confidence_floor.py [--strict] [scan-root]
 
 Defaults to scanning plugins/paad/skills/. The optional positional arg
 exists to support fixture-driven tests.
+
+`--strict` additionally requires every pattern in FLOOR_PATTERNS to
+match at least once across the scan tree. A zero-match pattern is the
+drift this checker is meant to detect — but synthetic fixtures
+deliberately exercise a subset of patterns, so the strict assertion
+is opt-in. The real-codebase invocation in the Makefile passes it.
 """
 from __future__ import annotations
 
@@ -38,10 +44,15 @@ DEFAULT_SCAN_ROOT = Path("plugins/paad/skills")
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) > 2:
-        print("Usage: check_confidence_floor.py [scan-root]", file=sys.stderr)
+    args = list(argv[1:])
+    strict = False
+    if "--strict" in args:
+        strict = True
+        args.remove("--strict")
+    if len(args) > 1:
+        print("Usage: check_confidence_floor.py [--strict] [scan-root]", file=sys.stderr)
         return 1
-    scan_root = Path(argv[1]) if len(argv) == 2 else DEFAULT_SCAN_ROOT
+    scan_root = Path(args[0]) if args else DEFAULT_SCAN_ROOT
 
     if not scan_root.is_dir():
         print(f"FAIL: scan root not found: {scan_root}", file=sys.stderr)
@@ -49,13 +60,21 @@ def main(argv: list[str]) -> int:
 
     matches: list[tuple[Path, str, int]] = []
     for md in sorted(scan_root.rglob("*.md")):
-        text = md.read_text(encoding="utf-8")
+        try:
+            text = md.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            # An unreadable or non-UTF-8 file under the scan root is a real
+            # operator problem (permissions, corruption, accidentally
+            # tracked binary), not a clean "no floor here" — fail loudly.
+            print(f"FAIL: cannot read {md}: {exc}", file=sys.stderr)
+            return 1
         for pat in FLOOR_PATTERNS:
             for m in re.finditer(pat, text):
-                try:
-                    matches.append((md, pat, int(m.group(1))))
-                except (ValueError, IndexError):
-                    continue
+                # The capture group `(\d+)` guarantees a digit-only match,
+                # so int() conversion cannot fail. If FLOOR_PATTERNS is
+                # ever changed to allow non-digit captures, that change
+                # owns adding the type guard.
+                matches.append((md, pat, int(m.group(1))))
 
     if not matches:
         print(
@@ -64,6 +83,33 @@ def main(argv: list[str]) -> int:
             file=sys.stderr,
         )
         return 1
+
+    # Per-pattern minimum-match guard (opt-in via --strict): every
+    # pattern in FLOOR_PATTERNS must have matched at least once across
+    # the scan tree. A pattern that no longer matches anything is
+    # itself the drift this checker is meant to detect — silently
+    # passing it would let stale patterns accumulate until the checker
+    # becomes vacuous. Off by default because synthetic fixtures
+    # legitimately exercise a subset of patterns.
+    if strict:
+        unmatched_patterns = [
+            pat for pat in FLOOR_PATTERNS
+            if not any(p == pat for _, p, _ in matches)
+        ]
+        if unmatched_patterns:
+            print(
+                "FAIL: one or more FLOOR_PATTERNS matched zero sites — "
+                "pattern rot or sites removed:",
+                file=sys.stderr,
+            )
+            for pat in unmatched_patterns:
+                print(f"  {pat!r}", file=sys.stderr)
+            print(
+                "If a pattern is intentionally retired, remove it from "
+                "FLOOR_PATTERNS; if a site was renamed, update the pattern.",
+                file=sys.stderr,
+            )
+            return 1
 
     distinct = sorted({v for _, _, v in matches})
     if len(distinct) > 1:

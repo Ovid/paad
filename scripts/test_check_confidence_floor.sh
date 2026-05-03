@@ -131,6 +131,74 @@ EOF
 }
 run_subtest "cap-confidence drift detected" test_cap_drift
 
+# -- S18 strict: all patterns matched -> --strict passes.
+test_strict_all_patterns_matched() {
+    local tmp; tmp="$(new_sandbox)"
+    mkdir -p "$tmp/foo"
+    cat > "$tmp/foo/SKILL.md" <<'EOF'
+Only report findings with confidence >= 60.
+Drop findings below 60 confidence.
+- Cap confidence at 60 when the bug requires a precondition.
+We refuse below 60% confidence overall, and confidence is below 60 means dropped.
+EOF
+    if ! python3 "$SCRIPT" --strict "$tmp" >/dev/null 2>&1; then
+        echo "  FAIL: --strict with all 5 patterns matched should pass"
+        return 1
+    fi
+    return 0
+}
+run_subtest "--strict passes when every FLOOR_PATTERN matches at least once" test_strict_all_patterns_matched
+
+# -- S18 strict: only some patterns match -> --strict fails (catches pattern rot).
+test_strict_partial_pattern_rot() {
+    local tmp; tmp="$(new_sandbox)"
+    mkdir -p "$tmp/foo"
+    cat > "$tmp/foo/SKILL.md" <<'EOF'
+Only report findings with confidence >= 60.
+EOF
+    if python3 "$SCRIPT" --strict "$tmp" >/dev/null 2>&1; then
+        echo "  FAIL: --strict with only 1/5 patterns matched should fail"
+        return 1
+    fi
+    # Sanity: same scan without --strict still passes (subset is OK by default).
+    if ! python3 "$SCRIPT" "$tmp" >/dev/null 2>&1; then
+        echo "  FAIL: non-strict with 1 matching pattern should pass"
+        return 1
+    fi
+    return 0
+}
+run_subtest "--strict fails on partial pattern rot; default-mode tolerates subset" test_strict_partial_pattern_rot
+
+# -- S9 read failure: unreadable file under scan root produces a clean fail (not a stack trace).
+test_unreadable_file_fails_cleanly() {
+    local tmp; tmp="$(new_sandbox)"
+    mkdir -p "$tmp/foo"
+    cat > "$tmp/foo/SKILL.md" <<'EOF'
+Only report findings with confidence >= 60.
+EOF
+    cat > "$tmp/foo/unreadable.md" <<'EOF'
+placeholder
+EOF
+    chmod 000 "$tmp/foo/unreadable.md"
+    local rc=0
+    local output
+    output="$(python3 "$SCRIPT" "$tmp" 2>&1)" || rc=$?
+    chmod 644 "$tmp/foo/unreadable.md"  # restore so cleanup can rm
+    if [ "$rc" -eq 0 ]; then
+        echo "  FAIL: unreadable file should produce non-zero exit"
+        return 1
+    fi
+    if ! grep -q "FAIL: cannot read" <<<"$output"; then
+        echo "  FAIL: expected 'FAIL: cannot read' diagnostic, got: $output"
+        return 1
+    fi
+    return 0
+}
+# Skip on root (chmod 000 doesn't block root reads).
+if [ "$(id -u)" -ne 0 ]; then
+    run_subtest "unreadable file produces clean FAIL not stack trace" test_unreadable_file_fails_cleanly
+fi
+
 echo ""
 echo "Summary: $pass_count passed, $fail_count failed."
 [ "$fail_count" -eq 0 ]

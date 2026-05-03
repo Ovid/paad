@@ -26,19 +26,8 @@ validate: ## Validate marketplace and all plugins
 		claude plugin validate "$$dir" || exit 1; \
 	done
 
-check-versions: ## Check marketplace.json (metadata + plugin entry) and plugin.json versions all match
-	@marketplace_meta_ver=$$(python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['metadata']['version'])"); \
-	marketplace_plugin_ver=$$(python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version'])"); \
-	plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
-	if [ "$$marketplace_meta_ver" != "$$plugin_ver" ]; then \
-		echo "FAIL: Version mismatch — marketplace.json metadata.version ($$marketplace_meta_ver) != plugin.json ($$plugin_ver)"; \
-		exit 1; \
-	fi; \
-	if [ "$$marketplace_plugin_ver" != "$$plugin_ver" ]; then \
-		echo "FAIL: Version mismatch — marketplace.json plugins[0].version ($$marketplace_plugin_ver) != plugin.json ($$plugin_ver)"; \
-		exit 1; \
-	fi; \
-	echo "Versions match: $$plugin_ver (metadata, plugin entry, plugin.json)"
+check-versions: ## Check marketplace.json (metadata + every plugin entry) and plugin.json versions all match
+	@python3 scripts/check_versions.py
 
 check-skill-versions: ## Check every SKILL.md (source + vendored kiro) announces the correct version
 	@plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
@@ -155,8 +144,8 @@ test-convert-skills: ## Self-test the convert_skills.py script against synthetic
 vendored: ## Regenerate the Cursor/Kiro/Antigravity vendored skills under kiro_and_antigravity/
 	@python3 scripts/convert_skills.py
 
-check-confidence-floor: ## Verify the confidence-floor literal (currently 60) is consistent across all sites
-	@python3 scripts/check_confidence_floor.py
+check-confidence-floor: ## Verify the confidence-floor literal (currently 60) is consistent across all sites; --strict also requires every FLOOR_PATTERN to match at least once
+	@python3 scripts/check_confidence_floor.py --strict
 
 test-check-confidence-floor: ## Self-test the check_confidence_floor.py script against synthetic fixtures
 	@bash scripts/test_check_confidence_floor.sh
@@ -198,7 +187,11 @@ release: ## Prepare a release: bump version, regenerate vendored, run all checks
 check-vendored: ## Verify kiro_and_antigravity/ is in sync with the converter's current output
 	@tmp=$$(mktemp -d); \
 	trap 'rm -rf "$$tmp"' EXIT; \
-	TARGET_DIR="$$tmp" python3 scripts/convert_skills.py >/dev/null; \
+	if ! TARGET_DIR="$$tmp" python3 scripts/convert_skills.py >/dev/null; then \
+		echo "FAIL: scripts/convert_skills.py exited non-zero — converter is broken (this is not a sync drift)."; \
+		echo "Re-run 'python3 scripts/convert_skills.py' to see the actual error."; \
+		exit 1; \
+	fi; \
 	if ! diff -r "$$tmp/.kiro" kiro_and_antigravity/skills/.kiro >/dev/null 2>&1 \
 	   || ! diff -r "$$tmp/.agent" kiro_and_antigravity/skills/.agent >/dev/null 2>&1; then \
 		echo "FAIL: kiro_and_antigravity/ is out of sync with scripts/convert_skills.py output."; \

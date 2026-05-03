@@ -15,7 +15,8 @@ fi
 
 fail=0
 row=0
-# `|| [ -n "$skill" ]` keeps the loop running on the final line of a
+raw_lineno=0
+# `|| [ -n "$raw_line" ]` keeps the loop running on the final line of a
 # manifest with no trailing newline (`read` returns nonzero on partial-
 # line EOF).
 # Column 4 (lens) is optional: empty for refs read directly by the
@@ -25,17 +26,40 @@ row=0
 # contains the literal `[ref-loaded:<lens>]` token — catching drift
 # between the manifest's recorded lens and the orchestrator's actual
 # dispatch instruction (which would silently break verifier routing).
-while IFS=$'\t' read -r skill ref_path sentinel lens || [ -n "$skill" ]; do
-    # strip stray CR from any field (Windows-edited TSVs)
+while IFS= read -r raw_line || [ -n "$raw_line" ]; do
+    raw_lineno=$((raw_lineno + 1))
+    # strip stray CR from end of raw line (Windows-edited TSVs)
+    raw_line="${raw_line%$'\r'}"
+
+    # skip blanks and comments early (before column-count guard so the
+    # header row '# skill\tref-path\tsentinel\tlens' doesn't trip it)
+    case "$raw_line" in
+        ''|'#'*) continue ;;
+    esac
+
+    # Column-count guard. Manifest contract: exactly 3 columns
+    # (skill, ref-path, sentinel) or 4 columns with optional lens.
+    # An under-column row (1-2 cols) silently parses as fields-with-
+    # empty-tail and produces "ref file not found at /SKILL.md"-shape
+    # diagnostics that misdirect the user. An over-column row (5+)
+    # silently drops the trailing data. Both are manifest authoring
+    # bugs; surface them with a clear message anchored to the line
+    # number rather than the data-row index.
+    field_count=$(awk -F'\t' '{print NF}' <<<"$raw_line")
+    if [ "$field_count" -lt 3 ] || [ "$field_count" -gt 4 ]; then
+        echo "FAIL [line $raw_lineno]: manifest row has $field_count tab-separated columns; expected 3 or 4 (skill, ref-path, sentinel, [lens])"
+        echo "  raw line: $raw_line"
+        fail=1
+        continue
+    fi
+
+    IFS=$'\t' read -r skill ref_path sentinel lens <<<"$raw_line"
+    # strip stray CR from any field (Windows-edited TSVs, defensive)
     skill="${skill%$'\r'}"
     ref_path="${ref_path%$'\r'}"
     sentinel="${sentinel%$'\r'}"
     lens="${lens%$'\r'}"
 
-    # skip blanks and comments
-    case "$skill" in
-        ''|'#'*) continue ;;
-    esac
     row=$((row + 1))
     skill_md="$SKILLS_ROOT/$skill/SKILL.md"
     ref_file="$SKILLS_ROOT/$skill/$ref_path"
@@ -77,6 +101,7 @@ while IFS=$'\t' read -r skill ref_path sentinel lens || [ -n "$skill" ]; do
         fi
     fi
 done < "$MANIFEST"
+unset raw_line
 
 if [ "$row" -eq 0 ]; then
     echo "FAIL: manifest contains zero data rows"
