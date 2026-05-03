@@ -159,7 +159,22 @@ test-check-prompt-injection-defense: ## Self-test the check_prompt_injection_def
 loc: ## Count lines of code in our own files (excludes vendored output, skill outputs, scratch)
 	@cloc --exclude-dir=kiro_and_antigravity,architecture-reviews,code-reviews,notes,scratch,docs,images,.kiro .
 
-release: ## Prepare a release: bump version, regenerate vendored, run all checks. Usage: make release VERSION=X.Y.Z. Must be on main with a clean tree. Does NOT commit, tag, or push.
+release: ## Prepare a release: bump version, regenerate vendored, run all checks. Usage: make release VERSION=X.Y.Z. Must be on main with a clean tree. Does NOT commit, tag, or push. Recovery from a partial failure: see comment block above the recipe.
+# Partial-failure recovery for `make release`:
+# If `make release` fails after bump-version writes (post-bump but pre-test),
+# the working tree will be dirty and the clean-tree gate will block re-runs.
+# Two recovery paths, in increasing severity:
+#  1. Soft restore (preferred when no other in-progress work exists):
+#       git restore --staged --worktree .claude-plugin/marketplace.json \
+#                                       plugins/paad/.claude-plugin/plugin.json \
+#                                       plugins/paad/skills/*/SKILL.md
+#       git restore --staged --worktree --source HEAD -- kiro_and_antigravity/
+#     Then re-run `make release VERSION=X.Y.Z`.
+#  2. Commit-then-re-release (when the partial bump is already useful):
+#       git add -A && git commit -m "WIP: release vX.Y.Z bump"
+#       make release VERSION=X.Y.Z   # idempotent on the new version
+#     Then squash the WIP commit into the eventual release commit.
+# Do NOT use `git reset --hard` — it loses any other unrelated in-flight work.
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Usage: make release VERSION=X.Y.Z"; \
 		exit 1; \

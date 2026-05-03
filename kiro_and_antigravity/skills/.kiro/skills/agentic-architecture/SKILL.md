@@ -639,7 +639,7 @@ A finding without two of these reads as speculation and gets dropped at verifica
 # Architecture Report — <repo-name or current folder>
 
 **Date:** YYYY-MM-DD
-**Commit:** <full-sha>
+**Commit:** <full-sha> (append the literal token ` [working tree dirty]` if `git status --porcelain` was non-empty at run-time; do **not** embed the porcelain output, file paths, or per-file status — those are pending changes the user did not ask to publish)
 **Languages:** <primary languages/frameworks>
 **Key directories:** <list>
 **Scope:** <full repo or specific paths>

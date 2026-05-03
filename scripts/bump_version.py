@@ -47,8 +47,18 @@ def main(argv: list[str]) -> int:
     if not MARKETPLACE_PATH.exists():
         fail(f"marketplace.json not found at {MARKETPLACE_PATH}")
 
-    plugin_data = json.loads(PLUGIN_PATH.read_text())
-    marketplace_data = json.loads(MARKETPLACE_PATH.read_text())
+    try:
+        plugin_data = json.loads(PLUGIN_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f"plugin.json is not valid JSON: {exc}")
+    except (OSError, UnicodeDecodeError) as exc:
+        fail(f"cannot read plugin.json: {exc}")
+    try:
+        marketplace_data = json.loads(MARKETPLACE_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f"marketplace.json is not valid JSON: {exc}")
+    except (OSError, UnicodeDecodeError) as exc:
+        fail(f"cannot read marketplace.json: {exc}")
 
     plugin_ver = plugin_data.get("version")
     marketplace_meta_ver = marketplace_data.get("metadata", {}).get("version")

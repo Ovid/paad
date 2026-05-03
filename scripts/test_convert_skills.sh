@@ -163,6 +163,107 @@ The faux specialist defers to `/paad:faux-skill` when input shape is ambiguous.
     "must_not_contain" \
     "/paad:faux-skill"
 
+# -- S15: stale output dir from a renamed/deleted skill is removed on
+#    next run, so a rename doesn't leave a tombstone that check-vendored
+#    misdiagnoses as "out of sync."
+test_stale_output_dir_removed() {
+    local tmp
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+
+    mkdir -p "$tmp/plugins/paad/skills/faux-skill/references"
+    mkdir -p "$tmp/scripts"
+    mkdir -p "$tmp/out/.kiro/skills/old-renamed-skill"
+    mkdir -p "$tmp/out/.agent/skills/old-renamed-skill"
+    printf 'tombstone\n' > "$tmp/out/.kiro/skills/old-renamed-skill/SKILL.md"
+    printf 'tombstone\n' > "$tmp/out/.agent/skills/old-renamed-skill/SKILL.md"
+
+    printf '%s' "$SKILL_HEADER" > "$tmp/plugins/paad/skills/faux-skill/SKILL.md"
+    printf '# Faux ref\n' > "$tmp/plugins/paad/skills/faux-skill/references/faux.md"
+    cp "$SCRIPT" "$tmp/scripts/convert_skills.py"
+
+    if ! (cd "$tmp" && TARGET_DIR="$tmp/out" python3 scripts/convert_skills.py >/dev/null 2>&1); then
+        echo "  FAIL: converter exited non-zero"
+        rm -rf "$tmp"
+        trap - EXIT
+        return 1
+    fi
+
+    if [ -d "$tmp/out/.kiro/skills/old-renamed-skill" ] || [ -d "$tmp/out/.agent/skills/old-renamed-skill" ]; then
+        echo "  FAIL: stale output dir was not removed"
+        rm -rf "$tmp"
+        trap - EXIT
+        return 1
+    fi
+
+    if [ ! -f "$tmp/out/.kiro/skills/faux-skill/SKILL.md" ]; then
+        echo "  FAIL: expected new skill output is missing"
+        rm -rf "$tmp"
+        trap - EXIT
+        return 1
+    fi
+
+    rm -rf "$tmp"
+    trap - EXIT
+    return 0
+}
+if test_stale_output_dir_removed; then
+    echo "PASS: stale output dirs from renamed/deleted skills are removed"
+    pass_count=$((pass_count + 1))
+else
+    echo "FAIL: stale output dirs from renamed/deleted skills are removed"
+    fail_count=$((fail_count + 1))
+fi
+
+# -- S14: an unreadable source file fails cleanly with a one-line
+#    diagnostic, not a stack trace, and does not produce a partial
+#    output tree.
+test_read_failure_clean_fail() {
+    local tmp
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+
+    mkdir -p "$tmp/plugins/paad/skills/faux-skill/references"
+    mkdir -p "$tmp/scripts"
+    mkdir -p "$tmp/out"
+
+    printf '%s' "$SKILL_HEADER" > "$tmp/plugins/paad/skills/faux-skill/SKILL.md"
+    printf 'tombstone\n' > "$tmp/plugins/paad/skills/faux-skill/references/unreadable.md"
+    chmod 000 "$tmp/plugins/paad/skills/faux-skill/references/unreadable.md"
+    cp "$SCRIPT" "$tmp/scripts/convert_skills.py"
+
+    local rc=0
+    local output
+    output="$(cd "$tmp" && TARGET_DIR="$tmp/out" python3 scripts/convert_skills.py 2>&1)" || rc=$?
+    chmod 644 "$tmp/plugins/paad/skills/faux-skill/references/unreadable.md"
+
+    if [ "$rc" -eq 0 ]; then
+        echo "  FAIL: unreadable source file should produce non-zero exit"
+        rm -rf "$tmp"
+        trap - EXIT
+        return 1
+    fi
+    if ! grep -q "FAIL: cannot read" <<<"$output"; then
+        echo "  FAIL: expected 'FAIL: cannot read' diagnostic, got: $output"
+        rm -rf "$tmp"
+        trap - EXIT
+        return 1
+    fi
+
+    rm -rf "$tmp"
+    trap - EXIT
+    return 0
+}
+if [ "$(id -u)" -ne 0 ]; then
+    if test_read_failure_clean_fail; then
+        echo "PASS: unreadable source file produces clean FAIL not stack trace"
+        pass_count=$((pass_count + 1))
+    else
+        echo "FAIL: unreadable source file produces clean FAIL not stack trace"
+        fail_count=$((fail_count + 1))
+    fi
+fi
+
 echo ""
 echo "Summary: $pass_count passed, $fail_count failed."
 [ "$fail_count" -eq 0 ]

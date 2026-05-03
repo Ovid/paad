@@ -14,6 +14,8 @@ make check-vendored).
 
 import os
 import re
+import shutil
+import sys
 from pathlib import Path
 
 SOURCE_DIR = "plugins/paad/skills"
@@ -34,6 +36,24 @@ PATH_RENAMES = (
 
 UNWANTED_HEADERS = ("Arguments", "Input Resolution", "Pre-flight Checks", "Document classification")
 SKIP_SKILL_NAMES = ("makefile", "help")
+
+
+def _fail(msg: str) -> "None":
+    print(f"FAIL: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def _safe_read(path: Path) -> str:
+    """Read a UTF-8 markdown file, failing cleanly on OS or decode errors.
+
+    A bare read_text() crash mid-conversion leaves a partial output tree
+    that check-vendored then misdiagnoses as 'out of sync'. Failing here
+    surfaces the actual file with a one-line diagnostic.
+    """
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        _fail(f"cannot read {path}: {exc}")
 
 
 def _neutralize(body: str) -> str:
@@ -84,7 +104,7 @@ def _append_references(cleaned_content: str, skill_path: Path) -> str:
         return cleaned_content
     appendix_chunks: list[str] = []
     for ref_file in sorted(refs_dir.glob("*.md")):
-        ref_text = _neutralize(ref_file.read_text(encoding="utf-8"))
+        ref_text = _neutralize(_safe_read(ref_file))
         appendix_chunks.append(
             f"\n## Appendix: {ref_file.name}\n\n{ref_text.rstrip()}\n"
         )
@@ -100,6 +120,23 @@ def convert_skills(target_dir: str | None = None) -> None:
     kiro_skills_root.mkdir(parents=True, exist_ok=True)
     agent_skills_root.mkdir(parents=True, exist_ok=True)
 
+    # Compute the set of skill folders the converter is about to write.
+    # Anything under the output roots whose folder name is not in that
+    # set is stale (a renamed or deleted source skill that left a tomb
+    # in the output tree). Remove those before regenerating so a rename
+    # doesn't require a manual `git rm` follow-up. Strict: only remove
+    # *direct* subdirs of kiro_skills_root / agent_skills_root, never
+    # parent dirs or files outside that scope.
+    expected_skill_names = {
+        p.name for p in Path(SOURCE_DIR).iterdir()
+        if p.is_dir() and p.name not in SKIP_SKILL_NAMES and (p / "SKILL.md").exists()
+    }
+    for output_root in (kiro_skills_root, agent_skills_root):
+        for child in output_root.iterdir():
+            if child.is_dir() and child.name not in expected_skill_names:
+                print(f"Removing stale output dir {child}...")
+                shutil.rmtree(child)
+
     for skill_path in sorted(Path(SOURCE_DIR).iterdir()):
         if not skill_path.is_dir() or skill_path.name in SKIP_SKILL_NAMES:
             continue
@@ -108,7 +145,7 @@ def convert_skills(target_dir: str | None = None) -> None:
             continue
 
         print(f"Converting {skill_path.name}...")
-        content = skill_file.read_text(encoding="utf-8")
+        content = _safe_read(skill_file)
 
         name_match = re.search(r"name:\s*(.*)", content)
         desc_match = re.search(r"description:\s*(.*)", content)
