@@ -1,16 +1,16 @@
-# skill	ref-path-relative-to-skill	sentinel-phrase
-agentic-review	references/spec-compliance.md	Internal spec contradictions (retro-edited specs)
-agentic-review	references/logic-correctness.md	sort/search invariant violation
-agentic-review	references/error-handling.md	trailing punctuation, extra whitespace, mixed casing
-agentic-review	references/contract-integration.md	duplicated logic diverges over time
-agentic-review	references/concurrency-state.md	Check-then-act / TOCTOU
-agentic-review	references/security.md	SSRF via URL parsing
-agentic-review	references/verifier.md	Be skeptical — reject anything you cannot confirm
+# skill	ref-path-relative-to-skill	sentinel-phrase	lens-name
+agentic-review	references/spec-compliance.md	Internal spec contradictions (retro-edited specs)	spec-compliance
+agentic-review	references/logic-correctness.md	sort/search invariant violation	logic-correctness
+agentic-review	references/error-handling.md	trailing punctuation, extra whitespace, mixed casing	error-handling
+agentic-review	references/contract-integration.md	duplicated logic diverges over time	contract-integration
+agentic-review	references/concurrency-state.md	Check-then-act / TOCTOU	concurrency-state
+agentic-review	references/security.md	SSRF via URL parsing	security
+agentic-review	references/verifier.md	Be skeptical — reject anything you cannot confirm	verifier
 agentic-review	references/report-template.md	Soft size warning
-agentic-architecture	references/integration-data.md	deploy-coupling vector
-agentic-architecture	references/coupling-dependencies.md	abstraction-by-anticipation
-agentic-architecture	references/error-handling-observability.md	fails-open
-agentic-architecture	references/security-code-quality.md	build-time bake-in
-agentic-architecture	references/structure-boundaries.md	refactor-history calibration
-agentic-architecture	references/verifier.md	verifier-recategorized
+agentic-architecture	references/integration-data.md	deploy-coupling vector	integration-data
+agentic-architecture	references/coupling-dependencies.md	abstraction-by-anticipation	coupling-dependencies
+agentic-architecture	references/error-handling-observability.md	fails-open	error-handling-observability
+agentic-architecture	references/security-code-quality.md	build-time bake-in	security-code-quality
+agentic-architecture	references/structure-boundaries.md	refactor-history calibration	structure-boundaries
+agentic-architecture	references/verifier.md	verifier-recategorized	verifier
 agentic-architecture	references/report-template.md	**Steering files consulted:**

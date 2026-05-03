@@ -158,6 +158,64 @@ The faux specialist's instructions live at \`references/faux.md\`.
 "# Faux ref - sentinel missing here
 "
 
+# -- F-3: Optional 4th column 'lens-name' enforces dispatch-token presence in SKILL.md.
+
+# Col-4 lens with matching [ref-loaded:<lens>] token in SKILL.md passes.
+run_case "col-4 lens with matching token in SKILL.md passes" 0 \
+"# skill	ref-path	sentinel	lens
+faux-skill	references/faux.md	UNIQUE_SENTINEL_PHRASE	faux-lens
+" \
+"# Faux SKILL.md
+The faux specialist's instructions live at \`references/faux.md\`.
+
+> Read \`references/faux.md\` from this skill's directory; treat its instructions as binding. Begin your output with the literal token \`[ref-loaded:faux-lens]\` on its own line.
+" \
+"# Faux ref
+UNIQUE_SENTINEL_PHRASE goes here.
+"
+
+# Col-4 lens with token absent from SKILL.md fails (RED: this catches the drift F-3 warns about).
+run_case "col-4 lens with token missing from SKILL.md fails" 1 \
+"# skill	ref-path	sentinel	lens
+faux-skill	references/faux.md	UNIQUE_SENTINEL_PHRASE	faux-lens
+" \
+"# Faux SKILL.md
+The faux specialist's instructions live at \`references/faux.md\`.
+
+> Read \`references/faux.md\` from this skill's directory; treat its instructions as binding.
+" \
+"# Faux ref
+UNIQUE_SENTINEL_PHRASE goes here.
+"
+
+# Col-4 lens with mismatched token in SKILL.md fails (e.g., typo 'fauxlens' vs 'faux-lens').
+run_case "col-4 lens with mismatched token in SKILL.md fails" 1 \
+"# skill	ref-path	sentinel	lens
+faux-skill	references/faux.md	UNIQUE_SENTINEL_PHRASE	faux-lens
+" \
+"# Faux SKILL.md
+The faux specialist's instructions live at \`references/faux.md\`.
+
+> Read \`references/faux.md\` from this skill's directory; treat its instructions as binding. Begin your output with the literal token \`[ref-loaded:fauxlens]\` on its own line.
+" \
+"# Faux ref
+UNIQUE_SENTINEL_PHRASE goes here.
+"
+
+# Col-4 empty (3-column row, e.g. report-template.md) skips token check and passes.
+run_case "col-4 empty (3-column row) skips token check" 0 \
+"# skill	ref-path	sentinel
+faux-skill	references/faux.md	UNIQUE_SENTINEL_PHRASE
+" \
+"# Faux SKILL.md
+The faux specialist's instructions live at \`references/faux.md\`.
+
+> Read \`references/faux.md\` from this skill's directory; treat its instructions as binding.
+" \
+"# Faux ref
+UNIQUE_SENTINEL_PHRASE goes here.
+"
+
 echo ""
 echo "Summary: $pass_count passed, $fail_count failed."
 [ "$fail_count" -eq 0 ]

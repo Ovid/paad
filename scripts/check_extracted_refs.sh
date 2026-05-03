@@ -18,11 +18,19 @@ row=0
 # `|| [ -n "$skill" ]` keeps the loop running on the final line of a
 # manifest with no trailing newline (`read` returns nonzero on partial-
 # line EOF).
-while IFS=$'\t' read -r skill ref_path sentinel || [ -n "$skill" ]; do
+# Column 4 (lens) is optional: empty for refs read directly by the
+# orchestrator (e.g. report-template.md), non-empty for refs dispatched
+# to a subagent that must echo `[ref-loaded:<lens>]` at the top of its
+# output. When non-empty, this script enforces that SKILL.md's dispatch
+# contains the literal `[ref-loaded:<lens>]` token — catching drift
+# between the manifest's recorded lens and the orchestrator's actual
+# dispatch instruction (which would silently break verifier routing).
+while IFS=$'\t' read -r skill ref_path sentinel lens || [ -n "$skill" ]; do
     # strip stray CR from any field (Windows-edited TSVs)
     skill="${skill%$'\r'}"
     ref_path="${ref_path%$'\r'}"
     sentinel="${sentinel%$'\r'}"
+    lens="${lens%$'\r'}"
 
     # skip blanks and comments
     case "$skill" in
@@ -60,6 +68,13 @@ while IFS=$'\t' read -r skill ref_path sentinel || [ -n "$skill" ]; do
     if ! awk -v path="$ref_path" 'index($0, path) && /binding/ { found=1; exit } END { exit (found ? 0 : 1) }' "$skill_md"; then
         echo "FAIL [row $row, $skill]: ref path '$ref_path' is not co-located with a binding-instruction phrase in SKILL.md (must appear on a line that also contains 'binding')"
         fail=1
+    fi
+    if [ -n "$lens" ]; then
+        token="[ref-loaded:$lens]"
+        if ! grep -qF -- "$token" "$skill_md"; then
+            echo "FAIL [row $row, $skill]: dispatch token '$token' not found in SKILL.md (lens column requires SKILL.md to contain the literal '[ref-loaded:<lens>]' token)"
+            fail=1
+        fi
     fi
 done < "$MANIFEST"
 
