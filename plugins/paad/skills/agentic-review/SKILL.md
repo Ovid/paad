@@ -3,7 +3,7 @@ name: agentic-review
 description: Use when reviewing current branch for bugs before pushing or merging, when wanting a thorough multi-agent review of local changes, or when preparing work for human review
 ---
 
-**On invocation:** announce "Running paad:agentic-review v1.19.0" before anything else.
+**On invocation:** announce "Running paad:agentic-review v1.20.0" before anything else.
 
 # Agentic Code Review
 

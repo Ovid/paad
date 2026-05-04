@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Ovid's plugin marketplace for Claude Code — impractical tools for software architecture, code quality, and development workflows.",
-    "version": "1.19.0"
+    "version": "1.20.0"
   },
   "plugins": [
     {
       "name": "paad",
       "source": "./plugins/paad",
       "description": "Architecture analysis, code quality, and development workflow skills by Ovid",
-      "version": "1.19.0",
+      "version": "1.20.0",
       "author": {
         "name": "Curtis \"Ovid\" Poe"
       },
