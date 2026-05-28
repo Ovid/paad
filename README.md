@@ -92,10 +92,19 @@ In practice, `pushback` and `alignment` are often worth running more than once. 
 
 #### Install the plugin
 
+Add the marketplace:
+
 ```bash
 /plugin marketplace add Ovid/paad
+```
+
+Install the plugin:
+
+```bash
 /plugin install paad@paad
 ````
+
+If you're not using Claude Code, see other examples below.
 
 #### Invoking skills
 
