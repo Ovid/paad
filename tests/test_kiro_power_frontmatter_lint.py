@@ -36,15 +36,10 @@ build_kiro_power = __import__("build-kiro-power")
 
 SOURCE_DIR = REPO_ROOT / "plugins" / "paad" / "skills"
 
-IN_SCOPE = [
-    "agentic-a11y",
-    "agentic-architecture",
-    "agentic-review",
-    "alignment",
-    "fix-architecture",
-    "pushback",
-    "vibe",
-]
+# Sourced from the generator so it can never silently drift from the actual
+# in-scope skill set (a skill added/removed in plugins/paad/skills is reflected
+# automatically).
+IN_SCOPE = build_kiro_power._in_scope_skill_names(SOURCE_DIR)
 
 VALID = "---\ninclusion: manual\n---\n\n# Title\n\nbody\n"
 
@@ -93,6 +88,21 @@ def test_first_line_not_dashes_is_violation():
 def test_unparseable_yaml_is_violation():
     """A leading `---...---` block whose body is not parseable YAML -> violation."""
     text = "---\n: : not valid : yaml :\n---\n\n# Title\n"
+    assert build_kiro_power.frontmatter_first_violation(text) is not None
+
+
+def test_scalar_yaml_frontmatter_is_violation():
+    """A leading block whose YAML parses to a SCALAR (not a mapping) -> violation.
+
+    `---\\njust a scalar\\n---` is parseable YAML but not usable frontmatter; real
+    steering/POWER frontmatter is always a YAML mapping (`name:`, `inclusion:`)."""
+    text = "---\njust a scalar\n---\n\n# Title\n"
+    assert build_kiro_power.frontmatter_first_violation(text) is not None
+
+
+def test_list_yaml_frontmatter_is_violation():
+    """A leading block whose YAML parses to a LIST (not a mapping) -> violation."""
+    text = "---\n- a\n- b\n---\n\n# Title\n"
     assert build_kiro_power.frontmatter_first_violation(text) is not None
 
 

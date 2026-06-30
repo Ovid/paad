@@ -573,6 +573,20 @@ def _generate_in_memory(source_dir):
     return generated
 
 
+def _steering_file_names(root):
+    """Return the on-disk `steering/<name>.md` relative names under `root`, sorted.
+
+    The single enumeration of "which steering files exist on disk". The drift
+    check (`_read_ondisk`) and the frontmatter-first lint (`lint_frontmatter_first`)
+    MUST agree on which files constitute the power; sharing one glob means they
+    can never silently diverge. Returns an empty list if `steering/` is absent.
+    """
+    steering_dir = Path(root) / "steering"
+    if not steering_dir.is_dir():
+        return []
+    return [f"steering/{path.name}" for path in sorted(steering_dir.glob("*.md"))]
+
+
 def _read_ondisk(root, names):
     """Read the on-disk content for the generator's files PLUS every steering file.
 
@@ -589,14 +603,11 @@ def _read_ondisk(root, names):
         if path.exists():
             ondisk[name] = path.read_text(encoding="utf-8")
 
-    # Enumerate the real steering tree so orphaned files (never (re)generated)
-    # become visible — the generators only write, never delete.
-    steering_dir = root / "steering"
-    if steering_dir.is_dir():
-        for path in sorted(steering_dir.glob("*.md")):
-            name = f"steering/{path.name}"
-            if name not in ondisk:
-                ondisk[name] = path.read_text(encoding="utf-8")
+    # Enumerate the real steering tree (shared helper) so orphaned files (never
+    # (re)generated) become visible — the generators only write, never delete.
+    for name in _steering_file_names(root):
+        if name not in ondisk:
+            ondisk[name] = (root / name).read_text(encoding="utf-8")
 
     return ondisk
 
@@ -655,9 +666,15 @@ def frontmatter_first_violation(text):
         return "frontmatter `---` block is missing its closing `---` delimiter"
 
     try:
-        yaml.safe_load(match.group(1))
+        parsed = yaml.safe_load(match.group(1))
     except yaml.YAMLError as exc:
         return f"frontmatter YAML is not parseable: {exc}"
+    # Real steering/POWER frontmatter is always a YAML mapping (`name:`,
+    # `inclusion:`, ...). A scalar or list parses cleanly but is unusable
+    # frontmatter, so reject it. (Lint-side only — the shared matcher and
+    # `read_skill_frontmatter` are unchanged; real frontmatter never trips this.)
+    if not isinstance(parsed, dict):
+        return "frontmatter is not a YAML mapping"
     return None
 
 
@@ -665,17 +682,15 @@ def lint_frontmatter_first(root=REPO_ROOT):
     """Return sorted `"<file>: <reason>"` strings for frontmatter-first violations.
 
     Scans the on-disk root `POWER.md` plus every `steering/*.md` under `root`
-    (the same enumeration `_read_ondisk` uses, so orphan steering files are
-    linted too) and applies `frontmatter_first_violation` to each. An empty list
-    means every power file has frontmatter as its literal first content.
+    (via the shared `_steering_file_names`, the SAME enumeration `_read_ondisk`
+    uses, so orphan steering files are linted too) and applies
+    `frontmatter_first_violation` to each. An empty list means every power file
+    has frontmatter as its literal first content.
     """
     root = Path(root)
     violations = []
 
-    targets = ["POWER.md"]
-    steering_dir = root / "steering"
-    if steering_dir.is_dir():
-        targets += [f"steering/{p.name}" for p in sorted(steering_dir.glob("*.md"))]
+    targets = ["POWER.md"] + _steering_file_names(root)
 
     for name in targets:
         path = root / name
