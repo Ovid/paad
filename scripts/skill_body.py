@@ -35,7 +35,9 @@ def neutralize_paad_paths(body):
     """Rewrite `paad/...` output paths to neutral `.reviews/...` paths.
 
     Shared by both generators: the copy-source skills must not reference the
-    plugin's own `paad/` review directories.
+    plugin's own `paad/` review directories. NOTE: this is NOT a seam — path
+    neutralization is fixed and identical for both generators. Only
+    `paad_ref_transform` (the `/paad:` handling) is meant to vary between them.
     """
     body = body.replace("paad/architecture-reviews/", ".reviews/architecture/")
     body = body.replace("paad/code-reviews/", ".reviews/code/")
@@ -60,9 +62,12 @@ def strip_paad_references(body):
     return body
 
 
-def clean_body(content, excluded_sections=EXCLUDED_SECTIONS,
+def clean_body(content, excluded_sections=None,
                paad_ref_transform=strip_paad_references):
     """Transform a raw SKILL.md `content` string into a cleaned skill body.
+
+    `excluded_sections` defaults to the module-level `EXCLUDED_SECTIONS` via a
+    None sentinel (avoids the mutable-default-argument pitfall).
 
     The pipeline is:
       1. Split into sections by `##`+ headers.
@@ -75,6 +80,9 @@ def clean_body(content, excluded_sections=EXCLUDED_SECTIONS,
     Steps 1-2 (which sections survive) are shared and fixed across generators;
     only `paad_ref_transform` is meant to vary.
     """
+    if excluded_sections is None:
+        excluded_sections = EXCLUDED_SECTIONS
+
     # Split into sections by headers (##). The capturing group keeps each
     # header line as its own element so we can re-pair headers with bodies.
     parts = re.split(r'\n(##+ .*)', content)
