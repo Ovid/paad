@@ -163,6 +163,32 @@ def test_dot_digraph_passes_through_verbatim():
     assert '"Has $ARGUMENTS?"' in out
 
 
+def test_cross_skill_ref_inside_dot_block_survives_verbatim():
+    """A `/paad:<name>` reference INSIDE a ```dot block is copied verbatim
+    (digraphs are not rewritten), while the SAME reference in normal prose is
+    rewritten to `#<name>`. Guards against the whole-body `/paad:` rewrite
+    leaking into digraphs."""
+    digraph = (
+        "```dot\n"
+        "digraph g {\n"
+        '  "Run /paad:agentic-review" [shape=box];\n'
+        '  "Start" -> "Run /paad:agentic-review";\n'
+        "}\n"
+        "```"
+    )
+    source = (
+        "---\nname: x\ndescription: d\n---\n\n"
+        "# X\n\n" + digraph + "\n\n## Body\n\nWhen done, run /paad:agentic-review.\n"
+    )
+    out = build_steering_file(source, "x")
+
+    # Inside the digraph: the /paad: ref is preserved verbatim.
+    assert digraph in out
+    assert '"Run /paad:agentic-review"' in out
+    # In prose: the /paad: ref IS rewritten to the #anchor.
+    assert "When done, run #agentic-review." in out
+
+
 def test_excluded_sections_do_not_survive():
     """Layered on clean_body: orchestration-only sections are dropped."""
     source = (

@@ -76,6 +76,54 @@ def strip_leading_frontmatter(body):
     return _LEADING_FRONTMATTER.sub("", body, count=1)
 
 
+def apply_outside_dot_blocks(text, transform):
+    """Apply `transform` to `text` everywhere EXCEPT inside ```dot blocks.
+
+    ```dot digraphs are copied verbatim, so any power transform that rewrites
+    tokens (cross-skill refs, `$ARGUMENTS`) must skip them. This stashes each
+    fenced `dot` block behind a sentinel, runs `transform` on the remainder,
+    then restores the blocks byte-for-byte.
+    """
+    stash = []
+
+    def _stash(match):
+        stash.append(match.group(0))
+        return f"\x00DOT{len(stash) - 1}\x00"
+
+    protected = _DOT_BLOCK.sub(_stash, text)
+    protected = transform(protected)
+
+    def _restore(match):
+        return stash[int(match.group(1))]
+
+    return re.sub(r"\x00DOT(\d+)\x00", _restore, protected)
+
+
+def _rewrite_arguments_tokens(text):
+    """Rewrite `$ARGUMENTS` tokens in `text` (assumes dot blocks already removed).
+
+    Most `$ARGUMENTS` lives in excluded sections and is already gone; this
+    handles whatever survives in retained prose.
+    """
+    scope_prose = (
+        "the path or scope you state in your chat message (for example, `src/`)"
+    )
+
+    # Special-case the `If no `$ARGUMENTS` provided` idiom (the real vibe.md
+    # phrasing): a blunt noun substitution yields the ungrammatical "If no the
+    # path or scope ... provided". Rewrite the whole clause as a clean
+    # conditional that still prompts the user for scope.
+    text = re.sub(
+        r"If no `?\$ARGUMENTS`?\s+(?:is\s+|are\s+|was\s+)?provided",
+        "If you don't state a scope in your chat message",
+        text,
+    )
+
+    # Replace any remaining `$ARGUMENTS` (optionally backtick-wrapped) with the
+    # prose noun phrase.
+    return re.sub(r"`?\$ARGUMENTS`?", scope_prose, text)
+
+
 def rewrite_arguments_to_scope_prompt(body):
     """Rewrite surviving prose `$ARGUMENTS` tokens into a scope prompt.
 
@@ -85,40 +133,9 @@ def rewrite_arguments_to_scope_prompt(body):
     than imply automatic capture.
 
     Digraph `$ARGUMENTS` (inside ```dot blocks) is left untouched — digraphs are
-    copied verbatim — so this protects fenced `dot` blocks before rewriting.
+    copied verbatim.
     """
-    scope_prose = (
-        "the path or scope you state in your chat message (for example, `src/`)"
-    )
-
-    # Protect ```dot blocks: stash them, rewrite, then restore.
-    stash = []
-
-    def _stash(match):
-        stash.append(match.group(0))
-        return f"\x00DOT{len(stash) - 1}\x00"
-
-    protected = _DOT_BLOCK.sub(_stash, body)
-
-    # Special-case the `If no `$ARGUMENTS` provided` idiom (the real vibe.md
-    # phrasing): a blunt noun substitution yields the ungrammatical "If no the
-    # path or scope ... provided". Rewrite the whole clause as a clean
-    # conditional that still prompts the user for scope.
-    protected = re.sub(
-        r"If no `?\$ARGUMENTS`?\s+(?:is\s+|are\s+|was\s+)?provided",
-        "If you don't state a scope in your chat message",
-        protected,
-    )
-
-    # Replace any remaining `$ARGUMENTS` (optionally backtick-wrapped) with the
-    # prose noun phrase.
-    protected = re.sub(r"`?\$ARGUMENTS`?", scope_prose, protected)
-
-    # Restore the digraphs verbatim.
-    def _restore(match):
-        return stash[int(match.group(1))]
-
-    return re.sub(r"\x00DOT(\d+)\x00", _restore, protected)
+    return apply_outside_dot_blocks(body, _rewrite_arguments_tokens)
 
 
 def prepend_steering_frontmatter(body):
@@ -144,9 +161,10 @@ def build_steering_file(source_content, skill_name):
     body = strip_leading_frontmatter(body)
     # `clean_body` only applies `paad_ref_transform` to `##` sections, so a
     # `/paad:` in the pre-`##` intro (e.g. fix-architecture) would survive.
-    # Re-run the rewrite over the whole body to catch those. Idempotent: a
-    # `#name` already rewritten is left unchanged.
-    body = rewrite_cross_skill_refs(body)
+    # Re-run the rewrite over the whole body to catch those — but skip ```dot
+    # blocks, which are copied verbatim. Idempotent: a `#name` already rewritten
+    # is left unchanged.
+    body = apply_outside_dot_blocks(body, rewrite_cross_skill_refs)
     body = rewrite_arguments_to_scope_prompt(body)
     return prepend_steering_frontmatter(body)
 
