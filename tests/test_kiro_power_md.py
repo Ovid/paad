@@ -259,6 +259,39 @@ def test_help_and_makefile_not_in_routing_list():
     assert "#makefile" not in out
 
 
+def test_no_paad_command_references_anywhere():
+    """Invariant: no `/paad:` substring anywhere in POWER.md. Claude-Code
+    command syntax is wrong for the Kiro power context (steering files follow
+    the same rule)."""
+    out = _build_real()
+    assert "/paad:" not in out
+
+
+def test_routing_list_has_exactly_seven_entries():
+    """The routing list is the single skill directory: exactly the 7 in-scope
+    skills, no more (no help/makefile reintroduced)."""
+    out = _build_real()
+    entries = [ln for ln in out.splitlines() if ln.startswith("- **#")]
+    assert len(entries) == 7, entries
+    names = [ln.split("**#", 1)[1].split("**", 1)[0] for ln in entries]
+    assert sorted(names) == sorted(IN_SCOPE)
+
+
+def test_onboarding_is_trimmed_no_verbatim_help_block():
+    """The verbatim help overview code block (the `/paad:` skill list with the
+    `makefile` line) is NOT embedded — only the help tagline plus a short
+    framing sentence survive. Guards against re-duplicating the skill directory
+    in a second, Claude-Code-flavored format."""
+    out = _build_real()
+    # The tagline is kept (drift-proof sourcing) ...
+    assert HELP_TAGLINE in out
+    # ... but the verbatim overview's skill-list scaffolding is gone.
+    assert "Available skills:" not in out
+    assert "Run /paad:help" not in out
+    # The framing sentence names manual steering files loaded on demand.
+    assert "steering file" in out
+
+
 # ---------------------------------------------------------------------------
 # Determinism + purity of the builder
 # ---------------------------------------------------------------------------

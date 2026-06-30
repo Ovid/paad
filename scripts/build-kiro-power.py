@@ -309,21 +309,47 @@ def _power_frontmatter(plugin_meta, sidecar):
     )
 
 
-def _extract_help_overview(help_content):
-    """Extract the help onboarding text from `help/SKILL.md`.
+# Short Kiro-context framing appended after the help-sourced tagline. POWER.md's
+# detailed skill directory is the generated "When to load steering files"
+# routing list (frontmatter-derived, `#<name>`), NOT the verbatim Claude Code
+# help overview — so the onboarding stays concise and Claude-Code-isms (the
+# `/paad:` skill list, the `makefile` line) never leak into the power.
+POWER_FRAMING = (
+    "Each skill is exposed as a manual steering file the agent loads on "
+    "demand. Pick the one that matches your request from the list below."
+)
 
-    Returns the fenced overview block (the tagline + skills list) shown by
-    `paad:help` with no arguments, so POWER.md's onboarding is sourced from help
-    rather than hand-written. The block is the ```...``` fence inside the
-    `## Overview (no arguments)` section. Falls back to the whole content if the
-    expected markers are absent (keeps the builder robust + deterministic).
+
+def _help_tagline(help_content):
+    """Extract just the help OVERVIEW TAGLINE from `help/SKILL.md`.
+
+    The tagline is the first non-empty line of the fenced overview block inside
+    the `## Overview (no arguments)` section. Sourcing the tagline (rather than
+    hand-writing it) keeps POWER.md's onboarding drift-proof, while DROPPING the
+    rest of the verbatim overview block (the `/paad:` skill list + `makefile`
+    line) that is Claude-Code-specific and wrong for the Kiro power context.
+
+    Falls back to the first non-empty line of the content if the expected
+    markers are absent (keeps the builder robust + deterministic).
     """
     after = help_content.split("## Overview (no arguments)", 1)
     region = after[1] if len(after) > 1 else help_content
     fence = re.search(r"```\n(.*?)\n```", region, re.DOTALL)
-    if fence:
-        return fence.group(1).strip()
+    block = fence.group(1) if fence else region
+    for line in block.splitlines():
+        if line.strip():
+            return line.strip()
     return region.strip()
+
+
+def _onboarding(help_content):
+    """Build the trimmed, Kiro-appropriate onboarding.
+
+    The help tagline (sourced verbatim, drift-proof) plus a short framing
+    sentence — NOT the verbatim help overview block. The detailed skill listing
+    is the generated routing list, so it is never duplicated here.
+    """
+    return _help_tagline(help_content) + "\n\n" + POWER_FRAMING
 
 
 def _routing_list(source_dir):
@@ -360,7 +386,7 @@ def build_power_md(source_dir, sidecar, plugin_meta, help_content):
     this content so Task 4's drift check can compare a stamp-free body.
     """
     frontmatter = _power_frontmatter(plugin_meta, sidecar)
-    onboarding = _extract_help_overview(help_content)
+    onboarding = _onboarding(help_content)
     routing = _routing_list(source_dir)
 
     return (

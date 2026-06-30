@@ -11,18 +11,7 @@ version: 1.11.0
 
 paad — impractical tools for software architecture, code quality, and development workflows.
 
-Available skills:
-
-  /paad:agentic-a11y [path]                  Accessibility audit (web, mobile, desktop, CLI, games)
-  /paad:agentic-architecture [path...]       Multi-agent architecture analysis (strengths & flaws)
-  /paad:fix-architecture [report]            Fix architectural flaws from an analysis report
-  /paad:agentic-review [base-branch] [path]  Multi-agent code review of current branch (bug hunting)
-  /paad:alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
-  /paad:makefile                             Create or update a Makefile with standard targets
-  /paad:pushback [spec-file]                 Spec/PRD critic (finds issues before you build)
-  /paad:vibe [task description]              Safe vibe coding with TDD guardrails
-
-Run /paad:help <skill-name> for detailed help on a specific skill.
+Each skill is exposed as a manual steering file the agent loads on demand. Pick the one that matches your request from the list below.
 
 ## When to load steering files
 
@@ -36,4 +25,4 @@ Each skill is a manual steering file — load the one matching the user's reques
 - **#pushback** — Push back on specs, PRDs, requirements, and design documents — finds unrelated features, oversized scope, contradictions, feasibility issues, scope imbalance, omissions, ambiguity, and security concerns, with source control reality checks
 - **#vibe** — Safe vibe coding with TDD guardrails — for small fixes and quick changes where you want speed but not recklessness. Enforces red/green/refactor, checks for architecture issues, reusable components, and test infrastructure before diving in.
 
-<!-- Generated from paad@871339d by build-kiro-power -->
+<!-- Generated from paad@8c1f699 by build-kiro-power -->
