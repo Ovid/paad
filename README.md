@@ -134,6 +134,26 @@ cp -r kiro_and_antigravity/skills/.kiro/skills/pushback .cursor/skills/
 
 ### Kiro
 
+There are two ways to install PAAD into Kiro. The **power** is an experimental one-click channel that installs straight from this GitHub repository. The **manual copy** is the established method when you want file-level control over exactly which skills land in your project.
+
+#### Power (one-click install)
+
+In Kiro, choose **Add Custom Power → Import from GitHub** and use the repository URL:
+
+```
+https://github.com/Ovid/paad
+```
+
+Kiro reads the root `POWER.md` and the `steering/` directory. Each PAAD skill becomes a manual steering file, which you invoke through Kiro's native `/` slash-command list (or by typing `#<name>`, for example `#pushback`). When PAAD is updated, you pull the changes in with Kiro's **refresh from remote**.
+
+This install path is newly added and experimental, so a real install test is appreciated. The manual copy below remains the established method for file-level control.
+
+**No arguments.** Kiro slash commands take no arguments. Where a Claude Code skill accepts a path or scope (for example `/paad:agentic-architecture src/`), in the Kiro power you instead invoke the steering file and then state the scope in your chat message — for example, after invoking `agentic-architecture`, say "review `src/`". The skill reads the scope from your message rather than from a command argument.
+
+**Trust note.** Importing the power from a GitHub URL injects steering files that dispatch multi-agent workflows — the same trust boundary as installing the Claude Code plugin. Install it only from a source you trust.
+
+#### Manual copy
+
 All skills (bash/zsh):
 
 ```bash
@@ -341,13 +361,18 @@ This validates the marketplace and plugin structure, then runs consistency check
 Individual checks can also be run separately:
 
 ```bash
-make check-versions     # marketplace.json ↔ plugin.json version sync
-make check-digraphs     # every skill (except help) has a digraph
-make check-help         # every skill is documented in paad:help
-make check-readme       # every skill is documented in README.md
-make check-frontmatter  # SKILL.md frontmatter is valid, folder name matches
-make validate           # claude plugin validate on marketplace + plugins
+make check-versions          # marketplace.json ↔ plugin.json version sync
+make check-digraphs          # every skill (except help) has a digraph
+make check-help              # every skill is documented in paad:help
+make check-readme            # every skill is documented in README.md
+make check-frontmatter       # SKILL.md frontmatter is valid, folder name matches
+make validate                # claude plugin validate on marketplace + plugins
+make kiro                    # regenerate the Kiro power (POWER.md + steering/)
+make check-kiro              # fail if the committed Kiro power is stale or hand-edited
+make check-kiro-frontmatter  # lint that POWER.md + steering/*.md lead with frontmatter
 ```
+
+`make test` also runs `check-kiro` and `check-kiro-frontmatter`, so a stale or hand-edited Kiro power fails the suite.
 
 ## Contributing
 
