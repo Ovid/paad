@@ -45,8 +45,11 @@ SKIP_NAMES = {"help", "makefile"}
 STEERING_FRONTMATTER = "---\ninclusion: manual\n---\n"
 
 # A self-contained ```dot ... ``` fenced block. Used to protect digraphs from
-# the `$ARGUMENTS` prose transform (digraphs are copied verbatim).
-_DOT_BLOCK = re.compile(r"```dot\n.*?\n```", re.DOTALL)
+# the cross-skill-ref and `$ARGUMENTS` transforms (digraphs are copied
+# verbatim). The open fence tolerates trailing characters (e.g. a stray
+# "```dot   " with trailing spaces) so such a block is still stashed rather than
+# silently rewritten.
+_DOT_BLOCK = re.compile(r"```dot[^\n]*\n.*?\n```", re.DOTALL)
 
 # Leading YAML frontmatter (`---\n...\n---`) at the very start of a body.
 # `clean_body` retains whatever precedes the first `##`, which includes the
@@ -81,9 +84,13 @@ def apply_outside_dot_blocks(text, transform):
 
     ```dot digraphs are copied verbatim, so any power transform that rewrites
     tokens (cross-skill refs, `$ARGUMENTS`) must skip them. This stashes each
-    fenced `dot` block behind a sentinel, runs `transform` on the remainder,
+    fenced `dot` block behind a NUL sentinel, runs `transform` on the remainder,
     then restores the blocks byte-for-byte.
     """
+    # NUL is never valid in hand-authored markdown; if it appeared, the stash
+    # sentinel would collide and `_restore` would fail opaquely. Fail loudly.
+    assert "\x00" not in text, "input contains a NUL byte; not valid markdown"
+
     stash = []
 
     def _stash(match):

@@ -189,6 +189,30 @@ def test_cross_skill_ref_inside_dot_block_survives_verbatim():
     assert "When done, run #agentic-review." in out
 
 
+def test_dot_block_with_trailing_whitespace_fence_is_protected():
+    """A ```dot open fence with trailing whitespace still stashes the block, so
+    `/paad:` refs inside it survive verbatim. Guards against a fence written as
+    "```dot   " silently dropping out of protection."""
+    digraph = (
+        "```dot   \n"  # trailing spaces on the open fence line
+        "digraph g {\n"
+        '  "Run /paad:agentic-review" [shape=box];\n'
+        "}\n"
+        "```"
+    )
+    source = (
+        "---\nname: x\ndescription: d\n---\n\n"
+        "# X\n\n" + digraph + "\n\n## Body\n\nWhen done, run /paad:agentic-review.\n"
+    )
+    out = build_steering_file(source, "x")
+
+    # The whole block (trailing-space fence and all) is preserved verbatim.
+    assert digraph in out
+    assert '"Run /paad:agentic-review"' in out
+    # Prose ref is still rewritten.
+    assert "When done, run #agentic-review." in out
+
+
 def test_excluded_sections_do_not_survive():
     """Layered on clean_body: orchestration-only sections are dropped."""
     source = (
