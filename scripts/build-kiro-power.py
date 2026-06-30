@@ -237,8 +237,28 @@ POWER_DESCRIPTION = (
 )
 POWER_AUTHOR = "Ovid"
 
-# Frontmatter for one SKILL.md (`---\n...\n---`) at the very start of the file.
+# Leading YAML frontmatter (`---\n...\n---`) anchored at the VERY START of a
+# file: line 1 is exactly `---`, then the captured YAML body, then a closing
+# `---\n` delimiter. This is the single definition of "valid leading
+# frontmatter" — it is what the generator PARSES out of a source SKILL.md
+# (`read_skill_frontmatter`) AND what the frontmatter-first lint enforces on the
+# generated steering/*.md + POWER.md. Sharing one regex is the REFACTOR seam:
+# "what we parse as valid frontmatter" and "what we lint" can never diverge.
 _SKILL_FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
+
+
+def match_leading_frontmatter(text):
+    """Return the `re.Match` for the leading `---...---` block, or None.
+
+    The single shared identifier of "valid leading frontmatter": the block must
+    be the literal first content (anchored at `\\A`, so `---` is line 1 with no
+    leading blank line, whitespace, or BOM) and must be terminated by a closing
+    `---\\n`. Group 1 is the YAML body between the delimiters.
+
+    Reused by both `read_skill_frontmatter` (the generator's PARSE side) and the
+    frontmatter-first lint, so the writer and the linter agree by construction.
+    """
+    return _SKILL_FRONTMATTER.match(text)
 
 
 def read_plugin_meta(plugin_json_path=PLUGIN_JSON):
@@ -262,7 +282,7 @@ def read_skill_frontmatter(source_content):
     Used to derive each routing entry's `name`/`description` from the source
     skill (drift-proof — descriptions are never hand-copied into POWER.md).
     """
-    match = _SKILL_FRONTMATTER.search(source_content)
+    match = match_leading_frontmatter(source_content)
     if not match:
         return {}
     return yaml.safe_load(match.group(1)) or {}
@@ -595,6 +615,80 @@ def check_drift(source_dir=SOURCE_DIR, root=REPO_ROOT):
     return find_drift(generated, ondisk)
 
 
+# ===========================================================================
+# Frontmatter-first lint (Task 5)
+#
+# Kiro has ONE hard rule for steering files and POWER.md: the YAML frontmatter
+# must be the LITERAL first content of the file. A leading blank line, leading
+# whitespace, or a UTF-8 BOM before `---` makes Kiro silently ignore the file —
+# a stray blank line disables a skill with no error. The generator already
+# WRITES files that satisfy this; this lint enforces it on the on-disk tree so a
+# hand-edit (or a future generator regression) is caught loudly.
+#
+# REFACTOR seam: the pure check reuses `match_leading_frontmatter` — the SAME
+# matcher the generator uses to PARSE source frontmatter — so "what we write and
+# parse as valid frontmatter" and "what we lint" share one definition.
+# ===========================================================================
+
+
+def frontmatter_first_violation(text):
+    """Return a reason string if `text`'s frontmatter is not the literal first
+    content, else None.
+
+    PURE and unit-testable against fixture strings. Valid means: `---` on line 1
+    (no leading blank line, whitespace, or UTF-8 BOM), a closing `---\\n`
+    delimiter, and parseable YAML between the delimiters. The leading-block
+    identification is delegated to `match_leading_frontmatter` (the shared seam),
+    so this lint and the generator's parser agree by construction.
+    """
+    if text.startswith("﻿"):
+        return "starts with a UTF-8 BOM before the frontmatter `---`"
+
+    match = match_leading_frontmatter(text)
+    if not match:
+        first_line = text.split("\n", 1)[0]
+        if first_line != "---":
+            return (
+                "frontmatter is not the first content "
+                f"(line 1 is {first_line!r}, expected '---')"
+            )
+        return "frontmatter `---` block is missing its closing `---` delimiter"
+
+    try:
+        yaml.safe_load(match.group(1))
+    except yaml.YAMLError as exc:
+        return f"frontmatter YAML is not parseable: {exc}"
+    return None
+
+
+def lint_frontmatter_first(root=REPO_ROOT):
+    """Return sorted `"<file>: <reason>"` strings for frontmatter-first violations.
+
+    Scans the on-disk root `POWER.md` plus every `steering/*.md` under `root`
+    (the same enumeration `_read_ondisk` uses, so orphan steering files are
+    linted too) and applies `frontmatter_first_violation` to each. An empty list
+    means every power file has frontmatter as its literal first content.
+    """
+    root = Path(root)
+    violations = []
+
+    targets = ["POWER.md"]
+    steering_dir = root / "steering"
+    if steering_dir.is_dir():
+        targets += [f"steering/{p.name}" for p in sorted(steering_dir.glob("*.md"))]
+
+    for name in targets:
+        path = root / name
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        reason = frontmatter_first_violation(text)
+        if reason is not None:
+            violations.append(f"{name}: {reason}")
+
+    return sorted(violations)
+
+
 def generate_power(source_dir=SOURCE_DIR, out_path=POWER_MD):
     """Write POWER.md: the pure deterministic content + the provenance stamp.
 
@@ -623,13 +717,35 @@ def generate_power(source_dir=SOURCE_DIR, out_path=POWER_MD):
 
 
 def _main(argv):
-    """CLI entry point. `--check` reports drift; otherwise regenerate the power.
+    """CLI entry point. `--check` reports drift; `--lint` enforces the Kiro
+    frontmatter-first rule; otherwise regenerate the power.
 
     `--check` exits non-zero (1) with a per-file message when the committed
     POWER.md / steering files are stale or hand-edited (ignoring the provenance
-    stamp), and exits 0 when the tree is clean. The default (no args) regenerates
-    the steering files and POWER.md.
+    stamp), and exits 0 when the tree is clean.
+
+    `--lint` exits non-zero (1) with a per-file message when any on-disk
+    POWER.md / steering file does NOT have its YAML frontmatter as the literal
+    first content (a leading blank line, BOM, or missing closing `---`), and
+    exits 0 when every file is clean.
+
+    The default (no args) regenerates the steering files and POWER.md.
     """
+    if "--lint" in argv:
+        violations = lint_frontmatter_first()
+        if violations:
+            print(
+                "FRONTMATTER LINT: the Kiro frontmatter-first rule is violated. "
+                "Frontmatter MUST be the literal first content (`---` on line 1, "
+                "no leading blank line or BOM). Offending files:",
+                file=sys.stderr,
+            )
+            for violation in violations:
+                print(f"  - {violation}", file=sys.stderr)
+            return 1
+        print("Kiro frontmatter-first rule satisfied (no violations).")
+        return 0
+
     if "--check" in argv:
         drifted = check_drift()
         if drifted:
