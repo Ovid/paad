@@ -2,7 +2,12 @@
 
 import os
 import re
+import sys
 from pathlib import Path
+
+# Make the shared body-cleaning core importable regardless of cwd.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from skill_body import clean_body  # noqa: E402
 
 # Paths relative to repository root
 SOURCE_DIR = "plugins/paad/skills"
@@ -17,7 +22,6 @@ def convert_skills():
     agent_skills_root.mkdir(parents=True, exist_ok=True)
     
     skip_names = ["makefile", "help"]
-    unwanted_headers = ["Arguments", "Input Resolution", "Pre-flight Checks", "Document classification"]
 
     for skill_path in Path(SOURCE_DIR).iterdir():
         if not skill_path.is_dir() or skill_path.name in skip_names:
@@ -38,46 +42,10 @@ def convert_skills():
         skill_name = name_match.group(1).strip() if name_match else skill_path.name
         description = desc_match.group(1).strip() if desc_match else ""
 
-        # Split into sections by headers (##)
-        # We use a non-capturing group for the split but keep the header as part of the next chunk
-        # Actually splitting by \n## works better if we prepend \n to content
-        parts = re.split(r'\n(##+ .*)', content)
-        
-        # parts[0] is everything before the first ##
-        cleaned_content = parts[0]
-        
-        # Process header/body pairs
-        for i in range(1, len(parts), 2):
-            header_line = parts[i]
-            body = parts[i+1]
-            
-            header_text = re.sub(r'^##+\s*', '', header_line).strip()
-            
-            # Skip unwanted sections
-            if any(uh in header_text for uh in unwanted_headers):
-                continue
-                
-            # Neutralize "paad/" paths to ".reviews/" or ".reports/"
-            body = body.replace("paad/architecture-reviews/", ".reviews/architecture/")
-            body = body.replace("paad/code-reviews/", ".reviews/code/")
-            body = body.replace("paad/pushback-reviews/", ".reviews/pushback/")
-            body = body.replace("paad/alignment-reviews/", ".reviews/alignment/")
-            body = body.replace("paad/", ".reviews/")
-            
-            # Remove entire lines containing /paad: (usually follow-up suggestions or command examples)
-            body = re.sub(r'^.*\/paad:[a-z0-9-]+.*$', '', body, flags=re.MULTILINE)
-            
-            # Additional cleanup for any remaining /paad: mentions just in case
-            body = re.sub(r'\(?/paad:[a-z0-9-]+\)?', '', body)
-            
-            # Clean up trailing whitespace and excessive newlines
-            body = body.rstrip() + "\n"
-            
-            cleaned_content += "\n" + header_line + body
-            
-        # Final cleanup for consecutive empty lines
-        cleaned_content = re.sub(r'\n{3,}', '\n\n', cleaned_content).strip() + "\n"
-        
+        # Clean the body using the shared core (section split + exclusion +
+        # path neutralization + legacy /paad: stripping + whitespace collapse).
+        cleaned_content = clean_body(content)
+
         # Write Kiro Skill
         kiro_skill_dir = kiro_skills_root / skill_path.name
         kiro_skill_dir.mkdir(exist_ok=True)
