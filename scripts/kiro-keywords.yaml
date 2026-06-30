@@ -1,0 +1,29 @@
+# Kiro power keyword metadata — Kiro-only, consumed by scripts/build-kiro-power.py.
+#
+# These keywords live HERE, not in SKILL.md frontmatter: keywords are a Kiro concern,
+# and keeping them out of SKILL.md leaves the Claude Code plugin byte-for-byte untouched.
+# `claude plugin validate` does not inspect SKILL.md frontmatter, so a sidecar is the only
+# place a Kiro-only key can be validated/owned. (Design: "Keywords source: sidecar file".)
+
+# Curated, NARROW keyword set written verbatim into POWER.md frontmatter `keywords`.
+# This drives *power-level* activation. It is deliberately a hand-picked subset, NOT the
+# union of every skill's keywords, to limit noisy power activation while staying
+# discoverable. (Design: "Residual noise caveat" + "Curate the power-level keyword set".)
+power:
+  - architecture
+  - code review
+  - accessibility
+  - requirements
+  - code quality
+
+# Per-skill keywords — one entry per SHIPPED steering file (excludes help + makefile).
+# The generator WARNS if a shipped skill has no entry here, so a newly added skill cannot
+# ship without an explicit decision about how it surfaces. (Design: "Edge cases" — warn.)
+skills:
+  agentic-a11y:         [accessibility, a11y, screen reader, WCAG]
+  agentic-architecture: [architecture, coupling, structure, tech debt]
+  agentic-review:       [code review, branch review, pre-merge]
+  alignment:            [alignment, requirements, design, coverage]
+  fix-architecture:     [fix architecture, remediation, flaws]
+  pushback:             [pushback, spec review, scope, feasibility]
+  vibe:                 [vibe coding, quick fix, TDD]
