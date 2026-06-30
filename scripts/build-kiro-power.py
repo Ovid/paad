@@ -436,6 +436,120 @@ def provenance_stamp(short_sha):
     return f"<!-- Generated from paad@{short_sha} by build-kiro-power -->"
 
 
+# ===========================================================================
+# Drift / idempotency (Task 4)
+#
+# The committed POWER.md's stamp embeds HEAD-at-generation-time, so it ALWAYS
+# lags HEAD by one commit and a naive `git diff --exit-code` is forever dirty.
+# The drift check therefore compares a STAMP-FREE view of POWER.md. The same
+# `without_stamp` helper is shared by the idempotency test and the drift check
+# so they cannot disagree (the REFACTOR seam), and the comparison itself is a
+# PURE `find_drift(generated, ondisk)` over in-memory `{name: content}` maps.
+# ===========================================================================
+
+# Matches the whole provenance-stamp line (including its trailing newline if
+# present) anchored on the stable, content-free prefix so a changed short SHA
+# never registers as drift. Multiline so it matches the stamp wherever it sits.
+_STAMP_LINE = re.compile(
+    r"^<!-- Generated from paad@[0-9a-f]+ by build-kiro-power -->\n?",
+    re.MULTILINE,
+)
+
+
+def without_stamp(text):
+    """Return `text` with the provenance-stamp line removed.
+
+    Shared by the idempotency test and the drift check: a POWER.md that differs
+    from a freshly-generated one ONLY in its embedded short SHA must compare
+    equal, because the committed stamp always lags HEAD by one commit. Text with
+    no stamp is returned unchanged (idempotent).
+    """
+    return _STAMP_LINE.sub("", text)
+
+
+def find_drift(generated, ondisk):
+    """Return the sorted names of files that have really drifted.
+
+    PURE comparison of two `{name: content}` maps (the freshly-generated
+    contents vs. the on-disk contents). For each generated file:
+
+      * POWER.md is compared with the provenance stamp normalized away
+        (`without_stamp`), so a stamp-only delta is NOT drift.
+      * Any other file is compared byte-for-byte.
+      * A generated file missing entirely from `ondisk` counts as drift.
+
+    Returns the drifted file names sorted (deterministic). An empty list means
+    the on-disk tree matches what the generator would produce now.
+    """
+    def _norm(name, content):
+        return without_stamp(content) if name == "POWER.md" else content
+
+    drifted = []
+    for name, gen_content in generated.items():
+        if name not in ondisk:
+            drifted.append(name)
+            continue
+        if _norm(name, gen_content) != _norm(name, ondisk[name]):
+            drifted.append(name)
+    return sorted(drifted)
+
+
+def _generate_in_memory(source_dir):
+    """Return the `{relative-name: content}` map the generator WOULD write.
+
+    Builds POWER.md (with the current provenance stamp) and every in-scope
+    `steering/<name>.md` purely in memory — no writes — so the drift check never
+    mutates the working tree.
+    """
+    source_dir = Path(source_dir)
+
+    plugin_meta = read_plugin_meta()
+    sidecar = load_sidecar()
+    help_content = (source_dir / "help" / "SKILL.md").read_text(encoding="utf-8")
+
+    power_body = build_power_md(
+        source_dir=source_dir,
+        sidecar=sidecar,
+        plugin_meta=plugin_meta,
+        help_content=help_content,
+    )
+    power = power_body + "\n" + provenance_stamp(git_short_sha()) + "\n"
+
+    generated = {"POWER.md": power}
+    for name in _in_scope_skill_names(source_dir):
+        source = (source_dir / name / "SKILL.md").read_text(encoding="utf-8")
+        generated[f"steering/{name}.md"] = build_steering_file(source, name)
+    return generated
+
+
+def _read_ondisk(root, names):
+    """Read the on-disk content for each `name` under `root` (missing -> absent).
+
+    Returns a `{name: content}` map. A file that does not exist is simply omitted
+    so `find_drift` can report it as drift.
+    """
+    root = Path(root)
+    ondisk = {}
+    for name in names:
+        path = root / name
+        if path.exists():
+            ondisk[name] = path.read_text(encoding="utf-8")
+    return ondisk
+
+
+def check_drift(source_dir=SOURCE_DIR, root=REPO_ROOT):
+    """Return the sorted names of committed power files that have drifted.
+
+    Regenerates POWER.md + every steering file IN MEMORY from `source_dir`, reads
+    the matching on-disk files under `root`, and compares them with `find_drift`
+    (excluding the provenance stamp). An empty list means the committed power is
+    up to date; a non-empty list names the stale or hand-edited files.
+    """
+    generated = _generate_in_memory(source_dir)
+    ondisk = _read_ondisk(root, generated.keys())
+    return find_drift(generated, ondisk)
+
+
 def generate_power(source_dir=SOURCE_DIR, out_path=POWER_MD):
     """Write POWER.md: the pure deterministic content + the provenance stamp.
 
@@ -465,7 +579,33 @@ def generate_power(source_dir=SOURCE_DIR, out_path=POWER_MD):
     print(f"Wrote {out_path.name}")
 
 
-if __name__ == "__main__":
+def _main(argv):
+    """CLI entry point. `--check` reports drift; otherwise regenerate the power.
+
+    `--check` exits non-zero (1) with a per-file message when the committed
+    POWER.md / steering files are stale or hand-edited (ignoring the provenance
+    stamp), and exits 0 when the tree is clean. The default (no args) regenerates
+    the steering files and POWER.md.
+    """
+    if "--check" in argv:
+        drifted = check_drift()
+        if drifted:
+            print(
+                "DRIFT: the committed Kiro power is stale or hand-edited. "
+                "Run `make kiro` to regenerate. Drifted files:",
+                file=sys.stderr,
+            )
+            for name in drifted:
+                print(f"  - {name}", file=sys.stderr)
+            return 1
+        print("Kiro power is up to date (no drift).")
+        return 0
+
     generate()
     generate_power()
     print("Steering + POWER.md generation complete.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(_main(sys.argv[1:]))

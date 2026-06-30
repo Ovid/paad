@@ -2,13 +2,19 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-digraphs check-help check-readme check-frontmatter
+.PHONY: help test validate check-versions check-digraphs check-help check-readme check-frontmatter kiro check-kiro
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
 
-test: validate check-versions check-digraphs check-help check-readme check-frontmatter ## Run all checks
+test: validate check-versions check-digraphs check-help check-readme check-frontmatter check-kiro ## Run all checks
 	@echo "All checks passed."
+
+kiro: ## Regenerate the Kiro power (POWER.md + steering/)
+	@python3 scripts/build-kiro-power.py
+
+check-kiro: ## Fail if the committed Kiro power is stale or hand-edited (ignores provenance stamp)
+	@python3 scripts/build-kiro-power.py --check
 
 validate: ## Validate marketplace and all plugins
 	@claude plugin validate .

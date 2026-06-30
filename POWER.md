@@ -25,4 +25,4 @@ Each skill is a manual steering file — load the one matching the user's reques
 - **#pushback** — Push back on specs, PRDs, requirements, and design documents — finds unrelated features, oversized scope, contradictions, feasibility issues, scope imbalance, omissions, ambiguity, and security concerns, with source control reality checks
 - **#vibe** — Safe vibe coding with TDD guardrails — for small fixes and quick changes where you want speed but not recklessness. Enforces red/green/refactor, checks for architecture issues, reusable components, and test infrastructure before diving in.
 
-<!-- Generated from paad@dff68d2 by build-kiro-power -->
+<!-- Generated from paad@4c71a8f by build-kiro-power -->
