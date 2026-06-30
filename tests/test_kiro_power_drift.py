@@ -86,6 +86,23 @@ def test_without_stamp_is_idempotent():
     assert build_kiro_power.without_stamp(once) == once
 
 
+def test_without_stamp_only_strips_trailing_stamp_not_midbody():
+    """The stamp is contractually the FINAL line: a mid-body line that merely
+    starts with the stamp literal must NOT be stripped — only the real trailing
+    stamp is removed."""
+    text = (
+        "<!-- Generated from paad@aaaaaaa by build-kiro-power -->\n"
+        "real body content survives\n"
+        "<!-- Generated from paad@bbbbbbb by build-kiro-power -->\n"
+    )
+    result = build_kiro_power.without_stamp(text)
+    # The mid-body stamp-like line is preserved; only the trailing one is gone.
+    assert result == (
+        "<!-- Generated from paad@aaaaaaa by build-kiro-power -->\n"
+        "real body content survives\n"
+    )
+
+
 # ---------------------------------------------------------------------------
 # find_drift: pure comparison of {name: content} maps
 # ---------------------------------------------------------------------------
@@ -133,6 +150,30 @@ def test_find_drift_missing_ondisk_file_is_drift():
     gen = {"POWER.md": "x\n", "steering/vibe.md": "y\n"}
     ondisk = {"POWER.md": "x\n"}
     assert build_kiro_power.find_drift(gen, ondisk) == ["steering/vibe.md"]
+
+
+def test_find_drift_orphan_ondisk_steering_file_is_drift():
+    """An on-disk steering file with NO generator counterpart is drift (the
+    generators only write, never delete — orphans must be caught)."""
+    gen = {"POWER.md": "x\n", "steering/vibe.md": "y\n"}
+    ondisk = {
+        "POWER.md": "x\n",
+        "steering/vibe.md": "y\n",
+        "steering/oldskill.md": "stale\n",
+    }
+    assert build_kiro_power.find_drift(gen, ondisk) == ["steering/oldskill.md"]
+
+
+def test_find_drift_extra_nonsteering_ondisk_file_ignored():
+    """An on-disk extra that is NOT under steering/ is not flagged — only
+    orphaned steering files matter (POWER.md is always regenerated)."""
+    gen = {"POWER.md": "x\n", "steering/vibe.md": "y\n"}
+    ondisk = {
+        "POWER.md": "x\n",
+        "steering/vibe.md": "y\n",
+        "README.md": "unrelated\n",
+    }
+    assert build_kiro_power.find_drift(gen, ondisk) == []
 
 
 def test_find_drift_results_sorted():
@@ -223,3 +264,22 @@ def test_check_drift_detects_hand_edited_power_md(tmp_path, monkeypatch):
                      encoding="utf-8")
     drift = build_kiro_power.check_drift(source_dir=SOURCE_DIR, root=tmp_path)
     assert "POWER.md" in drift
+
+
+def test_check_drift_detects_orphan_steering_file(tmp_path, monkeypatch):
+    """A stale on-disk steering file the generator never produces is drift.
+
+    The generators only WRITE, never DELETE, so removing/renaming a skill in
+    `plugins/paad/skills/` leaves an orphan `steering/<old>.md` behind. That
+    orphan means the committed power contains a file the generator would never
+    produce — exactly the single-source-of-truth violation the drift check must
+    catch.
+    """
+    _materialize_clean_tree(tmp_path, monkeypatch)
+    orphan = tmp_path / "steering" / "oldskill.md"
+    orphan.write_text(
+        "---\ninclusion: manual\n---\n\n# Old Skill\n\nstale content\n",
+        encoding="utf-8",
+    )
+    drift = build_kiro_power.check_drift(source_dir=SOURCE_DIR, root=tmp_path)
+    assert "steering/oldskill.md" in drift

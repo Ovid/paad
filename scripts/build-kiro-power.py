@@ -20,9 +20,13 @@ transforms layered on top:
 The source SKILL.md's own `name:`/`description:` frontmatter is STRIPPED; each
 steering file is prefixed with the literal `---\ninclusion: manual\n---`
 frontmatter as its first content (no leading blank line, no BOM). The
-`name:`/`description:` metadata is surfaced in POWER.md (a later task), not here.
+`name:`/`description:` metadata is surfaced in POWER.md, not here.
 
-This file is Task 2: steering files only. POWER.md aggregation is Task 3.
+Running this script regenerates the whole Kiro power: the aggregated `POWER.md`
+manifest at the repo root plus one `steering/<name>.md` per in-scope skill. The
+`--check` mode regenerates both in memory and reports any on-disk file that has
+drifted from what the generator would produce now (excluding the floating
+provenance stamp), so `make check-kiro` enforces single-source-of-truth.
 """
 
 import json
@@ -447,12 +451,12 @@ def provenance_stamp(short_sha):
 # PURE `find_drift(generated, ondisk)` over in-memory `{name: content}` maps.
 # ===========================================================================
 
-# Matches the whole provenance-stamp line (including its trailing newline if
-# present) anchored on the stable, content-free prefix so a changed short SHA
-# never registers as drift. Multiline so it matches the stamp wherever it sits.
+# Matches the provenance-stamp line anchored on the stable, content-free prefix
+# (so a changed short SHA never registers as drift) AND on end-of-text (`\Z`):
+# the stamp is contractually the FINAL line, so anchoring there means a body line
+# that merely STARTS with the stamp literal mid-document is never stripped.
 _STAMP_LINE = re.compile(
-    r"^<!-- Generated from paad@[0-9a-f]+ by build-kiro-power -->\n?",
-    re.MULTILINE,
+    r"<!-- Generated from paad@[0-9a-f]+ by build-kiro-power -->\n?\Z"
 )
 
 
@@ -480,6 +484,11 @@ def find_drift(generated, ondisk):
 
     Returns the drifted file names sorted (deterministic). An empty list means
     the on-disk tree matches what the generator would produce now.
+
+    Orphans: any on-disk `steering/*.md` with no generator counterpart is also
+    drift (the generators only WRITE, never DELETE, so a removed/renamed skill
+    leaves a stale steering file the generator would never produce). POWER.md is
+    always regenerated, so the orphan sweep is steering-only.
     """
     def _norm(name, content):
         return without_stamp(content) if name == "POWER.md" else content
@@ -491,7 +500,31 @@ def find_drift(generated, ondisk):
             continue
         if _norm(name, gen_content) != _norm(name, ondisk[name]):
             drifted.append(name)
+
+    # Flag stale on-disk steering files the generator would never produce.
+    for name in ondisk:
+        if (
+            name not in generated
+            and name.startswith("steering/")
+            and name.endswith(".md")
+        ):
+            drifted.append(name)
+
     return sorted(drifted)
+
+
+def _load_power_inputs(source_dir):
+    """Read the three POWER.md inputs: plugin meta, sidecar, and help content.
+
+    Shared by `generate_power` (the writer) and `_generate_in_memory` (the drift
+    check) so the two paths can never diverge in HOW they load inputs. PURE reads
+    only — no warnings, no writes; those side-effects stay in `generate_power`.
+    """
+    source_dir = Path(source_dir)
+    plugin_meta = read_plugin_meta()
+    sidecar = load_sidecar()
+    help_content = (source_dir / "help" / "SKILL.md").read_text(encoding="utf-8")
+    return plugin_meta, sidecar, help_content
 
 
 def _generate_in_memory(source_dir):
@@ -503,9 +536,7 @@ def _generate_in_memory(source_dir):
     """
     source_dir = Path(source_dir)
 
-    plugin_meta = read_plugin_meta()
-    sidecar = load_sidecar()
-    help_content = (source_dir / "help" / "SKILL.md").read_text(encoding="utf-8")
+    plugin_meta, sidecar, help_content = _load_power_inputs(source_dir)
 
     power_body = build_power_md(
         source_dir=source_dir,
@@ -523,10 +554,13 @@ def _generate_in_memory(source_dir):
 
 
 def _read_ondisk(root, names):
-    """Read the on-disk content for each `name` under `root` (missing -> absent).
+    """Read the on-disk content for the generator's files PLUS every steering file.
 
-    Returns a `{name: content}` map. A file that does not exist is simply omitted
-    so `find_drift` can report it as drift.
+    Returns a `{name: content}` map. The explicit `names` (the generator's
+    outputs) are read so a missing one is reported as drift; in ADDITION, every
+    actual `steering/*.md` under `root` is enumerated so a stale ORPHAN (a
+    steering file with no generator counterpart) is visible to `find_drift`. A
+    file that does not exist is simply omitted.
     """
     root = Path(root)
     ondisk = {}
@@ -534,6 +568,16 @@ def _read_ondisk(root, names):
         path = root / name
         if path.exists():
             ondisk[name] = path.read_text(encoding="utf-8")
+
+    # Enumerate the real steering tree so orphaned files (never (re)generated)
+    # become visible — the generators only write, never delete.
+    steering_dir = root / "steering"
+    if steering_dir.is_dir():
+        for path in sorted(steering_dir.glob("*.md")):
+            name = f"steering/{path.name}"
+            if name not in ondisk:
+                ondisk[name] = path.read_text(encoding="utf-8")
+
     return ondisk
 
 
@@ -541,9 +585,10 @@ def check_drift(source_dir=SOURCE_DIR, root=REPO_ROOT):
     """Return the sorted names of committed power files that have drifted.
 
     Regenerates POWER.md + every steering file IN MEMORY from `source_dir`, reads
-    the matching on-disk files under `root`, and compares them with `find_drift`
-    (excluding the provenance stamp). An empty list means the committed power is
-    up to date; a non-empty list names the stale or hand-edited files.
+    the matching on-disk files under `root` (plus every on-disk `steering/*.md`
+    so orphans are caught), and compares them with `find_drift` (excluding the
+    provenance stamp). An empty list means the committed power is up to date; a
+    non-empty list names the stale, hand-edited, or orphaned files.
     """
     generated = _generate_in_memory(source_dir)
     ondisk = _read_ondisk(root, generated.keys())
@@ -560,9 +605,7 @@ def generate_power(source_dir=SOURCE_DIR, out_path=POWER_MD):
     source_dir = Path(source_dir)
     out_path = Path(out_path)
 
-    plugin_meta = read_plugin_meta()
-    sidecar = load_sidecar()
-    help_content = (source_dir / "help" / "SKILL.md").read_text(encoding="utf-8")
+    plugin_meta, sidecar, help_content = _load_power_inputs(source_dir)
 
     warn_missing_sidecar_entries(_in_scope_skill_names(source_dir), sidecar)
 
