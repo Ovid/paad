@@ -167,6 +167,29 @@ def test_onboarding_falls_back_when_help_markers_absent():
     assert "## When to load steering files" in out
 
 
+def test_onboarding_tagline_extracted_from_language_hinted_fence():
+    """If the help overview fence gains a language hint (e.g. ```text — an
+    ordinary markdown edit), the tagline must STILL be extracted, not silently
+    corrupted into the literal `---` frontmatter fence. Guards against a
+    bare-fence-only regex matching the WRONG fence."""
+    tagline = "paad — the real tagline, hinted-fence edition"
+    fake_help = (
+        "---\nname: help\ndescription: d\n---\n\n"
+        "# paad Help\n\n## Overview (no arguments)\n\n"
+        "```text\n" + tagline + "\n\nAvailable skills:\n```\n"
+    )
+    out = build_kiro_power.build_power_md(
+        source_dir=SOURCE_DIR,
+        sidecar=_real_sidecar(),
+        plugin_meta=_real_plugin_meta(),
+        help_content=fake_help,
+    )
+    assert tagline in out
+    # The onboarding tagline must NOT have collapsed to the `---` fence marker.
+    onboarding = out.split("---\n", 2)[2]  # body after the frontmatter
+    assert not onboarding.lstrip().startswith("---")
+
+
 # ---------------------------------------------------------------------------
 # (c) keywords == curated sidecar `power:` list, NOT a union of skill keywords
 # ---------------------------------------------------------------------------
@@ -275,6 +298,50 @@ def test_routing_list_has_exactly_seven_entries():
     assert len(entries) == 7, entries
     names = [ln.split("**#", 1)[1].split("**", 1)[0] for ln in entries]
     assert sorted(names) == sorted(IN_SCOPE)
+
+
+def test_routing_handles_skill_without_frontmatter_gracefully(tmp_path):
+    """A skill whose SKILL.md has no frontmatter (or no `description:`) is
+    handled gracefully: no crash, deterministic output, and the entry still
+    renders with an empty description rather than a malformed line. Exercises
+    `read_skill_frontmatter`'s `{}` branch and `_routing_list`'s `.get(...)`
+    default."""
+    # Synthetic source tree: one well-formed skill, one with NO frontmatter.
+    skills = tmp_path / "skills"
+    (skills / "good").mkdir(parents=True)
+    (skills / "good" / "SKILL.md").write_text(
+        "---\nname: good\ndescription: a good skill\n---\n\n# Good\n",
+        encoding="utf-8",
+    )
+    (skills / "bare").mkdir(parents=True)
+    (skills / "bare" / "SKILL.md").write_text(
+        "# Bare\n\nNo frontmatter at all.\n", encoding="utf-8"
+    )
+    # help is needed for onboarding; it is skipped from the routing list.
+    (skills / "help").mkdir(parents=True)
+    (skills / "help" / "SKILL.md").write_text(
+        "---\nname: help\ndescription: d\n---\n\n# H\n\n"
+        "## Overview (no arguments)\n\n```\n" + HELP_TAGLINE + "\n```\n",
+        encoding="utf-8",
+    )
+
+    help_content = (skills / "help" / "SKILL.md").read_text(encoding="utf-8")
+
+    def _build():
+        return build_kiro_power.build_power_md(
+            source_dir=skills,
+            sidecar={"power": ["x"], "skills": {}},
+            plugin_meta={"name": "paad", "version": "9.9.9"},
+            help_content=help_content,
+        )
+
+    out = _build()  # must not raise
+    # The bare skill still gets a routing entry, with an empty description.
+    assert "- **#bare** — " in out
+    # The well-formed skill keeps its description.
+    assert "- **#good** — a good skill" in out
+    # Deterministic.
+    assert out == _build()
 
 
 def test_onboarding_is_trimmed_no_verbatim_help_block():

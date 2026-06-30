@@ -334,7 +334,12 @@ def _help_tagline(help_content):
     """
     after = help_content.split("## Overview (no arguments)", 1)
     region = after[1] if len(after) > 1 else help_content
-    fence = re.search(r"```\n(.*?)\n```", region, re.DOTALL)
+    # Tolerate a language hint on the opening fence (e.g. ```text) and anchor to
+    # the FIRST fence in the Overview region. `[^\n]*` mirrors `_DOT_BLOCK`'s
+    # language tolerance; a bare-fence-only pattern would silently match the
+    # WRONG fence if the help block ever gained a language hint, corrupting the
+    # tagline into the literal `---` frontmatter marker.
+    fence = re.search(r"```[^\n]*\n(.*?)\n```", region, re.DOTALL)
     block = fence.group(1) if fence else region
     for line in block.splitlines():
         if line.strip():
@@ -375,7 +380,11 @@ def _routing_list(source_dir):
 
 
 def build_power_md(source_dir, sidecar, plugin_meta, help_content):
-    """Return the POWER.md content (PURE, deterministic, no git, no file I/O).
+    """Return the POWER.md content (PURE, deterministic, no git).
+
+    Reads the in-scope SKILL.md files (via `_routing_list`) to derive the
+    routing entries, but performs NO git calls and NO writes — given the same
+    inputs it always returns byte-identical output.
 
     Composed of:
       1. frontmatter (name/version from plugin_meta, keywords from sidecar).
