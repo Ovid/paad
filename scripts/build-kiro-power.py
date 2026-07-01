@@ -24,9 +24,11 @@ frontmatter as its first content (no leading blank line, no BOM). The
 
 Running this script regenerates the whole Kiro power: the aggregated `POWER.md`
 manifest at the repo root plus one `steering/<name>.md` per in-scope skill. The
-`--check` mode regenerates both in memory and reports any on-disk file that has
-drifted from what the generator would produce now (excluding the floating
-provenance stamp), so `make check-kiro` enforces single-source-of-truth.
+`--check` mode first fails if any in-scope skill is missing a `kiro-keywords.yaml`
+`skills:` entry (so a new skill cannot ship without a keyword decision), then
+regenerates both in memory and reports any on-disk file that has drifted from
+what the generator would produce now (excluding the floating provenance stamp),
+so `make check-kiro` enforces single-source-of-truth.
 """
 
 import json
@@ -39,7 +41,7 @@ import yaml
 
 # Make the shared body-cleaning core importable regardless of cwd.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from skill_body import clean_body  # noqa: E402
+from skill_body import SKIP_NAMES, clean_body  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_DIR = REPO_ROOT / "plugins" / "paad" / "skills"
@@ -47,11 +49,6 @@ STEERING_DIR = REPO_ROOT / "steering"
 PLUGIN_JSON = REPO_ROOT / "plugins" / "paad" / ".claude-plugin" / "plugin.json"
 SIDECAR = Path(__file__).resolve().parent / "kiro-keywords.yaml"
 POWER_MD = REPO_ROOT / "POWER.md"
-
-# Mirrors convert_skills.py's skip_names: these two skills are not emitted.
-# `help` becomes POWER.md's index; `makefile` is intentionally omitted to keep
-# the power's skill set identical to the legacy Kiro output.
-SKIP_NAMES = {"help", "makefile"}
 
 STEERING_FRONTMATTER = "---\ninclusion: manual\n---\n"
 
@@ -612,6 +609,20 @@ def _read_ondisk(root, names):
     return ondisk
 
 
+def check_sidecar_completeness(source_dir=SOURCE_DIR):
+    """Return in-scope skills missing a `kiro-keywords.yaml` `skills:` entry.
+
+    Reuses `missing_sidecar_entries` (the logic behind `warn_missing_sidecar_entries`)
+    but is called on the `--check` path: unlike the non-fatal `make kiro` warning,
+    a non-empty result here MUST fail `check-kiro` so a new skill committed without
+    a sidecar keyword decision never passes `make test` green. All in-scope skills
+    currently have entries, so this returns `[]` on the clean tree.
+    """
+    source_dir = Path(source_dir)
+    sidecar = load_sidecar()
+    return missing_sidecar_entries(_in_scope_skill_names(source_dir), sidecar)
+
+
 def check_drift(source_dir=SOURCE_DIR, root=REPO_ROOT):
     """Return the sorted names of committed power files that have drifted.
 
@@ -735,9 +746,11 @@ def _main(argv):
     """CLI entry point. `--check` reports drift; `--lint` enforces the Kiro
     frontmatter-first rule; otherwise regenerate the power.
 
-    `--check` exits non-zero (1) with a per-file message when the committed
-    POWER.md / steering files are stale or hand-edited (ignoring the provenance
-    stamp), and exits 0 when the tree is clean.
+    `--check` exits non-zero (1) with a sidecar-specific message when any
+    in-scope skill has no `kiro-keywords.yaml` `skills:` entry, OR with a
+    per-file message when the committed POWER.md / steering files are stale or
+    hand-edited (ignoring the provenance stamp). It exits 0 when the sidecar is
+    complete and the tree is clean.
 
     `--lint` exits non-zero (1) with a per-file message when any on-disk
     POWER.md / steering file does NOT have its YAML frontmatter as the literal
@@ -762,6 +775,17 @@ def _main(argv):
         return 0
 
     if "--check" in argv:
+        missing = check_sidecar_completeness()
+        if missing:
+            print(
+                "SIDECAR: in-scope skills have no entry in "
+                "scripts/kiro-keywords.yaml `skills:` map. Every shipped skill "
+                "needs an explicit keyword decision — add a `skills:` entry. "
+                "Missing skills: " + ", ".join(missing),
+                file=sys.stderr,
+            )
+            return 1
+
         drifted = check_drift()
         if drifted:
             print(

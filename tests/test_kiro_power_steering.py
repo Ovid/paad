@@ -278,3 +278,70 @@ def test_generate_each_file_starts_with_frontmatter(tmp_path):
         assert lines[2] == "---", f.name
         assert not text.startswith("\n"), f.name
         assert not text.startswith("﻿"), f.name
+
+
+# ---------------------------------------------------------------------------
+# I-1: the ACCEPTED, deliberate digraph drop — guarded so it stays conscious
+#
+# `clean_body` copies ```dot digraphs verbatim, but ONLY within RETAINED
+# sections. A digraph authored INSIDE an excluded section (e.g. `## Pre-flight
+# Checks`) is dropped along with that whole section.
+#
+# In the real skills this splits the 7 steering files in two:
+#   * alignment, pushback, vibe author their digraph in the INTRO (before the
+#     first `##`), which is always retained -> their steering file KEEPS a
+#     ```dot block.
+#   * agentic-a11y, agentic-architecture, agentic-review, fix-architecture author
+#     their digraph inside `## Pre-flight Checks` (an EXCLUDED section) -> their
+#     steering file ships WITHOUT a ```dot block.
+#
+# This is ACCEPTED and deliberate (it matches the legacy Kiro output). It is NOT
+# a bug — but it was silent. These two tests pin the current reality so any
+# future change (a skill moving its digraph, or the exclusion set changing) is
+# caught and must be a CONSCIOUS decision, not an accidental regression.
+# ---------------------------------------------------------------------------
+
+# Digraph authored in the retained intro -> steering file KEEPS a ```dot block.
+_STEERING_WITH_DIGRAPH = ["alignment", "pushback", "vibe"]
+
+# Digraph authored inside the excluded `## Pre-flight Checks` -> DROPPED.
+_STEERING_WITHOUT_DIGRAPH = [
+    "agentic-a11y",
+    "agentic-architecture",
+    "agentic-review",
+    "fix-architecture",
+]
+
+
+def test_steering_files_with_intro_digraph_keep_the_dot_block(tmp_path):
+    """Skills that author their digraph in the retained intro keep a ```dot block
+    in their generated steering file."""
+    out_dir = tmp_path / "steering"
+    generate(SOURCE_DIR, out_dir)
+
+    for name in _STEERING_WITH_DIGRAPH:
+        text = (out_dir / f"{name}.md").read_text(encoding="utf-8")
+        assert "```dot" in text, (
+            f"{name}.md lost its digraph — it authors the digraph in the intro "
+            f"(a retained section), so the ```dot block MUST survive. If this "
+            f"changed, update this guard consciously."
+        )
+
+
+def test_steering_files_with_preflight_digraph_drop_the_dot_block(tmp_path):
+    """ACCEPTED behavior: skills that author their digraph inside the EXCLUDED
+    `## Pre-flight Checks` section ship WITHOUT a ```dot block — the digraph is
+    dropped along with the excluded section. This matches the legacy Kiro output
+    and is deliberate; the guard makes the drop conscious rather than silent."""
+    out_dir = tmp_path / "steering"
+    generate(SOURCE_DIR, out_dir)
+
+    for name in _STEERING_WITHOUT_DIGRAPH:
+        text = (out_dir / f"{name}.md").read_text(encoding="utf-8")
+        assert "```dot" not in text, (
+            f"{name}.md unexpectedly HAS a digraph. This skill authors its "
+            f"digraph inside the excluded `## Pre-flight Checks` section, so the "
+            f"steering file is expected to ship WITHOUT one (accepted, matches "
+            f"legacy Kiro output). If the skill moved its digraph into a retained "
+            f"section, that is a CONSCIOUS change — update this guard to match."
+        )

@@ -283,3 +283,51 @@ def test_check_drift_detects_orphan_steering_file(tmp_path, monkeypatch):
     )
     drift = build_kiro_power.check_drift(source_dir=SOURCE_DIR, root=tmp_path)
     assert "steering/oldskill.md" in drift
+
+
+# ---------------------------------------------------------------------------
+# M-1: sidecar completeness is a HARD FAILURE in --check mode
+#
+# `warn_missing_sidecar_entries` used to fire only on the `make kiro` (generate)
+# path as a non-fatal stderr line, so a new skill committed without a
+# `kiro-keywords.yaml` `skills:` entry passed `make test` green — a hollow
+# guardrail. The design's intent ("generator warns if a skill has no sidecar
+# entry — catches drift when a new skill is added") requires `check-kiro` (the
+# path `make test` runs) to FAIL when an in-scope skill is missing its entry.
+# ---------------------------------------------------------------------------
+
+def test_check_sidecar_missing_entry_fails(monkeypatch):
+    """An in-scope skill absent from the sidecar `skills:` map makes the
+    --check path FAIL (reports the missing skill)."""
+    # A sidecar that covers only ONE in-scope skill: every other in-scope skill
+    # is missing its entry and must be reported.
+    incomplete = {"power": ["x"], "skills": {"agentic-a11y": ["a11y"]}}
+    monkeypatch.setattr(build_kiro_power, "load_sidecar", lambda *a, **k: incomplete)
+    missing = build_kiro_power.check_sidecar_completeness(source_dir=SOURCE_DIR)
+    assert "vibe" in missing
+    assert "pushback" in missing
+
+
+def test_check_sidecar_complete_passes():
+    """The real, complete sidecar reports NO missing entries (clean tree)."""
+    assert build_kiro_power.check_sidecar_completeness(source_dir=SOURCE_DIR) == []
+
+
+def test_main_check_fails_on_missing_sidecar_entry(monkeypatch, capsys):
+    """THE M-1 DONE-CONDITION: `--check` exits non-zero with a sidecar-specific
+    message (distinct from file drift) when an in-scope skill has no sidecar
+    entry — so `make test` catches a skill committed without a keyword decision.
+    """
+    incomplete = {"power": ["x"], "skills": {"agentic-a11y": ["a11y"]}}
+    monkeypatch.setattr(build_kiro_power, "load_sidecar", lambda *a, **k: incomplete)
+    rc = build_kiro_power._main(["--check"])
+    captured = capsys.readouterr()
+    assert rc != 0
+    assert "kiro-keywords.yaml" in captured.err
+    assert "vibe" in captured.err
+
+
+def test_main_check_passes_on_clean_tree():
+    """--check exits 0 on the committed, in-sync tree (all 7 skills have
+    sidecar entries and no file drift)."""
+    assert build_kiro_power._main(["--check"]) == 0

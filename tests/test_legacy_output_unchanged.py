@@ -20,14 +20,10 @@ fail if `clean_body()` ever diverges from the committed golden output.
 import pytest
 
 from conftest import REPO_ROOT
-from skill_body import clean_body
+from skill_body import SKIP_NAMES, clean_body
 
 SOURCE_DIR = REPO_ROOT / "plugins" / "paad" / "skills"
 KIRO_DIR = REPO_ROOT / "kiro_and_antigravity" / "skills" / ".kiro" / "skills"
-
-# Mirrors convert_skills.py's skip_names: these skills are not emitted to the
-# Kiro tree and so have no golden output to compare against.
-SKIP_NAMES = {"help", "makefile"}
 
 
 def _in_scope_skill_names():

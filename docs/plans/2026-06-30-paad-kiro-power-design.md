@@ -187,8 +187,19 @@ So the repo root is purely a *marketplace* root, whose only artifact Claude Code
 | `skills/<name>/SKILL.md` body | → | `steering/<name>.md` body |
 | frontmatter `name`, `description` | → | aggregated into POWER.md "when to load" mapping |
 | keywords (from **sidecar**, see below) | → | aggregated into POWER.md `keywords` |
-| ```` ```dot ```` digraphs | → | copied verbatim (agent guidance — valid markdown) |
+| ```` ```dot ```` digraphs in RETAINED sections | → | copied verbatim (agent guidance — valid markdown) |
+| ```` ```dot ```` digraphs authored inside EXCLUDED sections (e.g. `## Pre-flight Checks`) | → | dropped along with the section (ACCEPTED, matches legacy Kiro output; see note below) |
 | `$ARGUMENTS` usage | → | rewritten to "the user may provide a path/scope" prose |
+
+**Digraph copying is section-conditional (ACCEPTED, guarded).** "Digraphs copied verbatim"
+applies *within retained sections only* — the transform never rewrites a `` ```dot `` block, but a
+digraph authored inside an EXCLUDED section is dropped with that section. In the real skills this
+splits the 7 steering files: `alignment`, `pushback`, `vibe` author their digraph in the intro (a
+retained region) and keep it; the four multi-agent skills (`agentic-a11y`, `agentic-architecture`,
+`agentic-review`, `fix-architecture`) author their digraph inside `## Pre-flight Checks` (excluded),
+so their steering files ship WITHOUT a digraph. This is deliberate and matches the legacy Kiro
+output; a guard test (`test_kiro_power_steering.py`) pins which steering files do/don't carry a
+`` ```dot `` block so the behavior can only change consciously.
 
 ### Keywords source: sidecar file (DECIDED — was: SKILL.md frontmatter)
 
@@ -268,7 +279,8 @@ The `inclusion: manual` block MUST be the literal first content — no blank lin
      https://kiro.dev/docs/steering/)
    - cross-skill refs ("run `/paad:agentic-architecture`") → "use the `/agentic-architecture`
      slash command" (or `#agentic-architecture`)
-   - digraphs copied verbatim
+   - digraphs copied verbatim *within retained sections* — a digraph authored inside an excluded
+     section (e.g. `## Pre-flight Checks`) is dropped with that section (ACCEPTED; see the mapping-table note)
 2. **Aggregate →** `POWER.md`: frontmatter (`name`, `displayName`, `description`, aggregated
    `keywords` from `scripts/kiro-keywords.yaml`, `author`) + onboarding + the generated
    "when to load steering files" mapping.
@@ -362,6 +374,11 @@ These are the "Must-resolve before build" items; none requires writing the gener
    - **Pass** → Kiro reads `POWER.md` + `steering/` despite `.claude-plugin/`, `plugins/`, `docs/`,
      etc. at root → proceed single-repo.
    - **Fail** → switch to the dedicated `Ovid/paad-kiro` repo fallback (Decision #5) before Phase 1.
+   - **Also confirm the POWER.md `version` frontmatter key is tolerated.** During this real Kiro
+     install, verify Kiro accepts the `version:` key on POWER.md frontmatter. (We deliberately used a
+     sidecar rather than adding unknown keys on the *Claude* side because validators may reject them,
+     but nobody has verified Kiro's tolerance of `version:` on POWER.md.) **If Kiro rejects it → drop
+     the `version` key from the generated POWER.md frontmatter.**
    - Delete the scratch branch either way.
 2. **Curate the power-level keyword set** (narrow, not a union of all skills' keywords) — draft
    `scripts/kiro-keywords.yaml` now; it is an input to Phase 1, not an output.
@@ -383,7 +400,8 @@ These are the "Must-resolve before build" items; none requires writing the gener
 2. **`build-kiro-power.py` reads `plugins/paad/skills/*/SKILL.md`** and, per skill (skipping `help`
    and `makefile`), writes `steering/<name>.md`: `inclusion: manual` frontmatter as the literal first
    line, then the cleaned body with the power-specific transforms (`$ARGUMENTS` → prose prompt;
-   cross-skill refs → `#<name>`; digraphs verbatim).
+   cross-skill refs → `#<name>`; digraphs verbatim within retained sections — a digraph inside an
+   excluded section is dropped with it, ACCEPTED).
 3. **Aggregate `POWER.md`**: frontmatter (`name`, `displayName`, `description`, curated `keywords`
    from the sidecar, `author`, version mirrored from `plugin.json`) + **onboarding generated from the
    `help` skill's content** (so it can't drift — alignment Issue [3]) + the generated "when to load
@@ -452,7 +470,8 @@ or small fixtures.
 #### Task: Steering file generation (Phase 1.2)
 
 **Requirement:** Decisions 2 & 4 (one steering file per skill, `inclusion: manual`); edge cases
-(skip `help` + `makefile`); the mapping (`$ARGUMENTS`→prose, cross-refs→`#name`, digraphs verbatim).
+(skip `help` + `makefile`); the mapping (`$ARGUMENTS`→prose, cross-refs→`#name`, digraphs verbatim
+within retained sections — a digraph inside an excluded section is dropped with it, ACCEPTED).
 
 - **RED** — Write tests asserting: (a) exactly 7 `steering/*.md` are produced (not 8, not 9);
   (b) `help.md` and `makefile.md` are absent; (c) each file's **first line** is `---` then

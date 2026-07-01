@@ -30,6 +30,14 @@ EXCLUDED_SECTIONS = [
     "Document classification",
 ]
 
+# Single source of truth for the skills excluded from BOTH generators. `help`
+# becomes POWER.md's index (and the legacy tree's, via convert_skills.py);
+# `makefile` is intentionally omitted to keep the two generators' skill sets
+# byte-for-byte identical. Both generators and the golden-output test import
+# this; do NOT copy-paste the names — the design REQUIRES the two generators'
+# skill sets stay identical, and a duplicated literal has no parity guard.
+SKIP_NAMES = frozenset({"help", "makefile"})
+
 
 def neutralize_paad_paths(body):
     """Rewrite `paad/...` output paths to neutral `.reviews/...` paths.
