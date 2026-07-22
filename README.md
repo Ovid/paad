@@ -30,6 +30,7 @@ The strongest early adoption has come from three skills:
 - **`pushback`**, which critically reviews specs before implementation
 - **`alignment`**, which checks whether the planned work actually matches the spec and design
 - **`agentic-review`**, which performs a deeper pre-merge review than the lightweight AI review tools many developers are used to
+- **`agentic-architecture`**, which allows you to find and fix the tech debt you're accruing over time
 
 One user described `pushback` this way:
 
@@ -64,6 +65,8 @@ If a specification is weak, a plan is misaligned, an architectural decision is f
 It also uses more tokens than a lightweight “just build it” workflow. PAAD optimizes for better decisions and fewer avoidable mistakes, not minimum token consumption.
 
 ## Workflow
+
+There's a lot to take in with PAAD, [so I've written an article to explain how to write production-quality code with it](https://curtispoe.org/articles/watching-claude-sonnet-outperform-opus).
 
 If you are new to PAAD, start with `/paad:help` to see the available skills and when to use them.
 
