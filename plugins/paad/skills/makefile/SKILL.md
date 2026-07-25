@@ -7,11 +7,7 @@ description: Use when creating or updating a Makefile for a project, especially 
 
 # Makefile Management
 
-## Overview
-
-Creates or updates a project Makefile with standard targets. **Never modifies an existing target without explicit user approval.**
-
-## Process
+**Process:**
 
 ```dot
 digraph makefile_flow {
@@ -57,6 +53,12 @@ digraph makefile_flow {
     "ASK the user how to handle test output" -> "Done";
 }
 ```
+
+## Overview
+
+Creates or updates a project Makefile with standard targets. **Never modifies an existing target without explicit user approval.**
+
+## Process
 
 1. Detect stack (read CLAUDE.md, AGENTS.md, README, package.json, pyproject.toml, Cargo.toml, go.mod, etc.)
 2. Check if Makefile exists

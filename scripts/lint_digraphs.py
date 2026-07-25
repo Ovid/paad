@@ -12,6 +12,9 @@ defects that fence check cannot see:
      node left behind when the flow around it was rewritten.
   3. nodes used in an edge but never declared — they render unstyled, so a
      stop condition looks like an ordinary step.
+  4. digraphs that are not all up front. Every skill puts its digraphs
+     immediately after the intro, before the first '## ' heading, so an
+     agent always finds the control flow in the same place.
 
 If graphviz is installed, each block is also parsed with `dot`. When it
 isn't, that check is skipped rather than failing the build.
@@ -57,6 +60,14 @@ def lint(block):
         problems.append(f'used in an edge but never declared: "{node}"')
 
     return problems
+
+
+def misplaced(text):
+    """Return the count of dot blocks that fall after the first '## ' heading."""
+    heading = re.search(r"^## ", text, re.M)
+    if not heading:
+        return 0
+    return sum(1 for m in re.finditer(r"^```dot$", text, re.M) if m.start() > heading.start())
 
 
 def parses(block):
@@ -105,6 +116,12 @@ def self_test():
     good = 'digraph g {\n "a" [shape=diamond];\n "b" [shape=box];\n "a" -> "b" [label="yes"];\n}'
     assert lint(good) == [], lint(good)
 
+    # 4. placement: digraphs belong above the first '## ' heading
+    up_front = "# Skill\n\nIntro.\n\n```dot\ndigraph g {}\n```\n\n## Arguments\n\nText.\n"
+    assert misplaced(up_front) == 0, misplaced(up_front)
+    buried = "# Skill\n\nIntro.\n\n## Process\n\n```dot\ndigraph g {}\n```\n"
+    assert misplaced(buried) == 1, misplaced(buried)
+
     print("self-test passed.")
     return 0
 
@@ -118,7 +135,17 @@ def main():
     blocks = 0
 
     for skill in sorted(SKILLS.glob("*/SKILL.md")):
-        for index, block in enumerate(BLOCK.findall(skill.read_text())):
+        text = skill.read_text()
+
+        late = misplaced(text)
+        if late:
+            print(
+                f"FAIL: {skill.parent.name}: {late} digraph(s) after the first '## ' "
+                "heading — all digraphs go immediately after the intro"
+            )
+            failures += late
+
+        for index, block in enumerate(BLOCK.findall(text)):
             blocks += 1
             problems = lint(block)
             if have_dot:

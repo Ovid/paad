@@ -13,17 +13,7 @@ Multi-agent accessibility audit of user-facing code across any platform. Dispatc
 
 **This is a technique skill.** Follow the phases in order. Do not skip verification.
 
-## Arguments
-
-`/paad:agentic-a11y` accepts optional `$ARGUMENTS`:
-
-- `/paad:agentic-a11y` — audit all user-facing code in the repository
-- `/paad:agentic-a11y src/components/` — scope the audit to a specific directory
-- `/paad:agentic-a11y src/components/Modal.tsx` — audit a specific file
-
-When a path is provided, only audit files within that scope. Still detect platform and run all specialists, but limit the file manifest accordingly.
-
-## Pre-flight Checks
+**Pre-flight:**
 
 ```dot
 digraph preflight {
@@ -40,21 +30,7 @@ digraph preflight {
 }
 ```
 
-1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This audit consumes significant context. Start a fresh session with `/paad:agentic-a11y` to avoid context rot." Stop and wait.
-2. **User-facing code:** Scan for any of the following. If none found, tell the user: "No user-facing code detected in this repository." Stop.
-
-| Platform | File indicators |
-|----------|----------------|
-| **Web** | `.html`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.ejs`, `.hbs`, `.blade.php`, `.erb`, `.jinja`, `.twig`, `.css`, `.scss`, `.less`, plus JS/TS with DOM manipulation |
-| **iOS (native)** | `.swift` (SwiftUI views), `.m`/`.h` (UIKit), `.storyboard`, `.xib` |
-| **Android (native)** | `.kt`/`.java` (Compose or View classes), `res/layout/*.xml` |
-| **React Native** | `.jsx`/`.tsx` with `react-native` imports |
-| **Flutter** | `.dart` files with `package:flutter` imports |
-| **Desktop** | Electron (web stack), Qt (`.cpp`/`.qml`), WPF/WinForms (`.xaml`/`.cs`), macOS AppKit/SwiftUI, GTK |
-| **CLI** | Any code producing terminal output or accepting terminal input (look for stdout/stderr writes, readline, prompt libraries, curses/ncurses, argument parsers) |
-| **Game** | Unity (`.cs` scripts), Unreal (C++/Blueprints), Godot (`.gd`/`.tscn`), custom engines with rendering/input systems |
-
-## Audit Flow
+**Audit flow:**
 
 ```dot
 digraph audit_flow {
@@ -116,6 +92,32 @@ digraph audit_flow {
   "Report location, counts by severity, Quick Wins guidance" -> "STOP: report is the deliverable — do NOT auto-fix";
 }
 ```
+
+## Arguments
+
+`/paad:agentic-a11y` accepts optional `$ARGUMENTS`:
+
+- `/paad:agentic-a11y` — audit all user-facing code in the repository
+- `/paad:agentic-a11y src/components/` — scope the audit to a specific directory
+- `/paad:agentic-a11y src/components/Modal.tsx` — audit a specific file
+
+When a path is provided, only audit files within that scope. Still detect platform and run all specialists, but limit the file manifest accordingly.
+
+## Pre-flight Checks
+
+1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This audit consumes significant context. Start a fresh session with `/paad:agentic-a11y` to avoid context rot." Stop and wait.
+2. **User-facing code:** Scan for any of the following. If none found, tell the user: "No user-facing code detected in this repository." Stop.
+
+| Platform | File indicators |
+|----------|----------------|
+| **Web** | `.html`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.ejs`, `.hbs`, `.blade.php`, `.erb`, `.jinja`, `.twig`, `.css`, `.scss`, `.less`, plus JS/TS with DOM manipulation |
+| **iOS (native)** | `.swift` (SwiftUI views), `.m`/`.h` (UIKit), `.storyboard`, `.xib` |
+| **Android (native)** | `.kt`/`.java` (Compose or View classes), `res/layout/*.xml` |
+| **React Native** | `.jsx`/`.tsx` with `react-native` imports |
+| **Flutter** | `.dart` files with `package:flutter` imports |
+| **Desktop** | Electron (web stack), Qt (`.cpp`/`.qml`), WPF/WinForms (`.xaml`/`.cs`), macOS AppKit/SwiftUI, GTK |
+| **CLI** | Any code producing terminal output or accepting terminal input (look for stdout/stderr writes, readline, prompt libraries, curses/ncurses, argument parsers) |
+| **Game** | Unity (`.cs` scripts), Unreal (C++/Blueprints), Godot (`.gd`/`.tscn`), custom engines with rendering/input systems |
 
 ## Phase 1: Reconnaissance
 

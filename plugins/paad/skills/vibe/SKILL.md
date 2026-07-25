@@ -9,6 +9,8 @@ description: Use when making a small fix or quick change (1-3 files, same module
 
 Quick fixes and small changes with guardrails. You get the speed of vibe coding without the recklessness — mandatory TDD, architecture awareness, and reusable component detection.
 
+**Flow:**
+
 ```dot
 digraph vibe {
   "Task clear?" [shape=diamond];

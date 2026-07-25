@@ -11,14 +11,7 @@ Guided, iterative fixing of architectural flaws identified by `/paad:agentic-arc
 
 **This is a technique skill.** Follow the phases (Setup → Safety Net → Fix Loop → Wrap-Up) in order. Do not skip validation or testing steps.
 
-## Arguments
-
-`/paad:fix-architecture` accepts optional `$ARGUMENTS`:
-
-- `/paad:fix-architecture` — finds the most recent report in `paad/architecture-reviews/` by date prefix
-- `/paad:fix-architecture path/to/report.md` — uses a specific report
-
-## Pre-flight Checks
+**Pre-flight:**
 
 ```dot
 digraph preflight {
@@ -67,21 +60,7 @@ digraph preflight {
 }
 ```
 
-1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This skill consumes significant context. Start a fresh session with `/paad:fix-architecture` to avoid context rot." Stop and wait.
-
-2. **Branch protection:** Refuse to operate on the default branch (main/master/trunk). Detect via `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null` (local, instant), falling back to branch name matching (`main`/`master`/`trunk`), and only falling back to `git remote show origin` as a last resort if neither works. If on the default branch: "Architecture fixes must be done on a feature branch. Create one and re-run this skill." Stop and wait.
-
-3. **Report exists:** Locate the report from `$ARGUMENTS` or find the most recent file in `paad/architecture-reviews/` by date prefix. If none found: "No architecture report found. Run `/paad:agentic-architecture` first to generate one." Stop and wait.
-
-4. **Report staleness:** Parse the date from the report. If the report is >14 days old, warn: "This report was generated N days ago. Some findings may be outdated. I'll validate each flaw before fixing, but consider re-running `/paad:agentic-architecture` for a fresh baseline." Ask explicitly: "Proceed anyway? (yes / no / re-run `/paad:agentic-architecture` first)". Do not use commit count as a staleness signal — architectural flaws persist across many commits, and high commit velocity (especially from fix sessions on the same report) does not indicate staleness.
-
-5. **Test infrastructure:** Check whether the project has a test framework, runner, and conventions (e.g., a `test/` or `__tests__/` directory, a test script in `package.json`, pytest config, etc.). If no test infrastructure exists: "This project has no test infrastructure. Fixes without tests are high-risk. Want to set up a test framework first, proceed without tests, or stop?" Wait for the developer's decision.
-
-6. **Baseline test run:** Run the existing test suite to establish a green baseline. If tests are already failing: "N tests are currently failing before any changes. This means I can't reliably attribute test failures to my fixes. Proceed anyway, or fix the failing tests first?" Record which tests are failing so the Handle Test Failures step can distinguish pre-existing failures from newly introduced ones.
-
-## Session Flow
-
-Setup → Safety Net → Fix Loop → Wrap-Up. The Safety Net gate is non-negotiable: no fix may begin until every safety-net test for the whole batch is written and committed.
+**Session flow** — Setup → Safety Net → Fix Loop → Wrap-Up. The Safety Net gate is non-negotiable: no fix may begin until every safety-net test for the whole batch is written and committed.
 
 ```dot
 digraph fix_session {
@@ -189,6 +168,27 @@ digraph fix_session {
   "STOP: finish current fix, resume in a fresh session" -> "Wrap-Up: summary + suggest re-running fix-architecture";
 }
 ```
+
+## Arguments
+
+`/paad:fix-architecture` accepts optional `$ARGUMENTS`:
+
+- `/paad:fix-architecture` — finds the most recent report in `paad/architecture-reviews/` by date prefix
+- `/paad:fix-architecture path/to/report.md` — uses a specific report
+
+## Pre-flight Checks
+
+1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This skill consumes significant context. Start a fresh session with `/paad:fix-architecture` to avoid context rot." Stop and wait.
+
+2. **Branch protection:** Refuse to operate on the default branch (main/master/trunk). Detect via `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null` (local, instant), falling back to branch name matching (`main`/`master`/`trunk`), and only falling back to `git remote show origin` as a last resort if neither works. If on the default branch: "Architecture fixes must be done on a feature branch. Create one and re-run this skill." Stop and wait.
+
+3. **Report exists:** Locate the report from `$ARGUMENTS` or find the most recent file in `paad/architecture-reviews/` by date prefix. If none found: "No architecture report found. Run `/paad:agentic-architecture` first to generate one." Stop and wait.
+
+4. **Report staleness:** Parse the date from the report. If the report is >14 days old, warn: "This report was generated N days ago. Some findings may be outdated. I'll validate each flaw before fixing, but consider re-running `/paad:agentic-architecture` for a fresh baseline." Ask explicitly: "Proceed anyway? (yes / no / re-run `/paad:agentic-architecture` first)". Do not use commit count as a staleness signal — architectural flaws persist across many commits, and high commit velocity (especially from fix sessions on the same report) does not indicate staleness.
+
+5. **Test infrastructure:** Check whether the project has a test framework, runner, and conventions (e.g., a `test/` or `__tests__/` directory, a test script in `package.json`, pytest config, etc.). If no test infrastructure exists: "This project has no test infrastructure. Fixes without tests are high-risk. Want to set up a test framework first, proceed without tests, or stop?" Wait for the developer's decision.
+
+6. **Baseline test run:** Run the existing test suite to establish a green baseline. If tests are already failing: "N tests are currently failing before any changes. This means I can't reliably attribute test failures to my fixes. Proceed anyway, or fix the failing tests first?" Record which tests are failing so the Handle Test Failures step can distinguish pre-existing failures from newly introduced ones.
 
 ## Setup: Developer Conversation
 

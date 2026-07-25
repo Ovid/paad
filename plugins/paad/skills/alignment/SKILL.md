@@ -11,6 +11,8 @@ Verifies that intent documents (requirements, specs, PRDs) and action documents 
 
 **This skill does NOT recommend a fresh session.** The conversation history may contain the documents.
 
+**Input resolution and reality check:**
+
 ```dot
 digraph alignment {
   "Has $ARGUMENTS?" [shape=diamond];
@@ -51,55 +53,7 @@ digraph alignment {
 }
 ```
 
-## Arguments
-
-`/paad:alignment` accepts optional `$ARGUMENTS`:
-
-- `/paad:alignment` — auto-detect documents from conversation history or common file locations
-- `/paad:alignment requirements.md plan.md` — check alignment between specific files
-- `/paad:alignment docs/specs/ docs/plans/` — check alignment across directories
-
-When file paths are provided, the skill classifies each as intent or action and proceeds. When multiple files are provided, the skill determines their relationships automatically.
-
-## Input Resolution
-
-Resolve the documents to check in this order:
-
-1. **`$ARGUMENTS` contains file paths** → use those files, classify each as intent (what we want) or action (what we'll do) based on content
-2. **Conversation history contains requirements/plans** (from brainstorming, planning, or spec writing) → confirm with user: "I see the design and plan we discussed — should I check their alignment?"
-3. **Scan common locations** (in order):
-   - `.kiro/` — Kiro requirements, design, and task files
-   - `specs/` — spec-kit feature specs and plans (`spec.md`, `plan.md` per feature folder); also check `SPECIFY_SPECS_DIR` env var
-   - `.specify/memory/constitution.md` — spec-kit project constitution
-   - `docs/plans/`, `docs/specs/` — common conventions
-   - `requirements.md`, `design.md`, `tasks.md`, `spec.md`, `plan.md`, `PRD.md` — repo root
-   - Recently modified markdown files as fallback
-   - Present candidates grouped as intent vs action, ask user to confirm
-4. **If nothing found or only one side found** → tell the user what's missing: "I found requirements but no implementation plan. Point me to the plan, or describe it and I'll work from that."
-
-### Document classification
-
-- **Intent documents** (source of truth): requirements, specs, PRDs, user stories, feature descriptions — these define *what* we want
-- **Action documents** (plan of work): implementation plans, task lists, step-by-step plans, tickets — these define *what we'll do*
-- **Intermediate documents** (optional bridge): architecture designs, technical designs — checked for alignment in both directions if present
-
-## Phase 1: Reality Check (Source Control)
-
-**Skip this phase if the project is not a git repository.**
-
-Before analyzing document alignment, check whether recent codebase changes conflict with what the documents assume:
-
-1. Run `git log --oneline -50 --since="2 weeks ago"` (whichever limit is reached first)
-2. Read commit messages and, for relevant-looking commits, check the actual diffs
-3. Compare against what the documents assume — do they reference code, APIs, schemas, infrastructure, or patterns that have recently been changed, removed, or replaced?
-4. **If conflicts found:** present them upfront before any other analysis. For each conflict:
-   - What the documents assume
-   - What actually changed (commit SHA, date, summary)
-   - Why this matters for alignment
-   - Ask: "How do you want to handle this?" with options
-5. **If no conflicts found:** say "No conflicts with recent changes" and move on
-
-## Phase 2: Alignment Analysis
+**Analysis and resolution:**
 
 ```dot
 digraph analysis_and_resolution {
@@ -159,6 +113,56 @@ digraph analysis_and_resolution {
   "Write rewritten tasks to a new file" -> "Done";
 }
 ```
+
+## Arguments
+
+`/paad:alignment` accepts optional `$ARGUMENTS`:
+
+- `/paad:alignment` — auto-detect documents from conversation history or common file locations
+- `/paad:alignment requirements.md plan.md` — check alignment between specific files
+- `/paad:alignment docs/specs/ docs/plans/` — check alignment across directories
+
+When file paths are provided, the skill classifies each as intent or action and proceeds. When multiple files are provided, the skill determines their relationships automatically.
+
+## Input Resolution
+
+Resolve the documents to check in this order:
+
+1. **`$ARGUMENTS` contains file paths** → use those files, classify each as intent (what we want) or action (what we'll do) based on content
+2. **Conversation history contains requirements/plans** (from brainstorming, planning, or spec writing) → confirm with user: "I see the design and plan we discussed — should I check their alignment?"
+3. **Scan common locations** (in order):
+   - `.kiro/` — Kiro requirements, design, and task files
+   - `specs/` — spec-kit feature specs and plans (`spec.md`, `plan.md` per feature folder); also check `SPECIFY_SPECS_DIR` env var
+   - `.specify/memory/constitution.md` — spec-kit project constitution
+   - `docs/plans/`, `docs/specs/` — common conventions
+   - `requirements.md`, `design.md`, `tasks.md`, `spec.md`, `plan.md`, `PRD.md` — repo root
+   - Recently modified markdown files as fallback
+   - Present candidates grouped as intent vs action, ask user to confirm
+4. **If nothing found or only one side found** → tell the user what's missing: "I found requirements but no implementation plan. Point me to the plan, or describe it and I'll work from that."
+
+### Document classification
+
+- **Intent documents** (source of truth): requirements, specs, PRDs, user stories, feature descriptions — these define *what* we want
+- **Action documents** (plan of work): implementation plans, task lists, step-by-step plans, tickets — these define *what we'll do*
+- **Intermediate documents** (optional bridge): architecture designs, technical designs — checked for alignment in both directions if present
+
+## Phase 1: Reality Check (Source Control)
+
+**Skip this phase if the project is not a git repository.**
+
+Before analyzing document alignment, check whether recent codebase changes conflict with what the documents assume:
+
+1. Run `git log --oneline -50 --since="2 weeks ago"` (whichever limit is reached first)
+2. Read commit messages and, for relevant-looking commits, check the actual diffs
+3. Compare against what the documents assume — do they reference code, APIs, schemas, infrastructure, or patterns that have recently been changed, removed, or replaced?
+4. **If conflicts found:** present them upfront before any other analysis. For each conflict:
+   - What the documents assume
+   - What actually changed (commit SHA, date, summary)
+   - Why this matters for alignment
+   - Ask: "How do you want to handle this?" with options
+5. **If no conflicts found:** say "No conflicts with recent changes" and move on
+
+## Phase 2: Alignment Analysis
 
 Perform three checks against the classified documents:
 

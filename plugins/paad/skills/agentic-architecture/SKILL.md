@@ -13,17 +13,7 @@ Multi-agent architecture analysis of the current codebase. Dispatches specialist
 
 **This is a technique skill.** Follow the phases in order. Do not skip verification.
 
-## Arguments
-
-`/paad:agentic-architecture` accepts optional `$ARGUMENTS`:
-
-- `/paad:agentic-architecture` — analyze the entire repository
-- `/paad:agentic-architecture src/` — scope the analysis to a specific directory (useful for monorepos or analyzing one service)
-- `/paad:agentic-architecture packages/api/ packages/shared/` — analyze multiple directories together
-
-When a path is provided, focus the analysis on that scope but still note dependencies on code outside the scope.
-
-## Pre-flight Checks
+**Pre-flight:**
 
 ```dot
 digraph preflight {
@@ -36,9 +26,7 @@ digraph preflight {
 }
 ```
 
-1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This analysis consumes significant context. Start a fresh session with `/paad:agentic-architecture` to avoid context rot." Stop and wait.
-
-## Analysis Flow
+**Analysis flow:**
 
 ```dot
 digraph analysis_flow {
@@ -95,6 +83,20 @@ digraph analysis_flow {
   "Report location, counts, 3-6 bullet summary" -> "STOP: diagnosis only — do NOT propose fixes";
 }
 ```
+
+## Arguments
+
+`/paad:agentic-architecture` accepts optional `$ARGUMENTS`:
+
+- `/paad:agentic-architecture` — analyze the entire repository
+- `/paad:agentic-architecture src/` — scope the analysis to a specific directory (useful for monorepos or analyzing one service)
+- `/paad:agentic-architecture packages/api/ packages/shared/` — analyze multiple directories together
+
+When a path is provided, focus the analysis on that scope but still note dependencies on code outside the scope.
+
+## Pre-flight Checks
+
+1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This analysis consumes significant context. Start a fresh session with `/paad:agentic-architecture` to avoid context rot." Stop and wait.
 
 ## Phase 1: Reconnaissance
 

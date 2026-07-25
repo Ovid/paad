@@ -11,31 +11,7 @@ Multi-agent bug-hunting review of the current branch against main. Dispatches sp
 
 **This is a technique skill.** Follow the phases in order. Do not skip verification.
 
-## Definitions
-
-Findings land in one of three buckets:
-
-**In-scope** for the current branch means: this branch's changes either *caused* the bug or *worsened* it (made it more likely to fire, expanded its blast radius, removed a guard that was masking it, added a new caller into broken code, etc.).
-
-**Out-of-scope (bug)** means: a pre-existing bug that the branch does not reach differently, even when it lives in files the branch touches. These persist to a project-wide backlog so they aren't lost.
-
-**Out-of-scope addition** means: code this branch added that the spec did not promise — possibly a legitimate "while I'm here" fix for an issue exposed by the work, possibly scope creep that should live in a separate PR. Surfaced by the Spec Compliance specialist for per-PR user decision (keep / split out / revert). Does not persist to the backlog.
-
-## Mechanism
-
-Findings land in one of three buckets — **in-scope**, **out-of-scope (bug)**, or **out-of-scope addition** — via two distinct routing rules:
-
-**Rule 0 (specialist tag short-circuit).** If a finding carries either the `[OOSA]` first-line sentinel or the tag `category: out-of-scope-addition` (emitted by the Spec Compliance specialist; both matched tolerantly per the verifier's "Specialist status detection" section), route directly to **Out-of-Scope Addition**. These are deliberate code adds the branch made that the spec did not promise; the blame check below would mark them in-scope (the branch *did* add them) but that's the wrong axis — the relevant question is scope vs spec, not who caused them. Out-of-scope additions are ephemeral per-PR decisions and **do not touch the backlog**.
-
-**Bug findings** (everything not tagged as an out-of-scope addition) go through **hybrid blame + reasoning**:
-
-1. **Blame default.** Every finding's `file:line` is checked against a pre-computed touched-lines map (see Phase 1). If the line falls within a touched range → tentatively **in-scope**. Otherwise → tentatively **out-of-scope**.
-2. **Reasoning promotion.** For tentatively out-of-scope findings only, the verifier asks: "Does this branch's diff cause this bug to fire when it didn't before, or measurably increase its probability/blast radius?" If yes → promote to **in-scope**. If the bug is purely pre-existing and the branch doesn't reach it differently → confirmed **out-of-scope (bug)**.
-3. **Cosmetic-touch demotion.** A finding on touched lines defaults to in-scope, but the verifier may demote to **out-of-scope (bug)** when **both** of the following hold: (a) the branch's edits to those specific lines are purely cosmetic (whitespace, comment additions, line splits, identifier renames that don't change semantics), and (b) the bug itself is purely pre-existing — the cosmetic touch did not introduce, expose, or alter the bug's behavior. If either condition fails (semantic edit on the line, or the touch interacts with the bug), the finding stays in-scope.
-
-Out-of-scope **bug** findings are **semantically deduped** by the verifier against a **file-filtered slice** of `paad/code-reviews/backlog.md`. Before invoking the verifier, the orchestrator pre-filters the backlog to entries whose `File (at first sighting)` path matches a file in the current review's manifest (changed + adjacent). Match → emit an update directive (`{id, last_seen, branch, sha}`). No match → mint a new entry with a stable 8-char hex ID hashed from `file + symbol + bug-class + first-seen-iso-date`.
-
-Backlog **lifecycle is explicit-removal only** — agentic-review never auto-resolves entries. Downstream agents (or the user) delete the entry when the item is addressed. `git log` on the file is the audit trail. **Out-of-scope additions never enter `backlog.md`** — they live only in this review's report and surface a per-PR keep / split / revert decision per item.
+**Finding classification** (terms are defined under `## Definitions` and `## Mechanism`):
 
 ```dot
 digraph classification {
@@ -67,21 +43,7 @@ digraph classification {
 }
 ```
 
-## Arguments
-
-`/paad:agentic-review` accepts optional `$ARGUMENTS`:
-
-- `/paad:agentic-review` — review all changes on the current branch against `main`
-- `/paad:agentic-review develop` — review against a different base branch (e.g., `develop` instead of `main`)
-- `/paad:agentic-review main src/auth/` — review against `main`, but only for files under `src/auth/`
-
-When a base branch is provided, use it instead of `main` in all `git diff` commands. When a path is provided, filter the diff and manifest to only include files within that scope.
-
-**Single-argument disambiguation.** When exactly one argument is provided, decide by shape: if the argument contains `/` or matches a path that exists on disk, treat it as a path filter against `main`; otherwise treat it as a base branch. Example: `/paad:agentic-review src/auth/` → path filter; `/paad:agentic-review develop` → base branch.
-
-## Pre-flight Checks
-
-The on-invocation announce (top of this skill) fires before pre-flight runs, so even when a pre-flight check stops the skill the user still sees which skill version was loaded.
+**Pre-flight:**
 
 ```dot
 digraph preflight {
@@ -108,6 +70,48 @@ digraph preflight {
   "Diff against base is empty?" -> "Proceed to Phase 1" [label="no"];
 }
 ```
+
+## Definitions
+
+Findings land in one of three buckets:
+
+**In-scope** for the current branch means: this branch's changes either *caused* the bug or *worsened* it (made it more likely to fire, expanded its blast radius, removed a guard that was masking it, added a new caller into broken code, etc.).
+
+**Out-of-scope (bug)** means: a pre-existing bug that the branch does not reach differently, even when it lives in files the branch touches. These persist to a project-wide backlog so they aren't lost.
+
+**Out-of-scope addition** means: code this branch added that the spec did not promise — possibly a legitimate "while I'm here" fix for an issue exposed by the work, possibly scope creep that should live in a separate PR. Surfaced by the Spec Compliance specialist for per-PR user decision (keep / split out / revert). Does not persist to the backlog.
+
+## Mechanism
+
+Findings land in one of three buckets — **in-scope**, **out-of-scope (bug)**, or **out-of-scope addition** — via two distinct routing rules:
+
+**Rule 0 (specialist tag short-circuit).** If a finding carries either the `[OOSA]` first-line sentinel or the tag `category: out-of-scope-addition` (emitted by the Spec Compliance specialist; both matched tolerantly per the verifier's "Specialist status detection" section), route directly to **Out-of-Scope Addition**. These are deliberate code adds the branch made that the spec did not promise; the blame check below would mark them in-scope (the branch *did* add them) but that's the wrong axis — the relevant question is scope vs spec, not who caused them. Out-of-scope additions are ephemeral per-PR decisions and **do not touch the backlog**.
+
+**Bug findings** (everything not tagged as an out-of-scope addition) go through **hybrid blame + reasoning**:
+
+1. **Blame default.** Every finding's `file:line` is checked against a pre-computed touched-lines map (see Phase 1). If the line falls within a touched range → tentatively **in-scope**. Otherwise → tentatively **out-of-scope**.
+2. **Reasoning promotion.** For tentatively out-of-scope findings only, the verifier asks: "Does this branch's diff cause this bug to fire when it didn't before, or measurably increase its probability/blast radius?" If yes → promote to **in-scope**. If the bug is purely pre-existing and the branch doesn't reach it differently → confirmed **out-of-scope (bug)**.
+3. **Cosmetic-touch demotion.** A finding on touched lines defaults to in-scope, but the verifier may demote to **out-of-scope (bug)** when **both** of the following hold: (a) the branch's edits to those specific lines are purely cosmetic (whitespace, comment additions, line splits, identifier renames that don't change semantics), and (b) the bug itself is purely pre-existing — the cosmetic touch did not introduce, expose, or alter the bug's behavior. If either condition fails (semantic edit on the line, or the touch interacts with the bug), the finding stays in-scope.
+
+Out-of-scope **bug** findings are **semantically deduped** by the verifier against a **file-filtered slice** of `paad/code-reviews/backlog.md`. Before invoking the verifier, the orchestrator pre-filters the backlog to entries whose `File (at first sighting)` path matches a file in the current review's manifest (changed + adjacent). Match → emit an update directive (`{id, last_seen, branch, sha}`). No match → mint a new entry with a stable 8-char hex ID hashed from `file + symbol + bug-class + first-seen-iso-date`.
+
+Backlog **lifecycle is explicit-removal only** — agentic-review never auto-resolves entries. Downstream agents (or the user) delete the entry when the item is addressed. `git log` on the file is the audit trail. **Out-of-scope additions never enter `backlog.md`** — they live only in this review's report and surface a per-PR keep / split / revert decision per item.
+
+## Arguments
+
+`/paad:agentic-review` accepts optional `$ARGUMENTS`:
+
+- `/paad:agentic-review` — review all changes on the current branch against `main`
+- `/paad:agentic-review develop` — review against a different base branch (e.g., `develop` instead of `main`)
+- `/paad:agentic-review main src/auth/` — review against `main`, but only for files under `src/auth/`
+
+When a base branch is provided, use it instead of `main` in all `git diff` commands. When a path is provided, filter the diff and manifest to only include files within that scope.
+
+**Single-argument disambiguation.** When exactly one argument is provided, decide by shape: if the argument contains `/` or matches a path that exists on disk, treat it as a path filter against `main`; otherwise treat it as a base branch. Example: `/paad:agentic-review src/auth/` → path filter; `/paad:agentic-review develop` → base branch.
+
+## Pre-flight Checks
+
+The on-invocation announce (top of this skill) fires before pre-flight runs, so even when a pre-flight check stops the skill the user still sees which skill version was loaded.
 
 1. **Context window:** If conversation has substantive history beyond invocations of this skill (other prior work in this session counts; prior runs of `/paad:agentic-review` on the same branch don't), tell the user: "This review consumes significant context. Start a fresh session with `/paad:agentic-review` to avoid context rot." Stop and wait.
 2. **Branch:** Must not be on main/master. If so, stop.

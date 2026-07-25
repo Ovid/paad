@@ -55,7 +55,7 @@ paad/
 1. Create `plugins/paad/skills/<skill-name>/SKILL.md` with frontmatter (`name`, `description`) and instructions
 2. Add the on-invocation announce line as the very first line of the body (after the closing `---` of frontmatter): `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` — the version literal must match `plugin.json`
 3. Consider `$ARGUMENTS` support — if the skill could benefit from user-provided scope (a file path, directory, branch name, etc.), add an Arguments section documenting usage. Users shouldn't need to remember flags; keep arguments positional and intuitive (e.g., `/paad:skillname path/to/scope`).
-4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow. The only exception is `paad:help`, which is a simple display skill. See "Digraph requirements" below.
+4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow, placed immediately after the intro paragraphs and before the first `##` heading. The only exception is `paad:help`, which is a simple display skill. See "Digraph requirements" below.
 5. Validate with `claude plugin validate ./plugins/paad`
 6. Test locally with `claude --plugin-dir ./plugins/paad`
 7. Bump the version with `make bump-version VERSION=X.Y.Z` (updates `plugin.json`, `marketplace.json`, and every SKILL.md announce line in one shot)
@@ -74,10 +74,11 @@ Every skill (except `paad:help`) must include at least one graphviz digraph (`\`
 - **Complete** — every decision point, stop condition, and branching path in the prose must appear in the digraph
 - **Accurate** — node labels, edge labels, and flow must match the prose exactly. If the prose changes, the digraph must be updated to match.
 - **Relevant** — digraphs exist to prevent the agent from skipping safety gates or misordering steps. Focus on decision points where the agent could cause damage by skipping ahead, not on linear sequences that are obvious from the prose.
+- **In the same place in every skill** — all of a skill's digraphs go immediately after the intro paragraphs, before the first `##` heading, each introduced by a one-line bold label (`**Pre-flight:**`, `**Session flow:**`). Never inside the section they describe. An agent reading any SKILL.md finds the control flow in the same position every time, and reads it before the prose that details it.
 
 When modifying a skill's flow, check that the digraph still matches. When reviewing a skill, cross-reference the digraph against the prose.
 
-`make check-digraphs` runs `scripts/lint_digraphs.py`, which parses each block with graphviz (skipped if graphviz isn't installed) and rejects node attributes attached to edge statements, declared-but-unused nodes, and nodes used in an edge but never declared. It cannot check completeness or accuracy against the prose — that stays a review job.
+`make check-digraphs` runs `scripts/lint_digraphs.py`, which parses each block with graphviz (skipped if graphviz isn't installed) and rejects `shape=` attached to an edge statement, declared-but-unused nodes, nodes used in an edge but never declared, and any digraph placed after the first `##` heading. It cannot check completeness or accuracy against the prose — that stays a review job.
 
 ## Important rules
 

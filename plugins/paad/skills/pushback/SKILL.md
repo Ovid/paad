@@ -11,6 +11,8 @@ Critically reviews a spec, PRD, requirements document, or design plan before wor
 
 **This skill does NOT recommend a fresh session.** The conversation history may be the spec.
 
+**Input resolution and reality check:**
+
 ```dot
 digraph pushback {
   "Has $ARGUMENTS?" [shape=diamond];
@@ -46,34 +48,7 @@ digraph pushback {
 }
 ```
 
-## Input Resolution
-
-Resolve the spec to review in this order:
-
-1. **`$ARGUMENTS` contains a file path** → use that file
-2. **Conversation history contains a spec/plan/design** (from brainstorming, plan writing, or the user describing what they want) → confirm with user: "I see the design we just discussed — should I review that?"
-3. **Scan common locations** → look for recently modified files in `docs/plans/`, `docs/specs/`, and files named `requirements.md`, `PRD.md`, `spec.md`, or similar in the repo root. If one obvious candidate, confirm. If multiple, present the list and ask.
-4. **Nothing found** → ask: "What spec should I review? Give me a file path, or describe what you want to build and I'll push back on that."
-
-## Phase 1: Reality Check (Source Control)
-
-**Skip this phase if the project is not a git repository.**
-
-Before analyzing the spec itself, check whether recent codebase changes conflict with what the spec assumes:
-
-1. Run `git log --oneline -50 --since="2 weeks ago"` (whichever limit is reached first)
-2. Read commit messages and, for relevant-looking commits, check the actual diffs
-3. Compare against the spec's assumptions — does the spec reference code, tables, APIs, infrastructure, or patterns that have recently been changed, removed, or replaced?
-4. **If conflicts found:** present them upfront before any other analysis. For each conflict:
-   - What the spec assumes
-   - What actually changed (commit SHA, date, summary)
-   - Why this matters
-   - Ask: "How do you want to handle this?" with options
-5. **If no conflicts found:** say "No conflicts with recent changes" and move on
-
-This phase surfaces showstoppers early. A spec that assumes deleted infrastructure is wrong before the analysis even starts.
-
-## Phase 1.5: Scope Shape
+**Scope shape, critique and resolution:**
 
 ```dot
 digraph scope_critique_resolution {
@@ -136,6 +111,35 @@ digraph scope_critique_resolution {
   "Write paad/pushback-reviews/<date>-<spec>-pushback.md" -> "Done";
 }
 ```
+
+## Input Resolution
+
+Resolve the spec to review in this order:
+
+1. **`$ARGUMENTS` contains a file path** → use that file
+2. **Conversation history contains a spec/plan/design** (from brainstorming, plan writing, or the user describing what they want) → confirm with user: "I see the design we just discussed — should I review that?"
+3. **Scan common locations** → look for recently modified files in `docs/plans/`, `docs/specs/`, and files named `requirements.md`, `PRD.md`, `spec.md`, or similar in the repo root. If one obvious candidate, confirm. If multiple, present the list and ask.
+4. **Nothing found** → ask: "What spec should I review? Give me a file path, or describe what you want to build and I'll push back on that."
+
+## Phase 1: Reality Check (Source Control)
+
+**Skip this phase if the project is not a git repository.**
+
+Before analyzing the spec itself, check whether recent codebase changes conflict with what the spec assumes:
+
+1. Run `git log --oneline -50 --since="2 weeks ago"` (whichever limit is reached first)
+2. Read commit messages and, for relevant-looking commits, check the actual diffs
+3. Compare against the spec's assumptions — does the spec reference code, tables, APIs, infrastructure, or patterns that have recently been changed, removed, or replaced?
+4. **If conflicts found:** present them upfront before any other analysis. For each conflict:
+   - What the spec assumes
+   - What actually changed (commit SHA, date, summary)
+   - Why this matters
+   - Ask: "How do you want to handle this?" with options
+5. **If no conflicts found:** say "No conflicts with recent changes" and move on
+
+This phase surfaces showstoppers early. A spec that assumes deleted infrastructure is wrong before the analysis even starts.
+
+## Phase 1.5: Scope Shape
 
 Before digging into individual requirements, check whether the spec has structural problems that should be addressed first.
 
