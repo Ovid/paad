@@ -23,6 +23,16 @@ The goal is simple: make AI-assisted development more reliable by introducing th
 
 PAAD supports **Claude Code** natively, along with support for **Cursor**, **Kiro**, and **Antigravity**.
 
+## Star History
+
+<a href="https://github.com/Ovid/star-history">
+  <picture>
+    <source media="(prefers-color-scheme: dark)"  srcset=".github/star-history/dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/star-history/light.svg">
+    <img alt="Star history for Ovid/paad: 59 stars as of 2026-07-25" src=".github/star-history/light.svg" width="800">
+  </picture>
+</a>
+
 ## Why people are using PAAD
 
 The strongest early adoption has come from three skills:

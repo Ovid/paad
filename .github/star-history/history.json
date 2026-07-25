@@ -1,0 +1,155 @@
+{
+ "points": [
+  {
+   "date": "2026-03-16",
+   "src": "backfill",
+   "stars": 1
+  },
+  {
+   "date": "2026-03-17",
+   "src": "backfill",
+   "stars": 3
+  },
+  {
+   "date": "2026-03-18",
+   "src": "backfill",
+   "stars": 4
+  },
+  {
+   "date": "2026-03-20",
+   "src": "backfill",
+   "stars": 5
+  },
+  {
+   "date": "2026-03-25",
+   "src": "backfill",
+   "stars": 6
+  },
+  {
+   "date": "2026-03-28",
+   "src": "backfill",
+   "stars": 7
+  },
+  {
+   "date": "2026-04-04",
+   "src": "backfill",
+   "stars": 8
+  },
+  {
+   "date": "2026-04-16",
+   "src": "backfill",
+   "stars": 9
+  },
+  {
+   "date": "2026-04-18",
+   "src": "backfill",
+   "stars": 10
+  },
+  {
+   "date": "2026-04-19",
+   "src": "backfill",
+   "stars": 11
+  },
+  {
+   "date": "2026-04-21",
+   "src": "backfill",
+   "stars": 12
+  },
+  {
+   "date": "2026-05-14",
+   "src": "backfill",
+   "stars": 15
+  },
+  {
+   "date": "2026-05-26",
+   "src": "backfill",
+   "stars": 16
+  },
+  {
+   "date": "2026-05-27",
+   "src": "backfill",
+   "stars": 17
+  },
+  {
+   "date": "2026-06-01",
+   "src": "backfill",
+   "stars": 19
+  },
+  {
+   "date": "2026-06-02",
+   "src": "backfill",
+   "stars": 22
+  },
+  {
+   "date": "2026-06-15",
+   "src": "backfill",
+   "stars": 23
+  },
+  {
+   "date": "2026-06-23",
+   "src": "backfill",
+   "stars": 25
+  },
+  {
+   "date": "2026-06-24",
+   "src": "backfill",
+   "stars": 29
+  },
+  {
+   "date": "2026-06-25",
+   "src": "backfill",
+   "stars": 31
+  },
+  {
+   "date": "2026-06-30",
+   "src": "backfill",
+   "stars": 32
+  },
+  {
+   "date": "2026-07-01",
+   "src": "backfill",
+   "stars": 33
+  },
+  {
+   "date": "2026-07-16",
+   "src": "backfill",
+   "stars": 34
+  },
+  {
+   "date": "2026-07-19",
+   "src": "backfill",
+   "stars": 35
+  },
+  {
+   "date": "2026-07-20",
+   "src": "backfill",
+   "stars": 37
+  },
+  {
+   "date": "2026-07-21",
+   "src": "backfill",
+   "stars": 38
+  },
+  {
+   "date": "2026-07-22",
+   "src": "backfill",
+   "stars": 42
+  },
+  {
+   "date": "2026-07-23",
+   "src": "backfill",
+   "stars": 51
+  },
+  {
+   "date": "2026-07-24",
+   "src": "backfill",
+   "stars": 57
+  },
+  {
+   "date": "2026-07-25",
+   "src": "backfill",
+   "stars": 59
+  }
+ ],
+ "repo": "Ovid/paad"
+}
