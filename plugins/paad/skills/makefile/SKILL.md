@@ -15,20 +15,39 @@ Creates or updates a project Makefile with standard targets. **Never modifies an
 
 ```dot
 digraph makefile_flow {
+    "Makefile exists?" [shape=diamond];
+    "Existing target needs change?" [shape=diamond];
+    "Approved?" [shape=diamond];
+    "Test tool supports balanced output?" [shape=diamond];
+
+    "Detect stack" [shape=box];
+    "Create from scratch" [shape=box];
+    "Include all required targets" [shape=box];
+    "Identify missing targets" [shape=box];
+    "Add new targets" [shape=box];
+    "STOP: ask user for approval" [shape=box, style=bold];
+    "Apply change" [shape=box];
+    "Skip change" [shape=box];
+    "ASK the user how to handle test output" [shape=box];
+    "Done" [shape=box];
+
     "Detect stack" -> "Makefile exists?";
     "Makefile exists?" -> "Create from scratch" [label="no"];
     "Makefile exists?" -> "Identify missing targets" [label="yes"];
     "Create from scratch" -> "Include all required targets";
-    "Include all required targets" -> "Done";
+    "Include all required targets" -> "Test tool supports balanced output?";
     "Identify missing targets" -> "Add new targets";
     "Add new targets" -> "Existing target needs change?";
-    "Existing target needs change?" -> "Done" [label="no"];
+    "Existing target needs change?" -> "Test tool supports balanced output?" [label="no"];
     "Existing target needs change?" -> "STOP: ask user for approval" [label="yes"];
-    "STOP: ask user for approval" -> "Approved?" [shape=diamond];
+    "STOP: ask user for approval" -> "Approved?";
     "Approved?" -> "Apply change" [label="yes"];
     "Approved?" -> "Skip change" [label="no"];
-    "Apply change" -> "Done";
-    "Skip change" -> "Done";
+    "Apply change" -> "Existing target needs change?" [label="next target"];
+    "Skip change" -> "Existing target needs change?" [label="next target"];
+    "Test tool supports balanced output?" -> "Done" [label="yes"];
+    "Test tool supports balanced output?" -> "ASK the user how to handle test output" [label="no — only silent or firehose"];
+    "ASK the user how to handle test output" -> "Done";
 }
 ```
 
