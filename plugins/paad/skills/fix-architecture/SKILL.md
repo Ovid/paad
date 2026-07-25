@@ -111,7 +111,8 @@ digraph fix_session {
   "Mark Fixed (pre-existing) / Won't fix, skip flaw" [shape=box];
   "Write safety-net tests for the gap" [shape=box];
   "Developer picks approach: refactor first / e2e tests / no tests / skip flaw" [shape=box];
-  "STOP: no fix may start until the safety net is committed" [shape=box, style=bold];
+  "Write and commit the outstanding safety-net tests" [shape=box, style=bold];
+  "Revert the fix; record status Attempted, reverted" [shape=box];
 
   "Propose fix options, developer chooses" [shape=box];
   "Execute red/green/refactor" [shape=box];
@@ -154,9 +155,9 @@ digraph fix_session {
   "More batch flaws to validate?" -> "Flaw still exists?" [label="yes"];
   "More batch flaws to validate?" -> "ALL safety-net tests written and committed?" [label="no"];
 
-  "ALL safety-net tests written and committed?" -> "STOP: no fix may start until the safety net is committed" [label="no"];
-  "STOP: no fix may start until the safety net is committed" -> "ALL safety-net tests written and committed?";
-  "ALL safety-net tests written and committed?" -> "Propose fix options, developer chooses" [label="yes — Fix Loop begins"];
+  "ALL safety-net tests written and committed?" -> "Write and commit the outstanding safety-net tests" [label="no — no fix may start yet"];
+  "Write and commit the outstanding safety-net tests" -> "ALL safety-net tests written and committed?";
+  "ALL safety-net tests written and committed?" -> "Propose fix options, developer chooses" [label="yes, or the developer chose to proceed without tests — Fix Loop begins"];
 
   "Propose fix options, developer chooses" -> "Execute red/green/refactor";
   "Execute red/green/refactor" -> "Tests pass after fix?";
@@ -168,7 +169,8 @@ digraph fix_session {
   "Pre-existing failure — not caused by this fix" -> "Sanity check: did the fix introduce new architectural issues?";
   "Propose updating structure-dependent unit tests" -> "Execute red/green/refactor" [label="developer approves"];
   "RED FLAG: discuss fix-forward vs revert" -> "Execute red/green/refactor" [label="fix forward"];
-  "RED FLAG: discuss fix-forward vs revert" -> "Update report status fields" [label="revert (status: Attempted, reverted)"];
+  "RED FLAG: discuss fix-forward vs revert" -> "Revert the fix; record status Attempted, reverted" [label="revert — nothing to commit as a fix"];
+  "Revert the fix; record status Attempted, reverted" -> "Fix resolved other flaws?";
 
   "Sanity check: did the fix introduce new architectural issues?" -> "Update report status fields" [label="flag any to developer"];
   "Update report status fields" -> "Auto-commit mode?";
@@ -187,8 +189,6 @@ digraph fix_session {
   "STOP: finish current fix, resume in a fresh session" -> "Wrap-Up: summary + suggest re-running fix-architecture";
 }
 ```
-
-Report status fields are updated before the commit so that auto-commit mode can include the report update in the same commit, as the Commit step requires.
 
 ## Setup: Developer Conversation
 
@@ -320,23 +320,6 @@ If tests fail after the fix:
 
 After the fix passes, do a brief sanity check: does the change introduce any obvious new architectural issues (e.g., splitting a god object but creating tight coupling between the new modules)? If so, flag it to the developer. This is not a full re-analysis — just a common-sense review of the code just written.
 
-### Commit
-
-If auto-commit mode: one commit per fix (including tests and report update), using this commit message format:
-
-```
-fix(architecture): [F-ID] <short description>
-
-Resolves architectural flaw F-ID (<flaw label>) identified in
-<report-filename>.
-
-<brief description of what changed>
-```
-
-Note: safety-net tests are committed in the Safety Net phase (before any fixes) so they survive if a fix is reverted.
-
-If manual mode: leave changes staged, tell the developer what changed.
-
 ### Update the Report
 
 Add status fields inline to the flaw entry in the architecture report:
@@ -355,6 +338,25 @@ Add status fields inline to the flaw entry in the architecture report:
 ```
 
 If status fields don't exist on the entry (report was generated before this skill existed), add them.
+
+Do this before committing, so auto-commit mode can include the report update in the same commit. **Status commit** is the one field that can only be filled once the commit exists — record it immediately after committing (`git commit --amend` in auto-commit mode, or leave it for the developer in manual mode).
+
+### Commit
+
+If auto-commit mode: one commit per fix (including tests and report update), using this commit message format:
+
+```
+fix(architecture): [F-ID] <short description>
+
+Resolves architectural flaw F-ID (<flaw label>) identified in
+<report-filename>.
+
+<brief description of what changed>
+```
+
+Note: safety-net tests are committed in the Safety Net phase (before any fixes) so they survive if a fix is reverted.
+
+If manual mode: leave changes staged, tell the developer what changed.
 
 ### Check Flaw Dependencies
 
