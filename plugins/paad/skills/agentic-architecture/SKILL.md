@@ -38,6 +38,64 @@ digraph preflight {
 
 1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This analysis consumes significant context. Start a fresh session with `/paad:agentic-architecture` to avoid context rot." Stop and wait.
 
+## Analysis Flow
+
+```dot
+digraph analysis_flow {
+  "Git repo?" [shape=diamond];
+  "Scope size?" [shape=diamond];
+  "Distributed system?" [shape=diamond];
+  "Confirmed by reading the actual code?" [shape=diamond];
+  "Confidence >= 60?" [shape=diamond];
+  "Concrete evidence present?" [shape=diamond];
+  "Reported by multiple specialists?" [shape=diamond];
+
+  "Repo name from git remote origin" [shape=box];
+  "Repo name from top-level directory basename" [shape=box];
+  "Recon: overview, structure, steering files, manifest" [shape=box];
+  "Dispatch 5 specialists in parallel" [shape=box];
+  "Partition files across 2 instances of each specialist" [shape=box];
+  "Mark distributed-specific categories Not applicable" [shape=box];
+  "Validate impact level and category assignment" [shape=box];
+  "Merge duplicates, note the agreeing specialists" [shape=box];
+  "DROP the finding" [shape=box];
+  "Keep the finding" [shape=box];
+  "Write report to paad/architecture-reviews/" [shape=box];
+  "Report location, counts, 3-6 bullet summary" [shape=box];
+  "STOP: diagnosis only — do NOT propose fixes" [shape=box, style=bold];
+
+  "Git repo?" -> "Repo name from git remote origin" [label="yes"];
+  "Git repo?" -> "Repo name from top-level directory basename" [label="no"];
+  "Repo name from git remote origin" -> "Recon: overview, structure, steering files, manifest";
+  "Repo name from top-level directory basename" -> "Recon: overview, structure, steering files, manifest";
+  "Recon: overview, structure, steering files, manifest" -> "Scope size?";
+
+  "Scope size?" -> "Dispatch 5 specialists in parallel" [label="small (<50) / medium (50-500)"];
+  "Scope size?" -> "Partition files across 2 instances of each specialist" [label="large (500+ source files)"];
+  "Partition files across 2 instances of each specialist" -> "Dispatch 5 specialists in parallel";
+  "Dispatch 5 specialists in parallel" -> "Distributed system?";
+  "Distributed system?" -> "Confirmed by reading the actual code?" [label="yes"];
+  "Distributed system?" -> "Mark distributed-specific categories Not applicable" [label="no"];
+  "Mark distributed-specific categories Not applicable" -> "Confirmed by reading the actual code?";
+
+  "Confirmed by reading the actual code?" -> "Confidence >= 60?" [label="yes — verifier per finding"];
+  "Confirmed by reading the actual code?" -> "DROP the finding" [label="no"];
+  "Confidence >= 60?" -> "Concrete evidence present?" [label="yes"];
+  "Confidence >= 60?" -> "DROP the finding" [label="no"];
+  "Concrete evidence present?" -> "Validate impact level and category assignment" [label="yes (path, symbol, excerpt)"];
+  "Concrete evidence present?" -> "DROP the finding" [label="no"];
+  "Validate impact level and category assignment" -> "Reported by multiple specialists?";
+  "Reported by multiple specialists?" -> "Merge duplicates, note the agreeing specialists" [label="yes"];
+  "Reported by multiple specialists?" -> "Keep the finding" [label="no"];
+  "Merge duplicates, note the agreeing specialists" -> "Keep the finding";
+
+  "Keep the finding" -> "Write report to paad/architecture-reviews/";
+  "DROP the finding" -> "Write report to paad/architecture-reviews/" [label="counted under Filtered out"];
+  "Write report to paad/architecture-reviews/" -> "Report location, counts, 3-6 bullet summary";
+  "Report location, counts, 3-6 bullet summary" -> "STOP: diagnosis only — do NOT propose fixes";
+}
+```
+
 ## Phase 1: Reconnaissance
 
 Run these steps and collect results:
