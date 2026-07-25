@@ -18,13 +18,12 @@ digraph vibe {
   "Reusable components found?" [shape=diamond];
   "TDD enabled?" [shape=diamond];
   "RED: test result?" [shape=diamond];
-  "GREEN: all tests pass?" [shape=diamond];
-  "REFACTOR: tests still green?" [shape=diamond];
   "More behaviours in this task?" [shape=diamond];
   "Follow-up genuinely warranted?" [shape=diamond];
 
   "Ask or clarify" [shape=box];
   "ASK: set up tests or skip TDD?" [shape=box];
+  "Set up a basic test framework" [shape=box];
   "WARN: may be bigger than a vibe task" [shape=box];
   "STOP: investigate deeper issues" [shape=box, style=bold];
   "Recommend using existing code" [shape=box];
@@ -45,8 +44,9 @@ digraph vibe {
   "Run pre-flight checks" -> "Test infrastructure?";
   "Test infrastructure?" -> "Scope: how many files?" [label="yes"];
   "Test infrastructure?" -> "ASK: set up tests or skip TDD?" [label="no"];
-  "ASK: set up tests or skip TDD?" -> "Scope: how many files?" [label="set up a test framework"];
-  "ASK: set up tests or skip TDD?" -> "Scope: how many files?" [label="proceed without TDD (RED is skipped)"];
+  "ASK: set up tests or skip TDD?" -> "Set up a basic test framework" [label="set up tests"];
+  "ASK: set up tests or skip TDD?" -> "Scope: how many files?" [label="proceed without TDD — RED is skipped"];
+  "Set up a basic test framework" -> "Scope: how many files?";
 
   "Scope: how many files?" -> "Architecture smell?" [label="1-3 files"];
   "Scope: how many files?" -> "WARN: may be bigger than a vibe task" [label="4+ files"];
@@ -66,12 +66,8 @@ digraph vibe {
   "RED: test result?" -> "STOP: unexpected failure, discuss" [label="fails unexpectedly"];
   "RED: test result?" -> "GREEN: minimal code to pass" [label="fails as expected"];
 
-  "GREEN: minimal code to pass" -> "GREEN: all tests pass?";
-  "GREEN: all tests pass?" -> "GREEN: minimal code to pass" [label="no"];
-  "GREEN: all tests pass?" -> "REFACTOR: clean up, keep tests green" [label="yes"];
-  "REFACTOR: clean up, keep tests green" -> "REFACTOR: tests still green?";
-  "REFACTOR: tests still green?" -> "REFACTOR: clean up, keep tests green" [label="no"];
-  "REFACTOR: tests still green?" -> "More behaviours in this task?" [label="yes"];
+  "GREEN: minimal code to pass" -> "REFACTOR: clean up, keep tests green" [label="new test passes, existing tests still pass"];
+  "REFACTOR: clean up, keep tests green" -> "More behaviours in this task?" [label="all tests still green"];
   "More behaviours in this task?" -> "TDD enabled?" [label="yes — one behaviour at a time"];
   "More behaviours in this task?" -> "Post-fix summary" [label="no"];
 
