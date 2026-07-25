@@ -61,6 +61,7 @@ digraph audit_flow {
   "Scope size?" [shape=diamond];
   "Platform has framework-specific a11y pitfalls?" [shape=diamond];
   "Existing a11y tooling already catches it?" [shape=diamond];
+  "Tooling misconfigured or finding suppressed?" [shape=diamond];
   "Barrier handled elsewhere?" [shape=diamond];
   "Confidence >= 60?" [shape=diamond];
   "Cited criterion correct?" [shape=diamond];
@@ -70,9 +71,8 @@ digraph audit_flow {
   "Detect platform(s), stack, tooling, steering files, manifest" [shape=box];
   "Partition files across 2 instances of each specialist" [shape=box];
   "Dispatch the 5 core specialists in parallel" [shape=box];
-  "Also dispatch Platform-Specific Patterns" [shape=box];
+  "Dispatch the 5 core specialists + Platform-Specific Patterns in parallel" [shape=box];
   "DROP the finding" [shape=box];
-  "Keep, but only if misconfigured or suppressed" [shape=box];
   "Correct the criterion" [shape=box];
   "Assign severity: critical / serious / moderate / minor" [shape=box];
   "Merge duplicates, note the agreeing specialists" [shape=box];
@@ -83,18 +83,19 @@ digraph audit_flow {
   "STOP: report is the deliverable — do NOT auto-fix" [shape=box, style=bold];
 
   "Detect platform(s), stack, tooling, steering files, manifest" -> "Scope size?";
-  "Scope size?" -> "Dispatch the 5 core specialists in parallel" [label="small (<20) / medium (20-100)"];
+  "Scope size?" -> "Platform has framework-specific a11y pitfalls?" [label="small (<20) / medium (20-100)"];
   "Scope size?" -> "Partition files across 2 instances of each specialist" [label="large (100+ user-facing files)"];
-  "Partition files across 2 instances of each specialist" -> "Dispatch the 5 core specialists in parallel";
-  "Dispatch the 5 core specialists in parallel" -> "Platform has framework-specific a11y pitfalls?";
-  "Platform has framework-specific a11y pitfalls?" -> "Also dispatch Platform-Specific Patterns" [label="yes"];
-  "Platform has framework-specific a11y pitfalls?" -> "Existing a11y tooling already catches it?" [label="no — core specialists only"];
-  "Also dispatch Platform-Specific Patterns" -> "Existing a11y tooling already catches it?";
+  "Partition files across 2 instances of each specialist" -> "Platform has framework-specific a11y pitfalls?";
+  "Platform has framework-specific a11y pitfalls?" -> "Dispatch the 5 core specialists + Platform-Specific Patterns in parallel" [label="yes"];
+  "Platform has framework-specific a11y pitfalls?" -> "Dispatch the 5 core specialists in parallel" [label="no"];
+  "Dispatch the 5 core specialists in parallel" -> "Existing a11y tooling already catches it?";
+  "Dispatch the 5 core specialists + Platform-Specific Patterns in parallel" -> "Existing a11y tooling already catches it?";
 
-  "Existing a11y tooling already catches it?" -> "Keep, but only if misconfigured or suppressed" [label="yes"];
-  "Existing a11y tooling already catches it?" -> "Barrier handled elsewhere?" [label="no — verifier per finding"];
-  "Keep, but only if misconfigured or suppressed" -> "Barrier handled elsewhere?";
-  "Barrier handled elsewhere?" -> "DROP the finding" [label="yes — parent, platform API, framework, library, system setting"];
+  "Existing a11y tooling already catches it?" -> "Tooling misconfigured or finding suppressed?" [label="yes — specialists check this"];
+  "Existing a11y tooling already catches it?" -> "Barrier handled elsewhere?" [label="no"];
+  "Tooling misconfigured or finding suppressed?" -> "DROP the finding" [label="no — do not re-flag what tooling already catches"];
+  "Tooling misconfigured or finding suppressed?" -> "Barrier handled elsewhere?" [label="yes"];
+  "Barrier handled elsewhere?" -> "DROP the finding" [label="yes — parent, platform API, framework, library, system setting (verifier)"];
   "Barrier handled elsewhere?" -> "Confidence >= 60?" [label="no"];
   "Confidence >= 60?" -> "DROP the finding" [label="no"];
   "Confidence >= 60?" -> "Cited criterion correct?" [label="yes"];
