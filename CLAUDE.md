@@ -77,6 +77,8 @@ Every skill (except `paad:help`) must include at least one graphviz digraph (`\`
 
 When modifying a skill's flow, check that the digraph still matches. When reviewing a skill, cross-reference the digraph against the prose.
 
+`make check-digraphs` runs `scripts/lint_digraphs.py`, which parses each block with graphviz (skipped if graphviz isn't installed) and rejects node attributes attached to edge statements, declared-but-unused nodes, and nodes used in an edge but never declared. It cannot check completeness or accuracy against the prose — that stays a review job.
+
 ## Important rules
 
 - Do NOT put `skills/`, `commands/`, or `agents/` inside `.claude-plugin/` — only `plugin.json` or `marketplace.json` go there

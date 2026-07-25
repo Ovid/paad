@@ -76,6 +76,7 @@ check-digraphs: ## Check every skill (except help) has a digraph
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All skills have digraphs (help excluded)."
+	@python3 scripts/lint_digraphs.py
 
 check-help: ## Check every skill is documented in paad:help
 	@fail=0; \
