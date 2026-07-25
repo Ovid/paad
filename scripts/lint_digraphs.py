@@ -4,9 +4,10 @@
 check-digraphs only proves a ```dot fence exists. These rules catch the
 defects that fence check cannot see:
 
-  1. node-only attributes (shape=, style=) attached to an edge statement.
-     Graphviz silently accepts and ignores them, so a decision node keeps
-     rendering as an ellipse and nobody notices.
+  1. shape= attached to an edge statement. Graphviz silently accepts and
+     ignores it, so a decision node keeps rendering as an ellipse and nobody
+     notices. (style= is deliberately not checked — it is a legal edge
+     attribute: style=dashed, style=bold.)
   2. nodes declared with attributes but never used in any edge — a dead
      node left behind when the flow around it was rewritten.
   3. nodes used in an edge but never declared — they render unstyled, so a
@@ -23,11 +24,13 @@ import subprocess
 import sys
 import tempfile
 
-SKILLS = pathlib.Path("plugins/paad/skills")
+SKILLS = pathlib.Path(__file__).resolve().parent.parent / "plugins/paad/skills"
 BLOCK = re.compile(r"```dot\n(.*?)```", re.S)
 DECL = re.compile(r'^\s*"([^"]+)"\s*\[', re.M)
-EDGE = re.compile(r'"([^"]+)"\s*->\s*"([^"]+)"')
-NODE_ATTR_ON_EDGE = re.compile(r"\[[^\]]*\b(?:shape|style)\s*=")
+# Matched as two halves so chained edges ("a" -> "b" -> "c") count b as both.
+EDGE_SOURCE = re.compile(r'"([^"]+)"\s*(?=->)')
+EDGE_TARGET = re.compile(r'->\s*"([^"]+)"')
+SHAPE_ON_EDGE = re.compile(r"\[[^\]]*\bshape\s*=")
 
 
 def lint(block):
@@ -37,15 +40,16 @@ def lint(block):
     if "digraph" not in block:
         problems.append("block contains no digraph")
 
-    for line in block.splitlines():
-        if "->" in line and NODE_ATTR_ON_EDGE.search(line):
+    # Statements, not lines — an edge statement may wrap before its [attrs].
+    for statement in block.split(";"):
+        if "->" in statement and SHAPE_ON_EDGE.search(statement):
             problems.append(
-                f"node attribute (shape/style) on an edge statement: {line.strip()}"
+                "shape= on an edge statement (graphviz ignores it): "
+                + " ".join(statement.split())
             )
 
     declared = set(DECL.findall(block))
-    edges = EDGE.findall(block)
-    used = {a for a, _ in edges} | {b for _, b in edges}
+    used = set(EDGE_SOURCE.findall(block)) | set(EDGE_TARGET.findall(block))
 
     for node in sorted(declared - used):
         problems.append(f'declared but never used in an edge: "{node}"')
@@ -76,6 +80,18 @@ def self_test():
     # 1. the makefile bug: shape= on an edge statement
     bad_edge = 'digraph g {\n "a" [shape=box];\n "a" -> "b" [shape=diamond];\n "b" [shape=box];\n}'
     assert any("on an edge statement" in p for p in lint(bad_edge)), lint(bad_edge)
+
+    # ...including when the statement wraps before its attribute list
+    wrapped = 'digraph g {\n "a" [shape=box];\n "b" [shape=box];\n "a" -> "b"\n   [shape=diamond];\n}'
+    assert any("on an edge statement" in p for p in lint(wrapped)), lint(wrapped)
+
+    # style= IS legal on an edge and must not be flagged
+    dashed = 'digraph g {\n "a" [shape=box];\n "b" [shape=box];\n "a" -> "b" [style=dashed];\n}'
+    assert lint(dashed) == [], lint(dashed)
+
+    # a chained edge marks the middle node as used, not orphaned
+    chain = 'digraph g {\n "a" [shape=box];\n "b" [shape=box];\n "c" [shape=box];\n "a" -> "b" -> "c";\n}'
+    assert lint(chain) == [], lint(chain)
 
     # 2. the alignment bug: declared node with no edges
     orphan = 'digraph g {\n "a" [shape=box];\n "b" [shape=box];\n "c" [shape=box];\n "a" -> "b";\n}'
@@ -115,6 +131,10 @@ def main():
 
     if failures:
         print(f"{failures} digraph problem(s) found.")
+        return 1
+
+    if not blocks:
+        print(f"FAIL: no digraphs found under {SKILLS} — the check is a no-op.")
         return 1
 
     skipped = "" if have_dot else " (graphviz not installed — parse check skipped)"
