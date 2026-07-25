@@ -40,7 +40,7 @@ Backlog **lifecycle is explicit-removal only** — agentic-review never auto-res
 ```dot
 digraph classification {
   "Finding from specialist (verified)" [shape=doublecircle];
-  "Tagged category: out-of-scope-addition?" [shape=diamond];
+  "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" [shape=diamond];
   "Anchor line in touched-lines map?" [shape=diamond];
   "Branch causes/worsens this bug?" [shape=diamond];
   "Touch is purely cosmetic AND bug is purely pre-existing?" [shape=diamond];
@@ -52,9 +52,9 @@ digraph classification {
   "Update last_seen on existing entry" [shape=box];
   "Mint new backlog entry" [shape=box];
 
-  "Finding from specialist (verified)" -> "Tagged category: out-of-scope-addition?";
-  "Tagged category: out-of-scope-addition?" -> "Out-of-Scope Addition" [label="yes (Spec Compliance)"];
-  "Tagged category: out-of-scope-addition?" -> "Anchor line in touched-lines map?" [label="no"];
+  "Finding from specialist (verified)" -> "Carries [OOSA] sentinel or category: out-of-scope-addition tag?";
+  "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" -> "Out-of-Scope Addition" [label="yes (Spec Compliance)"];
+  "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" -> "Anchor line in touched-lines map?" [label="no"];
   "Anchor line in touched-lines map?" -> "Touch is purely cosmetic AND bug is purely pre-existing?" [label="yes"];
   "Anchor line in touched-lines map?" -> "Branch causes/worsens this bug?" [label="no"];
   "Touch is purely cosmetic AND bug is purely pre-existing?" -> "Out-of-scope (bug)" [label="yes (demote)"];
@@ -93,15 +93,17 @@ digraph preflight {
   "STOP: recommend new session" [shape=box, style=bold];
   "STOP: nothing to review" [shape=box, style=bold];
   "STOP: no changes to review" [shape=box, style=bold];
-  "WARN: ask user" [shape=box];
+  "STOP: user wants to commit first" [shape=box, style=bold];
+  "ASK: review committed state only, or wait to commit?" [shape=box];
 
   "Conversation has history?" -> "STOP: recommend new session" [label="yes"];
   "Conversation has history?" -> "On main/master?" [label="no"];
   "On main/master?" -> "STOP: nothing to review" [label="yes"];
   "On main/master?" -> "Uncommitted changes?" [label="no"];
-  "Uncommitted changes?" -> "WARN: ask user" [label="yes"];
+  "Uncommitted changes?" -> "ASK: review committed state only, or wait to commit?" [label="yes"];
   "Uncommitted changes?" -> "Diff against base is empty?" [label="no"];
-  "WARN: ask user" -> "Diff against base is empty?" [label="user decides"];
+  "ASK: review committed state only, or wait to commit?" -> "Diff against base is empty?" [label="review committed state only"];
+  "ASK: review committed state only, or wait to commit?" -> "STOP: user wants to commit first" [label="wait to commit"];
   "Diff against base is empty?" -> "STOP: no changes to review" [label="yes"];
   "Diff against base is empty?" -> "Proceed to Phase 1" [label="no"];
 }
