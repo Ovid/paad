@@ -137,7 +137,7 @@ Then update the plugin itself:
 
 Restart Claude Code to apply the update.
 
-To confirm which version you're on, run any skill — every skill announces itself on invocation, e.g. `Running paad:vibe v1.19.0`. Compare that against the version in [`plugins/paad/.claude-plugin/plugin.json`](plugins/paad/.claude-plugin/plugin.json). If a skill documented here is missing entirely, you're on an older version — run the two commands above.
+To confirm which version you're on, run any skill — every skill announces its own name and version on invocation (`Running paad:vibe v<version>`). Compare that against the version in [`plugins/paad/.claude-plugin/plugin.json`](plugins/paad/.claude-plugin/plugin.json). If a skill documented here is missing entirely, you're on an older version — run the two commands above.
 
 #### Invoking skills
 
