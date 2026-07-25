@@ -147,8 +147,8 @@
   },
   {
    "date": "2026-07-25",
-   "src": "backfill",
-   "stars": 59
+   "src": "snapshot",
+   "stars": 60
   }
  ],
  "repo": "Ovid/paad"
