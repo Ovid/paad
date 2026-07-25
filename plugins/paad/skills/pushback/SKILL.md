@@ -75,6 +75,68 @@ This phase surfaces showstoppers early. A spec that assumes deleted infrastructu
 
 ## Phase 1.5: Scope Shape
 
+```dot
+digraph scope_critique_resolution {
+  "Unrelated features bundled?" [shape=diamond];
+  "User splits them out?" [shape=diamond];
+  "Spec large?" [shape=diamond];
+  "Meaningful split exists?" [shape=diamond];
+  "Issues found?" [shape=diamond];
+  "User says good enough / stop?" [shape=diamond];
+  "More issues to present?" [shape=diamond];
+  "Update spec or write report?" [shape=diamond];
+  "Spec saved to a file?" [shape=diamond];
+
+  "Identify groups, recommend splitting, ask" [shape=box];
+  "Continue reviewing the remaining spec" [shape=box];
+  "Note it as a scope concern, review as-is" [shape=box];
+  "Suggest the split — what each piece delivers alone" [shape=box];
+  "Flag the size, explain why splitting isn't practical" [shape=box];
+  "Say nothing about size" [shape=box];
+  "Rank findings by severity" [shape=box];
+  "Present one issue: problem, options best-to-worst, recommendation" [shape=box];
+  "Wait for the user's response" [shape=box];
+  "ASK where to write the spec first" [shape=box];
+  "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
+  "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [shape=box];
+  "Done" [shape=box];
+
+  "Unrelated features bundled?" -> "Identify groups, recommend splitting, ask" [label="yes"];
+  "Unrelated features bundled?" -> "Spec large?" [label="no"];
+  "Identify groups, recommend splitting, ask" -> "User splits them out?";
+  "User splits them out?" -> "Continue reviewing the remaining spec" [label="yes"];
+  "User splits them out?" -> "Note it as a scope concern, review as-is" [label="no"];
+  "Continue reviewing the remaining spec" -> "Spec large?";
+  "Note it as a scope concern, review as-is" -> "Spec large?";
+
+  "Spec large?" -> "Meaningful split exists?" [label="yes (8+ requirements, many areas, long)"];
+  "Spec large?" -> "Say nothing about size" [label="no"];
+  "Meaningful split exists?" -> "Suggest the split — what each piece delivers alone" [label="yes"];
+  "Meaningful split exists?" -> "Flag the size, explain why splitting isn't practical" [label="no — tightly interdependent"];
+  "Suggest the split — what each piece delivers alone" -> "Issues found?";
+  "Flag the size, explain why splitting isn't practical" -> "Issues found?";
+  "Say nothing about size" -> "Issues found?";
+
+  "Issues found?" -> "Rank findings by severity" [label="yes"];
+  "Issues found?" -> "Spec saved to a file?" [label="no"];
+  "Rank findings by severity" -> "Present one issue: problem, options best-to-worst, recommendation";
+  "Present one issue: problem, options best-to-worst, recommendation" -> "Wait for the user's response";
+  "Wait for the user's response" -> "User says good enough / stop?";
+  "User says good enough / stop?" -> "Spec saved to a file?" [label="yes — remainder goes to Unresolved Issues"];
+  "User says good enough / stop?" -> "More issues to present?" [label="no"];
+  "More issues to present?" -> "Present one issue: problem, options best-to-worst, recommendation" [label="yes"];
+  "More issues to present?" -> "Spec saved to a file?" [label="no"];
+
+  "Spec saved to a file?" -> "Update spec or write report?" [label="yes"];
+  "Spec saved to a file?" -> "ASK where to write the spec first" [label="no — came from conversation"];
+  "ASK where to write the spec first" -> "Update spec or write report?";
+  "Update spec or write report?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="update spec"];
+  "Update spec or write report?" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [label="write report"];
+  "Apply agreed changes; leave undiscussed requirements alone" -> "Done";
+  "Write paad/pushback-reviews/<date>-<spec>-pushback.md" -> "Done";
+}
+```
+
 Before digging into individual requirements, check whether the spec has structural problems that should be addressed first.
 
 ### Check 1: Feature Cohesion
