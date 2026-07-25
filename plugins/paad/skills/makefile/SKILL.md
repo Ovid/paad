@@ -3,34 +3,62 @@ name: makefile
 description: Use when creating or updating a Makefile for a project, especially when standard targets (build, test, lint, format, etc.) are missing or when modifying targets that may already be wired into other tooling
 ---
 
-**On invocation:** announce "Running paad:makefile v1.18.0" before anything else.
+**On invocation:** announce "Running paad:makefile v1.19.0" before anything else.
 
 # Makefile Management
+
+**Process:**
+
+```dot
+digraph makefile_flow {
+    "Makefile exists?" [shape=diamond];
+    "Existing target needs change?" [shape=diamond];
+    "Approved?" [shape=diamond];
+    "Coverage tool defaults to watch mode?" [shape=diamond];
+    "Test tool supports balanced output?" [shape=diamond];
+
+    "Detect stack" [shape=box];
+    "Create from scratch" [shape=box];
+    "Include all required targets" [shape=box];
+    "Identify missing targets" [shape=box];
+    "Add new targets" [shape=box];
+    "STOP: ask user for approval" [shape=box, style=bold];
+    "Apply change" [shape=box];
+    "Skip change" [shape=box];
+    "Force the one-shot flag for the detected stack" [shape=box];
+    "Verify the tool exits on its own before adding flags" [shape=box];
+    "ASK the user how to handle test output" [shape=box];
+    "Done" [shape=box];
+
+    "Detect stack" -> "Makefile exists?";
+    "Makefile exists?" -> "Create from scratch" [label="no"];
+    "Makefile exists?" -> "Identify missing targets" [label="yes"];
+    "Create from scratch" -> "Include all required targets";
+    "Include all required targets" -> "Coverage tool defaults to watch mode?";
+    "Identify missing targets" -> "Add new targets";
+    "Add new targets" -> "Existing target needs change?";
+    "Existing target needs change?" -> "Coverage tool defaults to watch mode?" [label="no"];
+    "Coverage tool defaults to watch mode?" -> "Force the one-shot flag for the detected stack" [label="yes — vitest, jest"];
+    "Coverage tool defaults to watch mode?" -> "Verify the tool exits on its own before adding flags" [label="unclear — pytest-cov, cargo, go test"];
+    "Force the one-shot flag for the detected stack" -> "Test tool supports balanced output?";
+    "Verify the tool exits on its own before adding flags" -> "Test tool supports balanced output?";
+    "Existing target needs change?" -> "STOP: ask user for approval" [label="yes"];
+    "STOP: ask user for approval" -> "Approved?";
+    "Approved?" -> "Apply change" [label="yes"];
+    "Approved?" -> "Skip change" [label="no"];
+    "Apply change" -> "Existing target needs change?" [label="next target"];
+    "Skip change" -> "Existing target needs change?" [label="next target"];
+    "Test tool supports balanced output?" -> "Done" [label="yes"];
+    "Test tool supports balanced output?" -> "ASK the user how to handle test output" [label="no — only silent or firehose"];
+    "ASK the user how to handle test output" -> "Done";
+}
+```
 
 ## Overview
 
 Creates or updates a project Makefile with standard targets. **Never modifies an existing target without explicit user approval.**
 
 ## Process
-
-```dot
-digraph makefile_flow {
-    "Detect stack" -> "Makefile exists?";
-    "Makefile exists?" -> "Create from scratch" [label="no"];
-    "Makefile exists?" -> "Identify missing targets" [label="yes"];
-    "Create from scratch" -> "Include all required targets";
-    "Include all required targets" -> "Done";
-    "Identify missing targets" -> "Add new targets";
-    "Add new targets" -> "Existing target needs change?";
-    "Existing target needs change?" -> "Done" [label="no"];
-    "Existing target needs change?" -> "STOP: ask user for approval" [label="yes"];
-    "STOP: ask user for approval" -> "Approved?" [shape=diamond];
-    "Approved?" -> "Apply change" [label="yes"];
-    "Approved?" -> "Skip change" [label="no"];
-    "Apply change" -> "Done";
-    "Skip change" -> "Done";
-}
-```
 
 1. Detect stack (read CLAUDE.md, AGENTS.md, README, package.json, pyproject.toml, Cargo.toml, go.mod, etc.)
 2. Check if Makefile exists

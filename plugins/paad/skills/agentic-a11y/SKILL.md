@@ -3,7 +3,7 @@ name: agentic-a11y
 description: Use when auditing a user-facing app — web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, or games — for accessibility barriers or WCAG 2.2 conformance, before shipping UI changes, or in response to concerns about screen-reader, keyboard, low-vision, motor, cognitive, or photosensitive users
 ---
 
-**On invocation:** announce "Running paad:agentic-a11y v1.18.0" before anything else.
+**On invocation:** announce "Running paad:agentic-a11y v1.19.0" before anything else.
 
 # Accessibility Audit
 
@@ -13,17 +13,7 @@ Multi-agent accessibility audit of user-facing code across any platform. Dispatc
 
 **This is a technique skill.** Follow the phases in order. Do not skip verification.
 
-## Arguments
-
-`/paad:agentic-a11y` accepts optional `$ARGUMENTS`:
-
-- `/paad:agentic-a11y` — audit all user-facing code in the repository
-- `/paad:agentic-a11y src/components/` — scope the audit to a specific directory
-- `/paad:agentic-a11y src/components/Modal.tsx` — audit a specific file
-
-When a path is provided, only audit files within that scope. Still detect platform and run all specialists, but limit the file manifest accordingly.
-
-## Pre-flight Checks
+**Pre-flight:**
 
 ```dot
 digraph preflight {
@@ -39,6 +29,81 @@ digraph preflight {
   "User-facing code exists?" -> "Proceed to Phase 1" [label="yes"];
 }
 ```
+
+**Audit flow:**
+
+```dot
+digraph audit_flow {
+  "Scope size?" [shape=diamond];
+  "Platform has framework-specific a11y pitfalls?" [shape=diamond];
+  "Existing a11y tooling already catches it?" [shape=diamond];
+  "Tooling misconfigured or finding suppressed?" [shape=diamond];
+  "Barrier handled elsewhere?" [shape=diamond];
+  "Confidence >= 60?" [shape=diamond];
+  "Cited criterion correct?" [shape=diamond];
+  "Reported by multiple specialists?" [shape=diamond];
+  "AAA criterion?" [shape=diamond];
+
+  "Detect platform(s), stack, tooling, steering files, manifest" [shape=box];
+  "Partition files across 2 instances of each specialist" [shape=box];
+  "Dispatch the 5 core specialists in parallel" [shape=box];
+  "Dispatch the 5 core specialists + Platform-Specific Patterns in parallel" [shape=box];
+  "DROP the finding" [shape=box];
+  "Correct the criterion" [shape=box];
+  "Assign severity: critical / serious / moderate / minor" [shape=box];
+  "Merge duplicates, note the agreeing specialists" [shape=box];
+  "List under Minor Issues & AAA Recommendations, prefix [AAA]" [shape=box];
+  "Place under its severity section" [shape=box];
+  "Write report to paad/a11y-reviews/a11y-<timestamp>.md" [shape=box];
+  "Report location, counts by severity, Quick Wins guidance" [shape=box];
+  "STOP: report is the deliverable — do NOT auto-fix" [shape=box, style=bold];
+
+  "Detect platform(s), stack, tooling, steering files, manifest" -> "Scope size?";
+  "Scope size?" -> "Platform has framework-specific a11y pitfalls?" [label="small (<20) / medium (20-100)"];
+  "Scope size?" -> "Partition files across 2 instances of each specialist" [label="large (100+ user-facing files)"];
+  "Partition files across 2 instances of each specialist" -> "Platform has framework-specific a11y pitfalls?";
+  "Platform has framework-specific a11y pitfalls?" -> "Dispatch the 5 core specialists + Platform-Specific Patterns in parallel" [label="yes"];
+  "Platform has framework-specific a11y pitfalls?" -> "Dispatch the 5 core specialists in parallel" [label="no"];
+  "Dispatch the 5 core specialists in parallel" -> "Existing a11y tooling already catches it?";
+  "Dispatch the 5 core specialists + Platform-Specific Patterns in parallel" -> "Existing a11y tooling already catches it?";
+
+  "Existing a11y tooling already catches it?" -> "Tooling misconfigured or finding suppressed?" [label="yes — specialists check this"];
+  "Existing a11y tooling already catches it?" -> "Barrier handled elsewhere?" [label="no"];
+  "Tooling misconfigured or finding suppressed?" -> "DROP the finding" [label="no — do not re-flag what tooling already catches"];
+  "Tooling misconfigured or finding suppressed?" -> "Barrier handled elsewhere?" [label="yes"];
+  "Barrier handled elsewhere?" -> "DROP the finding" [label="yes — parent, platform API, framework, library, system setting (verifier)"];
+  "Barrier handled elsewhere?" -> "Confidence >= 60?" [label="no"];
+  "Confidence >= 60?" -> "DROP the finding" [label="no"];
+  "Confidence >= 60?" -> "Cited criterion correct?" [label="yes"];
+  "Cited criterion correct?" -> "Assign severity: critical / serious / moderate / minor" [label="yes"];
+  "Cited criterion correct?" -> "Correct the criterion" [label="no"];
+  "Correct the criterion" -> "Assign severity: critical / serious / moderate / minor";
+  "Assign severity: critical / serious / moderate / minor" -> "Reported by multiple specialists?";
+  "Reported by multiple specialists?" -> "Merge duplicates, note the agreeing specialists" [label="yes"];
+  "Reported by multiple specialists?" -> "AAA criterion?" [label="no"];
+  "Merge duplicates, note the agreeing specialists" -> "AAA criterion?";
+  "AAA criterion?" -> "List under Minor Issues & AAA Recommendations, prefix [AAA]" [label="yes — a recommendation, not a failure"];
+  "AAA criterion?" -> "Place under its severity section" [label="no"];
+
+  "List under Minor Issues & AAA Recommendations, prefix [AAA]" -> "Write report to paad/a11y-reviews/a11y-<timestamp>.md";
+  "Place under its severity section" -> "Write report to paad/a11y-reviews/a11y-<timestamp>.md";
+  "DROP the finding" -> "Write report to paad/a11y-reviews/a11y-<timestamp>.md" [label="counted under Filtered out"];
+  "Write report to paad/a11y-reviews/a11y-<timestamp>.md" -> "Report location, counts by severity, Quick Wins guidance";
+  "Report location, counts by severity, Quick Wins guidance" -> "STOP: report is the deliverable — do NOT auto-fix";
+}
+```
+
+## Arguments
+
+`/paad:agentic-a11y` accepts optional `$ARGUMENTS`:
+
+- `/paad:agentic-a11y` — audit all user-facing code in the repository
+- `/paad:agentic-a11y src/components/` — scope the audit to a specific directory
+- `/paad:agentic-a11y src/components/Modal.tsx` — audit a specific file
+
+When a path is provided, only audit files within that scope. Still detect platform and run all specialists, but limit the file manifest accordingly.
+
+## Pre-flight Checks
 
 1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This audit consumes significant context. Start a fresh session with `/paad:agentic-a11y` to avoid context rot." Stop and wait.
 2. **User-facing code:** Scan for any of the following. If none found, tell the user: "No user-facing code detected in this repository." Stop.

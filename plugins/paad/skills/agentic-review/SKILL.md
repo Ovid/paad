@@ -3,13 +3,73 @@ name: agentic-review
 description: Use when reviewing current branch for bugs before pushing or merging, when wanting a thorough multi-agent review of local changes, or when preparing work for human review
 ---
 
-**On invocation:** announce "Running paad:agentic-review v1.18.0" before anything else.
+**On invocation:** announce "Running paad:agentic-review v1.19.0" before anything else.
 
 # Agentic Code Review
 
 Multi-agent bug-hunting review of the current branch against main. Dispatches specialist agents in parallel, verifies findings to filter false positives, ranks by severity, and produces a persistent report.
 
 **This is a technique skill.** Follow the phases in order. Do not skip verification.
+
+**Finding classification** (terms are defined under `## Definitions` and `## Mechanism`):
+
+```dot
+digraph classification {
+  "Finding from specialist (verified)" [shape=doublecircle];
+  "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" [shape=diamond];
+  "Anchor line in touched-lines map?" [shape=diamond];
+  "Branch causes/worsens this bug?" [shape=diamond];
+  "Touch is purely cosmetic AND bug is purely pre-existing?" [shape=diamond];
+  "Match in pre-filtered backlog?" [shape=diamond];
+
+  "In-scope" [shape=box, style=bold];
+  "Out-of-scope (bug)" [shape=box, style=bold];
+  "Out-of-Scope Addition" [shape=box, style=bold];
+  "Update last_seen on existing entry" [shape=box];
+  "Mint new backlog entry" [shape=box];
+
+  "Finding from specialist (verified)" -> "Carries [OOSA] sentinel or category: out-of-scope-addition tag?";
+  "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" -> "Out-of-Scope Addition" [label="yes (Spec Compliance)"];
+  "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" -> "Anchor line in touched-lines map?" [label="no"];
+  "Anchor line in touched-lines map?" -> "Touch is purely cosmetic AND bug is purely pre-existing?" [label="yes"];
+  "Anchor line in touched-lines map?" -> "Branch causes/worsens this bug?" [label="no"];
+  "Touch is purely cosmetic AND bug is purely pre-existing?" -> "Out-of-scope (bug)" [label="yes (demote)"];
+  "Touch is purely cosmetic AND bug is purely pre-existing?" -> "In-scope" [label="no"];
+  "Branch causes/worsens this bug?" -> "In-scope" [label="yes (promote)"];
+  "Branch causes/worsens this bug?" -> "Out-of-scope (bug)" [label="no"];
+  "Out-of-scope (bug)" -> "Match in pre-filtered backlog?";
+  "Match in pre-filtered backlog?" -> "Update last_seen on existing entry" [label="yes"];
+  "Match in pre-filtered backlog?" -> "Mint new backlog entry" [label="no"];
+}
+```
+
+**Pre-flight:**
+
+```dot
+digraph preflight {
+  "Conversation has history?" [shape=diamond];
+  "On main/master?" [shape=diamond];
+  "Uncommitted changes?" [shape=diamond];
+  "Diff against base is empty?" [shape=diamond];
+  "Proceed to Phase 1" [shape=box];
+  "STOP: recommend new session" [shape=box, style=bold];
+  "STOP: nothing to review" [shape=box, style=bold];
+  "STOP: no changes to review" [shape=box, style=bold];
+  "STOP: user wants to commit first" [shape=box, style=bold];
+  "ASK: review committed state only, or wait to commit?" [shape=box];
+
+  "Conversation has history?" -> "STOP: recommend new session" [label="yes"];
+  "Conversation has history?" -> "On main/master?" [label="no"];
+  "On main/master?" -> "STOP: nothing to review" [label="yes"];
+  "On main/master?" -> "Uncommitted changes?" [label="no"];
+  "Uncommitted changes?" -> "ASK: review committed state only, or wait to commit?" [label="yes"];
+  "Uncommitted changes?" -> "Diff against base is empty?" [label="no"];
+  "ASK: review committed state only, or wait to commit?" -> "Diff against base is empty?" [label="review committed state only"];
+  "ASK: review committed state only, or wait to commit?" -> "STOP: user wants to commit first" [label="wait to commit"];
+  "Diff against base is empty?" -> "STOP: no changes to review" [label="yes"];
+  "Diff against base is empty?" -> "Proceed to Phase 1" [label="no"];
+}
+```
 
 ## Definitions
 
@@ -37,36 +97,6 @@ Out-of-scope **bug** findings are **semantically deduped** by the verifier again
 
 Backlog **lifecycle is explicit-removal only** — agentic-review never auto-resolves entries. Downstream agents (or the user) delete the entry when the item is addressed. `git log` on the file is the audit trail. **Out-of-scope additions never enter `backlog.md`** — they live only in this review's report and surface a per-PR keep / split / revert decision per item.
 
-```dot
-digraph classification {
-  "Finding from specialist (verified)" [shape=doublecircle];
-  "Tagged category: out-of-scope-addition?" [shape=diamond];
-  "Anchor line in touched-lines map?" [shape=diamond];
-  "Branch causes/worsens this bug?" [shape=diamond];
-  "Touch is purely cosmetic AND bug is purely pre-existing?" [shape=diamond];
-  "Match in pre-filtered backlog?" [shape=diamond];
-
-  "In-scope" [shape=box, style=bold];
-  "Out-of-scope (bug)" [shape=box, style=bold];
-  "Out-of-Scope Addition" [shape=box, style=bold];
-  "Update last_seen on existing entry" [shape=box];
-  "Mint new backlog entry" [shape=box];
-
-  "Finding from specialist (verified)" -> "Tagged category: out-of-scope-addition?";
-  "Tagged category: out-of-scope-addition?" -> "Out-of-Scope Addition" [label="yes (Spec Compliance)"];
-  "Tagged category: out-of-scope-addition?" -> "Anchor line in touched-lines map?" [label="no"];
-  "Anchor line in touched-lines map?" -> "Touch is purely cosmetic AND bug is purely pre-existing?" [label="yes"];
-  "Anchor line in touched-lines map?" -> "Branch causes/worsens this bug?" [label="no"];
-  "Touch is purely cosmetic AND bug is purely pre-existing?" -> "Out-of-scope (bug)" [label="yes (demote)"];
-  "Touch is purely cosmetic AND bug is purely pre-existing?" -> "In-scope" [label="no"];
-  "Branch causes/worsens this bug?" -> "In-scope" [label="yes (promote)"];
-  "Branch causes/worsens this bug?" -> "Out-of-scope (bug)" [label="no"];
-  "Out-of-scope (bug)" -> "Match in pre-filtered backlog?";
-  "Match in pre-filtered backlog?" -> "Update last_seen on existing entry" [label="yes"];
-  "Match in pre-filtered backlog?" -> "Mint new backlog entry" [label="no"];
-}
-```
-
 ## Arguments
 
 `/paad:agentic-review` accepts optional `$ARGUMENTS`:
@@ -82,30 +112,6 @@ When a base branch is provided, use it instead of `main` in all `git diff` comma
 ## Pre-flight Checks
 
 The on-invocation announce (top of this skill) fires before pre-flight runs, so even when a pre-flight check stops the skill the user still sees which skill version was loaded.
-
-```dot
-digraph preflight {
-  "Conversation has history?" [shape=diamond];
-  "On main/master?" [shape=diamond];
-  "Uncommitted changes?" [shape=diamond];
-  "Diff against base is empty?" [shape=diamond];
-  "Proceed to Phase 1" [shape=box];
-  "STOP: recommend new session" [shape=box, style=bold];
-  "STOP: nothing to review" [shape=box, style=bold];
-  "STOP: no changes to review" [shape=box, style=bold];
-  "WARN: ask user" [shape=box];
-
-  "Conversation has history?" -> "STOP: recommend new session" [label="yes"];
-  "Conversation has history?" -> "On main/master?" [label="no"];
-  "On main/master?" -> "STOP: nothing to review" [label="yes"];
-  "On main/master?" -> "Uncommitted changes?" [label="no"];
-  "Uncommitted changes?" -> "WARN: ask user" [label="yes"];
-  "Uncommitted changes?" -> "Diff against base is empty?" [label="no"];
-  "WARN: ask user" -> "Diff against base is empty?" [label="user decides"];
-  "Diff against base is empty?" -> "STOP: no changes to review" [label="yes"];
-  "Diff against base is empty?" -> "Proceed to Phase 1" [label="no"];
-}
-```
 
 1. **Context window:** If conversation has substantive history beyond invocations of this skill (other prior work in this session counts; prior runs of `/paad:agentic-review` on the same branch don't), tell the user: "This review consumes significant context. Start a fresh session with `/paad:agentic-review` to avoid context rot." Stop and wait.
 2. **Branch:** Must not be on main/master. If so, stop.

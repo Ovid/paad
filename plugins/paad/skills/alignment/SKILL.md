@@ -3,13 +3,15 @@ name: alignment
 description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents
 ---
 
-**On invocation:** announce "Running paad:alignment v1.18.0" before anything else.
+**On invocation:** announce "Running paad:alignment v1.19.0" before anything else.
 
 # Alignment Check
 
 Verifies that intent documents (requirements, specs, PRDs) and action documents (plans, tasks, implementation steps) are aligned. Finds gaps in both directions — unaddressed requirements and out-of-scope tasks — then rewrites all tasks in TDD red/green/refactor format.
 
 **This skill does NOT recommend a fresh session.** The conversation history may contain the documents.
+
+**Input resolution and reality check:**
 
 ```dot
 digraph alignment {
@@ -43,10 +45,72 @@ digraph alignment {
   "Both sides found?" -> "STOP: tell user what's missing" [label="no"];
 
   "Git repo?" -> "Source control conflicts?" [label="yes"];
-  "Git repo?" -> "Proceed to Alignment Analysis" [label="no"];
+  "Git repo?" -> "Skip Reality Check" [label="no"];
+  "Skip Reality Check" -> "Proceed to Alignment Analysis";
   "Source control conflicts?" -> "Present conflicts, resolve first" [label="yes"];
   "Source control conflicts?" -> "Proceed to Alignment Analysis" [label="no"];
   "Present conflicts, resolve first" -> "Proceed to Alignment Analysis";
+}
+```
+
+**Analysis and resolution:**
+
+```dot
+digraph analysis_and_resolution {
+  "Design docs present?" [shape=diamond];
+  "Issues found?" [shape=diamond];
+  "User says stop / good enough?" [shape=diamond];
+  "More issues to present?" [shape=diamond];
+  "Update docs or write report?" [shape=diamond];
+  "Docs saved to files?" [shape=diamond];
+  "Tasks already red/green/refactor, or not code work?" [shape=diamond];
+  "Rewrite in place?" [shape=diamond];
+
+  "Check 1: requirements coverage" [shape=box];
+  "Check 2: scope compliance" [shape=box];
+  "Check 3: design alignment (both directions)" [shape=box];
+  "Order issues: missing requirements, then design gaps, then tasks" [shape=box];
+  "Present one issue: severity, options best-to-worst, recommendation" [shape=box];
+  "Wait for the user's response" [shape=box];
+  "Apply agreed changes; leave undiscussed items alone" [shape=box];
+  "Write paad/alignment-reviews/<date>-<topic>-alignment.md" [shape=box];
+  "ASK where to write the documents first" [shape=box];
+  "SKIP the TDD rewrite" [shape=box];
+  "Rewrite tasks in the action document" [shape=box];
+  "Write rewritten tasks to a new file" [shape=box];
+  "Done" [shape=box];
+
+  "Check 1: requirements coverage" -> "Check 2: scope compliance";
+  "Check 2: scope compliance" -> "Design docs present?";
+  "Design docs present?" -> "Check 3: design alignment (both directions)" [label="yes"];
+  "Design docs present?" -> "Issues found?" [label="no — skip check 3"];
+  "Check 3: design alignment (both directions)" -> "Issues found?";
+
+  "Issues found?" -> "Order issues: missing requirements, then design gaps, then tasks" [label="yes"];
+  "Issues found?" -> "Docs saved to files?" [label="no"];
+  "Order issues: missing requirements, then design gaps, then tasks" -> "Present one issue: severity, options best-to-worst, recommendation";
+  "Present one issue: severity, options best-to-worst, recommendation" -> "Wait for the user's response";
+  "Wait for the user's response" -> "User says stop / good enough?";
+  "User says stop / good enough?" -> "Docs saved to files?" [label="yes"];
+  "User says stop / good enough?" -> "More issues to present?" [label="no"];
+  "More issues to present?" -> "Present one issue: severity, options best-to-worst, recommendation" [label="yes"];
+  "More issues to present?" -> "Docs saved to files?" [label="no"];
+
+  "Docs saved to files?" -> "Update docs or write report?" [label="yes"];
+  "Docs saved to files?" -> "ASK where to write the documents first" [label="no — came from conversation"];
+  "ASK where to write the documents first" -> "Update docs or write report?";
+  "Update docs or write report?" -> "Apply agreed changes; leave undiscussed items alone" [label="update documents"];
+  "Update docs or write report?" -> "Write paad/alignment-reviews/<date>-<topic>-alignment.md" [label="write report"];
+  "Apply agreed changes; leave undiscussed items alone" -> "Tasks already red/green/refactor, or not code work?";
+  "Write paad/alignment-reviews/<date>-<topic>-alignment.md" -> "Tasks already red/green/refactor, or not code work?";
+
+  "Tasks already red/green/refactor, or not code work?" -> "SKIP the TDD rewrite" [label="yes"];
+  "Tasks already red/green/refactor, or not code work?" -> "Rewrite in place?" [label="no"];
+  "Rewrite in place?" -> "Rewrite tasks in the action document" [label="yes"];
+  "Rewrite in place?" -> "Write rewritten tasks to a new file" [label="no — user prefers a new file"];
+  "SKIP the TDD rewrite" -> "Done";
+  "Rewrite tasks in the action document" -> "Done";
+  "Write rewritten tasks to a new file" -> "Done";
 }
 ```
 

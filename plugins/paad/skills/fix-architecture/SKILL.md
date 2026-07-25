@@ -3,13 +3,171 @@ name: fix-architecture
 description: Use when working through architectural flaws documented in a paad/architecture-reviews/ report — selecting which flaws to fix, resuming a partial fix session across multiple sittings, or applying structural changes that need to be tracked back to a report
 ---
 
-**On invocation:** announce "Running paad:fix-architecture v1.18.0" before anything else.
+**On invocation:** announce "Running paad:fix-architecture v1.19.0" before anything else.
 
 # Fix Architecture
 
 Guided, iterative fixing of architectural flaws identified by `/paad:agentic-architecture`. Loads an existing architecture report, walks the developer through selecting and prioritizing flaws, then fixes them one at a time with a test-first workflow. Updates the report with status tracking so the skill can be re-run across multiple sessions.
 
 **This is a technique skill.** Follow the phases (Setup → Safety Net → Fix Loop → Wrap-Up) in order. Do not skip validation or testing steps.
+
+**Pre-flight:**
+
+```dot
+digraph preflight {
+  "Conversation has history?" [shape=diamond];
+  "On default branch?" [shape=diamond];
+  "Report exists?" [shape=diamond];
+  "Report stale?" [shape=diamond];
+  "Stale — developer choice?" [shape=diamond];
+  "Test infrastructure?" [shape=diamond];
+  "No test infra — developer choice?" [shape=diamond];
+  "Baseline tests pass?" [shape=diamond];
+  "Failing baseline — developer choice?" [shape=diamond];
+
+  "Proceed to Setup" [shape=box];
+  "STOP: recommend fresh session" [shape=box, style=bold];
+  "STOP: switch to feature branch" [shape=box, style=bold];
+  "STOP: run agentic-architecture first" [shape=box, style=bold];
+  "STOP: re-run agentic-architecture for a fresh report" [shape=box, style=bold];
+  "STOP: developer declined" [shape=box, style=bold];
+  "STOP: set up a test framework first" [shape=box, style=bold];
+  "STOP: fix the failing tests first" [shape=box, style=bold];
+
+  "Conversation has history?" -> "STOP: recommend fresh session" [label="yes"];
+  "Conversation has history?" -> "On default branch?" [label="no"];
+  "On default branch?" -> "STOP: switch to feature branch" [label="yes"];
+  "On default branch?" -> "Report exists?" [label="no"];
+  "Report exists?" -> "STOP: run agentic-architecture first" [label="no"];
+  "Report exists?" -> "Report stale?" [label="yes"];
+
+  "Report stale?" -> "Stale — developer choice?" [label="yes (>14 days old)"];
+  "Report stale?" -> "Test infrastructure?" [label="no"];
+  "Stale — developer choice?" -> "Test infrastructure?" [label="yes, proceed anyway"];
+  "Stale — developer choice?" -> "STOP: developer declined" [label="no"];
+  "Stale — developer choice?" -> "STOP: re-run agentic-architecture for a fresh report" [label="re-run first"];
+
+  "Test infrastructure?" -> "Baseline tests pass?" [label="yes"];
+  "Test infrastructure?" -> "No test infra — developer choice?" [label="no"];
+  "No test infra — developer choice?" -> "STOP: set up a test framework first" [label="set up framework"];
+  "No test infra — developer choice?" -> "Proceed to Setup" [label="proceed without tests (high risk)"];
+  "No test infra — developer choice?" -> "STOP: developer declined" [label="stop"];
+
+  "Baseline tests pass?" -> "Proceed to Setup" [label="all pass"];
+  "Baseline tests pass?" -> "Failing baseline — developer choice?" [label="some failing"];
+  "Failing baseline — developer choice?" -> "Proceed to Setup" [label="proceed anyway (record failing tests)"];
+  "Failing baseline — developer choice?" -> "STOP: fix the failing tests first" [label="fix first"];
+}
+```
+
+**Session flow** — Setup → Safety Net → Fix Loop → Wrap-Up. The Safety Net gate is non-negotiable: no fix may begin until every safety-net test for the whole batch is written and committed.
+
+```dot
+digraph fix_session {
+  "Solo or team?" [shape=diamond];
+  "Any unfixed flaws remain?" [shape=diamond];
+  "Developer approves plan?" [shape=diamond];
+  "Flaw still exists?" [shape=diamond];
+  "Test coverage?" [shape=diamond];
+  "More batch flaws to validate?" [shape=diamond];
+  "ALL safety-net tests written and committed?" [shape=diamond];
+  "Tests pass after fix?" [shape=diamond];
+  "Which tests broke?" [shape=diamond];
+  "Auto-commit mode?" [shape=diamond];
+  "Fix resolved other flaws?" [shape=diamond];
+  "Context running low?" [shape=diamond];
+  "Flaws left in batch?" [shape=diamond];
+
+  "Recommend 3-5 fixes, conflicts unlikely" [shape=box];
+  "Recommend 1-2 fixes, warn about conflict risk" [shape=box];
+  "Ask commit preference (auto / manual)" [shape=box];
+  "Dependency scan + complexity assessment" [shape=box];
+  "STOP: congratulate, suggest re-running agentic-architecture" [shape=box, style=bold];
+  "Present triage table, developer selects flaws" [shape=box];
+  "Revise plan with developer" [shape=box];
+
+  "Ask developer: does it still need work?" [shape=box];
+  "Mark Fixed (pre-existing) / Won't fix, skip flaw" [shape=box];
+  "Write safety-net tests for the gap" [shape=box];
+  "Developer picks approach: refactor first / e2e tests / no tests / skip flaw" [shape=box];
+  "Write and commit the outstanding safety-net tests" [shape=box, style=bold];
+  "Revert the fix; record status Attempted, reverted" [shape=box];
+
+  "Propose fix options, developer chooses" [shape=box];
+  "Execute red/green/refactor" [shape=box];
+  "Pre-existing failure — not caused by this fix" [shape=box];
+  "Propose updating structure-dependent unit tests" [shape=box];
+  "RED FLAG: discuss fix-forward vs revert" [shape=box];
+  "Sanity check: did the fix introduce new architectural issues?" [shape=box];
+  "Update report status fields" [shape=box];
+  "Commit fix + tests + report update" [shape=box];
+  "Leave changes staged, tell developer what changed" [shape=box];
+  "Validate and update the affected flaws" [shape=box];
+  "STOP: finish current fix, resume in a fresh session" [shape=box, style=bold];
+  "Wrap-Up: summary + suggest re-running fix-architecture" [shape=box];
+
+  "Solo or team?" -> "Recommend 3-5 fixes, conflicts unlikely" [label="solo"];
+  "Solo or team?" -> "Recommend 1-2 fixes, warn about conflict risk" [label="team"];
+  "Recommend 3-5 fixes, conflicts unlikely" -> "Ask commit preference (auto / manual)";
+  "Recommend 1-2 fixes, warn about conflict risk" -> "Ask commit preference (auto / manual)";
+  "Ask commit preference (auto / manual)" -> "Dependency scan + complexity assessment";
+  "Dependency scan + complexity assessment" -> "Any unfixed flaws remain?";
+  "Any unfixed flaws remain?" -> "STOP: congratulate, suggest re-running agentic-architecture" [label="no"];
+  "Any unfixed flaws remain?" -> "Present triage table, developer selects flaws" [label="yes"];
+  "Present triage table, developer selects flaws" -> "Developer approves plan?";
+  "Developer approves plan?" -> "Revise plan with developer" [label="no"];
+  "Revise plan with developer" -> "Developer approves plan?";
+  "Developer approves plan?" -> "Flaw still exists?" [label="yes — Safety Net begins"];
+
+  "Flaw still exists?" -> "Test coverage?" [label="yes, as described"];
+  "Flaw still exists?" -> "Ask developer: does it still need work?" [label="partially addressed"];
+  "Flaw still exists?" -> "Mark Fixed (pre-existing) / Won't fix, skip flaw" [label="no longer exists / false positive"];
+  "Ask developer: does it still need work?" -> "Test coverage?" [label="yes"];
+  "Ask developer: does it still need work?" -> "Mark Fixed (pre-existing) / Won't fix, skip flaw" [label="no"];
+  "Mark Fixed (pre-existing) / Won't fix, skip flaw" -> "More batch flaws to validate?";
+
+  "Test coverage?" -> "More batch flaws to validate?" [label="good — no gaps in affected paths"];
+  "Test coverage?" -> "Write safety-net tests for the gap" [label="gaps found / testable but untested"];
+  "Test coverage?" -> "Developer picks approach: refactor first / e2e tests / no tests / skip flaw" [label="not unit-testable without refactoring"];
+  "Write safety-net tests for the gap" -> "More batch flaws to validate?";
+  "Developer picks approach: refactor first / e2e tests / no tests / skip flaw" -> "More batch flaws to validate?";
+  "More batch flaws to validate?" -> "Flaw still exists?" [label="yes"];
+  "More batch flaws to validate?" -> "ALL safety-net tests written and committed?" [label="no"];
+
+  "ALL safety-net tests written and committed?" -> "Write and commit the outstanding safety-net tests" [label="no — no fix may start yet"];
+  "Write and commit the outstanding safety-net tests" -> "ALL safety-net tests written and committed?";
+  "ALL safety-net tests written and committed?" -> "Propose fix options, developer chooses" [label="yes, or the developer chose to proceed without tests — Fix Loop begins"];
+
+  "Propose fix options, developer chooses" -> "Execute red/green/refactor";
+  "Execute red/green/refactor" -> "Tests pass after fix?";
+  "Tests pass after fix?" -> "Sanity check: did the fix introduce new architectural issues?" [label="yes"];
+  "Tests pass after fix?" -> "Which tests broke?" [label="no"];
+  "Which tests broke?" -> "Pre-existing failure — not caused by this fix" [label="already failing at pre-flight baseline"];
+  "Which tests broke?" -> "Propose updating structure-dependent unit tests" [label="internal unit tests (expected in refactoring)"];
+  "Which tests broke?" -> "RED FLAG: discuss fix-forward vs revert" [label="external / integration tests"];
+  "Pre-existing failure — not caused by this fix" -> "Sanity check: did the fix introduce new architectural issues?";
+  "Propose updating structure-dependent unit tests" -> "Execute red/green/refactor" [label="developer approves"];
+  "RED FLAG: discuss fix-forward vs revert" -> "Execute red/green/refactor" [label="fix forward"];
+  "RED FLAG: discuss fix-forward vs revert" -> "Revert the fix; record status Attempted, reverted" [label="revert — nothing to commit as a fix"];
+  "Revert the fix; record status Attempted, reverted" -> "Fix resolved other flaws?";
+
+  "Sanity check: did the fix introduce new architectural issues?" -> "Update report status fields" [label="flag any to developer"];
+  "Update report status fields" -> "Auto-commit mode?";
+  "Auto-commit mode?" -> "Commit fix + tests + report update" [label="yes"];
+  "Auto-commit mode?" -> "Leave changes staged, tell developer what changed" [label="no"];
+  "Commit fix + tests + report update" -> "Fix resolved other flaws?";
+  "Leave changes staged, tell developer what changed" -> "Fix resolved other flaws?";
+
+  "Fix resolved other flaws?" -> "Validate and update the affected flaws" [label="yes (check whole report, not just batch)"];
+  "Fix resolved other flaws?" -> "Context running low?" [label="no"];
+  "Validate and update the affected flaws" -> "Context running low?";
+  "Context running low?" -> "STOP: finish current fix, resume in a fresh session" [label="yes"];
+  "Context running low?" -> "Flaws left in batch?" [label="no"];
+  "Flaws left in batch?" -> "Propose fix options, developer chooses" [label="yes, developer continues"];
+  "Flaws left in batch?" -> "Wrap-Up: summary + suggest re-running fix-architecture" [label="no / developer stops here"];
+  "STOP: finish current fix, resume in a fresh session" -> "Wrap-Up: summary + suggest re-running fix-architecture";
+}
+```
 
 ## Arguments
 
@@ -19,40 +177,6 @@ Guided, iterative fixing of architectural flaws identified by `/paad:agentic-arc
 - `/paad:fix-architecture path/to/report.md` — uses a specific report
 
 ## Pre-flight Checks
-
-```dot
-digraph preflight {
-  "Conversation has history?" [shape=diamond];
-  "On default branch?" [shape=diamond];
-  "Report exists?" [shape=diamond];
-  "Report stale?" [shape=diamond];
-  "Test infrastructure?" [shape=diamond];
-  "Baseline tests pass?" [shape=diamond];
-  "Proceed to Setup" [shape=box];
-  "STOP: recommend fresh session" [shape=box, style=bold];
-  "STOP: switch to feature branch" [shape=box, style=bold];
-  "STOP: run agentic-architecture first" [shape=box, style=bold];
-  "Warn staleness, ask to proceed" [shape=box];
-  "Warn no test infra, ask to proceed" [shape=box];
-  "Warn failing tests, ask to proceed" [shape=box];
-
-  "Conversation has history?" -> "STOP: recommend fresh session" [label="yes"];
-  "Conversation has history?" -> "On default branch?" [label="no"];
-  "On default branch?" -> "STOP: switch to feature branch" [label="yes"];
-  "On default branch?" -> "Report exists?" [label="no"];
-  "Report exists?" -> "STOP: run agentic-architecture first" [label="no"];
-  "Report exists?" -> "Report stale?" [label="yes"];
-  "Report stale?" -> "Warn staleness, ask to proceed" [label="yes"];
-  "Report stale?" -> "Test infrastructure?" [label="no"];
-  "Warn staleness, ask to proceed" -> "Test infrastructure?";
-  "Test infrastructure?" -> "Warn no test infra, ask to proceed" [label="no"];
-  "Test infrastructure?" -> "Baseline tests pass?" [label="yes"];
-  "Warn no test infra, ask to proceed" -> "Baseline tests pass?";
-  "Baseline tests pass?" -> "Warn failing tests, ask to proceed" [label="some failing"];
-  "Baseline tests pass?" -> "Proceed to Setup" [label="all pass"];
-  "Warn failing tests, ask to proceed" -> "Proceed to Setup";
-}
-```
 
 1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This skill consumes significant context. Start a fresh session with `/paad:fix-architecture` to avoid context rot." Stop and wait.
 
@@ -196,23 +320,6 @@ If tests fail after the fix:
 
 After the fix passes, do a brief sanity check: does the change introduce any obvious new architectural issues (e.g., splitting a god object but creating tight coupling between the new modules)? If so, flag it to the developer. This is not a full re-analysis — just a common-sense review of the code just written.
 
-### Commit
-
-If auto-commit mode: one commit per fix (including tests and report update), using this commit message format:
-
-```
-fix(architecture): [F-ID] <short description>
-
-Resolves architectural flaw F-ID (<flaw label>) identified in
-<report-filename>.
-
-<brief description of what changed>
-```
-
-Note: safety-net tests are committed in the Safety Net phase (before any fixes) so they survive if a fix is reverted.
-
-If manual mode: leave changes staged, tell the developer what changed.
-
 ### Update the Report
 
 Add status fields inline to the flaw entry in the architecture report:
@@ -231,6 +338,25 @@ Add status fields inline to the flaw entry in the architecture report:
 ```
 
 If status fields don't exist on the entry (report was generated before this skill existed), add them.
+
+Do this before committing, so auto-commit mode can include the report update in the same commit. **Status commit** is the one field that can only be filled once the commit exists — record it immediately after committing (`git commit --amend` in auto-commit mode, or leave it for the developer in manual mode).
+
+### Commit
+
+If auto-commit mode: one commit per fix (including tests and report update), using this commit message format:
+
+```
+fix(architecture): [F-ID] <short description>
+
+Resolves architectural flaw F-ID (<flaw label>) identified in
+<report-filename>.
+
+<brief description of what changed>
+```
+
+Note: safety-net tests are committed in the Safety Net phase (before any fixes) so they survive if a fix is reverted.
+
+If manual mode: leave changes staged, tell the developer what changed.
 
 ### Check Flaw Dependencies
 

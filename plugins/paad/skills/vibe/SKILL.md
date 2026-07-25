@@ -3,11 +3,13 @@ name: vibe
 description: Use when making a small fix or quick change (1-3 files, same module) — bug fixes, typos, minor features, tweaks — where you want vibe-coding speed without the recklessness of skipping tests, duplicating existing code, or papering over deeper structural issues
 ---
 
-**On invocation:** announce "Running paad:vibe v1.18.0" before anything else.
+**On invocation:** announce "Running paad:vibe v1.19.0" before anything else.
 
 # Safe Vibe Coding
 
 Quick fixes and small changes with guardrails. You get the speed of vibe coding without the recklessness — mandatory TDD, architecture awareness, and reusable component detection.
+
+**Flow:**
 
 ```dot
 digraph vibe {
@@ -16,16 +18,25 @@ digraph vibe {
   "Scope: how many files?" [shape=diamond];
   "Architecture smell?" [shape=diamond];
   "Reusable components found?" [shape=diamond];
+  "TDD enabled?" [shape=diamond];
   "RED: test result?" [shape=diamond];
+  "More behaviours in this task?" [shape=diamond];
+  "Follow-up genuinely warranted?" [shape=diamond];
 
   "Ask or clarify" [shape=box];
   "ASK: set up tests or skip TDD?" [shape=box];
+  "Set up a basic test framework" [shape=box];
   "WARN: may be bigger than a vibe task" [shape=box];
   "STOP: investigate deeper issues" [shape=box, style=bold];
   "Recommend using existing code" [shape=box];
   "STOP: feature may exist or test is wrong" [shape=box, style=bold];
   "STOP: unexpected failure, discuss" [shape=box, style=bold];
-  "Proceed to GREEN" [shape=box];
+  "RED: write one failing test" [shape=box];
+  "GREEN: minimal code to pass" [shape=box];
+  "REFACTOR: clean up, keep tests green" [shape=box];
+  "Post-fix summary" [shape=box];
+  "Suggest the matching paad skill" [shape=box];
+  "Say nothing further" [shape=box];
   "Run pre-flight checks" [shape=box];
 
   "Task clear?" -> "Run pre-flight checks" [label="yes"];
@@ -35,7 +46,9 @@ digraph vibe {
   "Run pre-flight checks" -> "Test infrastructure?";
   "Test infrastructure?" -> "Scope: how many files?" [label="yes"];
   "Test infrastructure?" -> "ASK: set up tests or skip TDD?" [label="no"];
-  "ASK: set up tests or skip TDD?" -> "Scope: how many files?";
+  "ASK: set up tests or skip TDD?" -> "Set up a basic test framework" [label="set up tests"];
+  "ASK: set up tests or skip TDD?" -> "Scope: how many files?" [label="proceed without TDD — RED is skipped"];
+  "Set up a basic test framework" -> "Scope: how many files?";
 
   "Scope: how many files?" -> "Architecture smell?" [label="1-3 files"];
   "Scope: how many files?" -> "WARN: may be bigger than a vibe task" [label="4+ files"];
@@ -45,12 +58,24 @@ digraph vibe {
   "Architecture smell?" -> "Reusable components found?" [label="no smell"];
 
   "Reusable components found?" -> "Recommend using existing code" [label="yes"];
-  "Reusable components found?" -> "RED: test result?" [label="no"];
-  "Recommend using existing code" -> "RED: test result?";
+  "Reusable components found?" -> "TDD enabled?" [label="no"];
+  "Recommend using existing code" -> "TDD enabled?";
 
+  "TDD enabled?" -> "RED: write one failing test" [label="yes"];
+  "TDD enabled?" -> "GREEN: minimal code to pass" [label="no — user chose to skip TDD"];
+  "RED: write one failing test" -> "RED: test result?";
   "RED: test result?" -> "STOP: feature may exist or test is wrong" [label="passes unexpectedly"];
   "RED: test result?" -> "STOP: unexpected failure, discuss" [label="fails unexpectedly"];
-  "RED: test result?" -> "Proceed to GREEN" [label="fails as expected"];
+  "RED: test result?" -> "GREEN: minimal code to pass" [label="fails as expected"];
+
+  "GREEN: minimal code to pass" -> "REFACTOR: clean up, keep tests green" [label="new test passes, existing tests still pass"];
+  "REFACTOR: clean up, keep tests green" -> "More behaviours in this task?" [label="all tests still green"];
+  "More behaviours in this task?" -> "TDD enabled?" [label="yes — one behaviour at a time"];
+  "More behaviours in this task?" -> "Post-fix summary" [label="no"];
+
+  "Post-fix summary" -> "Follow-up genuinely warranted?";
+  "Follow-up genuinely warranted?" -> "Suggest the matching paad skill" [label="security-sensitive / UI / harder than expected"];
+  "Follow-up genuinely warranted?" -> "Say nothing further" [label="no — trivial fix"];
 }
 ```
 

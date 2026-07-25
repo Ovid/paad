@@ -3,13 +3,15 @@ name: pushback
 description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling
 ---
 
-**On invocation:** announce "Running paad:pushback v1.18.0" before anything else.
+**On invocation:** announce "Running paad:pushback v1.19.0" before anything else.
 
 # Spec Pushback
 
 Critically reviews a spec, PRD, requirements document, or design plan before work begins. Checks source control for conflicts with reality, then walks through issues one at a time in severity order so you can fix what matters most.
 
 **This skill does NOT recommend a fresh session.** The conversation history may be the spec.
+
+**Input resolution and reality check:**
 
 ```dot
 digraph pushback {
@@ -43,6 +45,70 @@ digraph pushback {
   "Source control conflicts?" -> "Present conflicts, resolve first" [label="yes"];
   "Source control conflicts?" -> "Proceed to Spec Critique" [label="no"];
   "Present conflicts, resolve first" -> "Proceed to Spec Critique";
+}
+```
+
+**Scope shape, critique and resolution:**
+
+```dot
+digraph scope_critique_resolution {
+  "Unrelated features bundled?" [shape=diamond];
+  "User splits them out?" [shape=diamond];
+  "Spec large?" [shape=diamond];
+  "Meaningful split exists?" [shape=diamond];
+  "Issues found?" [shape=diamond];
+  "User says good enough / stop?" [shape=diamond];
+  "More issues to present?" [shape=diamond];
+  "Update spec or write report?" [shape=diamond];
+  "Spec saved to a file?" [shape=diamond];
+
+  "Identify groups, recommend splitting, ask" [shape=box];
+  "Continue reviewing the remaining spec" [shape=box];
+  "Note it as a scope concern, review as-is" [shape=box];
+  "Suggest the split — what each piece delivers alone" [shape=box];
+  "Flag the size, explain why splitting isn't practical" [shape=box];
+  "Say nothing about size" [shape=box];
+  "Rank findings by severity" [shape=box];
+  "Present one issue: problem, options best-to-worst, recommendation" [shape=box];
+  "Wait for the user's response" [shape=box];
+  "ASK where to write the spec first" [shape=box];
+  "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
+  "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [shape=box];
+  "Done" [shape=box];
+
+  "Unrelated features bundled?" -> "Identify groups, recommend splitting, ask" [label="yes"];
+  "Unrelated features bundled?" -> "Spec large?" [label="no"];
+  "Identify groups, recommend splitting, ask" -> "User splits them out?";
+  "User splits them out?" -> "Continue reviewing the remaining spec" [label="yes"];
+  "User splits them out?" -> "Note it as a scope concern, review as-is" [label="no"];
+  "Continue reviewing the remaining spec" -> "Spec large?";
+  "Note it as a scope concern, review as-is" -> "Spec large?";
+
+  "Spec large?" -> "Meaningful split exists?" [label="yes (8+ requirements, many areas, long)"];
+  "Spec large?" -> "Say nothing about size" [label="no"];
+  "Meaningful split exists?" -> "Suggest the split — what each piece delivers alone" [label="yes"];
+  "Meaningful split exists?" -> "Flag the size, explain why splitting isn't practical" [label="no — tightly interdependent"];
+  "Suggest the split — what each piece delivers alone" -> "Issues found?";
+  "Flag the size, explain why splitting isn't practical" -> "Issues found?";
+  "Say nothing about size" -> "Issues found?";
+
+  "Issues found?" -> "Rank findings by severity" [label="yes"];
+  "Issues found?" -> "Spec saved to a file?" [label="no"];
+  "Rank findings by severity" -> "Present one issue: problem, options best-to-worst, recommendation";
+  "Present one issue: problem, options best-to-worst, recommendation" -> "Wait for the user's response";
+  "Wait for the user's response" -> "User says good enough / stop?";
+  "User says good enough / stop?" -> "Spec saved to a file?" [label="yes — remainder goes to Unresolved Issues"];
+  "User says good enough / stop?" -> "More issues to present?" [label="no"];
+  "More issues to present?" -> "Present one issue: problem, options best-to-worst, recommendation" [label="yes"];
+  "More issues to present?" -> "Spec saved to a file?" [label="no"];
+
+  "Spec saved to a file?" -> "Update spec or write report?" [label="yes"];
+  "Spec saved to a file?" -> "ASK where to write the spec first" [label="no — came from conversation"];
+  "ASK where to write the spec first" -> "Update spec or write report?";
+  "Update spec or write report?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="update spec"];
+  "Update spec or write report?" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [label="write report"];
+  "Apply agreed changes; leave undiscussed requirements alone" -> "Done";
+  "Write paad/pushback-reviews/<date>-<spec>-pushback.md" -> "Done";
 }
 ```
 
