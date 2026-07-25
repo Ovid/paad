@@ -133,20 +133,20 @@ digraph analysis_and_resolution {
   "Check 3: design alignment (both directions)" -> "Issues found?";
 
   "Issues found?" -> "Order issues: missing requirements, then design gaps, then tasks" [label="yes"];
-  "Issues found?" -> "Update docs or write report?" [label="no"];
+  "Issues found?" -> "Docs saved to files?" [label="no"];
   "Order issues: missing requirements, then design gaps, then tasks" -> "Present one issue: severity, options best-to-worst, recommendation";
   "Present one issue: severity, options best-to-worst, recommendation" -> "Wait for the user's response";
   "Wait for the user's response" -> "User says stop / good enough?";
-  "User says stop / good enough?" -> "Update docs or write report?" [label="yes"];
+  "User says stop / good enough?" -> "Docs saved to files?" [label="yes"];
   "User says stop / good enough?" -> "More issues to present?" [label="no"];
   "More issues to present?" -> "Present one issue: severity, options best-to-worst, recommendation" [label="yes"];
-  "More issues to present?" -> "Update docs or write report?" [label="no"];
+  "More issues to present?" -> "Docs saved to files?" [label="no"];
 
-  "Update docs or write report?" -> "Docs saved to files?" [label="update documents"];
-  "Update docs or write report?" -> "Write paad/alignment-reviews/<date>-<topic>-alignment.md" [label="write report"];
-  "Docs saved to files?" -> "Apply agreed changes; leave undiscussed items alone" [label="yes"];
+  "Docs saved to files?" -> "Update docs or write report?" [label="yes"];
   "Docs saved to files?" -> "ASK where to write the documents first" [label="no — came from conversation"];
-  "ASK where to write the documents first" -> "Apply agreed changes; leave undiscussed items alone";
+  "ASK where to write the documents first" -> "Update docs or write report?";
+  "Update docs or write report?" -> "Apply agreed changes; leave undiscussed items alone" [label="update documents"];
+  "Update docs or write report?" -> "Write paad/alignment-reviews/<date>-<topic>-alignment.md" [label="write report"];
   "Apply agreed changes; leave undiscussed items alone" -> "Tasks already red/green/refactor, or not code work?";
   "Write paad/alignment-reviews/<date>-<topic>-alignment.md" -> "Tasks already red/green/refactor, or not code work?";
 

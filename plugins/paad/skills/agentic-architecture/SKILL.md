@@ -44,7 +44,7 @@ digraph preflight {
 digraph analysis_flow {
   "Git repo?" [shape=diamond];
   "Scope size?" [shape=diamond];
-  "Distributed system?" [shape=diamond];
+  "Integration & Data specialist: distributed system?" [shape=diamond];
   "Confirmed by reading the actual code?" [shape=diamond];
   "Confidence >= 60?" [shape=diamond];
   "Concrete evidence present?" [shape=diamond];
@@ -73,9 +73,9 @@ digraph analysis_flow {
   "Scope size?" -> "Dispatch 5 specialists in parallel" [label="small (<50) / medium (50-500)"];
   "Scope size?" -> "Partition files across 2 instances of each specialist" [label="large (500+ source files)"];
   "Partition files across 2 instances of each specialist" -> "Dispatch 5 specialists in parallel";
-  "Dispatch 5 specialists in parallel" -> "Distributed system?";
-  "Distributed system?" -> "Confirmed by reading the actual code?" [label="yes"];
-  "Distributed system?" -> "Mark distributed-specific categories Not applicable" [label="no"];
+  "Dispatch 5 specialists in parallel" -> "Integration & Data specialist: distributed system?";
+  "Integration & Data specialist: distributed system?" -> "Confirmed by reading the actual code?" [label="yes"];
+  "Integration & Data specialist: distributed system?" -> "Mark distributed-specific categories Not applicable" [label="no"];
   "Mark distributed-specific categories Not applicable" -> "Confirmed by reading the actual code?";
 
   "Confirmed by reading the actual code?" -> "Confidence >= 60?" [label="yes — verifier per finding"];

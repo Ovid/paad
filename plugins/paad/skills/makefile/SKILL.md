@@ -18,6 +18,7 @@ digraph makefile_flow {
     "Makefile exists?" [shape=diamond];
     "Existing target needs change?" [shape=diamond];
     "Approved?" [shape=diamond];
+    "Coverage tool defaults to watch mode?" [shape=diamond];
     "Test tool supports balanced output?" [shape=diamond];
 
     "Detect stack" [shape=box];
@@ -28,6 +29,8 @@ digraph makefile_flow {
     "STOP: ask user for approval" [shape=box, style=bold];
     "Apply change" [shape=box];
     "Skip change" [shape=box];
+    "Force the one-shot flag for the detected stack" [shape=box];
+    "Verify the tool exits on its own before adding flags" [shape=box];
     "ASK the user how to handle test output" [shape=box];
     "Done" [shape=box];
 
@@ -35,10 +38,14 @@ digraph makefile_flow {
     "Makefile exists?" -> "Create from scratch" [label="no"];
     "Makefile exists?" -> "Identify missing targets" [label="yes"];
     "Create from scratch" -> "Include all required targets";
-    "Include all required targets" -> "Test tool supports balanced output?";
+    "Include all required targets" -> "Coverage tool defaults to watch mode?";
     "Identify missing targets" -> "Add new targets";
     "Add new targets" -> "Existing target needs change?";
-    "Existing target needs change?" -> "Test tool supports balanced output?" [label="no"];
+    "Existing target needs change?" -> "Coverage tool defaults to watch mode?" [label="no"];
+    "Coverage tool defaults to watch mode?" -> "Force the one-shot flag for the detected stack" [label="yes — vitest, jest"];
+    "Coverage tool defaults to watch mode?" -> "Verify the tool exits on its own before adding flags" [label="unclear — pytest-cov, cargo, go test"];
+    "Force the one-shot flag for the detected stack" -> "Test tool supports balanced output?";
+    "Verify the tool exits on its own before adding flags" -> "Test tool supports balanced output?";
     "Existing target needs change?" -> "STOP: ask user for approval" [label="yes"];
     "STOP: ask user for approval" -> "Approved?";
     "Approved?" -> "Apply change" [label="yes"];
