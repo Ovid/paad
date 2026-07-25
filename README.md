@@ -115,9 +115,29 @@ Install the plugin:
 
 ```bash
 /plugin install paad@paad
-````
+```
 
 If you're not using Claude Code, see other examples below.
+
+#### Updating the plugin
+
+Installing pins you to the version that was current at the time. New skills and fixes do **not** arrive on their own — you have to pull them, and it takes two steps, because the marketplace catalog and the plugin are refreshed separately.
+
+Refresh the marketplace catalog from GitHub:
+
+```bash
+/plugin marketplace update paad
+```
+
+Then update the plugin itself:
+
+```bash
+/plugin update paad@paad
+```
+
+Restart Claude Code to apply the update.
+
+To confirm which version you're on, run any skill — every skill announces itself on invocation, e.g. `Running paad:vibe v1.19.0`. Compare that against the version in [`plugins/paad/.claude-plugin/plugin.json`](plugins/paad/.claude-plugin/plugin.json). If a skill documented here is missing entirely, you're on an older version — run the two commands above.
 
 #### Invoking skills
 
