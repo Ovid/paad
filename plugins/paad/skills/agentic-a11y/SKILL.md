@@ -54,6 +54,68 @@ digraph preflight {
 | **CLI** | Any code producing terminal output or accepting terminal input (look for stdout/stderr writes, readline, prompt libraries, curses/ncurses, argument parsers) |
 | **Game** | Unity (`.cs` scripts), Unreal (C++/Blueprints), Godot (`.gd`/`.tscn`), custom engines with rendering/input systems |
 
+## Audit Flow
+
+```dot
+digraph audit_flow {
+  "Scope size?" [shape=diamond];
+  "Platform has framework-specific a11y pitfalls?" [shape=diamond];
+  "Existing a11y tooling already catches it?" [shape=diamond];
+  "Barrier handled elsewhere?" [shape=diamond];
+  "Confidence >= 60?" [shape=diamond];
+  "Cited criterion correct?" [shape=diamond];
+  "Reported by multiple specialists?" [shape=diamond];
+  "AAA criterion?" [shape=diamond];
+
+  "Detect platform(s), stack, tooling, steering files, manifest" [shape=box];
+  "Partition files across 2 instances of each specialist" [shape=box];
+  "Dispatch the 5 core specialists in parallel" [shape=box];
+  "Also dispatch Platform-Specific Patterns" [shape=box];
+  "DROP the finding" [shape=box];
+  "Keep, but only if misconfigured or suppressed" [shape=box];
+  "Correct the criterion" [shape=box];
+  "Assign severity: critical / serious / moderate / minor" [shape=box];
+  "Merge duplicates, note the agreeing specialists" [shape=box];
+  "List under Minor Issues & AAA Recommendations, prefix [AAA]" [shape=box];
+  "Place under its severity section" [shape=box];
+  "Write report to paad/a11y-reviews/a11y-<timestamp>.md" [shape=box];
+  "Report location, counts by severity, Quick Wins guidance" [shape=box];
+  "STOP: report is the deliverable — do NOT auto-fix" [shape=box, style=bold];
+
+  "Detect platform(s), stack, tooling, steering files, manifest" -> "Scope size?";
+  "Scope size?" -> "Dispatch the 5 core specialists in parallel" [label="small (<20) / medium (20-100)"];
+  "Scope size?" -> "Partition files across 2 instances of each specialist" [label="large (100+ user-facing files)"];
+  "Partition files across 2 instances of each specialist" -> "Dispatch the 5 core specialists in parallel";
+  "Dispatch the 5 core specialists in parallel" -> "Platform has framework-specific a11y pitfalls?";
+  "Platform has framework-specific a11y pitfalls?" -> "Also dispatch Platform-Specific Patterns" [label="yes"];
+  "Platform has framework-specific a11y pitfalls?" -> "Existing a11y tooling already catches it?" [label="no — core specialists only"];
+  "Also dispatch Platform-Specific Patterns" -> "Existing a11y tooling already catches it?";
+
+  "Existing a11y tooling already catches it?" -> "Keep, but only if misconfigured or suppressed" [label="yes"];
+  "Existing a11y tooling already catches it?" -> "Barrier handled elsewhere?" [label="no — verifier per finding"];
+  "Keep, but only if misconfigured or suppressed" -> "Barrier handled elsewhere?";
+  "Barrier handled elsewhere?" -> "DROP the finding" [label="yes — parent, platform API, framework, library, system setting"];
+  "Barrier handled elsewhere?" -> "Confidence >= 60?" [label="no"];
+  "Confidence >= 60?" -> "DROP the finding" [label="no"];
+  "Confidence >= 60?" -> "Cited criterion correct?" [label="yes"];
+  "Cited criterion correct?" -> "Assign severity: critical / serious / moderate / minor" [label="yes"];
+  "Cited criterion correct?" -> "Correct the criterion" [label="no"];
+  "Correct the criterion" -> "Assign severity: critical / serious / moderate / minor";
+  "Assign severity: critical / serious / moderate / minor" -> "Reported by multiple specialists?";
+  "Reported by multiple specialists?" -> "Merge duplicates, note the agreeing specialists" [label="yes"];
+  "Reported by multiple specialists?" -> "AAA criterion?" [label="no"];
+  "Merge duplicates, note the agreeing specialists" -> "AAA criterion?";
+  "AAA criterion?" -> "List under Minor Issues & AAA Recommendations, prefix [AAA]" [label="yes — a recommendation, not a failure"];
+  "AAA criterion?" -> "Place under its severity section" [label="no"];
+
+  "List under Minor Issues & AAA Recommendations, prefix [AAA]" -> "Write report to paad/a11y-reviews/a11y-<timestamp>.md";
+  "Place under its severity section" -> "Write report to paad/a11y-reviews/a11y-<timestamp>.md";
+  "DROP the finding" -> "Write report to paad/a11y-reviews/a11y-<timestamp>.md" [label="counted under Filtered out"];
+  "Write report to paad/a11y-reviews/a11y-<timestamp>.md" -> "Report location, counts by severity, Quick Wins guidance";
+  "Report location, counts by severity, Quick Wins guidance" -> "STOP: report is the deliverable — do NOT auto-fix";
+}
+```
+
 ## Phase 1: Reconnaissance
 
 Run these steps and collect results:
