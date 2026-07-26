@@ -27,6 +27,16 @@ what a plugin user sees.
   the body — which for `vibe` meant skipping the mandatory red/green/refactor cycle.
 
 ### Changed
+- `fix-architecture`: Fix Loop approval points are now stops, not announcements.
+  Every pre-flight check ends with "Stop and wait", but the Fix Loop's approval
+  points only said "present it and get confirmation" / "Developer chooses" — so
+  presenting an approach and starting work in the same turn was defensible. The
+  Setup rule (ask, wait, then act) is now stated to apply to the whole loop, with
+  two non-approvals named explicitly: the Setup Step 4 batch approval covers which
+  flaws are in scope and never how one gets fixed, and a single viable option still
+  needs a yes. Reinforced at all three sites, most firmly at the
+  not-unit-testable fork where one of the four options being "presented" is *fix
+  without tests*.
 - `fix-architecture`: marking a flaw "Fixed (pre-existing)" now needs the
   developer's agreement. It was the only outcome in the flaw-validation table with
   no human in the loop, and the only one that both removed work and required no

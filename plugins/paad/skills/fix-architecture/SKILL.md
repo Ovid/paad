@@ -313,6 +313,15 @@ Rules for filling it in:
 
 For each flaw in the confirmed batch, execute this sequence:
 
+**The Setup rule applies here too: ask, wait for the answer, then act.** Every approval point below is a stop, not an announcement — present the options, then wait for the developer's reply before making any edit. Presenting an approach and beginning work on it in the same turn is not "getting confirmation", however clearly you flagged what you were about to do.
+
+Two things that are *not* approval for a fix approach:
+
+- **The batch approval from Setup Step 4.** That approved *which flaws* are in scope. It never approved how any of them gets fixed, how it gets tested, or whether it proceeds without tests.
+- **Only one option existing.** A single viable approach still needs a yes. "May I do the only sensible thing?" feels like a rubber stamp, but it is the developer's last look at the plan before code moves — and the point where they can say the only sensible thing is still not worth doing.
+
+The pre-flight checks each end with "Stop and wait" because a wrong answer there is cheap to prevent and expensive to undo. That is more true inside the Fix Loop, not less: here the developer discovers the choice after the code has changed, when reversing it costs a revert instead of a sentence.
+
 ### Validate the Flaw
 
 Read targeted sections around the referenced file:line (not entire files — conserve context window). Check `git log` on affected files since the report date. Determine outcome:
@@ -345,7 +354,7 @@ Check whether the affected code has existing tests. Three outcomes:
 3. Fix without tests (risky)
 4. Skip this flaw for now
 
-If only one testing approach is feasible, present it with explanation of why alternatives aren't viable. Developer chooses.
+If only one testing approach is feasible, present it with explanation of why alternatives aren't viable. Developer chooses — **stop and wait for their answer.** This fork matters more than the others: option 3 is *fix without tests*, and an agent that presents these four options and proceeds on its own has just decided to refactor a structural flaw with no safety net on the developer's behalf. That decision is never yours to assume, and it is the one the developer is most likely to answer differently from you.
 
 ### Propose Fix Options
 
@@ -353,7 +362,7 @@ If multiple fix approaches exist, present as a numbered list:
 - Recommended option first, with reasoning
 - Each option includes: what changes, files affected, tradeoffs (complexity, risk, scope)
 
-If only one reasonable approach, present it and get confirmation.
+If only one reasonable approach, present it and get confirmation. **Stop and wait** — in both cases. Do not begin editing in the same turn you present the options, and do not treat a single viable approach as needing no answer.
 
 ### Execute the Fix
 
@@ -371,7 +380,7 @@ If tests fail after the fix:
 2. Cross-reference against the pre-flight baseline — if a test was already failing before the session, it's not caused by this fix
 3. **Internal unit tests breaking because structure changed** → expected during refactoring, propose updating them. Note the limits in "Editing tests during the Fix Loop" below — they are strictest for safety-net tests.
 4. **External/integration tests breaking** → red flag, discuss with developer whether to fix forward or revert
-5. Developer decides how to proceed
+5. Developer decides how to proceed — **stop and wait for their decision.** Do not fix forward, revert, or update a test on your own reading of which failure this is.
 
 #### Editing tests during the Fix Loop
 
