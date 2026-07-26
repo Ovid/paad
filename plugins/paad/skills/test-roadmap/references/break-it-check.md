@@ -34,23 +34,67 @@ result means for the developer is spelled out in *Explaining results*, below.
 Six steps, in order. The order is load-bearing — steps 1 and 2 each protect
 against a failure mode that only shows up if they run first.
 
-1. **Sweep, then create one worktree for the phase.** First reclaim any strand
-   left by a crashed or aborted prior run:
+1. **Sweep, then create one worktree for the phase.** First fix this run's
+   identity. Generate it **once**, at the first `break-it-check` of the
+   session:
+
+   ```
+   echo "$(date +%Y%m%d-%H%M%S)-$$"
+   ```
+
+   Record the literal it prints (e.g. `20260726-141133-48217`) and reuse that
+   exact string as `<run-id>` for every phase for the rest of the session — the
+   timestamp keeps it legible, the shell PID separates two sessions started in
+   the same second. Never regenerate it per phase: the sweep below is scoped by
+   it, and a run that changes its own id stops recognizing its own strands.
+
+   Then reclaim any strand left by a crashed or aborted prior run:
 
    - `git worktree prune` — reclaims only records whose checkout directory is
      already gone; it cannot touch a live worktree.
-   - Enumerate `git worktree list --porcelain`, **filter to paths under
-     `.git/test-roadmap-worktrees/`, and force-remove only those.**
+   - Enumerate `git worktree list --porcelain` and force-remove a worktree
+     **iff both hold: its path is under `${TMPDIR:-/tmp}/paad-test-roadmap-`,
+     and the run-id in that path is yours.**
 
-   The filter-to-prefix is the whole guarantee here. This is **not** "remove
-   all worktrees" — that would be wrong, because a developer may have their
-   own hand-made worktree checked out elsewhere on the same repo, and this
-   sweep must never touch it. The prefix is fixed and lives inside `.git`, so
-   the sweep can identify its own worktrees by path alone and nothing it
-   creates ever lands in the working tree.
+   Both arms are load-bearing and they guard against different neighbors. The
+   **prefix** is what keeps the sweep off the developer's own worktrees — this
+   is **not** "remove all worktrees"; a developer may have a hand-made worktree
+   checked out elsewhere on the same repo, and this sweep must never touch it.
+   The **run-id** is what keeps the sweep off a *concurrent* `test-roadmap`
+   session, which is the likelier collision for a skill whose pre-flight tells
+   developers to start a fresh session: the prefix alone identifies "worktrees
+   under this path," not "worktrees belonging to *my* run," so a sibling
+   session's sweep would force-remove a live worktree out from under a running
+   mutation. Because the run-id is embedded in the path, both arms are
+   answerable from `git worktree list` output alone.
+
+   Scoping by run-id does mean a strand left by a *dead* session is no longer
+   force-removed by the next session's sweep. That is the deliberate trade, and
+   it costs nothing: the strand sits in `$TMPDIR`, which the OS reclaims, and
+   once the directory is gone the unscoped `git worktree prune` above clears
+   the leftover `.git/worktrees/` record. **Do not add an age or mtime arm to
+   reclaim it sooner.** The worktree is created once and reused across the
+   baseline plus one mutation per `Catches:` behavior, and a directory's mtime
+   only moves when entries are added or removed — so a phase grinding through a
+   slow suite crosses any threshold you pick and gets force-removed
+   mid-mutation, which is the exact failure the run-id scoping exists to
+   prevent, merely rescheduled onto a timer.
 
    Then create the phase's worktree: `git worktree add
-   .git/test-roadmap-worktrees/<phase> HEAD`.
+   "${TMPDIR:-/tmp}/paad-test-roadmap-<run-id>/<phase>" HEAD`.
+
+   The destination is named, not incidental. Nothing this gate creates may land
+   in the working tree: a second full checkout under the repo root is visible to
+   test discovery, linters, the `find`/`grep` recon in this plugin's own skills,
+   and `git status` — and the skill cannot exempt it, because it does not edit
+   the developer's `.gitignore`. `.git/` used to satisfy that property, but it
+   **hard-fails wherever `.git` is a *file* rather than a directory** — a `git
+   worktree` checkout, a submodule, a `--separate-git-dir` repo — with `fatal:
+   could not create leading directories of '.git/…/.git': Not a directory`.
+   Those shapes are not hypothetical here; `agentic-dedup` already detects both.
+   `$TMPDIR` keeps the nothing-in-the-working-tree property, behaves identically
+   in all three of those repo shapes, keeps a fixed prefix for the sweep to
+   match on, and lets the OS reclaim anything a crash leaks.
 
    This worktree is **reused across the baseline run and every mutation in
    the phase** — one worktree per phase, not one per mutation. That reuse is
@@ -215,10 +259,13 @@ hygiene, not a safety gap — the developer's tree is never touched either
 way, so Inviolate #2 holds regardless of whether step 5 ever runs — but the
 leak this time is closed the way the write-fence's window was **not**: on
 the next entry, never on the current exit. Step 1's sweep (`git worktree
-prune`, plus a force-remove filtered to test-roadmap's own prefix) runs on
-the one path a crash cannot skip — the start of the next run — so a strand
-left by a dead session dies at the start of the next one instead of
-persisting indefinitely. On-exit removal (step 5) is only the fast path;
+prune`, plus a force-remove filtered to test-roadmap's `$TMPDIR` prefix
+**and** this run's id) runs on the one path a crash cannot skip — the start
+of the next phase — so a strand left by a short-circuited phase dies when
+the session next enters the gate, instead of persisting for the rest of the
+run. A strand left by a session that died outright is out of the run-id
+sweep's reach by design (step 1) and is reclaimed instead by `$TMPDIR` plus
+the unscoped `prune`. On-exit removal (step 5) is only the fast path;
 the sweep is the guarantee, because no on-exit cleanup survives a crash this
 design already declined to trust once.
 
