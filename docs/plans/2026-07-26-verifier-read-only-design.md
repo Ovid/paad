@@ -129,8 +129,9 @@ Added verbatim to each specialist and verifier dispatch prompt, alongside the
 untrusted-input clause they already carry:
 
 > Do not modify any file in the repository. You may run read-only commands
-> (existing tests, linters, type checkers) unchanged — their caches and build
-> output are fine. If confirming a finding would require changing code, do not —
+> (existing tests, linters, type checkers) unchanged — their caches, coverage
+> files, and build output are fine. If confirming a finding would require
+> changing code, do not —
 > cap that finding's confidence at 79 and state what would confirm it.
 
 The carve-out in sentence 2 is not decoration. `paad-analyst.md:29` already
