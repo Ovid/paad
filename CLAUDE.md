@@ -18,6 +18,8 @@ paad/
 │   └── paad/                      ← the "paad" plugin (namespace for all skills)
 │       ├── .claude-plugin/
 │       │   └── plugin.json        ← plugin manifest (name, version, metadata)
+│       ├── agents/
+│       │   └── paad-analyst.md    ← read-only subagent type (not a skill)
 │       └── skills/
 │           ├── agentic-a11y/
 │           │   └── SKILL.md       ← /paad:agentic-a11y skill
