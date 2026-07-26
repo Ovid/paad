@@ -53,20 +53,30 @@ against a failure mode that only shows up if they run first.
    - `git worktree prune` — reclaims only records whose checkout directory is
      already gone; it cannot touch a live worktree.
    - Enumerate `git worktree list --porcelain` and force-remove a worktree
-     **iff both hold: its path is under `${TMPDIR:-/tmp}/paad-test-roadmap-`,
-     and the run-id in that path is yours.**
+     **iff both hold: its path contains a `paad-test-roadmap-<id>` directory
+     segment, and that `<id>` is your run-id.**
 
    Both arms are load-bearing and they guard against different neighbors. The
-   **prefix** is what keeps the sweep off the developer's own worktrees — this
-   is **not** "remove all worktrees"; a developer may have a hand-made worktree
-   checked out elsewhere on the same repo, and this sweep must never touch it.
-   The **run-id** is what keeps the sweep off a *concurrent* `test-roadmap`
-   session, which is the likelier collision for a skill whose pre-flight tells
-   developers to start a fresh session: the prefix alone identifies "worktrees
-   under this path," not "worktrees belonging to *my* run," so a sibling
-   session's sweep would force-remove a live worktree out from under a running
-   mutation. Because the run-id is embedded in the path, both arms are
-   answerable from `git worktree list` output alone.
+   **`paad-test-roadmap-` segment** is what keeps the sweep off the developer's
+   own worktrees — this is **not** "remove all worktrees"; a developer may have
+   a hand-made worktree checked out elsewhere on the same repo, and this sweep
+   must never touch it. The **run-id** is what keeps the sweep off a
+   *concurrent* `test-roadmap` session, which is the likelier collision for a
+   skill whose pre-flight tells developers to start a fresh session: the segment
+   alone identifies "worktrees this skill made," not "worktrees belonging to
+   *my* run," so a sibling session's sweep would force-remove a live worktree
+   out from under a running mutation. Because the run-id is embedded in the
+   path, both arms are answerable from `git worktree list` output alone.
+
+   **Match on that path segment, not on a `${TMPDIR:-/tmp}/…` string you
+   construct.** The two never compare equal: git records the *resolved*
+   absolute path, and on macOS `$TMPDIR` and `/tmp` both live behind symlinks
+   (`/var/folders/…` is printed as `/private/var/folders/…`, `/tmp` as
+   `/private/tmp`), while `$TMPDIR` itself already ends in `/`, so the
+   constructed string also carries a doubled slash the record does not have. A
+   constructed-prefix test silently matches nothing, which fails in the worst
+   direction available: the sweep becomes a no-op and the leak it exists to
+   close stays open all session.
 
    Scoping by run-id does mean a strand left by a *dead* session is no longer
    force-removed by the next session's sweep. That is the deliberate trade, and
@@ -91,10 +101,11 @@ against a failure mode that only shows up if they run first.
    **hard-fails wherever `.git` is a *file* rather than a directory** — a `git
    worktree` checkout, a submodule, a `--separate-git-dir` repo — with `fatal:
    could not create leading directories of '.git/…/.git': Not a directory`.
-   Those shapes are not hypothetical here; `agentic-dedup` already detects both.
+   Those shapes are not hypothetical here; `agentic-dedup`'s pre-flight already
+   detects two of the three (submodule, and `git worktree add` checkout).
    `$TMPDIR` keeps the nothing-in-the-working-tree property, behaves identically
-   in all three of those repo shapes, keeps a fixed prefix for the sweep to
-   match on, and lets the OS reclaim anything a crash leaks.
+   in all three of those repo shapes, keeps a fixed path segment for the sweep
+   to match on, and lets the OS reclaim anything a crash leaks.
 
    This worktree is **reused across the baseline run and every mutation in
    the phase** — one worktree per phase, not one per mutation. That reuse is
@@ -259,7 +270,7 @@ hygiene, not a safety gap — the developer's tree is never touched either
 way, so Inviolate #2 holds regardless of whether step 5 ever runs — but the
 leak this time is closed the way the write-fence's window was **not**: on
 the next entry, never on the current exit. Step 1's sweep (`git worktree
-prune`, plus a force-remove filtered to test-roadmap's `$TMPDIR` prefix
+prune`, plus a force-remove filtered to test-roadmap's own path segment
 **and** this run's id) runs on the one path a crash cannot skip — the start
 of the next phase — so a strand left by a short-circuited phase dies when
 the session next enters the gate, instead of persisting for the rest of the
