@@ -47,6 +47,7 @@ paad/
 - **Plugin name**: `paad` (so all skills are invoked as `/paad:<skill-name>`)
 - **Skill naming**: skill folder names become the suffix after `paad:` — e.g., `skills/agentic-architecture/` → `/paad:agentic-architecture`
 - **Versioning**: both `marketplace.json` and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. Run `make bump-version VERSION=X.Y.Z` to update all three places at once; `make check-skill-versions` (run as part of `make test`) catches drift.
+- **Changelog**: `CHANGELOG.md` tracks user-facing changes to the plugin. When bumping the version, rename the `[Unreleased]` section to the new version with today's date and open a fresh empty `[Unreleased]` above it. Repo-only churn (docs, `.claude/skills/`, README wording) doesn't need an entry.
 - **Validation**: run `claude plugin validate .` (marketplace) and `claude plugin validate ./plugins/paad` (plugin) before committing
 - **Announce on invocation**: every `SKILL.md` must begin its body with the line `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` so users see which skill ran and which version produced the behavior. The literal version string must match `plugin.json`.
 

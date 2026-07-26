@@ -1,0 +1,201 @@
+# Changelog
+
+All notable changes to the `paad` plugin. Format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are semver and
+match `plugins/paad/.claude-plugin/plugin.json`.
+
+Entries cover the distributed plugin. Repo-only work (project-local
+`.claude/skills/`, docs, design notes, README) is listed only where it changes
+what a plugin user sees.
+
+## [Unreleased]
+
+### Fixed
+- `fix-architecture`: Safety Net gate no longer deadlocks; stops committing reverts.
+- `vibe`: removed two invented retry loops, one of which gave wrong advice.
+- `agentic-a11y`: existing-tooling gate now has a DROP edge.
+- `makefile`, `agentic-architecture`, `alignment`: three review corrections.
+- All skills: digraphs moved to the same relative position (after the intro, before the first `##`).
+- `scripts/lint_digraphs.py`: dropped the `style=` false positive, fixed chained-edge parsing.
+
+## [1.19.0] — 2026-07-25
+
+### Added
+- Every skill except `help` now carries a digraph of its own control flow:
+  `agentic-architecture` (analysis flow), `agentic-a11y` (audit flow),
+  `alignment` (Phases 2–4), `pushback` (Phases 1.5, 2, 3),
+  `vibe` (GREEN/REFACTOR/repeat and the skip-TDD path),
+  `fix-architecture` (every stop branch and the Safety Net gate).
+- `make check-digraphs` now lints the digraph contents with graphviz
+  (`scripts/lint_digraphs.py`), not just the presence of a ```dot fence.
+
+### Fixed
+- `agentic-review`: digraph matches Rule 0 routing and the uncommitted-changes stop.
+- `makefile`: `shape=` no longer attached to an edge; all nodes declared.
+
+## [1.18.0] — 2026-05-02
+
+### Changed
+- `agentic-review`: tightened contracts across the `references/` package,
+  plus pushback corrections to the references hardening.
+
+## [1.17.0] — 2026-05-01
+
+### Changed
+- `agentic-review`: deterministic bug-class derivation and a closed enum for
+  Spec Compliance.
+- `agentic-review`: stable status tokens for out-of-scope routing and bail-outs.
+- `agentic-review`: untrusted-data preamble propagated to the verifier and
+  orchestrator.
+- `agentic-review`: ref-loaded echo-back tokens for subagent dispatch.
+- `agentic-review`: field-encoding rules for backlog entries; confidence
+  mapping codified.
+- `agentic-review`: thicker error-handling and contract-integration references.
+- `make check-extracted-refs` hardened against silent no-ops.
+
+## [1.16.0] — 2026-05-01
+
+### Changed
+- `agentic-review` split into a `references/` package: five specialist lenses,
+  the Verifier, and the Phase 4 report template each extracted to their own
+  file, flattened to one directory level.
+
+## [1.15.0] — 2026-05-01
+
+### Added
+- `agentic-review`: Spec Compliance specialist extracted to `references/`.
+- `make check-extracted-refs` — structural guardrail (manifest + check target)
+  so extracted references cannot silently drift from the skill.
+
+### Fixed
+- `agentic-review`: obsolete `Plan` value dropped from the backlog bug-class enum.
+- `agentic-review`: clearer `.gitignore` advice in the security warning; assorted
+  arguments, pre-flight, and Phase 2/3 contract gaps closed.
+- `help`: `agentic-review` dispatches 6 specialists, not 5.
+
+## [1.14.0] — 2026-05-01
+
+### Changed
+- `agentic-review`: the Plan Alignment specialist is replaced by a Spec
+  Compliance specialist.
+
+## [1.13.1] — 2026-04-26
+
+### Changed
+- `agentic-review`: Post-Review announces the out-of-scope summary explicitly.
+
+## [1.13.0] — 2026-04-26
+
+### Added
+- Every skill announces `Running paad:<skill-name> v<version>` on invocation, so
+  it is always visible which skill ran and which version produced the behaviour.
+
+### Fixed
+- `agentic-review`: soft-warning threshold and empty-Suggestions behaviour aligned.
+
+## [1.12.0] — 2026-04-26
+
+### Added
+- `agentic-review` scope classification: findings are split in-scope /
+  out-of-scope against a touched-lines map built in Phase 1, with a documented
+  backlog file format and lifecycle for the out-of-scope ones.
+- `agentic-review`: specialists must attribute findings to their model; Phase 3
+  verifier handles classification and backlog dedup; Phase 4 handles empty and
+  failure cases; Post-Review warns on security findings and backlog size.
+
+## [1.11.1] — 2026-04-26
+
+Version-numbering note: this release also carried the new `fix-architecture`
+skill, which under strict semver warranted a minor bump.
+
+### Added
+- `/paad:fix-architecture` — work through architectural flaws documented in a
+  `paad/architecture-reviews/` report, resumable across sittings.
+- Digraphs for `alignment`, `pushback`, `vibe`, and `makefile`.
+- `Makefile` with validation and consistency checks (`make test`).
+- Experimental skill copies for Kiro, Antigravity, and Cursor users under
+  `kiro_and_antigravity/`.
+
+### Changed
+- Skill descriptions rewritten as invocation triggers rather than workflow
+  summaries, so Claude picks the right skill from the user's phrasing.
+- `alignment`: the TDD task rewrite is skipped when it isn't needed.
+- `fix-architecture`: named phases, complexity assessment, accurate triage
+  labels; safety-net tests always written before any refactoring, and before any
+  fixes in multi-flaw batches; staleness measured by time, not commit count.
+
+## [1.11.0] — 2026-03-15
+
+### Added
+- `/paad:makefile` — create or update a project Makefile with standard targets,
+  asking before modifying any target that already exists.
+
+## [1.10.0] — 2026-03-15
+
+Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.0.
+
+### Added
+- `pushback`: scope shape check.
+
+### Changed
+- **Breaking:** `/paad:a11y` renamed to `/paad:agentic-a11y`.
+- `help` output corrected; documents `help` usage and notes that `pushback` and
+  `alignment` are worth running more than once.
+
+## [1.8.0] — 2026-03-14
+
+### Added
+- `/paad:help` — overview table plus per-skill detail for every paad skill.
+  Skill changes now require updating `help` to match.
+
+## [1.7.0] — 2026-03-14
+
+### Changed
+- **Breaking:** `/paad:architecture` renamed to `/paad:agentic-architecture` and
+  rewritten as a multi-agent analysis.
+
+## [1.6.0] — 2026-03-14
+
+### Added
+- `/paad:vibe` — small fixes (1–3 files, same module) at vibe-coding speed with
+  TDD guardrails instead of skipped tests and duplicated code.
+
+## [1.5.0] — 2026-03-14
+
+### Added
+- `/paad:alignment` — verify requirements/specs against implementation plans,
+  with a TDD rewrite of the resulting tasks.
+
+## [1.4.0] — 2026-03-14
+
+### Added
+- `$ARGUMENTS` support across all skills, so scope (a path, directory, or branch)
+  can be passed positionally: `/paad:<skill> path/to/scope`.
+
+## [1.3.0] — 2026-03-14
+
+### Added
+- `/paad:pushback` — review a spec, PRD, or design plan before implementation
+  begins.
+
+## [1.2.0] — 2026-03-14
+
+### Added
+- `/paad:a11y` — accessibility and WCAG 2.2 audit for user-facing apps.
+
+### Changed
+- Skills write their output to `paad/*` directories.
+
+## [1.1.0] — 2026-03-14
+
+### Added
+- `/paad:agentic-review` — multi-agent code review of the current branch.
+- MIT license.
+
+## [1.0.0] — 2026-03-14
+
+### Added
+- Initial release: `paad` plugin marketplace with the `architecture` skill.
+
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.19.0...HEAD
+[1.19.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.19.0
