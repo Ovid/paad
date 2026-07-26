@@ -140,6 +140,16 @@ Every skill's specialists report confidence 0–100 against a floor
 deterministically from that number (`verifier.md:25`, 80–100 → High, 60–79 →
 Medium). 79 sits inside every floor and maps to Medium automatically.
 
+**Verifiers get the first two sentences only, plus a third matching their own
+drop rule.** The cap is specialist-only vocabulary: `verifier.md:26` sets a
+merged finding's confidence to the *maximum* of the contributing specialists, so
+a verifier obeying a cap would silently demote a corroborated High finding to
+Medium. Each verifier's third sentence instead points at the rule that skill
+already gives it for findings it cannot confirm by reading (`verifier.md:24,:58`
+reject; `agentic-architecture:185` drop; `agentic-a11y:323` drop as a false
+positive; `agentic-dedup:560,:565` reject into the rejected-candidates table),
+and forbids lowering a merged or corroborated confidence in its place.
+
 Four lines duplicated four times cannot meaningfully drift, so this needs no
 shared-reference mechanism. It covers the two places the agent definition cannot
 reach: the `Bash` hole, and the exported copies described next.

@@ -178,7 +178,7 @@ Files to audit, grouped for specialists, annotated with detected platform(s).
 
 ## Phase 2: Specialist Audit (Parallel)
 
-Dispatch these agents simultaneously using the Agent tool. Each receives: the file manifest, detected platform(s), steering file contents, existing a11y tooling notes, and their specialist focus.
+Dispatch these agents simultaneously using the Agent tool (`subagent_type: paad:paad-analyst`). Each receives: the file manifest, detected platform(s), steering file contents, existing a11y tooling notes, and their specialist focus.
 
 ### Core specialists (always dispatched)
 
@@ -192,7 +192,7 @@ Dispatch these agents simultaneously using the Agent tool. Each receives: the fi
 
 ### Conditional specialist
 
-Dispatch when the platform has framework-specific a11y pitfalls (web frameworks, SwiftUI, Compose, Flutter, React Native, game engines):
+Dispatch this agent exactly as the core specialists (`subagent_type: paad:paad-analyst`) when the platform has framework-specific a11y pitfalls (web frameworks, SwiftUI, Compose, Flutter, React Native, game engines):
 
 | Agent | Focus | Input |
 |-------|-------|-------|
@@ -206,7 +206,7 @@ Each specialist agent prompt must include:
 - The detected platform(s)
 - Steering file contents with the staleness caveat
 - Existing a11y tooling notes
-- Instruction: "You are an accessibility specialist focused on [FOCUS AREA]. The detected platform(s) for this project: [PLATFORMS]. Your goal is to find accessibility barriers that affect [USER GROUP]. For each finding report: file:line, what's wrong, which accessibility criterion it violates (WCAG 2.2 criterion where applicable, or platform-specific guideline), the conformance level (A/AA/AAA), who is affected and how, a concrete code-level fix, and your confidence (0-100). Only report findings with confidence >= 60."
+- Instruction: "You are an accessibility specialist focused on [FOCUS AREA]. The detected platform(s) for this project: [PLATFORMS]. Your goal is to find accessibility barriers that affect [USER GROUP]. For each finding report: file:line, what's wrong, which accessibility criterion it violates (WCAG 2.2 criterion where applicable, or platform-specific guideline), the conformance level (A/AA/AAA), who is affected and how, a concrete code-level fix, and your confidence (0-100). Only report findings with confidence >= 60. Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged. If confirming a finding would require changing code, do not — cap your confidence at 79 and state what would confirm it."
 
 ### Platform-specific checks per specialist
 
@@ -316,7 +316,7 @@ Dispatch when the platform has framework-specific a11y pitfalls. Include relevan
 
 ## Phase 3: Verification
 
-After all specialists complete, dispatch a single **Verifier** agent with all findings. The verifier:
+After all specialists complete, dispatch a single **Verifier** agent (`subagent_type: paad:paad-analyst`) with all findings. The verifier:
 
 1. For each finding, reads the actual current code at the referenced file:line
 2. Confirms the accessibility barrier exists and isn't handled elsewhere (e.g., by a parent component, a platform API, a framework feature, a component library, or a system-level setting)
@@ -329,7 +329,7 @@ After all specialists complete, dispatch a single **Verifier** agent with all fi
    - **Minor** — Best practice improvement or AAA enhancement
 6. Deduplicates findings flagged by multiple specialists (note which specialists agreed — cross-specialist agreement increases confidence)
 
-**Verifier prompt must include:** "You are verifying accessibility findings. For each finding, read the actual code and confirm the barrier exists. Be skeptical — the platform, framework, or component library may already handle accessibility automatically. On iOS, UIKit provides some accessibility by default for standard controls. On Android, standard Material components include accessibility support. A finding reported by multiple specialists is more likely real. Ensure the cited criterion is correct."
+**Verifier prompt must include:** "You are verifying accessibility findings. For each finding, read the actual code and confirm the barrier exists. Be skeptical — the platform, framework, or component library may already handle accessibility automatically. On iOS, UIKit provides some accessibility by default for standard controls. On Android, standard Material components include accessibility support. A finding reported by multiple specialists is more likely real. Ensure the cited criterion is correct. Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged. If confirming a finding would require changing code, do not — treat the barrier as unconfirmed and drop it as you would any other false positive, rather than lowering the finding's confidence or severity."
 
 ## Phase 4: Report
 
