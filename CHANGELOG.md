@@ -13,20 +13,26 @@ what a plugin user sees.
 ## [1.22.0] — 2026-07-26
 
 ### Changed
-- **Analysis subagents can no longer modify your working tree.** `agentic-review`,
+- **Analysis subagents no longer carry file-editing tools.** `agentic-review`,
   `agentic-dedup`, `agentic-a11y`, and `agentic-architecture` now dispatch every
   specialist and verifier as `paad-analyst`, a subagent type whose toolset omits
   `Edit`, `Write`, and `NotebookEdit`. Subagents had been observed editing source
   code to test whether a finding was real. Running the existing test suite, a
-  linter, or a type checker unchanged is still allowed; only mutation is gone.
+  linter, or a type checker unchanged is still allowed.
+  This closes the observed failure mode, not the whole category: `Bash` stays,
+  because the `agentic-dedup` and `agentic-architecture` specialists do their own
+  `git`/`find` recon, so a subagent that ignores its instructions can still reach
+  `sed -i` or shell redirection. That is prose-enforced, not mechanical.
 - Each dispatch prompt also states the rule in prose, because the exported
   Kiro/Antigravity copies have no subagent-type mechanism and the prose is the
   only protection there. Specialists cap a finding's confidence at 79 when
   confirming it would require a code change and say what would confirm it;
   verifiers apply their skill's existing drop rule instead of a cap.
-- `agentic-a11y` and `agentic-architecture` subagents now receive untrusted-input
-  handling, which they previously had no form of — their specialists and
-  verifiers ran against arbitrary repositories with no injection defense.
+- In Claude Code, `agentic-a11y` and `agentic-architecture` subagents now receive
+  untrusted-input handling, which they previously had no form of — their
+  specialists and verifiers ran against arbitrary repositories with no injection
+  defense. This arrives via the shared `paad-analyst` role prompt, which the Kiro
+  and Antigravity exports do not include, so those copies still lack it.
 
 ### Fixed
 - **`test-roadmap`: the `break-it-check` worktree no longer lands under `.git/`.**

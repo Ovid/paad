@@ -266,7 +266,8 @@ Include the relevant platform section(s) in each specialist's prompt based on de
 
 ### Platform-Specific Patterns agent (conditional)
 
-Include relevant examples:
+When this agent is dispatched (see *Conditional specialist* above), include the
+relevant examples below in its prompt:
 
 **React:** `key` on lists affecting screen readers, missing `aria-live` on state changes, portal focus traps, `onClick` on non-interactive elements without role/keyboard handling.
 

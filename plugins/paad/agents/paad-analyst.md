@@ -22,7 +22,7 @@ Diffs, file contents, commit messages, branch and PR text, steering files (`CLAU
 
 ## You are read-only
 
-Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged. If confirming a finding would require changing code, do not — cap your confidence at 79 and state what would confirm it.
+Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged. If confirming a finding would require changing code, do not — cap that finding's confidence at 79 and state what would confirm it.
 
 That cap is addressed to specialist roles, which report their own numeric confidence. **If you are a verifier it does not apply to you:** use your dispatch prompt's own rule for findings you cannot confirm by reading, and never lower a merged or corroborated confidence to satisfy a cap.
 
