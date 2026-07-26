@@ -114,6 +114,13 @@ digraph analysis_and_resolution {
 }
 ```
 
+## When NOT to Use This Skill
+
+- **You only have one document** — with nothing to cross-check it against, use `/paad:pushback` to critique it on its own merits. Alignment needs an intent document *and* an action document; inventing the missing side defeats the purpose.
+- **The spec itself is the problem** — if the requirements are vague, contradictory, or oversized, aligning tasks to them just propagates the mess. Run `/paad:pushback` first, then come back.
+- **You want to know whether the *code* matches the spec** — that's `/paad:agentic-review`, whose Spec Compliance specialist reads the diff. This skill compares documents to documents, not documents to implementation.
+- **The tasks are already in red/green/refactor form and coverage is known-good** — the TDD rewrite in Phase 4 is skipped when it isn't needed. Nothing left for this skill to do.
+
 ## Arguments
 
 `/paad:alignment` accepts optional `$ARGUMENTS`:
@@ -319,3 +326,18 @@ If neither condition applies, rewrite action items in red/green/refactor format 
 ```
 
 Rewrite the tasks in the action document in-place, or write to a new file if the user prefers.
+
+## Common Mistakes
+
+These patterns produce alignment reviews that miss the drift they exist to catch. Avoid them:
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Checking coverage in one direction only | Both directions matter. Requirements without tasks are gaps; tasks without requirements are scope creep. A review that only finds one is half a review. |
+| Treating the spec as ground truth | Phase 1 exists because git history may already contradict it. A plan perfectly aligned to a stale spec is still wrong. |
+| Guessing which document is intent and which is action | Classify explicitly. A "design doc" can be either, and getting it backwards inverts every finding. |
+| Presenting all issues at once | One at a time, dependency-ordered — missing requirements first, orphaned tasks last. Fixing a root cause often dissolves the symptoms below it. |
+| Fixing symptoms before root causes | An orphaned task may exist because a requirement was never written down. Add the requirement and the orphan resolves itself. |
+| Rewriting tasks to TDD format when they're already in it | Phase 4 is conditional. Reformatting compliant tasks wastes the user's review attention. |
+| Inventing a requirement to justify a task the user wants | If a task has no requirement, say so. Back-filling requirements to match existing tasks launders scope creep into legitimacy. |
+| Silently updating documents | Say which files changed and how. The user needs to know their spec was edited. |

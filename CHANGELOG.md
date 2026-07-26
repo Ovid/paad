@@ -10,7 +10,38 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Added
+- Every skill except `help` gained a **When NOT to Use This Skill** section, naming
+  the situations that should route elsewhere. Draws the previously-implicit
+  boundaries between `pushback` and `alignment`, `agentic-architecture` and
+  `fix-architecture`, and `vibe` and everything larger than it.
+- **Common Mistakes** tables added to `alignment`, `help`, `makefile`, `pushback`,
+  and `vibe`, matching the tables the other four skills already carried.
+
+### Changed
+- `help`: description rewritten as a trigger ("Use when the user asks which paad
+  skills exist…") so it fires on questions like "what can paad do", instead of
+  only on an explicit `/paad:help`.
+- `vibe`: description no longer summarizes the skill's guardrails. A description
+  that restates the workflow becomes a shortcut Claude takes instead of reading
+  the body — which for `vibe` meant skipping the mandatory red/green/refactor cycle.
+
 ### Fixed
+- `fix-architecture`: resolved a contradiction between the Safety Net commit and
+  manual-commit mode. One line said safety-net tests are committed "so they survive
+  if a fix is reverted"; two lines later, manual mode said to leave changes staged.
+  A manual-mode session that hit the revert path destroyed the safety-net tests
+  along with the fix. Commit mode now governs fix commits only — the Safety Net
+  phase commits in both modes.
+- `agentic-review`: the Verifier is now dispatched with the touched-lines map, the
+  diff, and the manifest. `references/verifier.md` classifies scope by checking each
+  finding's anchor line against that map, but the Phase 3 dispatch listed only
+  findings and the backlog slice. Without the map, blame degrades to file
+  granularity, the out-of-scope bucket empties, and Post-Review reports "No
+  out-of-scope bugs found" without ever having determined it.
+- `agentic-review`: the "When NOT to Use" note no longer implies the specialist
+  count is negotiable — the judgement call is whether to run the skill, not how
+  many of the six lenses to dispatch.
 - `fix-architecture`: Safety Net gate no longer deadlocks; stops committing reverts.
 - `vibe`: removed two invented retry loops, one of which gave wrong advice.
 - `agentic-a11y`: existing-tooling gate now has a DROP edge.

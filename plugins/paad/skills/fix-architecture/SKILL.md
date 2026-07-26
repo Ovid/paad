@@ -169,6 +169,14 @@ digraph fix_session {
 }
 ```
 
+## When NOT to Use This Skill
+
+- **No architecture report exists** — this skill works through documented flaws with IDs it can track status against. Run `/paad:agentic-architecture` first; don't improvise a flaw list.
+- **You're on the primary branch** — pre-flight stops. Structural changes need a branch you can abandon.
+- **The fix is a small local change** — use `/paad:vibe`. The safety-net and per-flaw approval machinery here is priced for changes that move boundaries between components.
+- **You want to know what's wrong** — that's `/paad:agentic-architecture`. This skill starts from an answer, it doesn't produce one.
+- **There's no test infrastructure and the user won't add any** — the safety-net gate is what makes structural refactoring survivable. Without tests, say plainly that the risk can't be managed rather than proceeding on optimism.
+
 ## Arguments
 
 `/paad:fix-architecture` accepts optional `$ARGUMENTS`:
@@ -208,6 +216,8 @@ A setup conversation before any code is touched. **One question per message. Ask
 Two modes:
 - **Auto-commit** — skill commits after each successful fix (one commit per fix, including tests and report update)
 - **Manual commit** — skill leaves changes staged, tells the developer what was changed
+
+Both modes govern **fix** commits only. The Safety Net phase always commits its tests, in either mode — that commit is what lets a fix be reverted without taking the tests with it. Say so when the developer picks manual: "I'll leave fixes staged for you. The safety-net tests still get their own commit up front, so reverting a fix can't destroy them."
 
 ### Step 3: Flaw Triage
 
@@ -256,7 +266,7 @@ Get explicit go-ahead before touching any code.
 
 1. For each flaw in the batch, run Validate the Flaw and Assess Test Coverage
 2. Write all needed safety-net tests
-3. Commit all safety-net tests together (before any fix commits)
+3. Commit all safety-net tests together (before any fix commits) — **in both commit modes.** Manual-commit mode applies to fix commits, not to this one. Leaving safety-net tests staged means a later revert destroys them along with the fix, which is the exact failure this phase exists to prevent.
 4. Only then proceed to the Fix Loop (starting at Propose Fix Options for each flaw)
 
 ## Fix Loop
@@ -354,9 +364,9 @@ Resolves architectural flaw F-ID (<flaw label>) identified in
 <brief description of what changed>
 ```
 
-Note: safety-net tests are committed in the Safety Net phase (before any fixes) so they survive if a fix is reverted.
+Note: safety-net tests are committed in the Safety Net phase (before any fixes) so they survive if a fix is reverted. That commit already happened regardless of commit mode — nothing here re-commits it.
 
-If manual mode: leave changes staged, tell the developer what changed.
+If manual mode: leave the **fix** changes staged, tell the developer what changed.
 
 ### Check Flaw Dependencies
 

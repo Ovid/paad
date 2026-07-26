@@ -1,6 +1,6 @@
 ---
 name: help
-description: Show help for all paad skills or a specific skill
+description: Use when the user asks which paad skills exist, what a paad skill does, which one fits their situation, or how to invoke one — including "what can paad do", "list the paad skills", "is there a paad skill for X", or a request for the arguments of a named paad skill
 ---
 
 **On invocation:** announce "Running paad:help v1.19.0" before anything else.
@@ -20,6 +20,16 @@ Show help for paad skills. If `$ARGUMENTS` matches a skill name, show detailed h
 If `$ARGUMENTS` is provided and matches a skill name (with or without the `paad:` prefix), show the detailed help for that skill only. If the argument doesn't match any skill, say "Unknown skill: [name]. Available skills:" and show the overview.
 
 Do NOT read files or run commands. All help text is below.
+
+## Common Mistakes
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Reading SKILL.md files to answer the question | Everything needed is in this file. Reading the skills burns context to reproduce text already written below. |
+| Paraphrasing or summarizing the help text | Display the blocks verbatim. Arguments and output paths are exact; a paraphrase invents flags that don't exist. |
+| Answering for a skill not listed here | If it isn't below, it isn't a paad skill. Say "Unknown skill: [name]" and show the overview. |
+| Running the skill the user asked about | They asked what it does, not for it to happen. Show the help and stop. |
+| Showing every detailed section when no argument was given | No argument means the overview only. The detailed sections are for a named skill. |
 
 ---
 

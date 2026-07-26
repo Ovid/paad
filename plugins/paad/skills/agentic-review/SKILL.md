@@ -71,6 +71,14 @@ digraph preflight {
 }
 ```
 
+## When NOT to Use This Skill
+
+- **You're on the primary branch, or changes are uncommitted** — pre-flight stops in both cases, and for good reason: there is no diff to scope findings against. Commit to a feature branch first.
+- **You want structural assessment, not bugs** — use `/paad:agentic-architecture`. Specialists here hunt defects in a diff; they will not tell you the module boundaries are wrong.
+- **You want style, formatting, or naming feedback** — out of scope by design. That's what linters and formatters are for; `/paad:makefile` can wire them up.
+- **The change is one trivial commit** — a full six-specialist dispatch costs a session; don't spend it on a typo fix. The judgement call is whether to run this skill at all, never how many specialists to run once you have.
+- **You want the findings fixed** — the report is the deliverable and nothing is auto-fixed. Take the report into a separate session to act on it.
+
 ## Definitions
 
 Findings land in one of three buckets:
@@ -198,7 +206,15 @@ Each specialist agent prompt must include:
 
 ## Phase 3: Verification
 
-After all specialists complete, dispatch a single **Verifier** agent with all findings and a pre-filtered slice of `paad/code-reviews/backlog.md` (only entries whose `File (at first sighting)` path matches a file in the current review's manifest).
+After all specialists complete, dispatch a single **Verifier** agent with all of the following:
+
+- All specialist findings, verbatim
+- The full `git diff <base>...HEAD`
+- **The touched-lines map built in Phase 1 step 10, reproduced verbatim**
+- The file manifest from Phase 1 step 9
+- A pre-filtered slice of `paad/code-reviews/backlog.md` (only entries whose `File (at first sighting)` path matches a file in the current review's manifest)
+
+The touched-lines map is not optional. `references/verifier.md` step 6 classifies every finding by checking its anchor line against that map; without it, blame degrades to file granularity, nearly every finding in a changed file is marked in-scope, and the out-of-scope bucket and backlog silently empty — after which Post-Review announces "No out-of-scope bugs found" to a user for whom it was never actually determined. If you skipped step 10, build the map now, before dispatching.
 
 The Verifier's detailed instructions — its 7-step pipeline (read code, drop false positives, assign severity, merge duplicates, classify in-scope/out-of-scope/out-of-scope-addition, dedup out-of-scope bugs against the backlog), output format, and verification discipline — live at `references/verifier.md`. The dispatch prompt for the Verifier must include this instruction verbatim:
 

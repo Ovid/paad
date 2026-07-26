@@ -84,6 +84,13 @@ digraph analysis_flow {
 }
 ```
 
+## When NOT to Use This Skill
+
+- **You want the flaws fixed, not found** — this is diagnosis only and will not propose remedies. Run it first, then `/paad:fix-architecture` against the report it writes.
+- **You already have a recent report** — re-running burns a session to regenerate what you have. Read the existing report in `paad/architecture-reviews/` and use `/paad:fix-architecture`, which handles staleness itself.
+- **The question is about one branch's changes** — use `/paad:agentic-review`. This skill assesses the structure of a codebase, not the risk in a diff.
+- **The scope is a handful of files** — architecture is about boundaries and relationships between components. Below that scale there's no structure to assess, and the report will pad.
+
 ## Arguments
 
 `/paad:agentic-architecture` accepts optional `$ARGUMENTS`:

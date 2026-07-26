@@ -93,6 +93,13 @@ digraph audit_flow {
 }
 ```
 
+## When NOT to Use This Skill
+
+- **The code has no user-facing surface** — a library, data pipeline, or internal API has no one to exclude. Accessibility applies where humans interact.
+- **You want a general bug hunt on a branch** — use `/paad:agentic-review`. This skill audits accessibility against WCAG, not correctness.
+- **You're mid-change and want a quick check on one component** — a full audit dispatches 5+ agents and eats a session. `/paad:vibe` already suggests this skill when a change touches UI; take it up afterwards, in a fresh session.
+- **The user needs a legal conformance statement (VPAT, EN 301 549 attestation)** — this produces an engineering audit, not a certified accessibility conformance report. Say so rather than letting a report be mistaken for one.
+
 ## Arguments
 
 `/paad:agentic-a11y` accepts optional `$ARGUMENTS`:

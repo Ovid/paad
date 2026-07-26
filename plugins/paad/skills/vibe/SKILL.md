@@ -1,6 +1,6 @@
 ---
 name: vibe
-description: Use when making a small fix or quick change (1-3 files, same module) — bug fixes, typos, minor features, tweaks — where you want vibe-coding speed without the recklessness of skipping tests, duplicating existing code, or papering over deeper structural issues
+description: Use when making a small, quick change — a bug fix, typo, minor feature, tweak, or anything the user calls "vibe coding" — that looks like 1-3 files in the same module
 ---
 
 **On invocation:** announce "Running paad:vibe v1.19.0" before anything else.
@@ -78,6 +78,15 @@ digraph vibe {
   "Follow-up genuinely warranted?" -> "Say nothing further" [label="no — trivial fix"];
 }
 ```
+
+## When NOT to Use This Skill
+
+Hand off instead of starting here when:
+
+- **The change is clearly multi-module from the outset** — a new feature spanning services, a migration, a rename across dozens of files. Step 2 warns at 4+ files, but that gate exists for changes that turn out bigger than they looked, not for ones that were obviously big before you started. Write a plan first, then run `/paad:alignment` against it.
+- **The task is "review this", not "change this"** — use `/paad:agentic-review` for bug hunting, `/paad:agentic-a11y` for accessibility, `/paad:agentic-architecture` for structural assessment. This skill changes code; it isn't a review lens.
+- **The user has a spec or plan document** — run `/paad:pushback` or `/paad:alignment` against it first. Vibing a change that a spec already describes differently just creates drift.
+- **You already know the fix requires restructuring** — `/paad:agentic-architecture` to diagnose, then `/paad:fix-architecture` to work through it with safety nets.
 
 ## Arguments
 
@@ -194,3 +203,18 @@ Suggest paad skills when the change warrants it. Don't suggest follow-ups for tr
 - If the change touched security-sensitive code (auth, permissions, input handling, secrets) → "Consider `/paad:agentic-review` before merging — this touched security-sensitive code."
 - If the change touched UI components → "Consider `/paad:agentic-a11y src/path/to/changed/files` to check accessibility."
 - If the change felt significantly harder than expected → "This was harder than it should have been. Consider `/paad:agentic-architecture` to investigate whether there are deeper structural issues."
+
+## Common Mistakes
+
+These patterns turn safe vibe coding back into reckless vibe coding. Avoid them:
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Writing the fix first, then a test that covers it | RED comes first. A test written after the code passes immediately and proves nothing about the behaviour you intended. |
+| Treating "the fix is obvious" as grounds to skip RED | Obvious fixes are where regressions hide, because nobody guards them. Write the failing test; it costs seconds. |
+| Skipping REFACTOR because tests are green | Green is the entry condition for REFACTOR, not the exit. This is the step that gets silently dropped, and it's where the quality comes from. |
+| Continuing past a RED test that passes unexpectedly | Stop and tell the user. Either the feature already exists or the test doesn't test what you think — both change what you should do next. |
+| Building a helper that already exists elsewhere | Search the codebase in Step 2 before writing anything. Report what you found and recommend extending it. |
+| Warning about 4+ file scope, then proceeding without an answer | The warning is a question. Wait for the user to choose. |
+| Expanding the fix "while you're in there" | GREEN means minimal. Adjacent broken code, missing error handling, and new abstractions are separate tasks. |
+| Suggesting a follow-up paad skill on every task | Only when genuinely warranted — security-sensitive, UI, or harder than expected. Reflexive suggestions train the user to ignore them. |

@@ -112,6 +112,13 @@ digraph scope_critique_resolution {
 }
 ```
 
+## When NOT to Use This Skill
+
+- **You have both a spec and a plan, and want to know whether they match** — that's `/paad:alignment`. This skill critiques one document against reality; alignment cross-checks two documents against each other. If in doubt: pushback asks "is this spec any good?", alignment asks "does the plan deliver this spec?"
+- **Implementation has already started** — the questions change from "should we build this" to "does the code match intent". Use `/paad:agentic-review` (Spec Compliance covers drift) or `/paad:alignment`.
+- **There is no document and no discussion to work from** — this skill critiques a proposal, it doesn't author one. Get the intent written down first.
+- **The user wants the spec implemented, not criticized** — say what you'd push back on in a line or two, then get on with the work. Don't run a full critique nobody asked for.
+
 ## Input Resolution
 
 Resolve the spec to review in this order:
@@ -268,3 +275,19 @@ Issues not yet discussed (user stopped early). Listed for future reference.
 ### If the spec came from conversation history
 
 Ask: "The spec isn't saved to a file yet. Want me to write it to a file first?" Suggest a reasonable path based on the project structure (e.g., `docs/plans/`, `docs/specs/`). Then proceed with the chosen output option (update or report).
+
+## Common Mistakes
+
+These patterns produce pushback that reads well and changes nothing. Avoid them:
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Critiquing the spec without checking the codebase | Phase 1 is first for a reason. "This contradicts what already shipped" outranks every stylistic concern. |
+| Listing every issue at once | One at a time, most impactful first. A wall of twenty findings gets skimmed and dismissed. |
+| Raising a problem without options | Every issue needs concrete options, best to worst, with a recommendation. "This is ambiguous" is an observation, not pushback. |
+| Suggesting a split because the spec is long | Length isn't the test — independent value is. Split only when each piece ships something useful on its own. |
+| Mistaking sequenced work for bundled features | Phases of one coherent feature belong together. Cohesion is about whether they'd be separate PRs, not whether they're separate steps. |
+| Softening findings to seem agreeable | The skill's whole value is saying what a reviewer would say before the code exists. Hedged criticism is worse than none. |
+| Manufacturing issues to fill all six categories | Not every spec has security concerns or contradictions. Say a category is clean and move on. |
+| Continuing past "good enough" | That's the stop signal. Keep going and the user stops reading. |
+| Rewriting the spec instead of critiquing it | Present issues and let the user decide. Silent rewrites replace their judgment with yours. |

@@ -54,6 +54,13 @@ digraph makefile_flow {
 }
 ```
 
+## When NOT to Use This Skill
+
+- **The project's task runner is not make, and adding one isn't wanted** — a repo standardized on `npm run`, `just`, `task`, `nox`, or `cargo xtask` doesn't need a Makefile shimming over it. Ask before introducing a second entry point.
+- **You only need to run a command once** — run it. A target is for commands the project runs repeatedly.
+- **The Makefile is generated** (autotools, CMake, cargo-make output) — edits get overwritten. Change the generator.
+- **The request is "why is my build broken"** — that's debugging, not target management. Fix the build, then come back if the targets need work.
+
 ## Overview
 
 Creates or updates a project Makefile with standard targets. **Never modifies an existing target without explicit user approval.**
@@ -155,3 +162,15 @@ Common approaches by stack:
 | **prove (Perl)** | Default is fine; avoid `--verbose` |
 
 **If the testing tool doesn't support balanced output** (e.g., only offers silent vs. firehose), inform the user and ask how they'd like to handle it rather than guessing.
+
+## Common Mistakes
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Rewriting an existing target because the new version is better | Stop and ask, quoting the current command and the proposed one. Other tooling (CI, hooks, docs, muscle memory) may depend on the current behaviour. |
+| Treating "add a flag to an existing target" as additive | Changing a target's implementation is a change, flag or not. It needs approval. |
+| Inventing commands the stack doesn't have | Detect first — read CLAUDE.md, README, and the language manifest. A `lint` target running a linter that isn't installed is worse than no target. |
+| Writing a `help` target that lists targets by hand | Use the self-documenting `##` pattern, so help can't drift from reality. |
+| Leaving `cover` in watch mode | It hangs the agent and CI. Force one-shot explicitly, per the stack. |
+| Omitting targets from `.PHONY` | A file named `test` in the repo root silently breaks `make test`. |
+| Adding every optional target for completeness | Extra targets (`build`, `dev`, `preview`) go in only when the project actually supports them. |
