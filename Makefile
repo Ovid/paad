@@ -138,17 +138,29 @@ check-dispatch-sites: ## Check every specialist/verifier dispatch site names the
 	@fail=0; \
 	for pair in agentic-review:2 agentic-dedup:2 agentic-a11y:3 agentic-architecture:2; do \
 		name=$${pair%:*}; want=$${pair#*:}; \
-		got=$$(grep -cF 'subagent_type: paad:paad-analyst' "$(SKILLS_DIR)/$$name/SKILL.md" 2>/dev/null || true); \
-		got=$${got:-0}; \
+		file="$(SKILLS_DIR)/$$name/SKILL.md"; \
+		if [ ! -f "$$file" ]; then \
+			echo "FAIL: $$name has no SKILL.md (expected $$want dispatch site(s) in it)"; \
+			fail=1; \
+			continue; \
+		fi; \
+		got=$$(grep -cF 'subagent_type: paad:paad-analyst' "$$file" || true); \
 		if [ "$$got" != "$$want" ]; then \
-			echo "FAIL: $$name names paad:paad-analyst at $$got dispatch site(s), expected $$want"; \
+			echo "FAIL: $$name names paad:paad-analyst at $$got dispatch site(s), expected $$want (if this change is intentional, update the counts in check-dispatch-sites)"; \
 			fail=1; \
 		fi; \
 	done; \
-	total=$$(grep -rcF 'subagent_type: paad:paad-analyst' $(SKILLS_DIR) | awk -F: '{n+=$$2} END {print n+0}'); \
+	counts=$$(grep -rcF 'subagent_type: paad:paad-analyst' "$(SKILLS_DIR)" | grep -v ':0$$' || true); \
+	total=$$(echo "$$counts" | awk -F: '{n+=$$2} END {print n+0}'); \
 	if [ "$$total" != "9" ]; then \
-		echo "FAIL: expected 9 dispatch sites across $(SKILLS_DIR), found $$total"; \
+		echo "FAIL: expected 9 dispatch sites across $(SKILLS_DIR), found $$total (if this change is intentional, update the counts in check-dispatch-sites). Sites found:"; \
+		echo "$$counts" | sed 's/^/  /'; \
+		fail=1; \
+	fi; \
+	if grep -rqF 'subagent_type' kiro_and_antigravity/skills 2>/dev/null; then \
+		echo "FAIL: 'subagent_type' survived into the export — neutralize() in scripts/convert_skills.py did not match this dispatch site's wording. Occurrences:"; \
+		grep -rnF 'subagent_type' kiro_and_antigravity/skills | sed 's/^/  /'; \
 		fail=1; \
 	fi; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
-	echo "All 9 dispatch sites name paad:paad-analyst (review 2, dedup 2, a11y 3, architecture 2)."
+	echo "All 9 dispatch sites name paad:paad-analyst (review 2, dedup 2, a11y 3, architecture 2); none leaked into the export."

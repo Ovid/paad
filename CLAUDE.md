@@ -64,7 +64,7 @@ paad/
 7. Bump the version with `make bump-version VERSION=X.Y.Z` (updates `plugin.json`, `marketplace.json`, and every SKILL.md announce line in one shot)
 8. Update `README.md` to document the new skill under "Available Skills", including argument syntax in the heading
 9. Add the new skill to `paad:help` — both the overview table and a detailed help section
-10. Run `make test` to verify all checks pass (validate, version sync, skill-version announce, digraphs, help, README, frontmatter, references)
+10. Run `make test` to verify all checks pass (validate, version sync, skill-version announce, digraphs, help, README, frontmatter, references, dispatch sites)
 11. Add the skill to `CHANGELOG.md` under `[Unreleased]` (`### Added`), then follow "Releasing" — step 7 above already did the version bump
 
 ## Modifying an existing skill
@@ -84,7 +84,7 @@ Release from a branch, never by committing to `main` directly.
    - Open a fresh, empty `## [Unreleased]` above it.
    - Update the link refs at the bottom: point `[Unreleased]` at `compare/paad--vX.Y.Z...HEAD` and add a `[X.Y.Z]` line for the new tag.
    - If `[Unreleased]` was empty, there is nothing to release — stop and ask.
-4. **Verify.** `make test` must pass (validate, version sync, announce lines, digraphs, help, README, frontmatter, references). Read the output; don't assume.
+4. **Verify.** `make test` must pass (validate, version sync, announce lines, digraphs, help, README, frontmatter, references, dispatch sites). Read the output; don't assume.
 5. **Commit and merge.** Commit the bump plus changelog roll, then merge the branch into `main` and push. That commit is the release.
 6. **Tag the merge commit** — annotated, on `main`, after the merge:
 
