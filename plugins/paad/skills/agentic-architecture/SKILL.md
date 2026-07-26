@@ -135,7 +135,7 @@ Run these steps and collect results:
 
 ## Phase 2: Specialist Analysis (Parallel)
 
-Dispatch these agents simultaneously using the Agent tool (`subagent_type: paad:paad-analyst`). Each receives: the file manifest, repo overview, steering file contents, and their specialist focus.
+Dispatch these agents simultaneously using the Agent tool with `subagent_type: paad:paad-analyst`. Each receives: the file manifest, repo overview, steering file contents, and their specialist focus.
 
 ### Specialists
 
@@ -154,7 +154,7 @@ Each specialist agent prompt must include:
 - Repo overview and structure snapshot
 - Steering file contents with the staleness caveat
 - Their assigned flaw types and strength categories with descriptions
-- Instruction: "You are an architecture specialist focused on [DOMAIN]. Find both **strengths** and **flaws** in the assigned categories. For each finding report: the category (flaw type number or strength category), file:line, a short label, 1-2 sentence explanation, concrete evidence (path, symbol, excerpt), impact level (High/Medium/Low), and your confidence (0-100). Only report findings with confidence >= 60. Validate every candidate by reading the actual code — do not infer from file names alone. Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged. If confirming a finding would require changing code, do not — cap your confidence at 79 and state what would confirm it."
+- Instruction: "You are an architecture specialist focused on [DOMAIN]. Find both **strengths** and **flaws** in the assigned categories. For each finding report: the category (flaw type number or strength category), file:line, a short label, 1-2 sentence explanation, concrete evidence (path, symbol, excerpt), impact level (High/Medium/Low), and your confidence (0-100). Only report findings with confidence >= 60. Validate every candidate by reading the actual code — do not infer from file names alone. Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged — their caches and build output are fine. If confirming a finding would require changing code, do not — cap that finding's confidence at 79 and state what would confirm it."
 
 **Structure & Boundaries additional instruction:** "Look for: module-level mutable variables, singletons, static mutables; very large classes/files with high fan-in/fan-out; single logical changes requiring edits across many files; business logic in services while domain objects are just data bags; modules grouping unrelated behaviors; drifting responsibilities between layers; generic helper modules growing into grab-bags. Also look for the positive: clean module organization, high cohesion, strong domain modeling, pragmatic abstractions."
 
@@ -172,7 +172,7 @@ Each specialist agent prompt must include:
 
 ## Phase 3: Verification
 
-After all specialists complete, dispatch a single **Verifier** agent (`subagent_type: paad:paad-analyst`) with all findings. The verifier:
+After all specialists complete, dispatch a single **Verifier** agent using the Agent tool with `subagent_type: paad:paad-analyst`, passing all findings. The verifier:
 
 1. For each finding, reads the actual current code at the referenced file:line
 2. Confirms the strength or flaw exists and is accurately described
@@ -182,7 +182,7 @@ After all specialists complete, dispatch a single **Verifier** agent (`subagent_
 6. Deduplicates findings flagged by multiple specialists (note which specialists agreed — cross-specialist agreement increases confidence)
 7. Ensures every finding has concrete evidence (file path, symbol, excerpt) — drops findings without evidence
 
-**Verifier prompt must include:** "You are verifying architecture findings. For each finding, read the actual code and confirm the strength or flaw exists. Be skeptical — file size alone doesn't make a god object, and many imports don't necessarily mean tight coupling. Check git history for context. A finding reported by multiple specialists is more likely real. Drop anything you cannot confirm by reading the code. Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged. If confirming a finding would require changing code, do not — drop it under that same rule, rather than lowering its confidence or impact level."
+**Verifier prompt must include:** "You are verifying architecture findings. For each finding, read the actual code and confirm the strength or flaw exists. Be skeptical — file size alone doesn't make a god object, and many imports don't necessarily mean tight coupling. Check git history for context. A finding reported by multiple specialists is more likely real. Drop anything you cannot confirm by reading the code. Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged — their caches and build output are fine. If confirming a finding would require changing code, do not — drop it under that same rule, rather than lowering its confidence or impact level."
 
 ## Phase 4: Report
 

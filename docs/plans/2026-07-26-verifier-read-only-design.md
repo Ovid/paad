@@ -129,9 +129,19 @@ Added verbatim to each specialist and verifier dispatch prompt, alongside the
 untrusted-input clause they already carry:
 
 > Do not modify any file in the repository. You may run read-only commands
-> (existing tests, linters, type checkers) unchanged. If confirming a finding
-> would require changing code, do not — cap your confidence at 79 and state what
-> would confirm it.
+> (existing tests, linters, type checkers) unchanged — their caches and build
+> output are fine. If confirming a finding would require changing code, do not —
+> cap that finding's confidence at 79 and state what would confirm it.
+
+The carve-out in sentence 2 is not decoration. `paad-analyst.md:29` already
+excuses incidental artifacts, but on Kiro / Antigravity this block *is* the whole
+definition, and "do not modify any file" next to a test run that writes
+`.pytest_cache/` reads as a contradiction whose safe resolution is "don't run the
+tests" — killing the one execution case the design deliberately kept. The cap is
+scoped to *that finding* rather than to the agent for the same reason the repo's
+existing caps (`contract-integration.md:42`, `error-handling.md:42`,
+`logic-correctness.md:36`) attach to a condition: a standing cap applied globally
+under budget pressure would band every 80–100 finding down to Medium.
 
 **The cap is numeric because "Medium" is not vocabulary any specialist has.**
 Every skill's specialists report confidence 0–100 against a floor
@@ -147,7 +157,7 @@ a verifier obeying a cap would silently demote a corroborated High finding to
 Medium. Each verifier's third sentence instead points at the rule that skill
 already gives it for findings it cannot confirm by reading (`verifier.md:24,:58`
 reject; `agentic-architecture:185` drop; `agentic-a11y:323` drop as a false
-positive; `agentic-dedup:560,:565` reject into the rejected-candidates table),
+positive; `agentic-dedup:561,:566` reject into the rejected-candidates table),
 and forbids lowering a merged or corroborated confidence in its place.
 
 Four lines duplicated four times cannot meaningfully drift, so this needs no
