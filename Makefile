@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references bump-version
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites bump-version
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -133,3 +133,22 @@ check-frontmatter: ## Check every SKILL.md has name/description and name matches
 
 check-references: ## Check every references/ dispatch resolves and every reference file is named
 	@python3 scripts/check_references.py
+
+check-dispatch-sites: ## Check every specialist/verifier dispatch site names the read-only subagent
+	@fail=0; \
+	for pair in agentic-review:2 agentic-dedup:2 agentic-a11y:3 agentic-architecture:2; do \
+		name=$${pair%:*}; want=$${pair#*:}; \
+		got=$$(grep -cF 'subagent_type: paad:paad-analyst' "$(SKILLS_DIR)/$$name/SKILL.md" 2>/dev/null || true); \
+		got=$${got:-0}; \
+		if [ "$$got" != "$$want" ]; then \
+			echo "FAIL: $$name names paad:paad-analyst at $$got dispatch site(s), expected $$want"; \
+			fail=1; \
+		fi; \
+	done; \
+	total=$$(grep -rcF 'subagent_type: paad:paad-analyst' $(SKILLS_DIR) | awk -F: '{n+=$$2} END {print n+0}'); \
+	if [ "$$total" != "9" ]; then \
+		echo "FAIL: expected 9 dispatch sites across $(SKILLS_DIR), found $$total"; \
+		fail=1; \
+	fi; \
+	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
+	echo "All 9 dispatch sites name paad:paad-analyst (review 2, dedup 2, a11y 3, architecture 2)."

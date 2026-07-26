@@ -26,6 +26,12 @@ def neutralize(text):
     # skills link to the repo's issue tracker, which stays valid everywhere.
     text = re.sub(r"(?<!Ovid/)paad/", ".reviews/", text)
 
+    # Drop the subagent_type FRAGMENT, not the line. Kiro and Antigravity have
+    # no agents/ directory, so the type would dangle — but the dispatch
+    # instruction lives on the same line, and deleting it would silently kill
+    # the fan-out. None of the /paad: rules below match this (they need a "/").
+    text = re.sub(r" with `subagent_type: paad:[a-z0-9-]+`", "", text)
+
     # Remove entire lines containing /paad: (usually follow-up suggestions
     # or command examples — there are no /paad: commands outside Claude Code)
     text = re.sub(r"^.*\/paad:[a-z0-9-]+.*$", "", text, flags=re.MULTILINE)
