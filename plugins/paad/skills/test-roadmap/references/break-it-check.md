@@ -47,7 +47,7 @@ against a failure mode that only shows up if they run first.
    Then reclaim strands left by a crashed or aborted prior run:
 
    - `git worktree prune` — reclaims records whose directory is gone or
-     unreachable; it never deletes files.
+     unreachable; it never deletes checked-out files.
    - Enumerate `git worktree list --porcelain` and force-remove a worktree
      **iff one of its path components is exactly `paad-test-roadmap-<run-id>`**
      — split the path on `/` and compare components for **equality**. Never a
@@ -79,7 +79,7 @@ against a failure mode that only shows up if they run first.
    optimization to drop under time pressure: a fresh checkout has none of the
    gitignored build artifacts (`node_modules/`, `target/`, venv) that the skill
    cannot language-agnostically reinstall, so the cost is paid once per phase
-   or once per mutation. See *Why a disposable worktree* for the full cost.
+   rather than once per mutation. See *Why a disposable worktree* for the full cost.
 
 2. **Copy the phase's new test files into the worktree, *then* mutate.**
    Never the other way around. In colocated-test ecosystems — Rust's
@@ -239,14 +239,13 @@ nothing-in-the-working-tree property, behaves identically in all three of those
 repo shapes, and gives the sweep a fixed path component to match on.
 
 The **run-id** in that path is what keeps one run's sweep off another's live
-worktree. This is not hypothetical caution about a rare double-booking: both
-modes of this skill are built to resume across sittings (execute mode reads
-`Landed:` state on every entry; build mode's `## Decisions` section exists so a
-resume never re-asks), so more than one agent working one repo is a normal
-case, not an aberration. Path prefix alone identifies "worktrees this skill
-made," not "worktrees belonging to *my* run" — a sibling's sweep would
-force-remove a live worktree out from under a running mutation, which has been
-reproduced. The `paad-test-roadmap-` half of the component is what keeps the
+worktree. This is not hypothetical caution about a rare double-booking: a
+sibling's sweep force-removing a live worktree out from under a running
+mutation **has been reproduced**. Two agents on one repo is not exotic — a
+developer can open a second session while one sits mid-phase, and both modes
+of this skill are built to resume across sittings. Path prefix alone
+identifies "worktrees this skill made," not "worktrees belonging to *my*
+run." The `paad-test-roadmap-` half of the component is what keeps the
 sweep off the developer's *own* hand-made worktrees; the run-id half is what
 keeps it off a concurrent session. Both live in the path, so both are
 answerable from `git worktree list` output alone.
@@ -259,7 +258,7 @@ hygiene, not a safety gap — the developer's tree is never touched either
 way, so Inviolate #2 holds regardless of whether step 5 ever runs — but the
 leak this time is closed the way the write-fence's window was **not**: on
 the next entry, never on the current exit. Step 1's sweep (`git worktree
-prune`, plus a force-remove filtered to test-roadmap's own path segment
+prune`, plus a force-remove filtered to test-roadmap's own path component
 **and** this run's id) runs on the one path a crash cannot skip — the start
 of the next phase — so a strand left by a short-circuited phase dies when
 the session next enters the gate, instead of persisting for the rest of the

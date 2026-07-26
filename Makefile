@@ -167,21 +167,20 @@ check-dispatch-sites: ## Check every specialist/verifier dispatch site names the
 
 check-export-current: ## Check kiro_and_antigravity/ matches a fresh export of the skills
 	@tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT INT TERM; \
 	mkdir -p "$$tmp/plugins" "$$tmp/scripts"; \
 	cp -R plugins/paad "$$tmp/plugins/"; \
 	cp scripts/convert_skills.py "$$tmp/scripts/"; \
 	if ! (cd "$$tmp" && python3 scripts/convert_skills.py) >/dev/null 2>"$$tmp/err"; then \
 		echo "FAIL: scripts/convert_skills.py errored:"; \
 		sed 's/^/  /' "$$tmp/err"; \
-		rm -rf "$$tmp"; \
 		exit 1; \
 	fi; \
 	if ! diff -ru kiro_and_antigravity "$$tmp/kiro_and_antigravity" >"$$tmp/export.diff" 2>&1; then \
-		echo "FAIL: kiro_and_antigravity/ is stale — a skill changed but the export was not regenerated."; \
+		echo "FAIL: kiro_and_antigravity/ is stale — a skill changed but the export was not regenerated,"; \
+		echo "      or a hand-added file is living under kiro_and_antigravity/ (everything there is generated)."; \
 		echo "      Fix with: python3 scripts/convert_skills.py   (then commit the result)"; \
 		head -40 "$$tmp/export.diff" | sed 's/^/  /'; \
-		rm -rf "$$tmp"; \
 		exit 1; \
 	fi; \
-	rm -rf "$$tmp"; \
 	echo "Export in kiro_and_antigravity/ is current."
