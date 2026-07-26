@@ -47,6 +47,8 @@ Apply regardless of perceived likelihood. Any unbounded user-influenced input re
 
 ## Scale rigor to diff size
 
+Scale to the size of the file set **you were given**. When the diff was partitioned across two instances of this lens, that is your half, not the whole diff:
+
 - **Small (<50 lines), no boundary touched:** one-line "Security: clean" or "no security-relevant changes."
 - **Medium (50–500 lines):** boundary enumeration + targeted findings; expect 0–3.
 - **Large (500+ lines):** full boundary enumeration; expect 0–8; partition by boundary.

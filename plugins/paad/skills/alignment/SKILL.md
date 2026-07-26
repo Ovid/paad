@@ -1,9 +1,9 @@
 ---
 name: alignment
-description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents
+description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents. Needs both documents; not for checking code against a spec.
 ---
 
-**On invocation:** announce "Running paad:alignment v1.19.0" before anything else.
+**On invocation:** announce "Running paad:alignment v1.20.0" before anything else.
 
 # Alignment Check
 
@@ -319,3 +319,18 @@ If neither condition applies, rewrite action items in red/green/refactor format 
 ```
 
 Rewrite the tasks in the action document in-place, or write to a new file if the user prefers.
+
+## Common Mistakes
+
+These patterns produce alignment reviews that miss the drift they exist to catch. Avoid them:
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Checking coverage in one direction only | Both directions matter. Requirements without tasks are gaps; tasks without requirements are scope creep. A review that only finds one is half a review. |
+| Treating the spec as ground truth | Phase 1 exists because git history may already contradict it. A plan perfectly aligned to a stale spec is still wrong. |
+| Guessing which document is intent and which is action | Classify explicitly. A "design doc" can be either, and getting it backwards inverts every finding. |
+| Presenting all issues at once | One at a time, dependency-ordered — missing requirements first, orphaned tasks last. Fixing a root cause often dissolves the symptoms below it. |
+| Fixing symptoms before root causes | An orphaned task may exist because a requirement was never written down. Add the requirement and the orphan resolves itself. |
+| Rewriting tasks to TDD format when they're already in it | Phase 4 is conditional. Reformatting compliant tasks wastes the user's review attention. |
+| Inventing a requirement to justify a task the user wants | If a task has no requirement, say so. Back-filling requirements to match existing tasks launders scope creep into legitimacy. |
+| Silently updating documents | Say which files changed and how. The user needs to know their spec was edited. |

@@ -1,9 +1,9 @@
 ---
 name: help
-description: Show help for all paad skills or a specific skill
+description: Use when the user asks which paad skills exist, what a paad skill does, which one fits their situation, or how to invoke one — including "what can paad do", "list the paad skills", "is there a paad skill for X", or a request for the arguments of a named paad skill
 ---
 
-**On invocation:** announce "Running paad:help v1.19.0" before anything else.
+**On invocation:** announce "Running paad:help v1.20.0" before anything else.
 
 # paad Help
 
@@ -20,6 +20,14 @@ Show help for paad skills. If `$ARGUMENTS` matches a skill name, show detailed h
 If `$ARGUMENTS` is provided and matches a skill name (with or without the `paad:` prefix), show the detailed help for that skill only. If the argument doesn't match any skill, say "Unknown skill: [name]. Available skills:" and show the overview.
 
 Do NOT read files or run commands. All help text is below.
+
+## Common Mistakes
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Paraphrasing or summarizing the help text | Display the blocks verbatim. Arguments and output paths are exact; a paraphrase invents flags that don't exist. |
+| Answering for a skill not listed here | If it isn't below, it isn't a paad skill. Say "Unknown skill: [name]" and show the overview. |
+| Running the skill the user asked about | They asked what it does, not for it to happen. Show the help and stop. |
 
 ---
 
@@ -40,6 +48,19 @@ Available skills:
   /paad:makefile                             Create or update a Makefile with standard targets
   /paad:pushback [spec-file]                 Spec/PRD critic (finds issues before you build)
   /paad:vibe [task description]              Safe vibe coding with TDD guardrails
+
+Picking between them:
+
+  Want structural flaws found?          agentic-architecture (diagnoses, does not fix)
+  Want them fixed?                      fix-architecture (needs a report first)
+  Want bugs in a branch?                agentic-review (a diff, not the codebase)
+  Want accessibility barriers?          agentic-a11y (not general correctness)
+  Have one spec, is it any good?        pushback
+  Have a spec AND a plan, do they match? alignment (needs both; does not read code)
+  Making a small change?                vibe (1-3 files, same module)
+  Change is clearly multi-module?       write a plan, then alignment against it
+  Build is broken?                      none of these — makefile manages targets,
+                                        it does not debug builds
 
 Run /paad:help <skill-name> for detailed help on a specific skill.
 ```
@@ -177,7 +198,7 @@ Arguments:
 
 Requirements:
   - Must be on a feature branch (not main/master)
-  - Changes must be committed
+  - Uncommitted changes: asks whether to review the committed state or wait
 
 What it does:
   1. Reconnaissance: diff stats, file manifest, callers/callees
@@ -337,7 +358,8 @@ What it does:
      - Architecture smell (simple task but hard work = investigate)
      - Reusable components (search before building from scratch)
   3. Implements with mandatory red/green/refactor:
-     - RED: write one failing test (stop if unexpected behavior)
+     - RED: one failing test first — a new one, or an existing test
+       updated to the new expectation (stop if unexpected behavior)
      - GREEN: write minimal code to pass
      - REFACTOR: clean up duplication, hard-coded values, patterns
   4. Post-fix summary with contextual follow-up suggestions:

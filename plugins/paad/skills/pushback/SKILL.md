@@ -1,9 +1,9 @@
 ---
 name: pushback
-description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling
+description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling. Not for cross-checking a spec against a plan — that's /paad:alignment.
 ---
 
-**On invocation:** announce "Running paad:pushback v1.19.0" before anything else.
+**On invocation:** announce "Running paad:pushback v1.20.0" before anything else.
 
 # Spec Pushback
 
@@ -111,6 +111,10 @@ digraph scope_critique_resolution {
   "Write paad/pushback-reviews/<date>-<spec>-pushback.md" -> "Done";
 }
 ```
+
+## When NOT to Use This Skill
+
+- **The user wants the spec implemented, not criticized** — say what you'd push back on in a line or two, then get on with the work. Don't run a full critique nobody asked for.
 
 ## Input Resolution
 
@@ -268,3 +272,19 @@ Issues not yet discussed (user stopped early). Listed for future reference.
 ### If the spec came from conversation history
 
 Ask: "The spec isn't saved to a file yet. Want me to write it to a file first?" Suggest a reasonable path based on the project structure (e.g., `docs/plans/`, `docs/specs/`). Then proceed with the chosen output option (update or report).
+
+## Common Mistakes
+
+These patterns produce pushback that reads well and changes nothing. Avoid them:
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Critiquing the spec without checking the codebase | Phase 1 is first for a reason. "This contradicts what already shipped" outranks every stylistic concern. |
+| Listing every issue at once | One at a time, most impactful first. A wall of twenty findings gets skimmed and dismissed. |
+| Raising a problem without options | Every issue needs concrete options, best to worst, with a recommendation. "This is ambiguous" is an observation, not pushback. |
+| Suggesting a split because the spec is long | Length isn't the test — independent value is. Split only when each piece ships something useful on its own. |
+| Mistaking sequenced work for bundled features | Phases of one coherent feature belong together. Cohesion is about whether they'd be separate PRs, not whether they're separate steps. |
+| Softening findings to seem agreeable | The skill's whole value is saying what a reviewer would say before the code exists. Hedged criticism is worse than none. |
+| Manufacturing issues to fill all six categories | Not every spec has security concerns or contradictions. Say a category is clean and move on. |
+| Continuing past "good enough" | That's the stop signal. Keep going and the user stops reading. |
+| Rewriting the spec instead of critiquing it | Present issues and let the user decide. Silent rewrites replace their judgment with yours. |

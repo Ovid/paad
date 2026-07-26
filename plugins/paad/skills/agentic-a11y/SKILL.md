@@ -1,9 +1,9 @@
 ---
 name: agentic-a11y
-description: Use when auditing a user-facing app — web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, or games — for accessibility barriers or WCAG 2.2 conformance, before shipping UI changes, or in response to concerns about screen-reader, keyboard, low-vision, motor, cognitive, or photosensitive users
+description: Use when auditing a user-facing app — web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, or games — for accessibility barriers or WCAG 2.2 conformance, before shipping UI changes, or in response to concerns about screen-reader, keyboard, low-vision, motor, cognitive, or photosensitive users. Not for general bug hunting or code correctness.
 ---
 
-**On invocation:** announce "Running paad:agentic-a11y v1.19.0" before anything else.
+**On invocation:** announce "Running paad:agentic-a11y v1.20.0" before anything else.
 
 # Accessibility Audit
 
@@ -92,6 +92,10 @@ digraph audit_flow {
   "Report location, counts by severity, Quick Wins guidance" -> "STOP: report is the deliverable — do NOT auto-fix";
 }
 ```
+
+## When NOT to Use This Skill
+
+- **The user needs a legal conformance statement (VPAT, EN 301 549 attestation)** — this produces an engineering audit, not a certified accessibility conformance report. Say so rather than letting a report be mistaken for one.
 
 ## Arguments
 
