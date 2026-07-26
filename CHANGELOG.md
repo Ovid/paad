@@ -27,6 +27,17 @@ what a plugin user sees.
   the body — which for `vibe` meant skipping the mandatory red/green/refactor cycle.
 
 ### Changed
+- `fix-architecture`: marking a flaw "Fixed (pre-existing)" now needs the
+  developer's agreement. It was the only outcome in the flaw-validation table with
+  no human in the loop, and the only one that both removed work and required no
+  permission — while writing a *terminal* status that permanently excludes the flaw
+  from later sessions. The agent must now show the commit that removed the flaw and
+  the current state of the cited code, and say so rather than guessing when it
+  can't identify the resolving commit. Targeted reading is also explicitly not
+  grep-only: drifted line numbers or a missing symbol mean read the structure,
+  because a rename is not a fix. The digraph routed both this outcome and "false
+  positive" straight to marking, bypassing an approval the prose already required
+  for false positives; both now go through the developer.
 - `fix-architecture`: safety-net tests are **frozen** once the Fix Loop starts.
   Step 3 of Handle Test Failures ("internal unit tests breaking because structure
   changed → propose updating them") previously licensed editing any test, including

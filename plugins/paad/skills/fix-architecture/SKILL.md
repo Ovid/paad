@@ -87,6 +87,7 @@ digraph fix_session {
   "Revise plan with developer" [shape=box];
 
   "Ask developer: does it still need work?" [shape=box];
+  "Show developer the evidence; developer agrees?" [shape=diamond];
   "Mark Fixed (pre-existing) / Won't fix, skip flaw" [shape=box];
   "Write safety-net tests for the gap" [shape=box];
   "Developer picks approach: refactor first / e2e tests / no tests / skip flaw" [shape=box];
@@ -122,7 +123,9 @@ digraph fix_session {
 
   "Flaw still exists?" -> "Test coverage?" [label="yes, as described"];
   "Flaw still exists?" -> "Ask developer: does it still need work?" [label="partially addressed"];
-  "Flaw still exists?" -> "Mark Fixed (pre-existing) / Won't fix, skip flaw" [label="no longer exists / false positive"];
+  "Flaw still exists?" -> "Show developer the evidence; developer agrees?" [label="no longer exists / false positive"];
+  "Show developer the evidence; developer agrees?" -> "Mark Fixed (pre-existing) / Won't fix, skip flaw" [label="yes"];
+  "Show developer the evidence; developer agrees?" -> "Test coverage?" [label="no — flaw stands, treat as still exists"];
   "Ask developer: does it still need work?" -> "Test coverage?" [label="yes"];
   "Ask developer: does it still need work?" -> "Mark Fixed (pre-existing) / Won't fix, skip flaw" [label="no"];
   "Mark Fixed (pre-existing) / Won't fix, skip flaw" -> "More batch flaws to validate?";
@@ -318,10 +321,14 @@ Read targeted sections around the referenced file:line (not entire files — con
 |---------|--------|
 | Still exists as described | Proceed to Assess Test Coverage |
 | Partially addressed | Explain what changed, ask developer if it still needs work |
-| No longer exists | Mark "Fixed (pre-existing)" in report with date and commit SHA, move to next |
+| No longer exists | Show the developer the evidence that it's gone — the commit that removed it, and the current state of the cited code — and get their agreement before marking "Fixed (pre-existing)" with date and commit SHA |
 | False positive / wrong | Explain why, ask developer. If agreed, mark "Won't fix — false positive" |
 
 If uncertain about any flaw, ask the developer specifically rather than guessing.
+
+**Targeted reading does not mean grep-only.** If the cited line numbers have drifted, or the symbol isn't found where the report says it is, the file has changed enough that you must read the surrounding structure before concluding the flaw is gone. A rename is not a fix, and neither is a move.
+
+**Why "No longer exists" needs a witness.** Every other row in this table already routes to the developer. This one is the only outcome that both removes work and requires no permission, which is exactly the gradient an agent under context pressure slides down. It is also the only path in this skill that writes a *terminal* status — and terminal statuses are permanently excluded from future sessions ("Present flaws from the report, excluding any already marked as Fixed or Won't Fix"). A flaw wrongly marked here goes invisible to every later `/paad:fix-architecture` run and to any comparison against the report, with a commit SHA next to it making the record look audited. If you cannot identify the commit that actually resolved the flaw, say so rather than picking a plausible one from `git log`.
 
 ### Assess Test Coverage
 
