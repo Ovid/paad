@@ -47,7 +47,7 @@ paad/
 - **Plugin name**: `paad` (so all skills are invoked as `/paad:<skill-name>`)
 - **Skill naming**: skill folder names become the suffix after `paad:` — e.g., `skills/agentic-architecture/` → `/paad:agentic-architecture`
 - **Versioning**: both `marketplace.json` and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. Run `make bump-version VERSION=X.Y.Z` to update all three places at once; `make check-skill-versions` (run as part of `make test`) catches drift.
-- **Changelog**: `CHANGELOG.md` tracks user-facing changes to the plugin. When bumping the version, rename the `[Unreleased]` section to the new version with today's date and open a fresh empty `[Unreleased]` above it. Repo-only churn (docs, `.claude/skills/`, README wording) doesn't need an entry.
+- **Changelog**: `CHANGELOG.md` tracks user-facing changes to the plugin, newest first. Land every user-facing change under `[Unreleased]` as you make it; the release rolls that section into a version. Repo-only churn (docs, `.claude/skills/`, README wording, design notes) doesn't need an entry. See "Releasing" for the rollover steps.
 - **Validation**: run `claude plugin validate .` (marketplace) and `claude plugin validate ./plugins/paad` (plugin) before committing
 - **Announce on invocation**: every `SKILL.md` must begin its body with the line `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` so users see which skill ran and which version produced the behavior. The literal version string must match `plugin.json`.
 
@@ -63,10 +63,38 @@ paad/
 8. Update `README.md` to document the new skill under "Available Skills", including argument syntax in the heading
 9. Add the new skill to `paad:help` — both the overview table and a detailed help section
 10. Run `make test` to verify all checks pass (validate, version sync, skill-version announce, digraphs, help, README, frontmatter)
+11. Add the skill to `CHANGELOG.md` under `[Unreleased]` (`### Added`), then follow "Releasing" — step 7 above already did the version bump
 
 ## Modifying an existing skill
 
-When changing a skill's behavior, arguments, or output, review `plugins/paad/skills/help/SKILL.md` and update the corresponding help text to match.
+When changing a skill's behavior, arguments, or output, review `plugins/paad/skills/help/SKILL.md` and update the corresponding help text to match. Add a `CHANGELOG.md` entry under `[Unreleased]` if the change is visible to plugin users.
+
+## Releasing
+
+There is no build and no artifact upload. Users install from this repo via `/plugin marketplace add Ovid/paad`, and `/plugin marketplace update paad` re-fetches the default branch — so **merging to `main` is the release**. The version bump, changelog, and tag are what make that release legible; the tag is a marker after the fact, not the delivery mechanism.
+
+Release from a branch, never by committing to `main` directly.
+
+1. **Pick the version.** Semver against what changed since the last release: new skill or new user-facing behavior → minor; wording, digraph, or bug fixes only → patch. A renamed or removed skill is breaking — call it out in the changelog even though this project has stayed on `1.x`.
+2. **Bump it.** `make bump-version VERSION=X.Y.Z` — rewrites `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line in one shot. Don't hand-edit those; `make check-versions` and `make check-skill-versions` exist because drift happens.
+3. **Roll the changelog.** In `CHANGELOG.md`:
+   - Rename `## [Unreleased]` to `## [X.Y.Z] — YYYY-MM-DD` using today's real date (check it; don't guess).
+   - Open a fresh, empty `## [Unreleased]` above it.
+   - Update the link refs at the bottom: point `[Unreleased]` at `compare/paad--vX.Y.Z...HEAD` and add a `[X.Y.Z]` line for the new tag.
+   - If `[Unreleased]` was empty, there is nothing to release — stop and ask.
+4. **Verify.** `make test` must pass (validate, version sync, announce lines, digraphs, help, README, frontmatter, extracted refs). Read the output; don't assume.
+5. **Commit and merge.** Commit the bump plus changelog roll, then merge the branch into `main` and push. That commit is the release.
+6. **Tag the merge commit** — annotated, on `main`, after the merge:
+
+   ```bash
+   git tag -a paad--vX.Y.Z -m "paad X.Y.Z"
+   git push origin paad--vX.Y.Z
+   ```
+
+   The tag name is `paad--v` + version (double hyphen — it namespaces the plugin inside the marketplace repo). It goes on the commit that actually shipped, which includes anything merged after the bump commit.
+7. **Sanity-check the published side.** In Claude Code: `/plugin marketplace update paad` then `/plugin update paad@paad`, restart, and run any skill — the announce line should read `vX.Y.Z`. Cheapest way to catch a bump that never made it to `main`.
+
+This project does not use GitHub Releases (`gh release create`) — the tag is the record. Don't add one unless Ovid asks.
 
 ## Digraph requirements
 
