@@ -64,6 +64,8 @@ digraph preflight {
 
 ```dot
 digraph fix_session {
+  "Invocation pre-answers or refuses the questions?" [shape=diamond];
+  "Present plan in ONE message, assumptions stated" [shape=box];
   "Solo or team?" [shape=diamond];
   "Any unfixed flaws remain?" [shape=diamond];
   "Developer approves plan?" [shape=diamond];
@@ -108,6 +110,8 @@ digraph fix_session {
   "STOP: finish current fix, resume in a fresh session" [shape=box, style=bold];
   "Wrap-Up: summary + suggest re-running fix-architecture" [shape=box];
 
+  "Invocation pre-answers or refuses the questions?" -> "Solo or team?" [label="no — full setup conversation"];
+  "Invocation pre-answers or refuses the questions?" -> "Dependency scan + complexity assessment" [label="yes — skip only the answered questions, never the scan or Step 4"];
   "Solo or team?" -> "Recommend 3-5 fixes, conflicts unlikely" [label="solo"];
   "Solo or team?" -> "Recommend 1-2 fixes, warn about conflict risk" [label="team"];
   "Recommend 3-5 fixes, conflicts unlikely" -> "Ask commit preference (auto / manual)";
@@ -115,7 +119,9 @@ digraph fix_session {
   "Ask commit preference (auto / manual)" -> "Dependency scan + complexity assessment";
   "Dependency scan + complexity assessment" -> "Any unfixed flaws remain?";
   "Any unfixed flaws remain?" -> "STOP: congratulate, suggest re-running agentic-architecture" [label="no"];
-  "Any unfixed flaws remain?" -> "Present triage table, developer selects flaws" [label="yes"];
+  "Any unfixed flaws remain?" -> "Present triage table, developer selects flaws" [label="yes — full setup conversation"];
+  "Any unfixed flaws remain?" -> "Present plan in ONE message, assumptions stated" [label="yes — questions were pre-answered"];
+  "Present plan in ONE message, assumptions stated" -> "Developer approves plan?";
   "Present triage table, developer selects flaws" -> "Developer approves plan?";
   "Developer approves plan?" -> "Revise plan with developer" [label="no"];
   "Revise plan with developer" -> "Developer approves plan?";
@@ -209,6 +215,18 @@ digraph fix_session {
 ## Setup: Developer Conversation
 
 A setup conversation before any code is touched. **One question per message. Ask, wait for the answer, then ask the next.** Do not combine multiple questions into one message — it is frustrating and overwhelming.
+
+### When the developer pre-answers or refuses the questions
+
+An invocation like `/paad:fix-architecture report.md — fix F-02 and F-11, don't ask me a bunch of questions, just go` answers some of the steps below and declines the rest. Honour that, within limits.
+
+**You may skip** any question the developer has already answered. Re-asking it is the same friction the one-question-per-message rule exists to prevent.
+
+**You may not skip Step 3's dependency scan and complexity assessment, or Step 4.** Those are not questions — they are work you do *before* asking anything, and they produce information the developer does not have. Naming two flaws is not the same as knowing that fixing one resolves the other, or that a repo is shared and the batch is sized for solo work. Skipping them walks directly into two entries in this skill's own Common Mistakes table.
+
+So: run the scan, then present the plan in **one** message with every assumption you are making stated explicitly — "assuming solo and auto-commit; F-02 before F-11, because fixing F-02 likely resolves F-11" — and wait for a single confirmation. One message, one answer. That is the minimum the "just go" instruction can be honoured down to, not zero.
+
+**Silence is not a go-ahead, and being told to skip the questions is not approval of a plan the developer has not seen.** If they reply "yes, go" to that one message, you have your approval and Setup is complete.
 
 ### Step 1: Team Context
 

@@ -27,6 +27,17 @@ what a plugin user sees.
   the body — which for `vibe` meant skipping the mandatory red/green/refactor cycle.
 
 ### Changed
+- `fix-architecture`: handles a developer who pre-answers or refuses the setup
+  questions. An invocation like "fix F-02 and F-11, don't ask me a bunch of
+  questions, just go" previously had no rule covering it, so the whole Setup
+  conversation — including the dependency scan and the Step 4 plan confirmation —
+  got skipped along with the questions. Answered questions may now be skipped; the
+  scan and Step 4 may not, because they aren't questions but work that produces
+  information the developer doesn't have (that fixing F-02 likely resolves F-11,
+  that the batch is sized for solo work in a shared repo — both named in the skill's
+  own Common Mistakes). The floor is one message stating every assumption, and one
+  confirmation. Being told to skip the questions is not approval of a plan the
+  developer has not seen.
 - `agentic-review`: the uncommitted-changes pre-flight now stops and waits. It said
   only "ask" while the checks around it said "Stop and wait", so answering on the
   user's behalf was defensible. It isn't a courtesy check: the Verifier reads the
