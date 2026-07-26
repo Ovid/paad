@@ -149,6 +149,7 @@ digraph fix_session {
   "Which tests broke?" -> "RED FLAG: discuss fix-forward vs revert" [label="external / integration tests"];
   "Pre-existing failure — not caused by this fix" -> "Sanity check: did the fix introduce new architectural issues?";
   "Propose updating structure-dependent unit tests" -> "Execute red/green/refactor" [label="developer approves"];
+  "Propose updating structure-dependent unit tests" -> "RED FLAG: discuss fix-forward vs revert" [label="safety-net test still fails after call sites updated — assertions may not be changed"];
   "RED FLAG: discuss fix-forward vs revert" -> "Execute red/green/refactor" [label="fix forward"];
   "RED FLAG: discuss fix-forward vs revert" -> "Revert the fix; record status Attempted, reverted" [label="revert — nothing to commit as a fix"];
   "Revert the fix; record status Attempted, reverted" -> "Fix resolved other flaws?";
@@ -268,6 +269,8 @@ Get explicit go-ahead before touching any code.
 
 **Non-negotiable rule: ALL safety-net tests must be written and committed before ANY fixes are applied. No exceptions.** Changes can have unexpected action at a distance — tests must exist before any refactoring begins, even for a single fix. This phase must complete fully before the Fix Loop begins.
 
+Tests written here are **frozen** for the rest of the session: once the Fix Loop starts, their assertions and expected values may not be changed, relaxed, skipped, or deleted. See "Editing tests during the Fix Loop". A safety net you are free to rewrite until the suite goes green is not a safety net.
+
 1. For each flaw in the batch, run Validate the Flaw and Assess Test Coverage
 2. Write all needed safety-net tests
 3. Commit all safety-net tests together (before any fix commits) — **in both commit modes.** Manual-commit mode applies to fix commits, not to this one. Leaving safety-net tests staged means a later revert destroys them along with the fix, which is the exact failure this phase exists to prevent.
@@ -359,9 +362,23 @@ If tests fail after the fix:
 
 1. Analyze *which* tests failed and *why*
 2. Cross-reference against the pre-flight baseline — if a test was already failing before the session, it's not caused by this fix
-3. **Internal unit tests breaking because structure changed** → expected during refactoring, propose updating them
+3. **Internal unit tests breaking because structure changed** → expected during refactoring, propose updating them. Note the limits in "Editing tests during the Fix Loop" below — they are strictest for safety-net tests.
 4. **External/integration tests breaking** → red flag, discuss with developer whether to fix forward or revert
 5. Developer decides how to proceed
+
+#### Editing tests during the Fix Loop
+
+Step 3 licenses updating tests that broke because the structure moved. That license has a hard boundary, and it is at its hardest for the tests written in the Safety Net phase.
+
+**A safety-net test may be edited only to follow the code it already tested:** import paths, call sites, object construction, fixture wiring, type or module names. Mechanical adaptation to the new shape, nothing more.
+
+**A safety-net test may not have its assertions, expected values, or cases changed, relaxed, skipped, or deleted.** Not to "match the new design", not because the assertion "no longer maps onto the decomposition", not because the old expectation "was testing an implementation detail".
+
+The reason is that the Safety Net phase is only worth anything if it is *not* reversible. Write tests first, commit them separately, revert cleanly — every one of those guarantees dissolves if the same agent may edit those tests until the suite is green. And a genuine behaviour break and a mechanical call-shape break look identical from inside the loop: both present as "this test doesn't fit the new structure."
+
+So apply this rule: **if a safety-net test still fails after its call sites are updated, that is a behaviour change, not a structural one.** Stop treating it as step 3 and route it to step 4 — red flag, discuss fix-forward versus revert with the developer. The test is reporting exactly the regression it was written to catch.
+
+Show the developer a before/after diff of any safety-net test you touch, however mechanical the edit looks. If you find yourself explaining why an assertion change is really just a structural adjustment, that explanation is the finding — surface it instead of applying it.
 
 After the fix passes, do a brief sanity check: does the change introduce any obvious new architectural issues (e.g., splitting a god object but creating tight coupling between the new modules)? If so, flag it to the developer. This is not a full re-analysis — just a common-sense review of the code just written.
 

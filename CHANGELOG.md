@@ -27,6 +27,16 @@ what a plugin user sees.
   the body — which for `vibe` meant skipping the mandatory red/green/refactor cycle.
 
 ### Changed
+- `fix-architecture`: safety-net tests are **frozen** once the Fix Loop starts.
+  Step 3 of Handle Test Failures ("internal unit tests breaking because structure
+  changed → propose updating them") previously licensed editing any test, including
+  the safety-net tests written minutes earlier — which made the whole phase
+  reversible and therefore decorative. Safety-net tests may now be adapted only to
+  follow the code (imports, call sites, construction, fixtures); assertions,
+  expected values and cases may not be changed, relaxed, skipped or deleted. A
+  safety-net test that still fails after its call sites are updated is a behaviour
+  change, not a structural one, and routes to the fix-forward-versus-revert
+  discussion — it is reporting the regression it was written to catch.
 - `fix-architecture` and `agentic-review`: safety gates now require an artifact
   instead of the agent's own say-so. Previously every gate in both skills was
   self-attested — "coverage is good", "tests pass", "baseline is green", "the
