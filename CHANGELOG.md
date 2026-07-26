@@ -24,12 +24,24 @@ what a plugin user sees.
   ordering is the entire difference. New stop condition when the agent cannot tell
   a superseded requirement from a real regression, with matching digraph branch.
 
-- Every skill except `help` gained a **When NOT to Use This Skill** section, naming
-  the situations that should route elsewhere. Draws the previously-implicit
-  boundaries between `pushback` and `alignment`, `agentic-architecture` and
-  `fix-architecture`, and `vibe` and everything larger than it.
+- `paad:help` gained a **"Picking between them"** routing block in its overview —
+  one line per skill saying what to reach for instead. Routing lives here because
+  `help` is already the skill users ask "which one fits my situation", and its
+  overview loads only when someone asks that question.
+- Four skills (`agentic-a11y`, `agentic-architecture`, `makefile`, `pushback`)
+  carry a short **When NOT to Use This Skill** section — 187 words total, six
+  bullets. Each names a constraint that binds *while the correct skill is running*:
+  don't let an engineering audit be mistaken for a VPAT, don't pad a report when
+  the scope is a handful of files, don't edit a generated Makefile, don't run a
+  full critique when the user asked for implementation. An earlier draft put such a
+  section on all eight skills (1,048 words); the bullets that only said "use a
+  different skill" were cut. Skill selection reads the frontmatter description, and
+  an agent handed an explicit `/paad:<skill>` does not abandon it — so a routing
+  bullet in the body is read only by an agent already past the point of using it.
 - **Common Mistakes** tables added to `alignment`, `help`, `makefile`, `pushback`,
-  and `vibe`, matching the tables the other four skills already carried.
+  and `vibe`, matching the tables the other four skills already carried. In `vibe`
+  and `help` the rows that restated something already written in the same file were
+  dropped rather than kept for symmetry.
 
 ### Changed
 - `help`: description rewritten as a trigger ("Use when the user asks which paad
@@ -38,8 +50,17 @@ what a plugin user sees.
 - `vibe`: description no longer summarizes the skill's guardrails. A description
   that restates the workflow becomes a shortcut Claude takes instead of reading
   the body — which for `vibe` meant skipping the mandatory red/green/refactor cycle.
-
-### Changed
+- Every new rule added in this release states its rule and one sentence of reason,
+  not a paragraph. These files are prompts: the rationale costs context on every
+  invocation, and `fix-architecture` — which stops when context runs low — was the
+  skill that grew most. The full reasoning for each rule lives in this changelog,
+  where it costs nothing at runtime and is addressed to the reader who needs it.
+- The remaining seven skill descriptions gained a boundary clause naming what each
+  skill is *not* for — phrased **negatively only**. The `vibe` fix above is the
+  general rule: a description that summarizes what a skill *does* becomes a
+  shortcut taken instead of reading the body. "Not for checking code against a
+  spec" refines the trigger; "cross-checks two documents against each other" would
+  be a workflow summary, and is exactly what these clauses avoid.
 - `fix-architecture`: handles a developer who pre-answers or refuses the setup
   questions. An invocation like "fix F-02 and F-11, don't ask me a bunch of
   questions, just go" previously had no rule covering it, so the whole Setup
@@ -73,11 +94,15 @@ what a plugin user sees.
   specialist is explicitly not a substitute: its greps inform its own findings, they
   don't widen what the other five read.
 - `agentic-review`: large-diff partitioning (500+ lines) is required rather than
-  advisory, with a stated fallback. The per-lens expected-finding ranges were
-  calibrated on a partitioned file set, so an unpartitioned 900-line diff gets one
-  agent with roughly a 90-line attention budget. When 12 dispatches aren't
-  affordable, tell the user to re-run in a fresh session instead of silently
-  reviewing at half coverage — a thin finding list on a large diff reads as good news.
+  advisory, with a workable fallback. Specialist attention degrades across a long
+  input, so one agent reading a 900-line diff whole reviews its tail less carefully
+  than its head, and nothing in the output shows which part got the thin pass. When
+  12 dispatches aren't affordable, split into two passes over disjoint file subsets
+  and say which subset the report covers, rather than silently reviewing at half
+  coverage — a thin finding list on a large diff reads as good news. The six
+  specialist reference files now scale their size buckets to the file set the
+  instance was handed rather than to Phase 1's whole-diff classification, which is
+  what the buckets meant once partitioning became mandatory.
 - `fix-architecture`: Fix Loop approval points are now stops, not announcements.
   Every pre-flight check ends with "Stop and wait", but the Fix Loop's approval
   points only said "present it and get confirmation" / "Developer chooses" — so
@@ -108,7 +133,14 @@ what a plugin user sees.
   expected values and cases may not be changed, relaxed, skipped or deleted. A
   safety-net test that still fails after its call sites are updated is a behaviour
   change, not a structural one, and routes to the fix-forward-versus-revert
-  discussion — it is reporting the regression it was written to catch.
+  discussion — it is reporting the regression it was written to catch. The freeze
+  covers the tests the phase *credits* as the safety net, written or existing —
+  scoping it to "tests written here" switched it off entirely whenever a repo
+  already had coverage, which is the common case. Because roughly a quarter of the
+  flaw types `agentic-architecture` reports (swallowed errors, non-idempotency,
+  hard-coded secrets) are fixed by changing behaviour on purpose, the developer may
+  authorize an assertion change at the red-flag stop when the flaw itself is the
+  behaviour being asserted. The agent may never make that call alone.
 - `fix-architecture` and `agentic-review`: safety gates now require an artifact
   instead of the agent's own say-so. Previously every gate in both skills was
   self-attested — "coverage is good", "tests pass", "baseline is green", "the
@@ -136,6 +168,11 @@ what a plugin user sees.
     reported. Only an attempted-and-failed write may skip the backlog.
 
 ### Fixed
+- `agentic-review`: the new `When NOT to Use` section claimed pre-flight stops when
+  changes are uncommitted. It doesn't — pre-flight asks, and "review the committed
+  state" proceeds. Reviewing a branch with a dirty working tree is supported, so it
+  is not a reason to route elsewhere; only the primary-branch half of that bullet
+  survives.
 - `fix-architecture`: resolved a contradiction between the Safety Net commit and
   manual-commit mode. One line said safety-net tests are committed "so they survive
   if a fix is reverted"; two lines later, manual mode said to leave changes staged.

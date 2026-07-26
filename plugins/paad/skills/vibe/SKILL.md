@@ -3,7 +3,7 @@ name: vibe
 description: Use when making a small, quick change — a bug fix, typo, minor feature, tweak, or anything the user calls "vibe coding" — that looks like 1-3 files in the same module
 ---
 
-**On invocation:** announce "Running paad:vibe v1.19.0" before anything else.
+**On invocation:** announce "Running paad:vibe v1.19.1" before anything else.
 
 # Safe Vibe Coding
 
@@ -86,15 +86,6 @@ digraph vibe {
 }
 ```
 
-## When NOT to Use This Skill
-
-Hand off instead of starting here when:
-
-- **The change is clearly multi-module from the outset** — a new feature spanning services, a migration, a rename across dozens of files. Step 2 warns at 4+ files, but that gate exists for changes that turn out bigger than they looked, not for ones that were obviously big before you started. Write a plan first, then run `/paad:alignment` against it.
-- **The task is "review this", not "change this"** — use `/paad:agentic-review` for bug hunting, `/paad:agentic-a11y` for accessibility, `/paad:agentic-architecture` for structural assessment. This skill changes code; it isn't a review lens.
-- **The user has a spec or plan document** — run `/paad:pushback` or `/paad:alignment` against it first. Vibing a change that a spec already describes differently just creates drift.
-- **You already know the fix requires restructuring** — `/paad:agentic-architecture` to diagnose, then `/paad:fix-architecture` to work through it with safety nets.
-
 ## Arguments
 
 `/paad:vibe` accepts optional `$ARGUMENTS`:
@@ -168,16 +159,14 @@ Run it. It should fail. If it doesn't:
 
 Only proceed to GREEN when the test fails in the expected way.
 
-**When an existing test already encodes the old behaviour.** Common on any change to a requirement rather than a bug: a test asserts the value you are about to change. That test is part of what's changing — it is the old requirement written down, not a regression signal.
-
-Update it to the new expectation and run it *before* touching the source. That is a valid RED: you have a test that fails against unmodified production code for exactly the reason you predicted. Adding a second test asserting the same behaviour is not more rigorous, it just leaves two tests making contradictory claims that you then clean up in REFACTOR.
+**When an existing test already encodes the old behaviour.** Common on a requirement change rather than a bug fix: a test asserts the value you are about to change. That test is the old requirement written down, not a regression signal — update it to the new expectation and run it *before* touching the source. That is a valid RED. Don't add a second test asserting the same behaviour.
 
 Two things this does not license:
 
-- **Changing a test after the source, to make a red suite go green.** Same edit, opposite meaning. Before the fix it is a specification; after the fix it is whatever makes the failure go away. Order is the entire difference.
-- **Skipping RED because an existing test "already covers" the branch.** A test asserting the *old* value is not coverage of the *new* behaviour. It will go red whether your change is right or wrong, so it cannot tell you which — see the table below.
+- **Changing a test after the source, to make a red suite go green.** Order is the entire difference: before the fix it is a specification, after it is whatever makes the failure go away.
+- **Skipping RED because an existing test "already covers" the branch.** It asserts the *old* value, so it goes red whether your change is right or wrong.
 
-If you cannot tell whether a failing test encodes a superseded requirement or a real regression, stop and ask. That distinction is the user's to make, not yours.
+If you cannot tell whether a failing test encodes a superseded requirement or a real regression, stop and ask.
 
 ### GREEN — Write minimal code to pass
 
@@ -244,9 +233,6 @@ These patterns turn safe vibe coding back into reckless vibe coding. Avoid them:
 
 | Mistake | What to do instead |
 |---------|-------------------|
-| Writing the fix first, then a test that covers it | RED comes first. A test written after the code passes immediately and proves nothing about the behaviour you intended. |
-| Treating "the fix is obvious" as grounds to skip RED | Obvious fixes are where regressions hide, because nobody guards them. Write the failing test; it costs seconds. |
-| Skipping REFACTOR because tests are green | Green is the entry condition for REFACTOR, not the exit. This is the step that gets silently dropped, and it's where the quality comes from. |
 | Continuing past a RED test that passes unexpectedly | Stop and tell the user. Either the feature already exists or the test doesn't test what you think — both change what you should do next. |
 | Building a helper that already exists elsewhere | Search the codebase in Step 2 before writing anything. Report what you found and recommend extending it. |
 | Warning about 4+ file scope, then proceeding without an answer | The warning is a question. Wait for the user to choose. |

@@ -12,7 +12,7 @@
 
 **Failure handling:**
 
-- If writing `paad/code-reviews/backlog.md` fails for any reason (permissions, disk, malformed existing file), surface the error to the user and write the per-review report anyway. Only an **attempted-and-failed** write may skip the backlog, and only with the underlying error text shown to the user. Deferring the write because the run is short on context, or because the IDs already appear in the report, is a review defect — a report ID pointing at no backlog entry is worse than no ID at all.
+- If writing `paad/code-reviews/backlog.md` fails for any reason (permissions, disk, malformed existing file), surface the error to the user and write the per-review report anyway. Only an **attempted-and-failed** write may skip the backlog, and only with the underlying error text shown to the user. Deferring it because context is short, or because the IDs already appear in the report, is a review defect.
 - **Confirm the write before reporting it.** After writing the backlog, re-read the file and check that every backlog ID printed in the report appears in it. The counts in Post-Review come from what you read back, not from what the Verifier directed you to write. If they disagree, report the discrepancy rather than the intended numbers.
 
 **Report template:**
@@ -95,8 +95,8 @@ One-line entries only. If empty, follow the Empty-section rules above.
 
 ## Review Metadata
 
-- **Agents dispatched:** all six lenses, each listed by name with a status — `findings (N)` | `bailed: <reason token>` | `NOT DISPATCHED: <reason>`. Every lens appears on this list every run, including ones that bailed and ones that were not dispatched. A lens that never ran produces no output, no ref-token warning and no other trace, so this field is the only place its absence can surface; omitting it here is a review defect, not a tidier report.
-- **Scope:** <files reviewed — changed + adjacent. When Phase 1 steps 6-8 traced no adjacent files, write the literal string `no adjacent files traced` rather than listing only the changed files — an untraced review must be visible to the reader, never implied by a scope line that looks complete.>
+- **Agents dispatched:** all six lenses, each listed by name with a status — `findings (N)` | `bailed: <reason token>` | `NOT DISPATCHED: <reason>`. Every lens appears every run; a lens that never ran leaves no other trace, so this field is the only place its absence can surface.
+- **Scope:** <files reviewed — changed + adjacent. When Phase 1 steps 6-8 traced no adjacent files, write the literal string `no adjacent files traced` rather than listing only the changed files.>
 - **Raw findings:** N (before verification)
 - **Verified findings:** M (after verification)
 - **Filtered out:** N - M

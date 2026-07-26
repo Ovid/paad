@@ -1,9 +1,9 @@
 ---
 name: agentic-architecture
-description: Use when assessing the architectural health of a codebase — before a major refactor, when onboarding to an unfamiliar repo, after rapid growth, when planning a redesign, or to surface structural strengths and risks before they become expensive
+description: Use when assessing the architectural health of a codebase — before a major refactor, when onboarding to an unfamiliar repo, after rapid growth, when planning a redesign, or to surface structural strengths and risks before they become expensive. Not for fixing what it finds, and not for reviewing a branch diff.
 ---
 
-**On invocation:** announce "Running paad:agentic-architecture v1.19.0" before anything else.
+**On invocation:** announce "Running paad:agentic-architecture v1.19.1" before anything else.
 
 # Agentic Architecture Analysis
 
@@ -86,9 +86,7 @@ digraph analysis_flow {
 
 ## When NOT to Use This Skill
 
-- **You want the flaws fixed, not found** — this is diagnosis only and will not propose remedies. Run it first, then `/paad:fix-architecture` against the report it writes.
 - **You already have a recent report** — re-running burns a session to regenerate what you have. Read the existing report in `paad/architecture-reviews/` and use `/paad:fix-architecture`, which handles staleness itself.
-- **The question is about one branch's changes** — use `/paad:agentic-review`. This skill assesses the structure of a codebase, not the risk in a diff.
 - **The scope is a handful of files** — architecture is about boundaries and relationships between components. Below that scale there's no structure to assess, and the report will pad.
 
 ## Arguments

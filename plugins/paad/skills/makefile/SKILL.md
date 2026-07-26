@@ -1,9 +1,9 @@
 ---
 name: makefile
-description: Use when creating or updating a Makefile for a project, especially when standard targets (build, test, lint, format, etc.) are missing or when modifying targets that may already be wired into other tooling
+description: Use when creating or updating a Makefile for a project, especially when standard targets (build, test, lint, format, etc.) are missing or when modifying targets that may already be wired into other tooling. Not for debugging why a build fails.
 ---
 
-**On invocation:** announce "Running paad:makefile v1.19.0" before anything else.
+**On invocation:** announce "Running paad:makefile v1.19.1" before anything else.
 
 # Makefile Management
 
@@ -57,9 +57,7 @@ digraph makefile_flow {
 ## When NOT to Use This Skill
 
 - **The project's task runner is not make, and adding one isn't wanted** — a repo standardized on `npm run`, `just`, `task`, `nox`, or `cargo xtask` doesn't need a Makefile shimming over it. Ask before introducing a second entry point.
-- **You only need to run a command once** — run it. A target is for commands the project runs repeatedly.
 - **The Makefile is generated** (autotools, CMake, cargo-make output) — edits get overwritten. Change the generator.
-- **The request is "why is my build broken"** — that's debugging, not target management. Fix the build, then come back if the targets need work.
 
 ## Overview
 

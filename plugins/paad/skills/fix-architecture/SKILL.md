@@ -1,9 +1,9 @@
 ---
 name: fix-architecture
-description: Use when working through architectural flaws documented in a paad/architecture-reviews/ report — selecting which flaws to fix, resuming a partial fix session across multiple sittings, or applying structural changes that need to be tracked back to a report
+description: Use when working through architectural flaws documented in a paad/architecture-reviews/ report — selecting which flaws to fix, resuming a partial fix session across multiple sittings, or applying structural changes that need to be tracked back to a report. Not for producing that report — run /paad:agentic-architecture first if there isn't one.
 ---
 
-**On invocation:** announce "Running paad:fix-architecture v1.19.0" before anything else.
+**On invocation:** announce "Running paad:fix-architecture v1.19.1" before anything else.
 
 # Fix Architecture
 
@@ -181,14 +181,6 @@ digraph fix_session {
 }
 ```
 
-## When NOT to Use This Skill
-
-- **No architecture report exists** — this skill works through documented flaws with IDs it can track status against. Run `/paad:agentic-architecture` first; don't improvise a flaw list.
-- **You're on the primary branch** — pre-flight stops. Structural changes need a branch you can abandon.
-- **The fix is a small local change** — use `/paad:vibe`. The safety-net and per-flaw approval machinery here is priced for changes that move boundaries between components.
-- **You want to know what's wrong** — that's `/paad:agentic-architecture`. This skill starts from an answer, it doesn't produce one.
-- **There's no test infrastructure and the user won't add any** — the safety-net gate is what makes structural refactoring survivable. Without tests, say plainly that the risk can't be managed rather than proceeding on optimism.
-
 ## Arguments
 
 `/paad:fix-architecture` accepts optional `$ARGUMENTS`:
@@ -208,7 +200,7 @@ digraph fix_session {
 
 5. **Test infrastructure:** Check whether the project has a test framework, runner, and conventions (e.g., a `test/` or `__tests__/` directory, a test script in `package.json`, pytest config, etc.). If no test infrastructure exists: "This project has no test infrastructure. Fixes without tests are high-risk. Want to set up a test framework first, proceed without tests, or stop?" Wait for the developer's decision.
 
-6. **Baseline test run:** Run the **complete** test suite to establish a green baseline — not a subset, not only the modules named in the report, and not a CI result from an earlier commit. Structural refactoring breaks code far from the diff, which is exactly the region a scoped baseline omits. Record the exact command, the pass/fail/skip counts, and the **verbatim names of every failing test**. If tests are already failing: "N tests are currently failing before any changes. This means I can't reliably attribute test failures to my fixes. Proceed anyway, or fix the failing tests first?" If the suite cannot run to completion (missing services, unavailable fixtures), say so and treat the unrunnable portion as **unknown**, never as passing.
+6. **Baseline test run:** Run the **complete** test suite to establish a green baseline — not a subset, not only the modules named in the report, and not a CI result from an earlier commit. Record the exact command, the pass/fail/skip counts, and the **verbatim names of every failing test**. If tests are already failing: "N tests are currently failing before any changes. This means I can't reliably attribute test failures to my fixes. Proceed anyway, or fix the failing tests first?" If the suite cannot run to completion (missing services, unavailable fixtures), say so and treat the unrunnable portion as **unknown**, never as passing.
 
    **A test that fails after a fix and does not appear by name in the recorded baseline failure list must be treated as caused by the fix.** Absence of evidence is not a pre-existing failure.
 
@@ -222,9 +214,9 @@ An invocation like `/paad:fix-architecture report.md — fix F-02 and F-11, don'
 
 **You may skip** any question the developer has already answered. Re-asking it is the same friction the one-question-per-message rule exists to prevent.
 
-**You may not skip Step 3's dependency scan and complexity assessment, or Step 4.** Those are not questions — they are work you do *before* asking anything, and they produce information the developer does not have. Naming two flaws is not the same as knowing that fixing one resolves the other, or that a repo is shared and the batch is sized for solo work. Skipping them walks directly into two entries in this skill's own Common Mistakes table.
+**You may not skip Step 3's dependency scan and complexity assessment, or Step 4.** Those are not questions — they are work that produces information the developer does not have: naming two flaws is not the same as knowing that fixing one resolves the other.
 
-So: run the scan, then present the plan in **one** message with every assumption you are making stated explicitly — "assuming solo and auto-commit; F-02 before F-11, because fixing F-02 likely resolves F-11" — and wait for a single confirmation. One message, one answer. That is the minimum the "just go" instruction can be honoured down to, not zero.
+So: run the scan, then present the plan in **one** message with every assumption stated explicitly — "assuming solo and auto-commit; F-02 before F-11, because fixing F-02 likely resolves F-11" — and wait for a single confirmation. One message, one answer. That is the floor, not zero.
 
 **Silence is not a go-ahead, and being told to skip the questions is not approval of a plan the developer has not seen.** If they reply "yes, go" to that one message, you have your approval and Setup is complete.
 
@@ -290,17 +282,17 @@ Get explicit go-ahead before touching any code.
 
 **Non-negotiable rule: ALL safety-net tests must be written and committed before ANY fixes are applied. No exceptions.** Changes can have unexpected action at a distance — tests must exist before any refactoring begins, even for a single fix. This phase must complete fully before the Fix Loop begins.
 
-Tests written here are **frozen** for the rest of the session: once the Fix Loop starts, their assertions and expected values may not be changed, relaxed, skipped, or deleted. See "Editing tests during the Fix Loop". A safety net you are free to rewrite until the suite goes green is not a safety net.
+The tests this phase credits as the safety net — written here or existing — are **frozen** for the rest of the session: once the Fix Loop starts, their assertions and expected values may not be changed, relaxed, skipped, or deleted. See "Editing tests during the Fix Loop". A safety net you are free to rewrite until the suite goes green is not a safety net.
 
 1. For each flaw in the batch, run Validate the Flaw and Assess Test Coverage
 2. Write all needed safety-net tests
-3. Commit all safety-net tests together (before any fix commits) — **in both commit modes.** Manual-commit mode applies to fix commits, not to this one. Leaving safety-net tests staged means a later revert destroys them along with the fix, which is the exact failure this phase exists to prevent.
+3. Commit all safety-net tests together (before any fix commits) — **in both commit modes.** Manual-commit mode applies to fix commits, not to this one: staged tests are destroyed by a later revert along with the fix.
 4. Print the Safety Net Report (below) and show it to the developer
 5. Only then proceed to the Fix Loop (starting at Propose Fix Options for each flaw)
 
 ### Safety Net Report
 
-Every other check in this phase is self-attested: you decide coverage is good, you decide the baseline was green, you decide the tests exist. Nothing forces those judgements into the open, so a hollow Safety Net looks identical to a real one. This report is the artifact that makes the difference visible — as blanks, not as prose.
+Every other check in this phase is self-attested, so a hollow Safety Net looks identical to a real one. This report makes the difference visible as blanks.
 
 Print it before the first fix, filling in every field:
 
@@ -331,14 +323,12 @@ Rules for filling it in:
 
 For each flaw in the confirmed batch, execute this sequence:
 
-**The Setup rule applies here too: ask, wait for the answer, then act.** Every approval point below is a stop, not an announcement — present the options, then wait for the developer's reply before making any edit. Presenting an approach and beginning work on it in the same turn is not "getting confirmation", however clearly you flagged what you were about to do.
+**The Setup rule applies here too: ask, wait for the answer, then act.** Every approval point below is a stop, not an announcement — presenting an approach and beginning work on it in the same turn is not "getting confirmation".
 
 Two things that are *not* approval for a fix approach:
 
 - **The batch approval from Setup Step 4.** That approved *which flaws* are in scope. It never approved how any of them gets fixed, how it gets tested, or whether it proceeds without tests.
-- **Only one option existing.** A single viable approach still needs a yes. "May I do the only sensible thing?" feels like a rubber stamp, but it is the developer's last look at the plan before code moves — and the point where they can say the only sensible thing is still not worth doing.
-
-The pre-flight checks each end with "Stop and wait" because a wrong answer there is cheap to prevent and expensive to undo. That is more true inside the Fix Loop, not less: here the developer discovers the choice after the code has changed, when reversing it costs a revert instead of a sentence.
+- **Only one option existing.** A single viable approach still needs a yes — it is the developer's last look before code moves, and the point where they can say the only sensible thing is still not worth doing.
 
 ### Validate the Flaw
 
@@ -355,13 +345,13 @@ If uncertain about any flaw, ask the developer specifically rather than guessing
 
 **Targeted reading does not mean grep-only.** If the cited line numbers have drifted, or the symbol isn't found where the report says it is, the file has changed enough that you must read the surrounding structure before concluding the flaw is gone. A rename is not a fix, and neither is a move.
 
-**Why "No longer exists" needs a witness.** Every other row in this table already routes to the developer. This one is the only outcome that both removes work and requires no permission, which is exactly the gradient an agent under context pressure slides down. It is also the only path in this skill that writes a *terminal* status — and terminal statuses are permanently excluded from future sessions ("Present flaws from the report, excluding any already marked as Fixed or Won't Fix"). A flaw wrongly marked here goes invisible to every later `/paad:fix-architecture` run and to any comparison against the report, with a commit SHA next to it making the record look audited. If you cannot identify the commit that actually resolved the flaw, say so rather than picking a plausible one from `git log`.
+**Why "No longer exists" needs a witness.** It writes a *terminal* status, and terminal statuses are permanently excluded from later sessions ("Present flaws from the report, excluding any already marked as Fixed or Won't Fix") — so a flaw wrongly marked here goes invisible to every future run, with a commit SHA next to it making the record look audited. If you cannot identify the commit that actually resolved the flaw, say so rather than picking a plausible one from `git log`.
 
 ### Assess Test Coverage
 
 Check whether the affected code has existing tests. Three outcomes:
 
-**Good coverage exists** → "good" means you have **named the specific test cases** that exercise each path the fix will change, **run them**, and seen them pass. A test file sitting next to the affected code is not coverage: it may cover only the methods nobody is moving, and skipped or `xfail`ed cases count for nothing. If you cannot name a case for an affected path, that path has a gap. If gaps are identified during assessment — even if overall coverage looks strong — fill them with safety-net tests before proceeding. Do not dismiss gaps as "edge cases" and proceed anyway.
+**Good coverage exists** → "good" means you have **named the specific test cases** that exercise each path the fix will change, **run them**, and seen them pass. A test file sitting next to the affected code is not coverage, and skipped or `xfail`ed cases count for nothing. If you cannot name a case for an affected path, that path has a gap. If gaps are identified during assessment — even if overall coverage looks strong — fill them with safety-net tests before proceeding. Do not dismiss gaps as "edge cases" and proceed anyway.
 
 **Testable but untested** → write tests for existing behavior first, then red/green/refactor the fix. Flag this as higher risk: "This code has no tests. I'll write tests for the current behavior first so we have a safety net." In auto-commit mode, commit the safety-net tests separately before applying the fix, so they can be preserved independently if the fix is reverted.
 
@@ -372,7 +362,7 @@ Check whether the affected code has existing tests. Three outcomes:
 3. Fix without tests (risky)
 4. Skip this flaw for now
 
-If only one testing approach is feasible, present it with explanation of why alternatives aren't viable. Developer chooses — **stop and wait for their answer.** This fork matters more than the others: option 3 is *fix without tests*, and an agent that presents these four options and proceeds on its own has just decided to refactor a structural flaw with no safety net on the developer's behalf. That decision is never yours to assume, and it is the one the developer is most likely to answer differently from you.
+If only one testing approach is feasible, present it with explanation of why alternatives aren't viable. Developer chooses — **stop and wait for their answer.** This fork matters more than the others: option 3 is *fix without tests*, so proceeding on your own decides to refactor a structural flaw with no safety net on the developer's behalf.
 
 ### Propose Fix Options
 
@@ -388,7 +378,7 @@ Follow red/green/refactor:
 1. **Red** — write/update tests that fail against the current code (for the desired behavior)
 2. **Green** — make the minimal code change to pass tests
 3. **Refactor** — clean up if warranted
-4. **Verify** — re-run the **full** test suite, using the same command recorded in the pre-flight baseline, and state that command and its result. A scoped run of the safety-net tests plus the changed module is not sufficient: this phase exists because structural changes break code that no test in the changed module imports, and a scoped run can only ever detect damage that is not at a distance. Do not proceed to Update the Report on a partial run, and do not defer the full run to Wrap-Up — the "context running low" stop fires first, and the deferred run never happens.
+4. **Verify** — re-run the **full** test suite, using the same command recorded in the pre-flight baseline, and state that command and its result. A scoped run cannot detect damage at a distance, which is the damage structural changes cause. Do not proceed to Update the Report on a partial run, and do not defer the full run to Wrap-Up — the "context running low" stop fires first, and the deferred run never happens.
 
 ### Handle Test Failures
 
@@ -402,13 +392,13 @@ If tests fail after the fix:
 
 #### Editing tests during the Fix Loop
 
-Step 3 licenses updating tests that broke because the structure moved. That license has a hard boundary, and it is at its hardest for the tests written in the Safety Net phase.
+Step 3 licenses updating tests that broke because the structure moved. That license has a hard boundary, and it is at its hardest for the tests the Safety Net phase credited as the safety net — written or existing.
 
 **A safety-net test may be edited only to follow the code it already tested:** import paths, call sites, object construction, fixture wiring, type or module names. Mechanical adaptation to the new shape, nothing more.
 
-**A safety-net test may not have its assertions, expected values, or cases changed, relaxed, skipped, or deleted.** Not to "match the new design", not because the assertion "no longer maps onto the decomposition", not because the old expectation "was testing an implementation detail".
+**A safety-net test may not have its assertions, expected values, or cases changed, relaxed, skipped, or deleted.** Not to "match the new design", not because the assertion "no longer maps onto the decomposition", not because the old expectation "was testing an implementation detail". Only the developer may authorize otherwise, at the red-flag stop, and only when the flaw itself is the behaviour being asserted — a swallowed error, a non-idempotent call, a hard-coded secret. Never on your own reading.
 
-The reason is that the Safety Net phase is only worth anything if it is *not* reversible. Write tests first, commit them separately, revert cleanly — every one of those guarantees dissolves if the same agent may edit those tests until the suite is green. And a genuine behaviour break and a mechanical call-shape break look identical from inside the loop: both present as "this test doesn't fit the new structure."
+The Safety Net phase is only worth anything if it is *not* reversible: every guarantee dissolves if the same agent may edit those tests until the suite is green. A genuine behaviour break and a mechanical call-shape break look identical from inside the loop — both present as "this test doesn't fit the new structure."
 
 So apply this rule: **if a safety-net test still fails after its call sites are updated, that is a behaviour change, not a structural one.** Stop treating it as step 3 and route it to step 4 — red flag, discuss fix-forward versus revert with the developer. The test is reporting exactly the regression it was written to catch.
 

@@ -1,9 +1,9 @@
 ---
 name: alignment
-description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents
+description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents. Needs both documents; not for checking code against a spec.
 ---
 
-**On invocation:** announce "Running paad:alignment v1.19.0" before anything else.
+**On invocation:** announce "Running paad:alignment v1.19.1" before anything else.
 
 # Alignment Check
 
@@ -113,13 +113,6 @@ digraph analysis_and_resolution {
   "Write rewritten tasks to a new file" -> "Done";
 }
 ```
-
-## When NOT to Use This Skill
-
-- **You only have one document** — with nothing to cross-check it against, use `/paad:pushback` to critique it on its own merits. Alignment needs an intent document *and* an action document; inventing the missing side defeats the purpose.
-- **The spec itself is the problem** — if the requirements are vague, contradictory, or oversized, aligning tasks to them just propagates the mess. Run `/paad:pushback` first, then come back.
-- **You want to know whether the *code* matches the spec** — that's `/paad:agentic-review`, whose Spec Compliance specialist reads the diff. This skill compares documents to documents, not documents to implementation.
-- **The tasks are already in red/green/refactor form and coverage is known-good** — the TDD rewrite in Phase 4 is skipped when it isn't needed. Nothing left for this skill to do.
 
 ## Arguments
 

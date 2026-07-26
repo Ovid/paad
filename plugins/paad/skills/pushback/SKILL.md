@@ -1,9 +1,9 @@
 ---
 name: pushback
-description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling
+description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling. Not for cross-checking a spec against a plan — that's /paad:alignment.
 ---
 
-**On invocation:** announce "Running paad:pushback v1.19.0" before anything else.
+**On invocation:** announce "Running paad:pushback v1.19.1" before anything else.
 
 # Spec Pushback
 
@@ -114,9 +114,6 @@ digraph scope_critique_resolution {
 
 ## When NOT to Use This Skill
 
-- **You have both a spec and a plan, and want to know whether they match** — that's `/paad:alignment`. This skill critiques one document against reality; alignment cross-checks two documents against each other. If in doubt: pushback asks "is this spec any good?", alignment asks "does the plan deliver this spec?"
-- **Implementation has already started** — the questions change from "should we build this" to "does the code match intent". Use `/paad:agentic-review` (Spec Compliance covers drift) or `/paad:alignment`.
-- **There is no document and no discussion to work from** — this skill critiques a proposal, it doesn't author one. Get the intent written down first.
 - **The user wants the spec implemented, not criticized** — say what you'd push back on in a line or two, then get on with the work. Don't run a full critique nobody asked for.
 
 ## Input Resolution

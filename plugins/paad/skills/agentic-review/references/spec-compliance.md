@@ -36,7 +36,7 @@ Do not report:
 - "Implemented" lists (the diff IS the implementation).
 - "Not yet implemented" multi-PR pending items (partial implementation across PRs is expected).
 
-Scale rigor to diff size (from Phase 1's classification):
+Scale rigor to the size of the file set **you were given**. When the diff was partitioned across two instances of this lens, that is your half, not the whole diff:
 - Small (<50 lines): one-line summary unless something is wrong. Default: "Spec compliance: clean."
 - Medium (50–500 lines): full deviation analysis; expect 0–3 findings.
 - Large (500+ lines): full deviation analysis; expect 0–8 findings, partition focus by feature area.

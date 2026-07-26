@@ -43,7 +43,7 @@ Each finding must name (a) the input or condition that fires the bug, (b) the co
 
 ## Scale rigor to diff size
 
-From Phase 1's classification:
+Scale to the size of the file set **you were given**. When the diff was partitioned across two instances of this lens, that is your half, not the whole diff:
 - **Small (<50 lines):** one-line summary unless something is wrong. Default: "Error handling & edge cases: clean."
 - **Medium (50–500 lines):** full analysis; expect 0–3 findings.
 - **Large (500+ lines):** full analysis; expect 0–6 findings, partition by surface.
