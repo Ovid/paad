@@ -27,6 +27,33 @@ what a plugin user sees.
   the body — which for `vibe` meant skipping the mandatory red/green/refactor cycle.
 
 ### Changed
+- `agentic-review`: the uncommitted-changes pre-flight now stops and waits. It said
+  only "ask" while the checks around it said "Stop and wait", so answering on the
+  user's behalf was defensible. It isn't a courtesy check: the Verifier reads the
+  **working tree** at each finding's `file:line`, so with uncommitted changes
+  present it verifies code the specialists never saw — findings get dropped as
+  already-handled because an uncommitted edit handles them, and anchors drift
+  against the touched-lines map. The digraph node is now `ASK and WAIT`, since a
+  bare `ASK:` beside bold `STOP:` nodes read as non-blocking there too.
+- `agentic-review`: the Verifier is dispatched with the current contents of every
+  file named by a finding. It has its own tools, but a Verifier left to fetch its
+  own context under budget pressure pattern-matches the finding text instead — and
+  that output is indistinguishable from a real verification pass, so findings reach
+  the report carrying severity labels the user reads as confirmed against the code.
+- `agentic-review`: Phase 1 step 9 records which adjacent files the caller/callee
+  tracing added and carries the list into the report's `Scope:` field. Steps 6-8 are
+  the only thing making the manifest wider than the diff, and the manifest feeds all
+  six specialists *and* the backlog pre-filter — collapse it and the pre-filter
+  narrows with it, so backlog entries in adjacent files stop matching and get
+  re-minted as duplicates. Delegating the tracing to the Contract & Integration
+  specialist is explicitly not a substitute: its greps inform its own findings, they
+  don't widen what the other five read.
+- `agentic-review`: large-diff partitioning (500+ lines) is required rather than
+  advisory, with a stated fallback. The per-lens expected-finding ranges were
+  calibrated on a partitioned file set, so an unpartitioned 900-line diff gets one
+  agent with roughly a 90-line attention budget. When 12 dispatches aren't
+  affordable, tell the user to re-run in a fresh session instead of silently
+  reviewing at half coverage — a thin finding list on a large diff reads as good news.
 - `fix-architecture`: Fix Loop approval points are now stops, not announcements.
   Every pre-flight check ends with "Stop and wait", but the Fix Loop's approval
   points only said "present it and get confirmation" / "Developer chooses" — so

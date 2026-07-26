@@ -56,16 +56,16 @@ digraph preflight {
   "STOP: nothing to review" [shape=box, style=bold];
   "STOP: no changes to review" [shape=box, style=bold];
   "STOP: user wants to commit first" [shape=box, style=bold];
-  "ASK: review committed state only, or wait to commit?" [shape=box];
+  "ASK and WAIT: review committed state only, or wait to commit?" [shape=box];
 
   "Conversation has history?" -> "STOP: recommend new session" [label="yes"];
   "Conversation has history?" -> "On main/master?" [label="no"];
   "On main/master?" -> "STOP: nothing to review" [label="yes"];
   "On main/master?" -> "Uncommitted changes?" [label="no"];
-  "Uncommitted changes?" -> "ASK: review committed state only, or wait to commit?" [label="yes"];
+  "Uncommitted changes?" -> "ASK and WAIT: review committed state only, or wait to commit?" [label="yes"];
   "Uncommitted changes?" -> "Diff against base is empty?" [label="no"];
-  "ASK: review committed state only, or wait to commit?" -> "Diff against base is empty?" [label="review committed state only"];
-  "ASK: review committed state only, or wait to commit?" -> "STOP: user wants to commit first" [label="wait to commit"];
+  "ASK and WAIT: review committed state only, or wait to commit?" -> "Diff against base is empty?" [label="review committed state only"];
+  "ASK and WAIT: review committed state only, or wait to commit?" -> "STOP: user wants to commit first" [label="wait to commit"];
   "Diff against base is empty?" -> "STOP: no changes to review" [label="yes"];
   "Diff against base is empty?" -> "Proceed to Phase 1" [label="no"];
 }
@@ -123,7 +123,7 @@ The on-invocation announce (top of this skill) fires before pre-flight runs, so 
 
 1. **Context window:** If conversation has substantive history beyond invocations of this skill (other prior work in this session counts; prior runs of `/paad:agentic-review` on the same branch don't), tell the user: "This review consumes significant context. Start a fresh session with `/paad:agentic-review` to avoid context rot." Stop and wait.
 2. **Branch:** Must not be on main/master. If so, stop.
-3. **Clean state:** If uncommitted changes exist, ask: review committed state only, or wait to commit?
+3. **Clean state:** If uncommitted changes exist, ask: review committed state only, or wait to commit? **Stop and wait for the answer — do not choose on the user's behalf, and do not treat "review my branch" as having already answered it.** This is not a courtesy check. The Verifier reads the *working tree* at each finding's `file:line`, so while uncommitted changes exist the code being verified is not the code the specialists saw and not the code in the diff: findings get dropped as already-handled because an uncommitted edit handles them, and line anchors drift against the touched-lines map. A report produced this way claims to review the committed branch and does not.
 4. **Empty diff:** If `git diff <base>...HEAD` returns no output (the branch has zero commits ahead of base, or all changes are already merged), stop with: "No changes to review on this branch." Do not dispatch specialists against an empty manifest.
 
 ## Phase 1: Reconnaissance
@@ -143,7 +143,7 @@ Run these commands and collect results:
 6. For each changed file, grep for callers/callees one level deep (function/method names from the diff)
 7. When the diff includes infrastructure files (schema migrations, build configs, CI pipelines, environment templates), check whether test-side counterparts exist (e.g., test resource directories with their own migrations, test-specific configs). Add any unmatched test infrastructure to the manifest for the Contract & Integration specialist.
 8. For **small** diffs: expand scope to full module/package for each changed file
-9. Build manifest: files to review (changed + adjacent), grouped for specialists
+9. Build manifest: files to review (changed + adjacent), grouped for specialists. **Record which adjacent files came from steps 6-8 and why**, and carry that list into the report's `Scope:` field. Steps 6-8 are the only thing that makes the manifest wider than the diff, and the manifest feeds all six specialists *and* the Phase 3 backlog pre-filter. Collapse it to the changed files and this becomes the diff-only review the Common Mistakes table warns against — with the pre-filter narrowing in step, so existing backlog entries in adjacent files stop matching and get re-minted as duplicates. Do not delegate the tracing to the Contract & Integration specialist on the grounds that it greps callers too: its greps inform its own findings, they do not widen the manifest the other five are reading. If you traced nothing, the `Scope:` field must say so in those words rather than listing the changed files and looking complete.
 10. **Build the touched-lines map.** From `git diff <base>...HEAD`, produce `{file → [line ranges]}` covering every line the branch added or modified. Construction rules:
     - **Keys are current-HEAD paths.** Files are recorded under the path they have at HEAD, not at base.
     - **Renamed files** are keyed by the new path; line ranges cover lines modified in the new file. The old path is not retained.
@@ -204,7 +204,7 @@ Each specialist agent prompt must include:
 
 > Read `references/spec-compliance.md` from this skill's directory before producing findings; treat its instructions as binding. Begin your output with the literal token `[ref-loaded:spec-compliance]` on its own line so the verifier can confirm the ref was read.
 
-**Scaling for large diffs (500+ lines):** Partition files across 2 instances of each specialist (e.g., Logic-A gets half the files, Logic-B gets the other half).
+**Scaling for large diffs (500+ lines):** Partition files across 2 instances of each specialist (e.g., Logic-A gets half the files, Logic-B gets the other half) — 12 dispatches total. This is required, not an optimization: the per-lens expected-finding ranges in the reference files were calibrated on a partitioned file set, so handing one Logic agent a 900-line diff whole gives it roughly the attention budget of a 90-line one. The specialists' own internal "partition by boundary" guidance is about how each orders its work; it does not replace the second instance. If 12 dispatches are not affordable in this session, do not quietly review at half coverage — tell the user the diff is too large to review here and to re-run in a fresh session. Record the partitioning in Review Metadata. A thin finding list on a large diff reads to the user as good news, which is exactly why silently skipping this must not be an option.
 
 ## Phase 3: Verification
 
@@ -214,7 +214,10 @@ After all specialists complete, dispatch a single **Verifier** agent with all of
 - The full `git diff <base>...HEAD`
 - **The touched-lines map built in Phase 1 step 10, reproduced verbatim**
 - The file manifest from Phase 1 step 9
+- **The current contents of every file named by a finding**
 - A pre-filtered slice of `paad/code-reviews/backlog.md` (only entries whose `File (at first sighting)` path matches a file in the current review's manifest)
+
+Include the file contents even though the Verifier has its own tools. Verification is the skill's defense against the high false-positive rate of unverified findings, and it only works if the Verifier reads the code at each anchor line. A Verifier left to fetch its own context, under its own budget pressure, pattern-matches the finding text instead — and that output is indistinguishable from a real verification pass, so the failure is invisible. Findings then reach the report with severity labels the user reads as *confirmed against the code*.
 
 The touched-lines map is not optional. `references/verifier.md` step 6 classifies every finding by checking its anchor line against that map; without it, blame degrades to file granularity, nearly every finding in a changed file is marked in-scope, and the out-of-scope bucket and backlog silently empty — after which Post-Review announces "No out-of-scope bugs found" to a user for whom it was never actually determined. If you skipped step 10, build the map now, before dispatching.
 
