@@ -1,13 +1,17 @@
 ---
 name: pushback
-description: Push back on specs, PRDs, requirements, and design documents — finds unrelated features, oversized scope, contradictions, feasibility issues, scope imbalance, omissions, ambiguity, and security concerns, with source control reality checks
+
 ---
+
+**On invocation:** announce "Running paad:pushback v1.21.0" before anything else.
 
 # Spec Pushback
 
 Critically reviews a spec, PRD, requirements document, or design plan before work begins. Checks source control for conflicts with reality, then walks through issues one at a time in severity order so you can fix what matters most.
 
 **This skill does NOT recommend a fresh session.** The conversation history may be the spec.
+
+**Input resolution and reality check:**
 
 ```dot
 digraph pushback {
@@ -43,6 +47,74 @@ digraph pushback {
   "Present conflicts, resolve first" -> "Proceed to Spec Critique";
 }
 ```
+
+**Scope shape, critique and resolution:**
+
+```dot
+digraph scope_critique_resolution {
+  "Unrelated features bundled?" [shape=diamond];
+  "User splits them out?" [shape=diamond];
+  "Spec large?" [shape=diamond];
+  "Meaningful split exists?" [shape=diamond];
+  "Issues found?" [shape=diamond];
+  "User says good enough / stop?" [shape=diamond];
+  "More issues to present?" [shape=diamond];
+  "Update spec or write report?" [shape=diamond];
+  "Spec saved to a file?" [shape=diamond];
+
+  "Identify groups, recommend splitting, ask" [shape=box];
+  "Continue reviewing the remaining spec" [shape=box];
+  "Note it as a scope concern, review as-is" [shape=box];
+  "Suggest the split — what each piece delivers alone" [shape=box];
+  "Flag the size, explain why splitting isn't practical" [shape=box];
+  "Say nothing about size" [shape=box];
+  "Rank findings by severity" [shape=box];
+  "Present one issue: problem, options best-to-worst, recommendation" [shape=box];
+  "Wait for the user's response" [shape=box];
+  "ASK where to write the spec first" [shape=box];
+  "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
+  "Write .reviews/pushback/<date>-<spec>-pushback.md" [shape=box];
+  "Done" [shape=box];
+
+  "Unrelated features bundled?" -> "Identify groups, recommend splitting, ask" [label="yes"];
+  "Unrelated features bundled?" -> "Spec large?" [label="no"];
+  "Identify groups, recommend splitting, ask" -> "User splits them out?";
+  "User splits them out?" -> "Continue reviewing the remaining spec" [label="yes"];
+  "User splits them out?" -> "Note it as a scope concern, review as-is" [label="no"];
+  "Continue reviewing the remaining spec" -> "Spec large?";
+  "Note it as a scope concern, review as-is" -> "Spec large?";
+
+  "Spec large?" -> "Meaningful split exists?" [label="yes (8+ requirements, many areas, long)"];
+  "Spec large?" -> "Say nothing about size" [label="no"];
+  "Meaningful split exists?" -> "Suggest the split — what each piece delivers alone" [label="yes"];
+  "Meaningful split exists?" -> "Flag the size, explain why splitting isn't practical" [label="no — tightly interdependent"];
+  "Suggest the split — what each piece delivers alone" -> "Issues found?";
+  "Flag the size, explain why splitting isn't practical" -> "Issues found?";
+  "Say nothing about size" -> "Issues found?";
+
+  "Issues found?" -> "Rank findings by severity" [label="yes"];
+  "Issues found?" -> "Spec saved to a file?" [label="no"];
+  "Rank findings by severity" -> "Present one issue: problem, options best-to-worst, recommendation";
+  "Present one issue: problem, options best-to-worst, recommendation" -> "Wait for the user's response";
+  "Wait for the user's response" -> "User says good enough / stop?";
+  "User says good enough / stop?" -> "Spec saved to a file?" [label="yes — remainder goes to Unresolved Issues"];
+  "User says good enough / stop?" -> "More issues to present?" [label="no"];
+  "More issues to present?" -> "Present one issue: problem, options best-to-worst, recommendation" [label="yes"];
+  "More issues to present?" -> "Spec saved to a file?" [label="no"];
+
+  "Spec saved to a file?" -> "Update spec or write report?" [label="yes"];
+  "Spec saved to a file?" -> "ASK where to write the spec first" [label="no — came from conversation"];
+  "ASK where to write the spec first" -> "Update spec or write report?";
+  "Update spec or write report?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="update spec"];
+  "Update spec or write report?" -> "Write .reviews/pushback/<date>-<spec>-pushback.md" [label="write report"];
+  "Apply agreed changes; leave undiscussed requirements alone" -> "Done";
+  "Write .reviews/pushback/<date>-<spec>-pushback.md" -> "Done";
+}
+```
+
+## When NOT to Use This Skill
+
+- **The user wants the spec implemented, not criticized** — say what you'd push back on in a line or two, then get on with the work. Don't run a full critique nobody asked for.
 
 ## Phase 1: Reality Check (Source Control)
 
@@ -191,3 +263,19 @@ Issues not yet discussed (user stopped early). Listed for future reference.
 ### If the spec came from conversation history
 
 Ask: "The spec isn't saved to a file yet. Want me to write it to a file first?" Suggest a reasonable path based on the project structure (e.g., `docs/plans/`, `docs/specs/`). Then proceed with the chosen output option (update or report).
+
+## Common Mistakes
+
+These patterns produce pushback that reads well and changes nothing. Avoid them:
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Critiquing the spec without checking the codebase | Phase 1 is first for a reason. "This contradicts what already shipped" outranks every stylistic concern. |
+| Listing every issue at once | One at a time, most impactful first. A wall of twenty findings gets skimmed and dismissed. |
+| Raising a problem without options | Every issue needs concrete options, best to worst, with a recommendation. "This is ambiguous" is an observation, not pushback. |
+| Suggesting a split because the spec is long | Length isn't the test — independent value is. Split only when each piece ships something useful on its own. |
+| Mistaking sequenced work for bundled features | Phases of one coherent feature belong together. Cohesion is about whether they'd be separate PRs, not whether they're separate steps. |
+| Softening findings to seem agreeable | The skill's whole value is saying what a reviewer would say before the code exists. Hedged criticism is worse than none. |
+| Manufacturing issues to fill all six categories | Not every spec has security concerns or contradictions. Say a category is clean and move on. |
+| Continuing past "good enough" | That's the stop signal. Keep going and the user stops reading. |
+| Rewriting the spec instead of critiquing it | Present issues and let the user decide. Silent rewrites replace their judgment with yours. |

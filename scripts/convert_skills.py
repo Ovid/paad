@@ -2,11 +2,39 @@
 
 import os
 import re
+import shutil
 from pathlib import Path
 
 # Paths relative to repository root
 SOURCE_DIR = "plugins/paad/skills"
 TARGET_DIR = "kiro_and_antigravity/skills"
+
+
+def neutralize(text):
+    """Strip paad-plugin specifics from a chunk of skill prose.
+
+    Applied to SKILL.md section bodies and to every file under a skill's
+    references/ directory, so a reference file never tells the agent to
+    write to a path its own SKILL.md has already rewritten.
+    """
+    # Neutralize "paad/" output paths to ".reviews/" or ".reports/".
+    text = text.replace("paad/architecture-reviews/", ".reviews/architecture/")
+    text = text.replace("paad/code-reviews/", ".reviews/code/")
+    text = text.replace("paad/pushback-reviews/", ".reviews/pushback/")
+    text = text.replace("paad/alignment-reviews/", ".reviews/alignment/")
+    # The catch-all must not eat the "paad" in a github.com/Ovid/paad URL —
+    # skills link to the repo's issue tracker, which stays valid everywhere.
+    text = re.sub(r"(?<!Ovid/)paad/", ".reviews/", text)
+
+    # Remove entire lines containing /paad: (usually follow-up suggestions
+    # or command examples — there are no /paad: commands outside Claude Code)
+    text = re.sub(r"^.*\/paad:[a-z0-9-]+.*$", "", text, flags=re.MULTILINE)
+
+    # Additional cleanup for any remaining /paad: mentions just in case
+    text = re.sub(r"\(?/paad:[a-z0-9-]+\)?", "", text)
+
+    return text
+
 
 def convert_skills():
     # Detect root if possible, but assume relative to cwd
@@ -43,38 +71,30 @@ def convert_skills():
         # Actually splitting by \n## works better if we prepend \n to content
         parts = re.split(r'\n(##+ .*)', content)
         
-        # parts[0] is everything before the first ##
-        cleaned_content = parts[0]
-        
+        # parts[0] is everything before the first ## — the intro, the
+        # announce line, and (by paad convention) every digraph. Those
+        # digraphs name output paths, so parts[0] gets neutralized on the
+        # same terms as the section bodies or the two disagree.
+        cleaned_content = neutralize(parts[0])
+
         # Process header/body pairs
         for i in range(1, len(parts), 2):
             header_line = parts[i]
             body = parts[i+1]
-            
+
             header_text = re.sub(r'^##+\s*', '', header_line).strip()
-            
+
             # Skip unwanted sections
             if any(uh in header_text for uh in unwanted_headers):
                 continue
-                
-            # Neutralize "paad/" paths to ".reviews/" or ".reports/"
-            body = body.replace("paad/architecture-reviews/", ".reviews/architecture/")
-            body = body.replace("paad/code-reviews/", ".reviews/code/")
-            body = body.replace("paad/pushback-reviews/", ".reviews/pushback/")
-            body = body.replace("paad/alignment-reviews/", ".reviews/alignment/")
-            body = body.replace("paad/", ".reviews/")
-            
-            # Remove entire lines containing /paad: (usually follow-up suggestions or command examples)
-            body = re.sub(r'^.*\/paad:[a-z0-9-]+.*$', '', body, flags=re.MULTILINE)
-            
-            # Additional cleanup for any remaining /paad: mentions just in case
-            body = re.sub(r'\(?/paad:[a-z0-9-]+\)?', '', body)
-            
+
+            body = neutralize(body)
+
             # Clean up trailing whitespace and excessive newlines
             body = body.rstrip() + "\n"
-            
+
             cleaned_content += "\n" + header_line + body
-            
+
         # Final cleanup for consecutive empty lines
         cleaned_content = re.sub(r'\n{3,}', '\n\n', cleaned_content).strip() + "\n"
         
@@ -83,7 +103,32 @@ def convert_skills():
         kiro_skill_dir.mkdir(exist_ok=True)
         with open(kiro_skill_dir / "SKILL.md", "w", encoding="utf-8") as f:
             f.write(cleaned_content)
-            
+
+        # Copy references/, if the skill has one. A SKILL.md that dispatches
+        # to references/ is only a router — without these files the exported
+        # skill points at nothing. Rewritten (not copied verbatim) so their
+        # output paths match the SKILL.md that loads them.
+        src_refs = skill_path / "references"
+        dst_refs = kiro_skill_dir / "references"
+        # Drop the previous export first, so a reference deleted upstream
+        # does not linger here and get loaded by a stale dispatch line.
+        if dst_refs.exists():
+            shutil.rmtree(dst_refs)
+        if src_refs.is_dir():
+            dst_refs.mkdir()
+            for ref_file in sorted(src_refs.rglob("*")):
+                target = dst_refs / ref_file.relative_to(src_refs)
+                if ref_file.is_dir():
+                    target.mkdir(exist_ok=True)
+                elif ref_file.suffix == ".md":
+                    text = neutralize(ref_file.read_text(encoding="utf-8"))
+                    text = re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
+                    target.write_text(text, encoding="utf-8")
+                else:
+                    shutil.copy2(ref_file, target)
+            print(f"  + {len(list(dst_refs.rglob('*.md')))} reference file(s)")
+
+
         # Write Antigravity wrapper
         h1_match = re.search(r'^#\s*(.*)', cleaned_content, re.MULTILINE)
         title = h1_match.group(1).strip() if h1_match else skill_path.name.replace("-", " ").title()

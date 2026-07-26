@@ -278,8 +278,7 @@ review-pass flow, not just the references-package work.
 
 Commit `29f213c` added several cross-file semantic contracts to the
 agentic-review references package that the existing structural
-guardrails (`scripts/check_extracted_refs.sh`,
-`scripts/extracted-refs.tsv`) cannot verify. These are LLM-driven
+guardrail (`scripts/check_references.py`) cannot verify. These are LLM-driven
 runtime invariants — a maintainer changing any of the listed
 sections must hand-verify the others stay in sync. Build a behavioral
 test harness or add static greps if/when one of these silently breaks
@@ -379,9 +378,12 @@ Notes on the shape:
 - The inventory sentence is a TOC, not a paraphrase of the ref's
   content. Keep it short. If you find yourself duplicating the ref's
   prose into the inventory, prefer the ref.
-- The structural-guardrail check (`scripts/check_extracted_refs.sh`)
-  enforces both: that the ref path is referenced in SKILL.md, and
-  that the chosen sentinel phrase is *only* in the ref file.
+- The structural-guardrail check (`scripts/check_references.py`)
+  enforces that every `references/` path named anywhere in the skill
+  resolves to a real file, and that every reference file is named by
+  something. It does **not** check the dispatch *wording* — that the
+  line says "treat its instructions as binding" is a convention this
+  document holds, not one the build enforces.
 
 ### Reference file shape (PR1)
 

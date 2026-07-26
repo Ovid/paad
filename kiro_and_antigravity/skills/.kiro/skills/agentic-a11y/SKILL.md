@@ -1,7 +1,9 @@
 ---
 name: agentic-a11y
-description: Comprehensive multi-agent accessibility audit of user-facing code — supports web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, and games — dispatches specialists for screen readers, vision, motor, cognitive, and multimedia concerns, verifies findings, and produces an actionable report with WCAG 2.2 AA/AAA ratings
+description: Use when auditing a user-facing app — web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, or games — for accessibility barriers or WCAG 2.2 conformance, before shipping UI changes, or in response to concerns about screen-reader, keyboard, low-vision, motor, cognitive, or photosensitive users. Not for general bug hunting or code correctness.
 ---
+
+**On invocation:** announce "Running paad:agentic-a11y v1.21.0" before anything else.
 
 # Accessibility Audit
 
@@ -10,6 +12,90 @@ Multi-agent accessibility audit of user-facing code across any platform. Dispatc
 **Conformance target:** WCAG 2.2 AA as baseline (applied via WCAG2ICT for non-web platforms). AAA criteria are flagged as bonus recommendations. Platform-specific guidelines (Apple HIG Accessibility, Android Accessibility, Xbox Accessibility Guidelines) are referenced where applicable.
 
 **This is a technique skill.** Follow the phases in order. Do not skip verification.
+
+**Pre-flight:**
+
+```dot
+digraph preflight {
+  "Conversation has history?" [shape=diamond];
+  "User-facing code exists?" [shape=diamond];
+  "Proceed to Phase 1" [shape=box];
+  "STOP: recommend new session" [shape=box, style=bold];
+  "STOP: no user-facing code" [shape=box, style=bold];
+
+  "Conversation has history?" -> "STOP: recommend new session" [label="yes"];
+  "Conversation has history?" -> "User-facing code exists?" [label="no"];
+  "User-facing code exists?" -> "STOP: no user-facing code" [label="no"];
+  "User-facing code exists?" -> "Proceed to Phase 1" [label="yes"];
+}
+```
+
+**Audit flow:**
+
+```dot
+digraph audit_flow {
+  "Scope size?" [shape=diamond];
+  "Platform has framework-specific a11y pitfalls?" [shape=diamond];
+  "Existing a11y tooling already catches it?" [shape=diamond];
+  "Tooling misconfigured or finding suppressed?" [shape=diamond];
+  "Barrier handled elsewhere?" [shape=diamond];
+  "Confidence >= 60?" [shape=diamond];
+  "Cited criterion correct?" [shape=diamond];
+  "Reported by multiple specialists?" [shape=diamond];
+  "AAA criterion?" [shape=diamond];
+
+  "Detect platform(s), stack, tooling, steering files, manifest" [shape=box];
+  "Partition files across 2 instances of each specialist" [shape=box];
+  "Dispatch the 5 core specialists in parallel" [shape=box];
+  "Dispatch the 5 core specialists + Platform-Specific Patterns in parallel" [shape=box];
+  "DROP the finding" [shape=box];
+  "Correct the criterion" [shape=box];
+  "Assign severity: critical / serious / moderate / minor" [shape=box];
+  "Merge duplicates, note the agreeing specialists" [shape=box];
+  "List under Minor Issues & AAA Recommendations, prefix [AAA]" [shape=box];
+  "Place under its severity section" [shape=box];
+  "Write report to .reviews/a11y-reviews/a11y-<timestamp>.md" [shape=box];
+  "Report location, counts by severity, Quick Wins guidance" [shape=box];
+  "STOP: report is the deliverable — do NOT auto-fix" [shape=box, style=bold];
+
+  "Detect platform(s), stack, tooling, steering files, manifest" -> "Scope size?";
+  "Scope size?" -> "Platform has framework-specific a11y pitfalls?" [label="small (<20) / medium (20-100)"];
+  "Scope size?" -> "Partition files across 2 instances of each specialist" [label="large (100+ user-facing files)"];
+  "Partition files across 2 instances of each specialist" -> "Platform has framework-specific a11y pitfalls?";
+  "Platform has framework-specific a11y pitfalls?" -> "Dispatch the 5 core specialists + Platform-Specific Patterns in parallel" [label="yes"];
+  "Platform has framework-specific a11y pitfalls?" -> "Dispatch the 5 core specialists in parallel" [label="no"];
+  "Dispatch the 5 core specialists in parallel" -> "Existing a11y tooling already catches it?";
+  "Dispatch the 5 core specialists + Platform-Specific Patterns in parallel" -> "Existing a11y tooling already catches it?";
+
+  "Existing a11y tooling already catches it?" -> "Tooling misconfigured or finding suppressed?" [label="yes — specialists check this"];
+  "Existing a11y tooling already catches it?" -> "Barrier handled elsewhere?" [label="no"];
+  "Tooling misconfigured or finding suppressed?" -> "DROP the finding" [label="no — do not re-flag what tooling already catches"];
+  "Tooling misconfigured or finding suppressed?" -> "Barrier handled elsewhere?" [label="yes"];
+  "Barrier handled elsewhere?" -> "DROP the finding" [label="yes — parent, platform API, framework, library, system setting (verifier)"];
+  "Barrier handled elsewhere?" -> "Confidence >= 60?" [label="no"];
+  "Confidence >= 60?" -> "DROP the finding" [label="no"];
+  "Confidence >= 60?" -> "Cited criterion correct?" [label="yes"];
+  "Cited criterion correct?" -> "Assign severity: critical / serious / moderate / minor" [label="yes"];
+  "Cited criterion correct?" -> "Correct the criterion" [label="no"];
+  "Correct the criterion" -> "Assign severity: critical / serious / moderate / minor";
+  "Assign severity: critical / serious / moderate / minor" -> "Reported by multiple specialists?";
+  "Reported by multiple specialists?" -> "Merge duplicates, note the agreeing specialists" [label="yes"];
+  "Reported by multiple specialists?" -> "AAA criterion?" [label="no"];
+  "Merge duplicates, note the agreeing specialists" -> "AAA criterion?";
+  "AAA criterion?" -> "List under Minor Issues & AAA Recommendations, prefix [AAA]" [label="yes — a recommendation, not a failure"];
+  "AAA criterion?" -> "Place under its severity section" [label="no"];
+
+  "List under Minor Issues & AAA Recommendations, prefix [AAA]" -> "Write report to .reviews/a11y-reviews/a11y-<timestamp>.md";
+  "Place under its severity section" -> "Write report to .reviews/a11y-reviews/a11y-<timestamp>.md";
+  "DROP the finding" -> "Write report to .reviews/a11y-reviews/a11y-<timestamp>.md" [label="counted under Filtered out"];
+  "Write report to .reviews/a11y-reviews/a11y-<timestamp>.md" -> "Report location, counts by severity, Quick Wins guidance";
+  "Report location, counts by severity, Quick Wins guidance" -> "STOP: report is the deliverable — do NOT auto-fix";
+}
+```
+
+## When NOT to Use This Skill
+
+- **The user needs a legal conformance statement (VPAT, EN 301 549 attestation)** — this produces an engineering audit, not a certified accessibility conformance report. Say so rather than letting a report be mistaken for one.
 
 ## Phase 1: Reconnaissance
 
