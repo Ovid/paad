@@ -26,6 +26,33 @@ what a plugin user sees.
   that restates the workflow becomes a shortcut Claude takes instead of reading
   the body — which for `vibe` meant skipping the mandatory red/green/refactor cycle.
 
+### Changed
+- `fix-architecture` and `agentic-review`: safety gates now require an artifact
+  instead of the agent's own say-so. Previously every gate in both skills was
+  self-attested — "coverage is good", "tests pass", "baseline is green", "the
+  backlog was written" — with nothing forcing the judgement into the open, so a
+  hollow gate was indistinguishable from a real one.
+  - `fix-architecture` prints a **Safety Net Report** before the first fix: the
+    baseline command and counts, pre-existing failures by name, and per flaw the
+    named test cases, the command that proved they pass, and the safety-net commit
+    SHA. Blank fields are the point — they make a hollow safety net visible.
+  - `fix-architecture`: "good coverage" now means naming the specific cases and
+    running them. A test file next to the affected code is not coverage.
+  - `fix-architecture`: the baseline must be the complete suite with failing tests
+    recorded verbatim, and a post-fix failure absent from that list counts as
+    caused by the fix — absence of evidence is not a pre-existing failure.
+  - `fix-architecture`: the post-fix verification run must be the full suite, not
+    the changed module. Structural changes break code at a distance, which is
+    exactly what a scoped run cannot see.
+  - `agentic-review`: Review Metadata lists all six lenses by name with a per-lens
+    status, including `NOT DISPATCHED`. A lens that never ran leaves no other
+    trace, so this is the only place its absence can surface.
+  - `agentic-review`: a missing `[ref-loaded:verifier]` token now has a
+    consequence — re-dispatch once, then warn that classification and all backlog
+    directives are unverified. Well-formed output is not evidence the ref was read.
+  - `agentic-review`: backlog counts are read back from the file before being
+    reported. Only an attempted-and-failed write may skip the backlog.
+
 ### Fixed
 - `fix-architecture`: resolved a contradiction between the Safety Net commit and
   manual-commit mode. One line said safety-net tests are committed "so they survive

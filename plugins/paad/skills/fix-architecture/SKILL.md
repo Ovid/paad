@@ -91,6 +91,7 @@ digraph fix_session {
   "Write safety-net tests for the gap" [shape=box];
   "Developer picks approach: refactor first / e2e tests / no tests / skip flaw" [shape=box];
   "Write and commit the outstanding safety-net tests" [shape=box, style=bold];
+  "Print Safety Net Report; every field filled" [shape=box, style=bold];
   "Revert the fix; record status Attempted, reverted" [shape=box];
 
   "Propose fix options, developer chooses" [shape=box];
@@ -136,7 +137,8 @@ digraph fix_session {
 
   "ALL safety-net tests written and committed?" -> "Write and commit the outstanding safety-net tests" [label="no — no fix may start yet"];
   "Write and commit the outstanding safety-net tests" -> "ALL safety-net tests written and committed?";
-  "ALL safety-net tests written and committed?" -> "Propose fix options, developer chooses" [label="yes, or the developer chose to proceed without tests — Fix Loop begins"];
+  "ALL safety-net tests written and committed?" -> "Print Safety Net Report; every field filled" [label="yes, or the developer chose to proceed without tests"];
+  "Print Safety Net Report; every field filled" -> "Propose fix options, developer chooses" [label="Fix Loop begins"];
 
   "Propose fix options, developer chooses" -> "Execute red/green/refactor";
   "Execute red/green/refactor" -> "Tests pass after fix?";
@@ -196,7 +198,9 @@ digraph fix_session {
 
 5. **Test infrastructure:** Check whether the project has a test framework, runner, and conventions (e.g., a `test/` or `__tests__/` directory, a test script in `package.json`, pytest config, etc.). If no test infrastructure exists: "This project has no test infrastructure. Fixes without tests are high-risk. Want to set up a test framework first, proceed without tests, or stop?" Wait for the developer's decision.
 
-6. **Baseline test run:** Run the existing test suite to establish a green baseline. If tests are already failing: "N tests are currently failing before any changes. This means I can't reliably attribute test failures to my fixes. Proceed anyway, or fix the failing tests first?" Record which tests are failing so the Handle Test Failures step can distinguish pre-existing failures from newly introduced ones.
+6. **Baseline test run:** Run the **complete** test suite to establish a green baseline — not a subset, not only the modules named in the report, and not a CI result from an earlier commit. Structural refactoring breaks code far from the diff, which is exactly the region a scoped baseline omits. Record the exact command, the pass/fail/skip counts, and the **verbatim names of every failing test**. If tests are already failing: "N tests are currently failing before any changes. This means I can't reliably attribute test failures to my fixes. Proceed anyway, or fix the failing tests first?" If the suite cannot run to completion (missing services, unavailable fixtures), say so and treat the unrunnable portion as **unknown**, never as passing.
+
+   **A test that fails after a fix and does not appear by name in the recorded baseline failure list must be treated as caused by the fix.** Absence of evidence is not a pre-existing failure.
 
 ## Setup: Developer Conversation
 
@@ -267,7 +271,37 @@ Get explicit go-ahead before touching any code.
 1. For each flaw in the batch, run Validate the Flaw and Assess Test Coverage
 2. Write all needed safety-net tests
 3. Commit all safety-net tests together (before any fix commits) — **in both commit modes.** Manual-commit mode applies to fix commits, not to this one. Leaving safety-net tests staged means a later revert destroys them along with the fix, which is the exact failure this phase exists to prevent.
-4. Only then proceed to the Fix Loop (starting at Propose Fix Options for each flaw)
+4. Print the Safety Net Report (below) and show it to the developer
+5. Only then proceed to the Fix Loop (starting at Propose Fix Options for each flaw)
+
+### Safety Net Report
+
+Every other check in this phase is self-attested: you decide coverage is good, you decide the baseline was green, you decide the tests exist. Nothing forces those judgements into the open, so a hollow Safety Net looks identical to a real one. This report is the artifact that makes the difference visible — as blanks, not as prose.
+
+Print it before the first fix, filling in every field:
+
+```
+Safety Net Report
+
+Baseline:  <exact command run>
+           <pass/fail/skip counts>
+           Pre-existing failures: <verbatim test names, or "none">
+           Not runnable: <what could not be run, or "nothing">
+
+Per flaw:
+  <F-ID>   Coverage: <written | existing | none — developer approved>
+           Cases:    <named test cases — the ones you wrote, or the existing
+                      ones you are crediting as coverage>
+           Proof:    <command that ran those cases, and its result>
+           Commit:   <SHA of the safety-net commit, or "n/a — existing tests">
+```
+
+Rules for filling it in:
+
+- **Never leave a field blank or write "see above".** A field you cannot fill is a gap in the safety net, and the developer needs to see it before the first fix, not after a revert.
+- **`Cases:` must name cases, not files.** "`test/services/user.test.ts`" is not an answer; "`describes user split across services`, `rejects empty role`" is.
+- **`Proof:` requires you to have actually run them this session.** A green CI badge, a suite you ran before writing the tests, and "these obviously pass" are all not proof.
+- **If the whole batch comes back `Coverage: existing` and you wrote no tests at all**, say so explicitly and get the developer's confirmation before entering the Fix Loop. A Safety Net phase that produces zero tests is a claim that needs a witness.
 
 ## Fix Loop
 
@@ -290,7 +324,7 @@ If uncertain about any flaw, ask the developer specifically rather than guessing
 
 Check whether the affected code has existing tests. Three outcomes:
 
-**Good coverage exists** → "good" means no significant gaps were found in the paths that will be affected by the fix. If gaps are identified during assessment — even if overall coverage looks strong — fill them with safety-net tests before proceeding. Do not dismiss gaps as "edge cases" and proceed anyway.
+**Good coverage exists** → "good" means you have **named the specific test cases** that exercise each path the fix will change, **run them**, and seen them pass. A test file sitting next to the affected code is not coverage: it may cover only the methods nobody is moving, and skipped or `xfail`ed cases count for nothing. If you cannot name a case for an affected path, that path has a gap. If gaps are identified during assessment — even if overall coverage looks strong — fill them with safety-net tests before proceeding. Do not dismiss gaps as "edge cases" and proceed anyway.
 
 **Testable but untested** → write tests for existing behavior first, then red/green/refactor the fix. Flag this as higher risk: "This code has no tests. I'll write tests for the current behavior first so we have a safety net." In auto-commit mode, commit the safety-net tests separately before applying the fix, so they can be preserved independently if the fix is reverted.
 
@@ -317,6 +351,7 @@ Follow red/green/refactor:
 1. **Red** — write/update tests that fail against the current code (for the desired behavior)
 2. **Green** — make the minimal code change to pass tests
 3. **Refactor** — clean up if warranted
+4. **Verify** — re-run the **full** test suite, using the same command recorded in the pre-flight baseline, and state that command and its result. A scoped run of the safety-net tests plus the changed module is not sufficient: this phase exists because structural changes break code that no test in the changed module imports, and a scoped run can only ever detect damage that is not at a distance. Do not proceed to Update the Report on a partial run, and do not defer the full run to Wrap-Up — the "context running low" stop fires first, and the deferred run never happens.
 
 ### Handle Test Failures
 
