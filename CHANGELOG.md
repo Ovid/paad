@@ -10,6 +10,8 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.20.0] — 2026-07-26
+
 ### Added
 - `vibe` gained a **rationalization table** — "When You're About to Skip a Step".
   Every excuse in it was produced verbatim by an agent working a real timed task
@@ -380,5 +382,6 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.19.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.20.0...HEAD
+[1.20.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.20.0
 [1.19.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.19.0
