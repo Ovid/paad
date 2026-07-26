@@ -159,6 +159,8 @@ Findings are classified by their **anchor line** only (the `file:line` reported 
 
 Dispatch these agents simultaneously using the Agent tool. Each receives: the diff, manifest of files to review, steering file contents, and their specialist focus.
 
+**All six are dispatched, every run, in a single parallel batch.** Diff size changes how much work each specialist does — it never changes how many are dispatched. Do not drop a lens because the diff looks irrelevant to it: deciding whether a lens applies is that specialist's job, and it is the job it does best. Each reference file defines its own bail-out, so an inapplicable lens costs one short subagent turn and returns a `BAIL:` token; a lens you drop on a hunch costs the entire lens and leaves no trace that it was lost. Never write a `BAIL:` line on a specialist's behalf, and never treat a bail you predicted as one that happened.
+
 | Agent | Lens | Scope |
 |-------|------|-------|
 | **Logic & Correctness** | Wrong conditions, off-by-one, null paths, state transitions, algorithm errors, new code paths that skip processing/validation/cleanup present in sibling paths | Changed code + surrounding functions |
@@ -168,7 +170,7 @@ Dispatch these agents simultaneously using the Agent tool. Each receives: the di
 | **Security** | Injection, auth gaps, data exposure, OWASP top 10 | Changed code + input/output boundaries |
 | **Spec Compliance** | Missing features, deviations from intent, out-of-scope additions | Diff + intent sources (PR description, plan/design docs, recent commit messages, branch name) |
 
-The Spec Compliance specialist replaces the older Plan Alignment specialist. It runs unconditionally — every PR has at least commit messages — but bails cleanly when no intent source can be inferred.
+The Spec Compliance specialist replaces the older Plan Alignment specialist. Like every other lens it is always dispatched; the note worth making about it is that an intent source can nearly always be found — every PR has at least commit messages — so it will rarely bail, and when it does, it bails cleanly.
 
 **Agent prompt template:**
 
@@ -232,7 +234,7 @@ These patterns produce low-quality reviews. Avoid them:
 
 | Mistake | What to do instead |
 |---------|-------------------|
-| Single-agent review (no parallel dispatch) | Always dispatch 5+ specialist agents in parallel via Agent tool |
+| Dispatching fewer than all six specialists | The count is fixed at six, not "five or more". A lens may bail after it runs; it may never be dropped from dispatch. |
 | Skipping verification | Always run verifier — unverified findings have high false positive rates |
 | Reporting style/quality nits | Specialists hunt **bugs**, not code style. "Missing test" is a suggestion at best, not a bug. |
 | Not tracing callers/callees | The best bugs hide at integration boundaries. Always trace one level deep. |

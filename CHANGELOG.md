@@ -39,6 +39,12 @@ what a plugin user sees.
   findings and the backlog slice. Without the map, blame degrades to file
   granularity, the out-of-scope bucket empties, and Post-Review reports "No
   out-of-scope bugs found" without ever having determined it.
+- `agentic-review`: the specialist count is now fixed at six everywhere. The
+  Common Mistakes rule said "5+" while the Phase 2 table listed six, and only Spec
+  Compliance was described as running unconditionally — between them, dropping a
+  lens looked sanctioned. Phase 2 now states that all six dispatch every run, that
+  whether a lens applies is the specialist's call rather than the orchestrator's,
+  and that a predicted `BAIL:` is never a substitute for one that happened.
 - `agentic-review`: the "When NOT to Use" note no longer implies the specialist
   count is negotiable — the judgement call is whether to run the skill, not how
   many of the six lenses to dispatch.
