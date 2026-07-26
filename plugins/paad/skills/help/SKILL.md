@@ -347,7 +347,8 @@ What it does:
      - Architecture smell (simple task but hard work = investigate)
      - Reusable components (search before building from scratch)
   3. Implements with mandatory red/green/refactor:
-     - RED: write one failing test (stop if unexpected behavior)
+     - RED: one failing test first — a new one, or an existing test
+       updated to the new expectation (stop if unexpected behavior)
      - GREEN: write minimal code to pass
      - REFACTOR: clean up duplication, hard-coded values, patterns
   4. Post-fix summary with contextual follow-up suggestions:

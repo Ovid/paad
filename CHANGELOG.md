@@ -11,6 +11,19 @@ what a plugin user sees.
 ## [Unreleased]
 
 ### Added
+- `vibe` gained a **rationalization table** — "When You're About to Skip a Step".
+  Every excuse in it was produced verbatim by an agent working a real timed task
+  under this skill, not invented: two independent runs both reached for "the
+  existing suite is my safety net", and the baseline runs supplied the
+  duplicate-coverage and one-line-change variants. Each row pairs the excuse with
+  why it is almost-but-not right.
+- `vibe`: RED now covers the case where an existing test encodes the old behaviour
+  — common on any requirement change, and hit by three of four agents in testing.
+  Updating that test and running it before touching the source is a valid RED;
+  changing a test *after* the source to make a red suite go green is not, and the
+  ordering is the entire difference. New stop condition when the agent cannot tell
+  a superseded requirement from a real regression, with matching digraph branch.
+
 - Every skill except `help` gained a **When NOT to Use This Skill** section, naming
   the situations that should route elsewhere. Draws the previously-implicit
   boundaries between `pushback` and `alignment`, `agentic-architecture` and

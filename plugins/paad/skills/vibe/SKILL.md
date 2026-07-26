@@ -32,6 +32,9 @@ digraph vibe {
   "STOP: feature may exist or test is wrong" [shape=box, style=bold];
   "STOP: unexpected failure, discuss" [shape=box, style=bold];
   "RED: write one failing test" [shape=box];
+  "Existing test encodes the old behaviour?" [shape=diamond];
+  "RED: update that test, run it before touching source" [shape=box];
+  "STOP: superseded requirement or real regression? ask" [shape=box, style=bold];
   "GREEN: minimal code to pass" [shape=box];
   "REFACTOR: clean up, keep tests green" [shape=box];
   "Post-fix summary" [shape=box];
@@ -61,8 +64,12 @@ digraph vibe {
   "Reusable components found?" -> "TDD enabled?" [label="no"];
   "Recommend using existing code" -> "TDD enabled?";
 
-  "TDD enabled?" -> "RED: write one failing test" [label="yes"];
+  "TDD enabled?" -> "Existing test encodes the old behaviour?" [label="yes"];
   "TDD enabled?" -> "GREEN: minimal code to pass" [label="no — user chose to skip TDD"];
+  "Existing test encodes the old behaviour?" -> "RED: write one failing test" [label="no"];
+  "Existing test encodes the old behaviour?" -> "RED: update that test, run it before touching source" [label="yes — it is the old requirement, not a regression"];
+  "Existing test encodes the old behaviour?" -> "STOP: superseded requirement or real regression? ask" [label="cannot tell"];
+  "RED: update that test, run it before touching source" -> "RED: test result?";
   "RED: write one failing test" -> "RED: test result?";
   "RED: test result?" -> "STOP: feature may exist or test is wrong" [label="passes unexpectedly"];
   "RED: test result?" -> "STOP: unexpected failure, discuss" [label="fails unexpectedly"];
@@ -161,6 +168,17 @@ Run it. It should fail. If it doesn't:
 
 Only proceed to GREEN when the test fails in the expected way.
 
+**When an existing test already encodes the old behaviour.** Common on any change to a requirement rather than a bug: a test asserts the value you are about to change. That test is part of what's changing — it is the old requirement written down, not a regression signal.
+
+Update it to the new expectation and run it *before* touching the source. That is a valid RED: you have a test that fails against unmodified production code for exactly the reason you predicted. Adding a second test asserting the same behaviour is not more rigorous, it just leaves two tests making contradictory claims that you then clean up in REFACTOR.
+
+Two things this does not license:
+
+- **Changing a test after the source, to make a red suite go green.** Same edit, opposite meaning. Before the fix it is a specification; after the fix it is whatever makes the failure go away. Order is the entire difference.
+- **Skipping RED because an existing test "already covers" the branch.** A test asserting the *old* value is not coverage of the *new* behaviour. It will go red whether your change is right or wrong, so it cannot tell you which — see the table below.
+
+If you cannot tell whether a failing test encodes a superseded requirement or a real regression, stop and ask. That distinction is the user's to make, not yours.
+
 ### GREEN — Write minimal code to pass
 
 Write the simplest code that makes the failing test pass. Resist the urge to:
@@ -186,6 +204,22 @@ Run all tests after refactoring. Everything must stay green.
 ### Repeat if needed
 
 If the task involves multiple behaviors, repeat the red/green/refactor cycle for each. One test at a time, one behavior at a time.
+
+## When You're About to Skip a Step
+
+Every excuse below was produced by an agent working a real timed task under this skill, not invented for illustration. They are persuasive because they are *almost* right — each one contains a true observation attached to a wrong conclusion. If you catch yourself composing one of these, that is the signal to do the step, not to explain why you didn't.
+
+| Excuse | Reality |
+|--------|---------|
+| "There's already a test asserting the old value that will fail loudly if I get this wrong — the existing suite is my safety net, so writing a failing test first is ceremony." | The existing test asserts the **old** behaviour. It goes red whether your change is right or wrong, so it cannot tell you which. That is a tripwire, not a safety net. Update it first and watch it fail, and you have a real RED for free. |
+| "Two existing tests already cover this branch — a third would be duplicate coverage." | Coverage of the old requirement is not coverage of the new one. Either update the existing tests before touching the source, or add one. Both are RED; neither is skipping it. |
+| "It's a one-line change." | The observed runs all found the "one-line change" claim was false — two tests elsewhere encoded the same value. You cannot know a change is one line until you have looked, and looking is most of the cost you were trying to avoid. |
+| "There's a deadline / demo in fifteen minutes." | RED cost about eight seconds in every measured run. A deadline is an argument for a *fast* RED, not for no RED — and the version that skips it is slower when the suite goes red on a change you believed was correct and you are now diagnosing under pressure. |
+| "The requirement was pre-confirmed with the PM, so I can move fast." | Confirmation of *what* to build says nothing about *how* to verify it. Accepting the requirement is correct; treating it as license to skip verification is not. |
+| "Stopping to ask would block on a question with only one defensible answer." | If it genuinely has one answer, stating it costs one sentence. This gate exists precisely because "obviously the only answer" is how an agent ends up rewriting tests to match code it just changed. Say what you are assuming and why, then proceed — but say it. |
+| "Tests are green, so I'm done." | Green is REFACTOR's entry condition, not its exit. This is the measured failure mode: without this skill, agents refactored **zero** times out of two; with it, both did. It is the step that vanishes silently, because nothing fails when you skip it. |
+| "Refactoring now would be scope creep — they asked for one line." | GREEN is where minimalism binds. REFACTOR is a separate step with different rules, and naming a magic number you just changed is squarely inside them. Keep it bounded: follow the conventions already in the file, and stop there. |
+| "I'll write the test right after the fix — same tests either way." | Not the same. A test written after passes immediately and proves only that it agrees with whatever you wrote. Written first, it specifies what the code *should* do; that is the only version that can be wrong in a useful way. |
 
 ## Step 4: Post-fix Summary
 
