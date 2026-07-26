@@ -35,86 +35,51 @@ Six steps, in order. The order is load-bearing — steps 1 and 2 each protect
 against a failure mode that only shows up if they run first.
 
 1. **Sweep, then create one worktree for the phase.** First fix this run's
-   identity. Generate it **once**, at the first `break-it-check` of the
-   session:
+   identity: run `echo "$(date +%Y%m%d-%H%M%S)-$$"` **once**, at the first
+   `break-it-check` of the session, and reuse the exact string it prints —
+   shape `<YYYYMMDD-HHMMSS>-<pid>` — as `<run-id>` for every phase after it.
+   **Run the command; never invent an id, and never copy one out of any
+   example.** Two runs holding the same id sweep each other's live worktrees,
+   which is the failure the id exists to prevent. Never regenerate it per
+   phase either: a run that changes its own id stops recognizing its own
+   strands.
 
-   ```
-   echo "$(date +%Y%m%d-%H%M%S)-$$"
-   ```
+   Then reclaim strands left by a crashed or aborted prior run:
 
-   Record the literal it prints (e.g. `20260726-141133-48217`) and reuse that
-   exact string as `<run-id>` for every phase for the rest of the session — the
-   timestamp keeps it legible, the shell PID separates two sessions started in
-   the same second. Never regenerate it per phase: the sweep below is scoped by
-   it, and a run that changes its own id stops recognizing its own strands.
-
-   Then reclaim any strand left by a crashed or aborted prior run:
-
-   - `git worktree prune` — reclaims only records whose checkout directory is
-     already gone; it cannot touch a live worktree.
+   - `git worktree prune` — reclaims records whose directory is gone or
+     unreachable; it never deletes files.
    - Enumerate `git worktree list --porcelain` and force-remove a worktree
-     **iff both hold: its path contains a `paad-test-roadmap-<id>` directory
-     segment, and that `<id>` is your run-id.**
+     **iff one of its path components is exactly `paad-test-roadmap-<run-id>`**
+     — split the path on `/` and compare components for **equality**. Never a
+     substring or "contains" test: run-ids differ only by PID, so a sibling's
+     `paad-test-roadmap-20260726-141133-481712` *contains* your
+     `paad-test-roadmap-20260726-141133-4817`, and a contains-test
+     force-removes that sibling's live worktree mid-mutation. Never match on a
+     `${TMPDIR:-/tmp}/…` prefix you construct either: git records the
+     symlink-resolved path (`/var/…` prints as `/private/var/…`) and `$TMPDIR`
+     already ends in `/`, so a constructed prefix matches nothing and the sweep
+     silently becomes a no-op.
+   - **Do not add an age or mtime arm to catch what run-id scoping leaves
+     behind.** The worktree is created once and reused for the whole phase, so
+     its mtime does not move while a slow suite runs — any threshold you pick
+     force-removes a live phase mid-mutation, which is that same failure
+     rescheduled onto a timer. *Why a disposable worktree* covers what happens
+     to those strands instead.
 
-   Both arms are load-bearing and they guard against different neighbors. The
-   **`paad-test-roadmap-` segment** is what keeps the sweep off the developer's
-   own worktrees — this is **not** "remove all worktrees"; a developer may have
-   a hand-made worktree checked out elsewhere on the same repo, and this sweep
-   must never touch it. The **run-id** is what keeps the sweep off a
-   *concurrent* `test-roadmap` session, which is the likelier collision for a
-   skill whose pre-flight tells developers to start a fresh session: the segment
-   alone identifies "worktrees this skill made," not "worktrees belonging to
-   *my* run," so a sibling session's sweep would force-remove a live worktree
-   out from under a running mutation. Because the run-id is embedded in the
-   path, both arms are answerable from `git worktree list` output alone.
+   Then create the phase's worktree. Name the directory `phase-<N>` — never the
+   roadmap's phase title, which is prose (`Phase X of Y`) and would silently
+   nest if it ever contained a `/`:
 
-   **Match on that path segment, not on a `${TMPDIR:-/tmp}/…` string you
-   construct.** The two never compare equal: git records the *resolved*
-   absolute path, and on macOS `$TMPDIR` and `/tmp` both live behind symlinks
-   (`/var/folders/…` is printed as `/private/var/folders/…`, `/tmp` as
-   `/private/tmp`), while `$TMPDIR` itself already ends in `/`, so the
-   constructed string also carries a doubled slash the record does not have. A
-   constructed-prefix test silently matches nothing, which fails in the worst
-   direction available: the sweep becomes a no-op and the leak it exists to
-   close stays open all session.
+   ```
+   git worktree add "${TMPDIR:-/tmp}/paad-test-roadmap-<run-id>/phase-<N>" HEAD
+   ```
 
-   Scoping by run-id does mean a strand left by a *dead* session is no longer
-   force-removed by the next session's sweep. That is the deliberate trade, and
-   it costs nothing: the strand sits in `$TMPDIR`, which the OS reclaims, and
-   once the directory is gone the unscoped `git worktree prune` above clears
-   the leftover `.git/worktrees/` record. **Do not add an age or mtime arm to
-   reclaim it sooner.** The worktree is created once and reused across the
-   baseline plus one mutation per `Catches:` behavior, and a directory's mtime
-   only moves when entries are added or removed — so a phase grinding through a
-   slow suite crosses any threshold you pick and gets force-removed
-   mid-mutation, which is the exact failure the run-id scoping exists to
-   prevent, merely rescheduled onto a timer.
-
-   Then create the phase's worktree: `git worktree add
-   "${TMPDIR:-/tmp}/paad-test-roadmap-<run-id>/<phase>" HEAD`.
-
-   The destination is named, not incidental. Nothing this gate creates may land
-   in the working tree: a second full checkout under the repo root is visible to
-   test discovery, linters, the `find`/`grep` recon in this plugin's own skills,
-   and `git status` — and the skill cannot exempt it, because it does not edit
-   the developer's `.gitignore`. `.git/` used to satisfy that property, but it
-   **hard-fails wherever `.git` is a *file* rather than a directory** — a `git
-   worktree` checkout, a submodule, a `--separate-git-dir` repo — with `fatal:
-   could not create leading directories of '.git/…/.git': Not a directory`.
-   Those shapes are not hypothetical here; `agentic-dedup`'s pre-flight already
-   detects two of the three (submodule, and `git worktree add` checkout).
-   `$TMPDIR` keeps the nothing-in-the-working-tree property, behaves identically
-   in all three of those repo shapes, keeps a fixed path segment for the sweep
-   to match on, and lets the OS reclaim anything a crash leaks.
-
-   This worktree is **reused across the baseline run and every mutation in
-   the phase** — one worktree per phase, not one per mutation. That reuse is
-   structural, not an optimization to skip if time-pressed: a fresh checkout
-   excludes gitignored artifacts (no `node_modules/`, `target/`, no venv), and
-   the skill cannot know, language-agnostically, what install command would
-   repopulate them or how long it takes. Paying that cost once per phase
-   instead of once per mutation is the only mitigation available that doesn't
-   require hardcoding an ecosystem's build tooling.
+   That worktree is **reused across the baseline run and every mutation in the
+   phase** — one per phase, not one per mutation. This is structural, not an
+   optimization to drop under time pressure: a fresh checkout has none of the
+   gitignored build artifacts (`node_modules/`, `target/`, venv) that the skill
+   cannot language-agnostically reinstall, so the cost is paid once per phase
+   or once per mutation. See *Why a disposable worktree* for the full cost.
 
 2. **Copy the phase's new test files into the worktree, *then* mutate.**
    Never the other way around. In colocated-test ecosystems — Rust's
@@ -262,6 +227,30 @@ that broke every such fence (in Rust/Zig/D the test file *is* under `src/`)
 becomes irrelevant, because you're mutating a copy you're about to throw
 away regardless.
 
+**Why `$TMPDIR` and not somewhere under the repo.** Nothing this gate creates
+may land in the working tree: a second full checkout under the repo root is
+visible to test discovery, linters, the `find`/`grep` recon in this plugin's
+own skills, and `git status` — and the skill cannot exempt it, because it does
+not edit the developer's `.gitignore`. An earlier draft used
+`.git/test-roadmap-worktrees/`, which satisfied that property but hard-fails
+wherever `.git` is a *file* rather than a directory: a `git worktree` checkout,
+a submodule, a `--separate-git-dir` repo. `$TMPDIR` keeps the
+nothing-in-the-working-tree property, behaves identically in all three of those
+repo shapes, and gives the sweep a fixed path component to match on.
+
+The **run-id** in that path is what keeps one run's sweep off another's live
+worktree. This is not hypothetical caution about a rare double-booking: both
+modes of this skill are built to resume across sittings (execute mode reads
+`Landed:` state on every entry; build mode's `## Decisions` section exists so a
+resume never re-asks), so more than one agent working one repo is a normal
+case, not an aberration. Path prefix alone identifies "worktrees this skill
+made," not "worktrees belonging to *my* run" — a sibling's sweep would
+force-remove a live worktree out from under a running mutation, which has been
+reproduced. The `paad-test-roadmap-` half of the component is what keeps the
+sweep off the developer's *own* hand-made worktrees; the run-id half is what
+keeps it off a concurrent session. Both live in the path, so both are
+answerable from `git worktree list` output alone.
+
 The same kind of crash the write-fence could not survive can still strand
 the **worktree itself** — the disposable checkout, plus its
 `.git/worktrees/` record — on any exit that skips step 5: a failure-table
@@ -274,9 +263,20 @@ prune`, plus a force-remove filtered to test-roadmap's own path segment
 **and** this run's id) runs on the one path a crash cannot skip — the start
 of the next phase — so a strand left by a short-circuited phase dies when
 the session next enters the gate, instead of persisting for the rest of the
-run. A strand left by a session that died outright is out of the run-id
-sweep's reach by design (step 1) and is reclaimed instead by `$TMPDIR` plus
-the unscoped `prune`. On-exit removal (step 5) is only the fast path;
+run.
+
+A strand left by a session that died *outright* is out of the run-id sweep's
+reach by design, and what reclaims it is `$TMPDIR` — eventually, with an
+honest ceiling: `systemd-tmpfiles` defaults to ten days on Linux, many
+container and CI images run no cleaner at all, and a project-local `$TMPDIR`
+may never be swept. So "the OS reclaims it" can mean "not for ten days" or
+"never." That is accepted rather than fixed because the residue is bounded and
+non-destructive: disk held by a checkout, plus a phantom row in `git worktree
+list` until the directory does go away and `git worktree prune` clears the
+record. The developer's tree is untouched either way, which is the property
+this design actually protects — and every mechanism that would reclaim it
+sooner (an age arm, an unscoped prefix sweep) buys that back by risking a live
+sibling's worktree. On-exit removal (step 5) is only the fast path;
 the sweep is the guarantee, because no on-exit cleanup survives a crash this
 design already declined to trust once.
 

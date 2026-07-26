@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites bump-version
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-export-current bump-version
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-export-current ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -164,3 +164,24 @@ check-dispatch-sites: ## Check every specialist/verifier dispatch site names the
 	fi; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All 9 dispatch sites name paad:paad-analyst (review 2, dedup 2, a11y 3, architecture 2); none leaked into the export."
+
+check-export-current: ## Check kiro_and_antigravity/ matches a fresh export of the skills
+	@tmp=$$(mktemp -d); \
+	mkdir -p "$$tmp/plugins" "$$tmp/scripts"; \
+	cp -R plugins/paad "$$tmp/plugins/"; \
+	cp scripts/convert_skills.py "$$tmp/scripts/"; \
+	if ! (cd "$$tmp" && python3 scripts/convert_skills.py) >/dev/null 2>"$$tmp/err"; then \
+		echo "FAIL: scripts/convert_skills.py errored:"; \
+		sed 's/^/  /' "$$tmp/err"; \
+		rm -rf "$$tmp"; \
+		exit 1; \
+	fi; \
+	if ! diff -ru kiro_and_antigravity "$$tmp/kiro_and_antigravity" >"$$tmp/export.diff" 2>&1; then \
+		echo "FAIL: kiro_and_antigravity/ is stale — a skill changed but the export was not regenerated."; \
+		echo "      Fix with: python3 scripts/convert_skills.py   (then commit the result)"; \
+		head -40 "$$tmp/export.diff" | sed 's/^/  /'; \
+		rm -rf "$$tmp"; \
+		exit 1; \
+	fi; \
+	rm -rf "$$tmp"; \
+	echo "Export in kiro_and_antigravity/ is current."
