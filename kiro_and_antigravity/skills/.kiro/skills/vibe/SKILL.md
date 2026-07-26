@@ -1,11 +1,15 @@
 ---
 name: vibe
-description: Safe vibe coding with TDD guardrails — for small fixes and quick changes where you want speed but not recklessness. Enforces red/green/refactor, checks for architecture issues, reusable components, and test infrastructure before diving in.
+description: Use when making a small, quick change — a bug fix, typo, minor feature, tweak, or anything the user calls "vibe coding" — that looks like 1-3 files in the same module
 ---
+
+**On invocation:** announce "Running paad:vibe v1.21.0" before anything else.
 
 # Safe Vibe Coding
 
 Quick fixes and small changes with guardrails. You get the speed of vibe coding without the recklessness — mandatory TDD, architecture awareness, and reusable component detection.
+
+**Flow:**
 
 ```dot
 digraph vibe {
@@ -14,16 +18,28 @@ digraph vibe {
   "Scope: how many files?" [shape=diamond];
   "Architecture smell?" [shape=diamond];
   "Reusable components found?" [shape=diamond];
+  "TDD enabled?" [shape=diamond];
   "RED: test result?" [shape=diamond];
+  "More behaviours in this task?" [shape=diamond];
+  "Follow-up genuinely warranted?" [shape=diamond];
 
   "Ask or clarify" [shape=box];
   "ASK: set up tests or skip TDD?" [shape=box];
+  "Set up a basic test framework" [shape=box];
   "WARN: may be bigger than a vibe task" [shape=box];
   "STOP: investigate deeper issues" [shape=box, style=bold];
   "Recommend using existing code" [shape=box];
   "STOP: feature may exist or test is wrong" [shape=box, style=bold];
   "STOP: unexpected failure, discuss" [shape=box, style=bold];
-  "Proceed to GREEN" [shape=box];
+  "RED: write one failing test" [shape=box];
+  "Existing test encodes the old behaviour?" [shape=diamond];
+  "RED: update that test, run it before touching source" [shape=box];
+  "STOP: superseded requirement or real regression? ask" [shape=box, style=bold];
+  "GREEN: minimal code to pass" [shape=box];
+  "REFACTOR: clean up, keep tests green" [shape=box];
+  "Post-fix summary" [shape=box];
+  "Suggest the matching paad skill" [shape=box];
+  "Say nothing further" [shape=box];
   "Run pre-flight checks" [shape=box];
 
   "Task clear?" -> "Run pre-flight checks" [label="yes"];
@@ -33,7 +49,9 @@ digraph vibe {
   "Run pre-flight checks" -> "Test infrastructure?";
   "Test infrastructure?" -> "Scope: how many files?" [label="yes"];
   "Test infrastructure?" -> "ASK: set up tests or skip TDD?" [label="no"];
-  "ASK: set up tests or skip TDD?" -> "Scope: how many files?";
+  "ASK: set up tests or skip TDD?" -> "Set up a basic test framework" [label="set up tests"];
+  "ASK: set up tests or skip TDD?" -> "Scope: how many files?" [label="proceed without TDD — RED is skipped"];
+  "Set up a basic test framework" -> "Scope: how many files?";
 
   "Scope: how many files?" -> "Architecture smell?" [label="1-3 files"];
   "Scope: how many files?" -> "WARN: may be bigger than a vibe task" [label="4+ files"];
@@ -43,12 +61,28 @@ digraph vibe {
   "Architecture smell?" -> "Reusable components found?" [label="no smell"];
 
   "Reusable components found?" -> "Recommend using existing code" [label="yes"];
-  "Reusable components found?" -> "RED: test result?" [label="no"];
-  "Recommend using existing code" -> "RED: test result?";
+  "Reusable components found?" -> "TDD enabled?" [label="no"];
+  "Recommend using existing code" -> "TDD enabled?";
 
+  "TDD enabled?" -> "Existing test encodes the old behaviour?" [label="yes"];
+  "TDD enabled?" -> "GREEN: minimal code to pass" [label="no — user chose to skip TDD"];
+  "Existing test encodes the old behaviour?" -> "RED: write one failing test" [label="no"];
+  "Existing test encodes the old behaviour?" -> "RED: update that test, run it before touching source" [label="yes — it is the old requirement, not a regression"];
+  "Existing test encodes the old behaviour?" -> "STOP: superseded requirement or real regression? ask" [label="cannot tell"];
+  "RED: update that test, run it before touching source" -> "RED: test result?";
+  "RED: write one failing test" -> "RED: test result?";
   "RED: test result?" -> "STOP: feature may exist or test is wrong" [label="passes unexpectedly"];
   "RED: test result?" -> "STOP: unexpected failure, discuss" [label="fails unexpectedly"];
-  "RED: test result?" -> "Proceed to GREEN" [label="fails as expected"];
+  "RED: test result?" -> "GREEN: minimal code to pass" [label="fails as expected"];
+
+  "GREEN: minimal code to pass" -> "REFACTOR: clean up, keep tests green" [label="new test passes, existing tests still pass"];
+  "REFACTOR: clean up, keep tests green" -> "More behaviours in this task?" [label="all tests still green"];
+  "More behaviours in this task?" -> "TDD enabled?" [label="yes — one behaviour at a time"];
+  "More behaviours in this task?" -> "Post-fix summary" [label="no"];
+
+  "Post-fix summary" -> "Follow-up genuinely warranted?";
+  "Follow-up genuinely warranted?" -> "Suggest the matching paad skill" [label="security-sensitive / UI / harder than expected"];
+  "Follow-up genuinely warranted?" -> "Say nothing further" [label="no — trivial fix"];
 }
 ```
 
@@ -111,6 +145,15 @@ Run it. It should fail. If it doesn't:
 
 Only proceed to GREEN when the test fails in the expected way.
 
+**When an existing test already encodes the old behaviour.** Common on a requirement change rather than a bug fix: a test asserts the value you are about to change. That test is the old requirement written down, not a regression signal — update it to the new expectation and run it *before* touching the source. That is a valid RED. Don't add a second test asserting the same behaviour.
+
+Two things this does not license:
+
+- **Changing a test after the source, to make a red suite go green.** Order is the entire difference: before the fix it is a specification, after it is whatever makes the failure go away.
+- **Skipping RED because an existing test "already covers" the branch.** It asserts the *old* value, so it goes red whether your change is right or wrong.
+
+If you cannot tell whether a failing test encodes a superseded requirement or a real regression, stop and ask.
+
 ### GREEN — Write minimal code to pass
 
 Write the simplest code that makes the failing test pass. Resist the urge to:
@@ -137,6 +180,22 @@ Run all tests after refactoring. Everything must stay green.
 
 If the task involves multiple behaviors, repeat the red/green/refactor cycle for each. One test at a time, one behavior at a time.
 
+## When You're About to Skip a Step
+
+Every excuse below was produced by an agent working a real timed task under this skill, not invented for illustration. They are persuasive because they are *almost* right — each one contains a true observation attached to a wrong conclusion. If you catch yourself composing one of these, that is the signal to do the step, not to explain why you didn't.
+
+| Excuse | Reality |
+|--------|---------|
+| "There's already a test asserting the old value that will fail loudly if I get this wrong — the existing suite is my safety net, so writing a failing test first is ceremony." | The existing test asserts the **old** behaviour. It goes red whether your change is right or wrong, so it cannot tell you which. That is a tripwire, not a safety net. Update it first and watch it fail, and you have a real RED for free. |
+| "Two existing tests already cover this branch — a third would be duplicate coverage." | Coverage of the old requirement is not coverage of the new one. Either update the existing tests before touching the source, or add one. Both are RED; neither is skipping it. |
+| "It's a one-line change." | The observed runs all found the "one-line change" claim was false — two tests elsewhere encoded the same value. You cannot know a change is one line until you have looked, and looking is most of the cost you were trying to avoid. |
+| "There's a deadline / demo in fifteen minutes." | RED cost about eight seconds in every measured run. A deadline is an argument for a *fast* RED, not for no RED — and the version that skips it is slower when the suite goes red on a change you believed was correct and you are now diagnosing under pressure. |
+| "The requirement was pre-confirmed with the PM, so I can move fast." | Confirmation of *what* to build says nothing about *how* to verify it. Accepting the requirement is correct; treating it as license to skip verification is not. |
+| "Stopping to ask would block on a question with only one defensible answer." | If it genuinely has one answer, stating it costs one sentence. This gate exists precisely because "obviously the only answer" is how an agent ends up rewriting tests to match code it just changed. Say what you are assuming and why, then proceed — but say it. |
+| "Tests are green, so I'm done." | Green is REFACTOR's entry condition, not its exit. This is the measured failure mode: without this skill, agents refactored **zero** times out of two; with it, both did. It is the step that vanishes silently, because nothing fails when you skip it. |
+| "Refactoring now would be scope creep — they asked for one line." | GREEN is where minimalism binds. REFACTOR is a separate step with different rules, and naming a magic number you just changed is squarely inside them. Keep it bounded: follow the conventions already in the file, and stop there. |
+| "I'll write the test right after the fix — same tests either way." | Not the same. A test written after passes immediately and proves only that it agrees with whatever you wrote. Written first, it specifies what the code *should* do; that is the only version that can be wrong in a useful way. |
+
 ## Step 4: Post-fix Summary
 
 After the fix is complete, provide a brief summary:
@@ -149,3 +208,15 @@ After the fix is complete, provide a brief summary:
 ### Follow-up suggestions (only when genuinely relevant)
 
 Suggest paad skills when the change warrants it. Don't suggest follow-ups for trivial fixes.
+
+## Common Mistakes
+
+These patterns turn safe vibe coding back into reckless vibe coding. Avoid them:
+
+| Mistake | What to do instead |
+|---------|-------------------|
+| Continuing past a RED test that passes unexpectedly | Stop and tell the user. Either the feature already exists or the test doesn't test what you think — both change what you should do next. |
+| Building a helper that already exists elsewhere | Search the codebase in Step 2 before writing anything. Report what you found and recommend extending it. |
+| Warning about 4+ file scope, then proceeding without an answer | The warning is a question. Wait for the user to choose. |
+| Expanding the fix "while you're in there" | GREEN means minimal. Adjacent broken code, missing error handling, and new abstractions are separate tasks. |
+| Suggesting a follow-up paad skill on every task | Only when genuinely warranted — security-sensitive, UI, or harder than expected. Reflexive suggestions train the user to ignore them. |

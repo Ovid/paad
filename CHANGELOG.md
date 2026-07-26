@@ -10,6 +10,75 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.21.0] — 2026-07-26
+
+### Added
+- **Experimental skills.** Two skills ship as explicitly experimental: their
+  arguments, output paths, and behavior may change or be withdrawn in any
+  release, **including a patch release**. The semver promise the other skills
+  carry does not apply to them. Each carries an `EXPERIMENTAL` banner as the
+  first thing in its body, an `EXPERIMENTAL.` lead in its frontmatter
+  description, and the word "experimental" in `paad:help` and the README. They are marked
+  rather than renamed — an `experimental-` name prefix would force a breaking
+  rename the day one graduates.
+- `agentic-dedup` (experimental) — a multi-agent hunt for **semantic** duplication: code
+  that means the same thing behind different names, syntax, control flow, or
+  independently evolved implementations. Not a syntactic clone detector; a
+  finding must show shared domain meaning, and findings resting on name
+  similarity, field-shape similarity, or visual structure are rejected in
+  verification, as is any duplication that turns out to be an intentional
+  bounded-context boundary. Six discovery strategies feed five specialists
+  (Semantic Equivalence, Type & Constraint Equivalence, Domain Boundary &
+  Intent, Divergence Risk, Refactoring Safety) and a skeptical verifier.
+  Reports to `paad/dedup-reviews/` with a cross-run `INDEX.md`, states each
+  constraint relationship as exact / overlap / subset / superset / drift, and
+  records rejected candidates so the next run does not rediscover them. It
+  never refactors — the report is the deliverable. Arguments: a path scope,
+  `--changed <base>`, `--type-constraints`, `--domain "<term>"`.
+- `test-roadmap` (experimental) — plans and builds a test suite that catches real
+  regressions, in phases, across as many sessions as it takes. Every phase must
+  name the bug it would catch; one that cannot is coverage theater and gets
+  rewritten or dropped. Before a phase counts as done it injects that very bug
+  in a disposable `git worktree` and confirms the test goes red — a passing
+  command and a covered line are never accepted as proof a test is any good.
+  Grades pre-existing tests against a test-theater catalog (assertion-free,
+  tautological, snapshot-only, over-mocked, happy-path-only), logs concrete
+  bugs it finds while pinning behavior without ever fixing them, and resumes
+  across unrelated commits, squash merges, and fresh clones. Routing is one
+  file-existence check: `paad/test-roadmap/test-roadmap.md` absent → build
+  mode, present → execute mode.
+
+  **This is the first paad skill that writes and commits code** — tests, one
+  commit per phase, onto your working branch. It refuses to run on
+  `main`/`master`/`trunk` and offers to create a working branch first.
+
+  Adapted from [Ovid/test-suite-generator](https://github.com/Ovid/test-suite-generator),
+  which was always intended to land here; that repo's design doc and decision
+  log remain the long-form record.
+
+### Changed
+- **Repo tooling.** `make check-extracted-refs` and its 163-line self-test are
+  replaced by `make check-references` (`scripts/check_references.py`). The old
+  check verified a *migration*: that a chunk of prose had moved out of a
+  SKILL.md into `references/`, tracked by a hand-maintained manifest of sentinel
+  sentences. That migration finished; git history is its record, and every new
+  extraction meant inventing another sentinel. The new check verifies the
+  invariant that actually persists — every `references/` path named anywhere in
+  a skill resolves to a real file, and every reference file is named by
+  something. It covers all 13 reference files instead of the manifest's 8
+  (`test-roadmap`'s were unguarded), needs no manifest, and catches orphaned
+  reference files the old check could not see. What it no longer enforces: the
+  *wording* of a dispatch line. That convention now lives only in
+  `notes/convert-skills.md`.
+- `scripts/convert_skills.py` now copies each skill's `references/` into the
+  Kiro export. It never did, so `agentic-review` exported as a router pointing
+  at eight files that weren't there; `test-roadmap`, which is almost entirely
+  reference content, would have been worse. Reference files are rewritten on the
+  same terms as SKILL.md bodies rather than copied verbatim, so their output
+  paths agree with the SKILL.md that loads them. The text before the first `##`
+  is now rewritten too — it holds every digraph by paad convention, and
+  `test-roadmap` routes on a path named inside one.
+
 ## [1.20.0] — 2026-07-26
 
 ### Added

@@ -350,6 +350,47 @@ Shows help for all PAAD skills or detailed help for one skill.
 
 * **Arguments:** `/paad:help` (overview of all skills) or `/paad:help vibe` (detailed help for one skill)
 
+---
+
+### Experimental skills
+
+These skills are shipped so they get real use, but they are **not settled**. Their arguments, output paths, and behavior may change — or the skill may be withdrawn — in **any** release, including a patch release. The semver promise the other skills carry does not apply to them. If you build a workflow on one, pin your plugin version, and please [file what breaks](https://github.com/Ovid/paad/issues).
+
+#### `/paad:agentic-dedup [scope]` — experimental
+
+Duplication that a clone detector finds is the easy kind. The expensive kind is two pieces of code that *mean* the same thing while looking nothing alike — a validator and a schema that accept the same values, a `for` loop and a stream pipeline that compute the same total, a permission check reimplemented through a different helper chain. Those drift apart silently, and the bug surfaces when one side is fixed and the other is not.
+
+`agentic-dedup` hunts for shared meaning rather than shared text, and reports only what survives verification.
+
+* **Arguments:** `/paad:agentic-dedup` (whole repo) or `/paad:agentic-dedup src/auth/` (scoped) or `/paad:agentic-dedup --changed main` (seeded from the branch diff) or `/paad:agentic-dedup --type-constraints` (schemas, type aliases, validators, DB constraints) or `/paad:agentic-dedup --domain "payments"` (scoped to a domain term)
+* **Six discovery strategies** — name and concept search, behavioral fingerprints, type and constraint equivalence, control-flow normalization, tests read as behavioral specs, and a search for an existing canonical utility that the duplicates should have been calling
+* **Five specialists in parallel** — Semantic Equivalence, Type & Constraint Equivalence, Domain Boundary & Intent, Divergence Risk, and Refactoring Safety
+* **Skeptical verification** — findings based on name similarity, field-shape similarity, or visual structure are rejected, as is anything where the duplication is an intentional bounded-context boundary and sharing would be the riskier change
+* **Relationship, not just a verdict** — the type and constraint table states whether two constraints are exact, overlapping, subset, superset, or already drifting
+* **Rejected candidates are recorded** — so the next run does not spend context rediscovering the same false positives
+* **Report** — written to `paad/dedup-reviews/`, with a persistent `INDEX.md` across runs
+
+It never refactors anything. The report is the deliverable.
+
+#### `/paad:test-roadmap` — experimental
+
+High coverage numbers lie. A line can be "covered" by a test that asserts nothing — green forever, catching nothing. So when you finally refactor the scary part of a legacy codebase, the suite stays quiet and the regression ships anyway.
+
+`test-roadmap` builds the suite that does *not* stay quiet. It pins your code's **current** behavior, deliberately including the buggy parts, so that the day you start changing things the tests break loudly and tell you exactly what you changed. One command, run again each session: it plans the suite in phases, then writes those phases one at a time across as many sessions as it takes.
+
+* **Arguments:** `/paad:test-roadmap` (no arguments — the presence of the roadmap file selects build mode or execute mode)
+* **Every phase names the bug it would catch** — a phase that cannot answer *"what breakage makes these tests go red?"* is coverage theater, and gets rewritten or dropped
+* **It proves each test actually works** — before a phase counts as done, it injects the very bug the phase claims to catch and confirms the test goes red; a passing command and a covered line are never accepted as proof
+* **Bug injection is disposable** — it happens in a throwaway `git worktree`, never in your working tree, database, or config
+* **It grades the tests you already have** — existing tests are classified against a catalog of test theater (assertion-free, tautological, snapshot-only, over-mocked, happy-path-only) before anything new is planned
+* **It will not call a phase done while the run is noisy** — your whole suite runs normally and again under coverage; it fixes what is its own to fix and surfaces the rest, and never edits your code to quiet a warning
+* **You finish with a bug list you did not start with** — contradictions found while pinning behavior are logged with the test that proves them. It never fixes them; that is your call
+* **Resumable** — across unrelated commits, squash merges, fresh clones, and sessions that remember nothing about the last one
+
+Requires a git checkout and a working branch. Started on `main` (or `master`, or `trunk`), it stops and offers to create a branch first, so your primary branch never fills up with half-built tests.
+
+**This is the only PAAD skill that writes and commits code.** Every other skill reports, advises, or edits documents; this one adds tests and commits them, one commit per phase, onto the branch you are on.
+
 ## Local Development
 
 Test the plugin locally without installing it:
@@ -380,6 +421,7 @@ make check-digraphs     # every skill (except help) has a digraph
 make check-help         # every skill is documented in paad:help
 make check-readme       # every skill is documented in README.md
 make check-frontmatter  # SKILL.md frontmatter is valid, folder name matches
+make check-references   # references/ dispatches resolve; no orphaned reference files
 make validate           # claude plugin validate on marketplace + plugins
 ```
 

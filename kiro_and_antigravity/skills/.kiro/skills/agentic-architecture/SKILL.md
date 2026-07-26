@@ -1,7 +1,9 @@
 ---
 name: agentic-architecture
-description: Multi-agent architecture analysis — dispatches specialists for structure, coupling, integration, error handling, and security, verifies findings, and produces a comprehensive report of strengths and flaws with evidence
+description: Use when assessing the architectural health of a codebase — before a major refactor, when onboarding to an unfamiliar repo, after rapid growth, when planning a redesign, or to surface structural strengths and risks before they become expensive. Not for fixing what it finds, and not for reviewing a branch diff.
 ---
+
+**On invocation:** announce "Running paad:agentic-architecture v1.21.0" before anything else.
 
 # Agentic Architecture Analysis
 
@@ -10,6 +12,81 @@ Multi-agent architecture analysis of the current codebase. Dispatches specialist
 **Do NOT propose fixes.** This is diagnosis only.
 
 **This is a technique skill.** Follow the phases in order. Do not skip verification.
+
+**Pre-flight:**
+
+```dot
+digraph preflight {
+  "Conversation has history?" [shape=diamond];
+  "Proceed to Phase 1" [shape=box];
+  "STOP: recommend new session" [shape=box, style=bold];
+
+  "Conversation has history?" -> "STOP: recommend new session" [label="yes"];
+  "Conversation has history?" -> "Proceed to Phase 1" [label="no"];
+}
+```
+
+**Analysis flow:**
+
+```dot
+digraph analysis_flow {
+  "Git repo?" [shape=diamond];
+  "Scope size?" [shape=diamond];
+  "Integration & Data specialist: distributed system?" [shape=diamond];
+  "Confirmed by reading the actual code?" [shape=diamond];
+  "Confidence >= 60?" [shape=diamond];
+  "Concrete evidence present?" [shape=diamond];
+  "Reported by multiple specialists?" [shape=diamond];
+
+  "Repo name from git remote origin" [shape=box];
+  "Repo name from top-level directory basename" [shape=box];
+  "Recon: overview, structure, steering files, manifest" [shape=box];
+  "Dispatch 5 specialists in parallel" [shape=box];
+  "Partition files across 2 instances of each specialist" [shape=box];
+  "Mark distributed-specific categories Not applicable" [shape=box];
+  "Validate impact level and category assignment" [shape=box];
+  "Merge duplicates, note the agreeing specialists" [shape=box];
+  "DROP the finding" [shape=box];
+  "Keep the finding" [shape=box];
+  "Write report to .reviews/architecture/" [shape=box];
+  "Report location, counts, 3-6 bullet summary" [shape=box];
+  "STOP: diagnosis only — do NOT propose fixes" [shape=box, style=bold];
+
+  "Git repo?" -> "Repo name from git remote origin" [label="yes"];
+  "Git repo?" -> "Repo name from top-level directory basename" [label="no"];
+  "Repo name from git remote origin" -> "Recon: overview, structure, steering files, manifest";
+  "Repo name from top-level directory basename" -> "Recon: overview, structure, steering files, manifest";
+  "Recon: overview, structure, steering files, manifest" -> "Scope size?";
+
+  "Scope size?" -> "Dispatch 5 specialists in parallel" [label="small (<50) / medium (50-500)"];
+  "Scope size?" -> "Partition files across 2 instances of each specialist" [label="large (500+ source files)"];
+  "Partition files across 2 instances of each specialist" -> "Dispatch 5 specialists in parallel";
+  "Dispatch 5 specialists in parallel" -> "Integration & Data specialist: distributed system?";
+  "Integration & Data specialist: distributed system?" -> "Confirmed by reading the actual code?" [label="yes"];
+  "Integration & Data specialist: distributed system?" -> "Mark distributed-specific categories Not applicable" [label="no"];
+  "Mark distributed-specific categories Not applicable" -> "Confirmed by reading the actual code?";
+
+  "Confirmed by reading the actual code?" -> "Confidence >= 60?" [label="yes — verifier per finding"];
+  "Confirmed by reading the actual code?" -> "DROP the finding" [label="no"];
+  "Confidence >= 60?" -> "Concrete evidence present?" [label="yes"];
+  "Confidence >= 60?" -> "DROP the finding" [label="no"];
+  "Concrete evidence present?" -> "Validate impact level and category assignment" [label="yes (path, symbol, excerpt)"];
+  "Concrete evidence present?" -> "DROP the finding" [label="no"];
+  "Validate impact level and category assignment" -> "Reported by multiple specialists?";
+  "Reported by multiple specialists?" -> "Merge duplicates, note the agreeing specialists" [label="yes"];
+  "Reported by multiple specialists?" -> "Keep the finding" [label="no"];
+  "Merge duplicates, note the agreeing specialists" -> "Keep the finding";
+
+  "Keep the finding" -> "Write report to .reviews/architecture/";
+  "DROP the finding" -> "Write report to .reviews/architecture/" [label="counted under Filtered out"];
+  "Write report to .reviews/architecture/" -> "Report location, counts, 3-6 bullet summary";
+  "Report location, counts, 3-6 bullet summary" -> "STOP: diagnosis only — do NOT propose fixes";
+}
+```
+
+## When NOT to Use This Skill
+
+- **The scope is a handful of files** — architecture is about boundaries and relationships between components. Below that scale there's no structure to assess, and the report will pad.
 
 ## Phase 1: Reconnaissance
 

@@ -3,7 +3,7 @@ name: help
 description: Use when the user asks which paad skills exist, what a paad skill does, which one fits their situation, or how to invoke one — including "what can paad do", "list the paad skills", "is there a paad skill for X", or a request for the arguments of a named paad skill
 ---
 
-**On invocation:** announce "Running paad:help v1.20.0" before anything else.
+**On invocation:** announce "Running paad:help v1.21.0" before anything else.
 
 # paad Help
 
@@ -49,12 +49,21 @@ Available skills:
   /paad:pushback [spec-file]                 Spec/PRD critic (finds issues before you build)
   /paad:vibe [task description]              Safe vibe coding with TDD guardrails
 
+Experimental — may change or be withdrawn in any release, including patches:
+
+  /paad:agentic-dedup [scope]                Find semantic duplication (same meaning, different code)
+  /paad:test-roadmap                         Plan and build a test suite that catches real regressions
+
 Picking between them:
 
   Want structural flaws found?          agentic-architecture (diagnoses, does not fix)
   Want them fixed?                      fix-architecture (needs a report first)
   Want bugs in a branch?                agentic-review (a diff, not the codebase)
   Want accessibility barriers?          agentic-a11y (not general correctness)
+  Want duplicated logic found?          agentic-dedup (experimental; reports,
+                                        never refactors)
+  Have no tests, or tests you distrust? test-roadmap (experimental; the only
+                                        skill that writes and commits code)
   Have one spec, is it any good?        pushback
   Have a spec AND a plan, do they match? alignment (needs both; does not read code)
   Making a small change?                vibe (1-3 files, same module)
@@ -368,4 +377,98 @@ What it does:
      - Harder than expected → /paad:agentic-architecture
 
 No fresh session needed — this is a lightweight workflow skill.
+```
+
+### agentic-dedup
+
+```
+/paad:agentic-dedup [scope]
+
+EXPERIMENTAL — arguments, output paths, and behavior may change or be
+withdrawn in any release, including patch releases.
+
+Multi-agent hunt for semantic duplication: code that means the same thing
+behind different names, different syntax, different control flow, or
+independently evolved implementations. Not a syntactic clone detector.
+
+Output: paad/dedup-reviews/<branch-or-scope>-<timestamp>-<sha>.md
+        paad/dedup-reviews/INDEX.md (persistent, newest run on top)
+
+Arguments:
+  /paad:agentic-dedup                     Scan the repository
+  /paad:agentic-dedup src/auth/           Scope to a path or module
+  /paad:agentic-dedup --changed main      Seed from the diff against main
+  /paad:agentic-dedup --type-constraints  Schemas, type aliases, validators
+  /paad:agentic-dedup --domain "payments" Scope to a domain term
+
+What it does:
+  1. Reconnaissance: manifest grouped by semantic domain, not by extension
+  2. Candidate discovery via six strategies: name/concept search,
+     behavioral fingerprints, type & constraint equivalence, control-flow
+     normalization, tests as behavioral specs, canonical utility search
+  3. Dispatches 5 specialist agents in parallel:
+     - Semantic Equivalence
+     - Type & Constraint Equivalence
+     - Domain Boundary & Intent
+     - Divergence Risk
+     - Refactoring Safety
+  4. Verifies findings — rejects name-only, shape-only, and structural
+     matches, and anything where duplication is the safer choice
+  5. Writes a report with:
+     - Findings ranked Critical / Important / Suggestion
+     - Type and constraint equivalence table (exact/overlap/subset/drift)
+     - Rejected candidates, so the next run does not rediscover them
+     - A consolidation strategy with a safe migration sequence
+
+Never refactors anything. The report is the deliverable.
+
+Best used in a fresh session — consumes significant context.
+```
+
+### test-roadmap
+
+```
+/paad:test-roadmap
+
+EXPERIMENTAL — arguments, output paths, and behavior may change or be
+withdrawn in any release, including patch releases. This is the only paad
+skill that writes and commits code.
+
+Builds a test suite that catches real regressions, in phases, across as
+many sessions as it takes. One command on day 1 and on day 90.
+
+Output: paad/test-roadmap/test-roadmap.md (the roadmap, and the memory)
+        Tests, committed one phase per commit, on your working branch
+
+Arguments:
+  /paad:test-roadmap    No arguments — the roadmap file decides the mode
+
+Requirements:
+  - A git checkout (bug injection runs in a disposable git worktree)
+  - A working branch, not main/master/trunk — it offers to make one
+
+What it does:
+  Routing is one check: does paad/test-roadmap/test-roadmap.md exist?
+
+  Absent → BUILD mode, five stages:
+     1. Detect   — stack, test runner, and existing tests from manifests,
+                   never from a hardcoded language list
+     2. Grade    — fan-out subagents grade existing tests for weakness and
+                   classify mocks (see the test-theater catalog)
+     3. Plan     — phases, each naming the bug it would catch
+     4. Critique — a phase that cannot name its bug is coverage theater
+                   and gets rewritten or dropped
+     5. Write    — the roadmap, including the decisions you settled
+
+  Present → EXECUTE mode, one phase per run:
+     - Writes that phase's tests
+     - break-it-check: injects the very bug the phase claims to catch,
+       in a throwaway worktree, and confirms the test goes red
+     - Runs your whole suite, once normally and once under coverage;
+       will not call a phase done while the run is noisy
+     - Commits the phase and marks it done
+
+  Logs concrete bugs it finds along the way. It never fixes them.
+
+Best used in a fresh session — consumes significant context.
 ```

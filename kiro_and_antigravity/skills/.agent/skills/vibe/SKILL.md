@@ -1,6 +1,6 @@
 ---
 name: vibe
-description: Safe vibe coding with TDD guardrails — for small fixes and quick changes where you want speed but not recklessness. Enforces red/green/refactor, checks for architecture issues, reusable components, and test infrastructure before diving in.
+description: Use when making a small, quick change — a bug fix, typo, minor feature, tweak, or anything the user calls "vibe coding" — that looks like 1-3 files in the same module
 ---
 
 # Safe Vibe Coding (Antigravity Wrapper)
