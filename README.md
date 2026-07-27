@@ -92,8 +92,8 @@ It doesn't replace your current AI-assisted development tools; it complements
 them. You like [Superpowers](https://github.com/obra/superpowers/)? Use it
 with PAAD for even better results.
 
-PAAD supports **Claude Code** natively, along with support for **Cursor**,
-**Kiro**, and **Antigravity**.
+PAAD supports **Claude Code** and **Pi** natively, along with support for
+**Cursor**, **Kiro**, and **Antigravity**.
 
 ## Star History
 
@@ -245,6 +245,22 @@ recognizes skill names in natural language, so prompts such as “run a pushback
 review on this spec” or “review the architecture of this module” should
 trigger the corresponding skill.
 
+### Pi
+
+Install PAAD directly from Git:
+
+```bash
+pi install git:github.com/Ovid/paad
+```
+
+To try a local checkout without installing it permanently:
+
+```bash
+pi -e .
+```
+
+Pi discovers all canonical PAAD skills from the package manifest. Invoke one explicitly with `/skill:<name>`, for example `/skill:pushback` or `/skill:help`, or ask for it in natural language.
+
 ### Cursor
 
 PAAD skills use the same `SKILL.md` format that [Cursor
@@ -316,9 +332,9 @@ cp -r kiro_and_antigravity/skills/.agent/skills/pushback .agent/skills/
 
 ### Using skills outside Claude Code
 
-As with Claude Code, with Cursor, Kiro, and Antigravity, skills are
-automatically recognized by your assistant. You do not need a special prefix.
-You can simply ask the assistant to perform the task, such as:
+As with Claude Code, with Pi, Cursor, Kiro, and Antigravity, skills are
+automatically recognized by your assistant. You can simply ask the assistant to
+perform the task, such as:
 
 * “Run a pushback review on this spec”
 * “Check whether this plan aligns with the requirements”
@@ -678,6 +694,12 @@ claude --plugin-dir ./plugins/paad
 Then invoke skills with `/paad:help` to see available commands, or try
 `/paad:vibe`, `/paad:pushback`, and the rest directly.
 
+For Pi, load the package directly from the current checkout:
+
+```bash
+pi -e .
+```
+
 After making changes, run `/reload-plugins` inside Claude Code to pick up
 updates without restarting.
 
@@ -689,14 +711,15 @@ Run all checks with:
 make test
 ```
 
-This validates the marketplace and plugin structure, then runs consistency
-checks such as version sync, digraph presence, help and README coverage, and
-frontmatter validation. Use `make help` to see all available targets.
+This validates the marketplace and Claude plugin structure, then runs
+consistency checks such as package version sync, digraph presence, help and
+README coverage, and frontmatter validation. Use `make help` to see all
+available targets.
 
 Individual checks can also be run separately:
 
 ```bash
-make check-versions     # marketplace.json ↔ plugin.json version sync
+make check-versions     # package.json ↔ marketplace.json ↔ plugin.json version sync
 make check-digraphs     # every skill (except help) has a digraph
 make check-help         # every skill is documented in paad:help
 make check-readme       # every skill is documented in README.md
