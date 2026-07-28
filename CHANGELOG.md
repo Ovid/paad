@@ -10,6 +10,9 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Added
+- **Pi package support.** Added a package manifest and installation instructions. Parallel subagent dispatch is required.
+
 ## [1.21.0] — 2026-07-26
 
 ### Added

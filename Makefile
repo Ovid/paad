@@ -41,7 +41,7 @@ check-skill-versions: ## Check every SKILL.md announces the correct version
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All skills announce v$$plugin_ver."
 
-bump-version: ## Bump version across plugin.json, marketplace.json, and all SKILL.md (usage: make bump-version VERSION=X.Y.Z)
+bump-version: ## Bump version across package and plugin manifests and all SKILL.md (usage: make bump-version VERSION=X.Y.Z)
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Usage: make bump-version VERSION=X.Y.Z"; \
 		exit 1; \
@@ -56,6 +56,7 @@ bump-version: ## Bump version across plugin.json, marketplace.json, and all SKIL
 		exit 0; \
 	fi; \
 	echo "Bumping $$old_ver -> $(VERSION)..."; \
+	sed -i.bak 's|^  "version": "[^"]*"|  "version": "$(VERSION)"|' package.json && rm -f package.json.bak; \
 	sed -i.bak 's|"version": "[^"]*"|"version": "$(VERSION)"|' plugins/paad/.claude-plugin/plugin.json && rm -f plugins/paad/.claude-plugin/plugin.json.bak; \
 	sed -i.bak 's|^      "version": "[^"]*"|      "version": "$(VERSION)"|' .claude-plugin/marketplace.json && rm -f .claude-plugin/marketplace.json.bak; \
 	for dir in $(SKILL_DIRS); do \

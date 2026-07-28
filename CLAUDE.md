@@ -12,6 +12,7 @@ Also, address me as "Ovid" for further verification that you have read this file
 
 ```
 paad/
+├── package.json                        ← Pi package manifest
 ├── .claude-plugin/
 │   └── marketplace.json           ← marketplace catalog (lists all plugins)
 ├── plugins/
@@ -46,7 +47,7 @@ paad/
 - **Marketplace name**: `paad`
 - **Plugin name**: `paad` (so all skills are invoked as `/paad:<skill-name>`)
 - **Skill naming**: skill folder names become the suffix after `paad:` — e.g., `skills/agentic-architecture/` → `/paad:agentic-architecture`
-- **Versioning**: both `marketplace.json` and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. Run `make bump-version VERSION=X.Y.Z` to update all three places at once; `make check-skill-versions` (run as part of `make test`) catches drift.
+- **Versioning**: `package.json`, `marketplace.json`, and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. Run `make bump-version VERSION=X.Y.Z` to update all manifests and skill announce lines at once; `make check-versions` and `make check-skill-versions` (run as part of `make test`) catch drift.
 - **Changelog**: `CHANGELOG.md` tracks user-facing changes to the plugin, newest first. Land every user-facing change under `[Unreleased]` as you make it; the release rolls that section into a version. Repo-only churn (docs, `.claude/skills/`, README wording, design notes) doesn't need an entry. See "Releasing" for the rollover steps.
 - **Validation**: run `claude plugin validate .` (marketplace) and `claude plugin validate ./plugins/paad` (plugin) before committing
 - **Announce on invocation**: every `SKILL.md` must begin its body with the line `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` so users see which skill ran and which version produced the behavior. The literal version string must match `plugin.json`.
@@ -59,7 +60,7 @@ paad/
 4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow, placed immediately after the intro paragraphs and before the first `##` heading. The only exception is `paad:help`, which is a simple display skill. See "Digraph requirements" below.
 5. Validate with `claude plugin validate ./plugins/paad`
 6. Test locally with `claude --plugin-dir ./plugins/paad`
-7. Bump the version with `make bump-version VERSION=X.Y.Z` (updates `plugin.json`, `marketplace.json`, and every SKILL.md announce line in one shot)
+7. Bump the version with `make bump-version VERSION=X.Y.Z` (updates `package.json`, `plugin.json`, `marketplace.json`, and every SKILL.md announce line in one shot)
 8. Update `README.md` to document the new skill under "Available Skills", including argument syntax in the heading
 9. Add the new skill to `paad:help` — both the overview table and a detailed help section
 10. Run `make test` to verify all checks pass (validate, version sync, skill-version announce, digraphs, help, README, frontmatter, references)
@@ -76,7 +77,7 @@ There is no build and no artifact upload. Users install from this repo via `/plu
 Release from a branch, never by committing to `main` directly.
 
 1. **Pick the version.** Semver against what changed since the last release: new skill or new user-facing behavior → minor; wording, digraph, or bug fixes only → patch. A renamed or removed skill is breaking — call it out in the changelog even though this project has stayed on `1.x`.
-2. **Bump it.** `make bump-version VERSION=X.Y.Z` — rewrites `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line in one shot. Don't hand-edit those; `make check-versions` and `make check-skill-versions` exist because drift happens.
+2. **Bump it.** `make bump-version VERSION=X.Y.Z` — rewrites `package.json`, `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line in one shot. Don't hand-edit those; `make check-versions` and `make check-skill-versions` exist because drift happens.
 3. **Roll the changelog.** In `CHANGELOG.md`:
    - Rename `## [Unreleased]` to `## [X.Y.Z] — YYYY-MM-DD` using today's real date (check it; don't guess).
    - Open a fresh, empty `## [Unreleased]` above it.
@@ -121,7 +122,7 @@ When modifying a skill's flow, check that the digraph still matches. When review
 The repo also hosts **project-local** skills at `.claude/skills/<name>/SKILL.md` (e.g. `.claude/skills/roadmap/SKILL.md`). These are **not** part of the `paad` plugin and follow a different lifecycle:
 
 - **Not distributed** — they live in this repo only and are picked up automatically by Claude Code when it runs in this working directory. There is no marketplace, no `claude plugin validate` step, no `plugin.json`, no version field.
-- **No `make bump-version` impact** — `make bump-version` rewrites `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line. Project-local SKILL.md files are skipped on purpose. They have no announce-line version, no `paad:<name>` namespace.
+- **No `make bump-version` impact** — `make bump-version` rewrites `package.json`, `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line. Project-local SKILL.md files are skipped on purpose. They have no announce-line version, no `paad:<name>` namespace.
 - **No `make test` checks** — the Makefile's check-frontmatter / check-digraphs / check-help / check-readme / check-skill-versions targets all walk `plugins/paad/skills/`. They do not enforce anything against `.claude/skills/`.
 - **Edit-and-commit only** — change the SKILL.md, commit, you're done. No version bump, no help table edit, no README entry, no `paad:help` cross-reference.
 - **Naming** — invoke as `/<name>` (no `paad:` prefix), because they're not in a plugin. `/roadmap`, not `/paad:roadmap`.
