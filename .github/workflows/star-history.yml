@@ -1,7 +1,7 @@
 name: star-history
 on:
   schedule: [{cron: "17 3 * * *"}]
-  push: {paths: ['.github/workflows/star-history.yml']}
+  push: {branches: ['**'], paths: ['.github/workflows/star-history.yml']}
   workflow_dispatch:
 permissions: {contents: write}
 concurrency: {group: star-history}
@@ -9,10 +9,11 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: python3 star_history.py update
         env: {GITHUB_TOKEN: "${{ github.token }}"}
       - run: |
+          git symbolic-ref -q HEAD >/dev/null || { echo "detached HEAD, nothing to push"; exit 0; }
           git add -A .github/star-history
           git diff --cached --quiet && exit 0
           git config user.name  "github-actions[bot]"
