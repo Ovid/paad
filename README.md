@@ -35,7 +35,7 @@ PAAD supports **Claude Code** natively, along with support for **Cursor**, **Kir
 
 ## Why people are using PAAD
 
-The strongest early adoption has come from three skills:
+The strongest early adoption has come from four skills:
 
 - **`pushback`**, which critically reviews specs before implementation
 - **`alignment`**, which checks whether the planned work actually matches the spec and design
