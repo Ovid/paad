@@ -92,8 +92,8 @@ It doesn't replace your current AI-assisted development tools; it complements
 them. You like [Superpowers](https://github.com/obra/superpowers/)? Use it
 with PAAD for even better results.
 
-PAAD supports **Claude Code** and **Pi** natively, along with support for
-**Cursor**, **Kiro**, and **Antigravity**.
+PAAD supports **Claude Code** natively and ships as a **Pi** package. It also
+supports **Cursor**, **Kiro**, and **Antigravity**.
 
 ## Star History
 
@@ -247,6 +247,10 @@ trigger the corresponding skill.
 
 ### Pi
 
+PAAD requires an extension for parallel subagent dispatch. Pi provides an
+[official
+example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent).
+
 Install PAAD directly from Git:
 
 ```bash
@@ -259,7 +263,7 @@ To try a local checkout without installing it permanently:
 pi -e .
 ```
 
-Pi discovers all canonical PAAD skills from the package manifest. Invoke one explicitly with `/skill:<name>`, for example `/skill:pushback` or `/skill:help`, or ask for it in natural language.
+Invoke a skill with `/skill:<name>` or by name.
 
 ### Cursor
 
@@ -694,12 +698,6 @@ claude --plugin-dir ./plugins/paad
 Then invoke skills with `/paad:help` to see available commands, or try
 `/paad:vibe`, `/paad:pushback`, and the rest directly.
 
-For Pi, load the package directly from the current checkout:
-
-```bash
-pi -e .
-```
-
 After making changes, run `/reload-plugins` inside Claude Code to pick up
 updates without restarting.
 
@@ -740,7 +738,7 @@ Key rules from `CLAUDE.md`:
 * Every skill except `help` must include a Graphviz digraph covering its
   decision points
 * Skill folder names must match the `name` field in `SKILL.md` frontmatter
-* Bump the version in both `plugin.json` and `marketplace.json`
+* Use `make bump-version VERSION=X.Y.Z` to keep all versioned files in sync
 * Update `README.md`, `paad:help`, and `CLAUDE.md` when adding or changing
   skills
 

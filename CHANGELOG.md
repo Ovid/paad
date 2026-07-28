@@ -10,6 +10,13 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Added
+- **Pi package support.** A root `package.json` declares the skills directory as
+  a [Pi](https://pi.dev/) package, so `pi install git:github.com/Ovid/paad`
+  installs every canonical PAAD skill. The multi-agent skills need a Pi
+  extension that provides parallel subagent dispatch; without one they have no
+  supported execution path.
+
 ### Changed
 - **Every skill that writes a file now ends by listing what it wrote.** Runs
   were leaving reports, indexes, backlogs, roadmaps, findings logs, and edited
