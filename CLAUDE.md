@@ -85,24 +85,18 @@ The changelog and tag are what make a release legible; the tag is a marker after
 
 Release from a branch, never by committing to `main` directly.
 
-1. **Pick the version.** Semver against what changed since the last release: new skill or new user-facing behavior → minor; wording, digraph, or bug fixes only → patch. A renamed or removed skill is breaking — call it out in the changelog even though this project has stayed on `1.x`.
-2. **Bump it.** `make bump-version VERSION=X.Y.Z` — rewrites `package.json`, `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line in one shot. Don't hand-edit those; `make check-versions` and `make check-skill-versions` exist because drift happens.
-3. **Roll the changelog.** In `CHANGELOG.md`:
-   - Rename `## [Unreleased]` to `## [X.Y.Z] — YYYY-MM-DD` using today's real date (check it; don't guess).
-   - Open a fresh, empty `## [Unreleased]` above it.
-   - Update the link refs at the bottom: point `[Unreleased]` at `compare/paad--vX.Y.Z...HEAD` and add a `[X.Y.Z]` line for the new tag.
-   - If `[Unreleased]` was empty, there is nothing to release — stop and ask.
-4. **Verify.** `make test` must pass (validate, version sync, announce lines, digraphs, help, README, frontmatter, references, dispatch sites). Read the output; don't assume.
-5. **Commit and merge.** Commit the bump plus changelog roll, then merge the branch into `main` and push. That commit is the release.
-6. **Tag the merge commit** — annotated, on `main`, after the merge:
+**Use `/release`.** The project-local skill at `.claude/skills/release/SKILL.md` drives the whole sequence and owns the judgment calls the Makefile can't make. The steps below are what it does, and what to follow if you're releasing by hand.
 
-   ```bash
-   git tag -a paad--vX.Y.Z -m "paad X.Y.Z"
-   git push origin paad--vX.Y.Z
-   ```
+1. **Pick the version.** Semver against what is in `[Unreleased]`: new skill or new user-facing behavior → minor; wording, digraph, or bug fixes only → patch. A renamed or removed skill is breaking — call it out in the changelog even though this project has stayed on `1.x`. If `[Unreleased]` is empty there is nothing to release — stop and ask.
+2. **Cut it.** `make release VERSION=X.Y.Z` — one command, on a branch. It rolls the changelog (renames `## [Unreleased]` to `## [X.Y.Z] — <today>` using the system date, opens a fresh empty `[Unreleased]`, and rewrites both link refs), runs `make bump-version`, regenerates `kiro_and_antigravity/` and `pi/` via `make export`, then runs `make test`. It refuses on `main`, on a dirty tree, when `[Unreleased]` is empty, and when the version already has a section.
 
-   The tag name is `paad--v` + version (double hyphen — it namespaces the plugin inside the marketplace repo). It goes on the commit that actually shipped, which includes anything merged after the bump commit.
-7. **Sanity-check the published side.** In Claude Code: `/plugin marketplace update paad` then `/plugin update paad@paad`, restart, and run any skill — the announce line should read `vX.Y.Z`. Cheapest way to catch a bump that never made it to `main`.
+   Never hand-edit the generated pieces — `package.json`, `plugin.json`, `marketplace.json`, SKILL.md announce lines, changelog version headings, link refs, or anything under `kiro_and_antigravity/` and `pi/`. `make check-versions`, `check-skill-versions`, and `check-export-current` exist because drift happens. If the generated result is wrong, fix the generator.
+3. **Read the output.** `make release` fails loudly; don't assume it passed. Review the diff before committing.
+4. **Commit and merge.** `git commit -a -m "release: paad X.Y.Z"`, then merge the branch into `main` and push.
+5. **Tag it.** On `main`, after the merge is pushed: `make tag`. It reads the version from `plugin.json`, builds the name as `paad--v` + version (double hyphen — it namespaces the plugin inside the marketplace repo), annotates, and pushes. It refuses if you're not on `main`, if the tree is dirty, if `main` is out of sync with `origin/main`, if the changelog has no matching section, or if the tag already exists.
+
+   The tag goes on the merge commit because that's the tree users receive. Published tags don't get moved.
+6. **Sanity-check the published side.** In Claude Code: `/plugin marketplace update paad` then `/plugin update paad@paad`, restart, and run any skill — the announce line should read `vX.Y.Z`. Cheapest way to catch a bump that never made it to `main`. This is the one step no target automates, because it happens in the app.
 
 This project does not use GitHub Releases (`gh release create`) — the tag is the record. Don't add one unless Ovid asks.
 
@@ -128,7 +122,7 @@ When modifying a skill's flow, check that the digraph still matches. When review
 
 ## Project-local skills under `.claude/skills/`
 
-The repo also hosts **project-local** skills at `.claude/skills/<name>/SKILL.md` (e.g. `.claude/skills/roadmap/SKILL.md`). These are **not** part of the `paad` plugin and follow a different lifecycle:
+The repo also hosts **project-local** skills at `.claude/skills/<name>/SKILL.md` (`roadmap`, `release`). These are **not** part of the `paad` plugin and follow a different lifecycle:
 
 - **Not distributed** — they live in this repo only and are picked up automatically by Claude Code when it runs in this working directory. There is no marketplace, no `claude plugin validate` step, no `plugin.json`, no version field.
 - **No `make bump-version` impact** — `make bump-version` rewrites `package.json`, `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line. Project-local SKILL.md files are skipped on purpose. They have no announce-line version, no `paad:<name>` namespace.

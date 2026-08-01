@@ -2,7 +2,7 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-export-current bump-version
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-export-current bump-version export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -65,6 +65,66 @@ bump-version: ## Bump version across package and plugin manifests and all SKILL.
 		sed -i.bak "s|Running paad:$$name v$$old_ver\"|Running paad:$$name v$(VERSION)\"|g" "$$file" && rm -f "$$file.bak"; \
 	done; \
 	echo "Bumped to $(VERSION)."
+
+export: ## Regenerate kiro_and_antigravity/ and pi/ from the plugin sources
+	@python3 scripts/convert_skills.py
+
+release: ## Roll the changelog, bump, regenerate exports, test (usage: make release VERSION=X.Y.Z)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make release VERSION=X.Y.Z"; \
+		exit 1; \
+	fi
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" = "main" ]; then \
+		echo "FAIL: release from a branch, never by committing to main directly."; \
+		echo "      Create a release branch first, then re-run."; \
+		exit 1; \
+	fi
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "FAIL: working tree is dirty — commit or stash before cutting a release."; \
+		git status --short | sed 's/^/  /'; \
+		exit 1; \
+	fi
+	@python3 scripts/roll_changelog.py $(VERSION)
+	@$(MAKE) --no-print-directory bump-version VERSION=$(VERSION)
+	@$(MAKE) --no-print-directory export
+	@$(MAKE) --no-print-directory test
+	@echo ""
+	@echo "Release $(VERSION) prepared. Review the diff, then:"
+	@echo "  git commit -a -m 'release: paad $(VERSION)'"
+	@echo "  <merge this branch into main and push>"
+	@echo "  make tag        # annotates the merge commit and pushes the tag"
+
+tag: ## Tag the released version on main and push it (run after merging the release branch)
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" != "main" ]; then \
+		echo "FAIL: the tag goes on the commit that shipped — check out main first (you are on $$branch)."; \
+		exit 1; \
+	fi; \
+	if [ -n "$$(git status --porcelain)" ]; then \
+		echo "FAIL: working tree is dirty — the tag would not describe what you think it does."; \
+		git status --short | sed 's/^/  /'; \
+		exit 1; \
+	fi; \
+	ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
+	tag="paad--v$$ver"; \
+	if ! grep -qF "## [$$ver] — " CHANGELOG.md; then \
+		echo "FAIL: CHANGELOG.md has no '## [$$ver]' section. Did 'make release VERSION=$$ver' run and get merged?"; \
+		exit 1; \
+	fi; \
+	git fetch --quiet --tags origin; \
+	if git rev-parse -q --verify "refs/tags/$$tag" >/dev/null; then \
+		echo "FAIL: $$tag already exists (pointing at $$(git rev-parse --short $$tag)). Tags are not moved once published."; \
+		exit 1; \
+	fi; \
+	if [ "$$(git rev-parse HEAD)" != "$$(git rev-parse origin/main)" ]; then \
+		echo "FAIL: main is not in sync with origin/main. Push the merge first — a tag on an unpushed"; \
+		echo "      commit points at a tree nobody else can fetch."; \
+		exit 1; \
+	fi; \
+	git tag -a "$$tag" -m "paad $$ver"; \
+	git push origin "$$tag"; \
+	echo "Tagged $$tag on $$(git rev-parse --short HEAD) and pushed."
 
 check-digraphs: ## Check every skill (except help) has a digraph
 	@fail=0; \
@@ -183,7 +243,7 @@ check-export-current: ## Check kiro_and_antigravity/ and pi/ match a fresh expor
 		if ! diff -ru "$$dir" "$$tmp/$$dir" >"$$tmp/export.diff" 2>&1; then \
 			echo "FAIL: $$dir/ is stale — a source file changed but the export was not regenerated,"; \
 			echo "      or a hand-added file is living under $$dir/ (everything there is generated)."; \
-			echo "      Fix with: python3 scripts/convert_skills.py   (then commit the result)"; \
+			echo "      Fix with: make export   (then commit the result)"; \
 			head -40 "$$tmp/export.diff" | sed 's/^/  /'; \
 			fail=1; \
 		fi; \
