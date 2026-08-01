@@ -209,45 +209,42 @@ Install the plugin:
 /plugin install paad@paad
 ```
 
-This opens the plugin's details, where you choose an installation scope — user
-(all your projects), project (shared with collaborators on this repository), or
-local (just you, just this repository). Then run `/reload-plugins` to activate
-the skills in your current session.
+That opens the plugin's details rather than installing straight away — you pick
+a scope there: **Install for you (user scope)**, **Install for all collaborators
+on this repository (project scope)**, or **Install for you, in this repo only
+(local scope)**. Then run `/reload-plugins` to activate the skills in the
+session you're in. Claude Code prompts you to do that as well, so you aren't
+relying on this README to know it.
 
 If you're not using Claude Code, see other examples below.
 
 #### Updating the plugin
 
 New skills and fixes do **not** arrive on their own. Claude Code disables
-auto-update for third-party marketplaces by default, and PAAD is one — so you
-pull updates yourself, in two steps, because the marketplace catalog and the
-plugin are refreshed separately.
+auto-update for third-party marketplaces by default, and PAAD is one, so you
+pull updates yourself.
 
-Refresh the marketplace catalog from GitHub:
+Open `/plugin`, go to the **Installed** tab, select **paad**, and choose
+**Update now**. Then run `/reload-plugins` to load the new version.
 
-```bash
-/plugin marketplace update paad
-```
-
-Then update the plugin itself: open `/plugin`, go to the **Installed** tab,
-select **paad**, and choose **Update now**. Then run `/reload-plugins` to load
-the new version.
+That single action already refreshes the marketplace catalog from GitHub before
+it looks for a new version, so there's no separate catalog step to run first.
 
 There is no `/plugin update` slash command, despite what the Claude Code docs
 currently say — `update` is not one of `/plugin`'s subcommands, and
 `/plugin update paad@paad` silently opens the plugin browser instead of
 updating anything. The update action lives in the panel.
 
-If you'd rather script it, both steps have shell equivalents that run outside
-Claude Code:
+To script it instead, from a shell outside Claude Code:
 
 ```bash
-claude plugin marketplace update paad
 claude plugin update paad@paad
 ```
 
-Those write the new version to disk but don't affect a session that's already
-running; restart Claude Code to pick it up.
+That defaults to the `user` scope. If you installed PAAD at project or local
+scope, pass `--scope project` or `--scope local` to match, or it will report
+the plugin isn't installed. It writes the new version to disk without touching
+a session that's already running; restart Claude Code to pick it up.
 
 What gates delivery is the version number, not how often you run those steps.
 PAAD sets an explicit `version` in `plugin.json`, which Claude Code
@@ -325,6 +322,15 @@ cp pi/agents/paad-analyst.md ~/.pi/agent/agents/
 
 It restricts the agent to `read, grep, find, ls, bash`, which is what keeps an
 analysis subagent from editing your code to test whether a finding was real.
+
+**`rethink` is degraded on Pi.** The Claude Code analyst also holds `WebSearch`
+and `WebFetch`, and Pi has no web tool to map those onto — its built-ins are
+`read`, `bash`, `edit`, `write`, `grep`, `find`, and `ls`. So on Pi the analyst
+cannot reach a primary source outside the repository. `rethink` still runs and
+still verifies everything the repository can settle, but a premise that needs a
+vendor's documentation, a standard, or a changelog will come back `Ungrounded`
+rather than checked. That is the correct answer given the tools, not a failure —
+but it is a narrower skill than the Claude Code one.
 
 Two known rough edges even with both installed. The skills name their subagent
 type in Claude Code's syntax (`subagent_type: paad:paad-analyst`), which is not
@@ -441,6 +447,44 @@ not build on flawed assumptions.
   one at a time, with concrete options and recommendations
 * **Flexible output** — update the spec in place or write a separate report to
   `paad/pushback-reviews/`
+
+#### `/paad:rethink [what to re-examine]`
+
+`pushback` argues with a spec. `rethink` argues with an answer — including one
+of `pushback`'s. When options have been laid out and one has been chosen, it
+goes and checks whether the premises under that choice actually hold.
+
+The distinction it exists for: a recommendation can be correct *and* unsound.
+The premises may hold and yet have been taken on faith from a source nobody
+tested. That answer is right today and will stay right until the day it isn't,
+with no one watching. `rethink` reports that case as its own verdict rather
+than waving the recommendation through.
+
+* **Arguments:** `/paad:rethink` (the most recent option set) or
+  `/paad:rethink the caching approach` (when several decisions are live)
+* **Premise extraction** — writes out everything the recommendation depends on,
+  including the unstated assumptions, sorted into checkable now, checkable by
+  experiment, and not checkable at all
+* **Primary sources only** — verifies against the software, not its
+  documentation; a claim sourced from a doc is checked against the thing the
+  doc describes
+* **Five verdicts** — Sound, Lucky (holds but unchecked), Wrong reason (false
+  premise, surviving conclusion), Premise false, and Ungrounded (with the
+  cheapest experiment that would settle it)
+* **Evidence per premise** — every claim names what was checked to reach it
+* **Plain-terms walkthrough** — you probably ran this because you weren't sure
+  about the options, so it re-presents them without jargon or internal names,
+  with pros *and* cons for each, and says what verification changed about where
+  each one stands
+* **A recommendation, with its reason** — and where the call also turns on
+  something it can't see (a deadline, headcount, an unshipped roadmap) it gives
+  you both halves: the option the evidence supports, plus the specific missing
+  input and what it would flip the answer to. It goes silent only when the
+  evidence supports no default at all
+* **No option list** — deliberately unlike `pushback`. It proposes an
+  alternative only when verification exposed a real defect, and then exactly
+  one, tied to that defect
+* **Writes nothing** — no report, no edits. The conversation is the deliverable
 
 ---
 

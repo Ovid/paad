@@ -10,7 +10,42 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Added
+- **`paad:rethink` — verify the premises under options you have already been
+  given.** Where `pushback` critiques a spec before anyone builds it, `rethink`
+  critiques an *answer*: it extracts everything a recommendation depends on,
+  including the assumptions nobody stated, and checks them against primary
+  sources — the software, not the documentation describing it. It reports one
+  of five verdicts, and the one that earns its keep is **Lucky**: premises that
+  hold but that nobody checked. A conclusion that is right by luck reads
+  exactly like one that is right by method, right up until it isn't.
+
+  It deliberately does not produce an option list. An alternative appears only
+  when verification exposed a defect, and then exactly one, tied to that
+  defect. It writes no files.
+
+  Because you probably ran it *unsure* about the options, it does not stop at
+  the verdict. Every run ends by re-presenting the options in plain language —
+  no jargon, no internal names, pros and cons for each — and recommending one
+  with its reason. Where the call also turns on something it cannot see, like a
+  deadline or an unshipped roadmap, it gives both halves: the option the
+  evidence supports, plus the specific missing input and what it would flip the
+  answer to. It goes silent only when the evidence supports no default at all.
+
 ### Changed
+- **`paad-analyst` can now read the web.** The read-only analysis subagent
+  gains `WebSearch` and `WebFetch` so `rethink` can check a claim against a
+  vendor's own documentation. It holds repository and network access at the
+  same time, so its instructions now forbid putting repository content into an
+  outbound request — no source, paths, or identifiers in a search query, and no
+  URL assembled from anything it read. The other four dispatching skills inherit
+  the capability; they had no reason to leave the repository before and still
+  don't, and the agent is told to prefer the local answer.
+
+  On Pi this maps to nothing, because Pi has no web tool. `rethink` there
+  verifies against the repository alone and returns `Ungrounded` for anything
+  that needs an outside source. See README's Pi section.
+
 - **`vibe` and `makefile` now announce what they wrote too.** 1.23.0 gave the
   `Files written or updated:` block to the eight skills that produce reports and
   left out the two that write code and configuration. `vibe` was the gap that

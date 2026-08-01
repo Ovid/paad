@@ -16,11 +16,19 @@ PI_AGENT_DIR = "pi/agents"
 # point of the file — an unmapped name is a hard error rather than a silent
 # drop, because dropping one quietly hands the Pi analyst a different toolset
 # than the Claude Code one it is supposed to mirror.
+# WebSearch/WebFetch map to nothing on purpose: Pi's built-ins are read, bash,
+# edit, write, grep, find, and ls — there is no web tool to map onto. An empty
+# list is the one case where dropping a tool is deliberate rather than silent,
+# so it is spelled out here instead of being left unmapped. The consequence is
+# real and documented in README's Pi section: paad:rethink on Pi cannot reach a
+# primary source, so it verifies against the repo alone and must say so.
 PI_TOOLS = {
     "Read": ["read"],
     "Grep": ["grep"],
     "Glob": ["find", "ls"],
     "Bash": ["bash"],
+    "WebSearch": [],
+    "WebFetch": [],
 }
 
 

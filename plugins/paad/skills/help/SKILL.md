@@ -47,6 +47,7 @@ Available skills:
   /paad:alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
   /paad:makefile                             Create or update a Makefile with standard targets
   /paad:pushback [spec-file]                 Spec/PRD critic (finds issues before you build)
+  /paad:rethink [what to re-examine]         Verify the premises under options already on the table
   /paad:vibe [task description]              Safe vibe coding with TDD guardrails
 
 Experimental — may change or be withdrawn in any release, including patches:
@@ -65,6 +66,8 @@ Picking between them:
   Have no tests, or tests you distrust? test-roadmap (experimental; the only
                                         skill that writes and commits code)
   Have one spec, is it any good?        pushback
+  Been handed options, are they sound?  rethink (checks premises, does not
+                                        invent alternatives)
   Have a spec AND a plan, do they match? alignment (needs both; does not read code)
   Making a small change?                vibe (1-3 files, same module)
   Change is clearly multi-module?       write a plan, then alignment against it
@@ -346,6 +349,54 @@ What it does:
   7. Updates the spec or writes a separate report
 
 Works within an existing conversation — no fresh session needed.
+```
+
+### rethink
+
+```
+/paad:rethink [what to re-examine]
+
+Independently verifies the premises under options that are already on
+the table. Reports what it checked, and how it checked it.
+
+Output: none — it speaks in the conversation and writes no files.
+
+Arguments:
+  /paad:rethink                    Re-examine the most recent option set
+  /paad:rethink the caching approach   Name which decision, if several are live
+
+What it does:
+  1. Extracts every premise the recommendation depends on, including
+     the unstated ones, and sorts them:
+     - checkable now (a primary source exists)
+     - checkable by experiment (names the cheapest one)
+     - not checkable (judgment, taste, prediction)
+  2. Dispatches one read-only subagent to verify them against
+     PRIMARY sources — the software, not its documentation
+  3. Reports one of five verdicts:
+     - Sound          premises hold, and were checked
+     - Lucky          premises hold, but nobody checked them
+     - Wrong reason   a premise is false, the conclusion survives
+     - Premise false  a premise is false, the conclusion does not
+     - Ungrounded     unsettleable; names the experiment that would settle it
+  4. Per premise: what was claimed, what was found, what was checked
+  5. Re-presents the options in plain language — no jargon, no internal
+     names — with pros AND cons for each, and says what verification
+     changed about their standing
+  6. Recommends one, with the reason. Where the call also turns on
+     something it cannot see — a deadline, headcount, an unshipped
+     roadmap — it still recommends, then names that input and what it
+     would flip the answer to. It withholds entirely only when the
+     evidence supports no default at all
+
+What it deliberately does NOT do:
+  - Produce an option list. It is not pushback. It proposes an
+    alternative only when verification exposed a defect, and then
+    exactly one, tied to that defect.
+  - Write, edit, or create any file.
+
+Use it when a choice rests on cited docs, remembered behavior, or
+premises nobody tested. Not for critiquing a spec — that is pushback.
 ```
 
 ### vibe

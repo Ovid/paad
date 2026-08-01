@@ -233,16 +233,16 @@ check-announce: ## Check every skill that writes files announces what it wrote
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
-		if [ "$$name" = "help" ]; then continue; fi; \
+		if [ "$$name" = "help" ] || [ "$$name" = "rethink" ]; then continue; fi; \
 		if ! grep -rqF 'Files written or updated' "$$dir" 2>/dev/null; then \
 			echo "FAIL: $$name has no 'Files written or updated:' block. Any skill that writes or updates"; \
-			echo "      a file must end its run by listing every path it touched. Only 'help' is exempt,"; \
-			echo "      because it writes nothing — if this skill also writes nothing, exempt it here."; \
+			echo "      a file must end its run by listing every path it touched. Only 'help' and 'rethink'"; \
+			echo "      are exempt, because they write nothing — if this skill also writes nothing, exempt it here."; \
 			fail=1; \
 		fi; \
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
-	echo "All skills announce the files they write (help excluded)."
+	echo "All skills announce the files they write (help, rethink excluded)."
 
 check-export-current: ## Check kiro_and_antigravity/ and pi/ match a fresh export
 	@tmp=$$(mktemp -d); \
