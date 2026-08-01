@@ -10,6 +10,24 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.23.0] — 2026-08-01
+
+### Added
+- **Pi package support, experimental.** A root `package.json` declares the
+  skills directory as a [Pi](https://pi.dev/) package, so
+  `pi install git:github.com/Ovid/paad` installs every canonical PAAD skill.
+  The multi-agent skills additionally need a Pi subagent extension and a
+  read-only analyst agent, neither of which can ship inside the package — Pi's
+  manifest has no way to declare agents. Without them those skills run every
+  lens in one context with the full toolset, silently: no parallelism, no
+  context isolation, and no read-only guarantee. The README says so, and
+  `scripts/convert_skills.py` now generates `pi/agents/paad-analyst.md` — a Pi
+  translation of the plugin's analyst, restricted to
+  `read, grep, find, ls, bash` — for users to drop into `~/.pi/agent/agents/`.
+  Packaging and layout may change or be withdrawn in **any** release, including
+  a patch release — the semver promise the Claude Code plugin carries does not
+  apply.
+
 ### Changed
 - **Every skill that writes a file now ends by listing what it wrote.** Runs
   were leaving reports, indexes, backlogs, roadmaps, findings logs, and edited
@@ -506,7 +524,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.22.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.23.0...HEAD
+[1.23.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.23.0
 [1.22.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.22.0
 [1.21.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.21.0
 [1.20.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.20.0

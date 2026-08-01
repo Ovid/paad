@@ -2,7 +2,7 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-export-current bump-version
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-export-current bump-version export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -17,14 +17,15 @@ validate: ## Validate marketplace and all plugins
 		claude plugin validate "$$dir" || exit 1; \
 	done
 
-check-versions: ## Check marketplace.json and plugin.json versions match
-	@marketplace_ver=$$(python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version'])"); \
+check-versions: ## Check package and plugin versions match
+	@package_ver=$$(python3 -c "import json; print(json.load(open('package.json'))['version'])"); \
+	marketplace_ver=$$(python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version'])"); \
 	plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
-	if [ "$$marketplace_ver" != "$$plugin_ver" ]; then \
-		echo "FAIL: Version mismatch — marketplace.json ($$marketplace_ver) != plugin.json ($$plugin_ver)"; \
+	if [ "$$package_ver" != "$$marketplace_ver" ] || [ "$$package_ver" != "$$plugin_ver" ]; then \
+		echo "FAIL: Version mismatch — package.json ($$package_ver), marketplace.json ($$marketplace_ver), plugin.json ($$plugin_ver)"; \
 		exit 1; \
 	fi; \
-	echo "Versions match: $$plugin_ver"
+	echo "Versions match: $$package_ver"
 
 check-skill-versions: ## Check every SKILL.md announces the correct version
 	@plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
@@ -40,7 +41,7 @@ check-skill-versions: ## Check every SKILL.md announces the correct version
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All skills announce v$$plugin_ver."
 
-bump-version: ## Bump version across plugin.json, marketplace.json, and all SKILL.md (usage: make bump-version VERSION=X.Y.Z)
+bump-version: ## Bump version across package and plugin manifests and all SKILL.md (usage: make bump-version VERSION=X.Y.Z)
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Usage: make bump-version VERSION=X.Y.Z"; \
 		exit 1; \
@@ -55,6 +56,7 @@ bump-version: ## Bump version across plugin.json, marketplace.json, and all SKIL
 		exit 0; \
 	fi; \
 	echo "Bumping $$old_ver -> $(VERSION)..."; \
+	sed -i.bak 's|^  "version": "[^"]*"|  "version": "$(VERSION)"|' package.json && rm -f package.json.bak; \
 	sed -i.bak 's|"version": "[^"]*"|"version": "$(VERSION)"|' plugins/paad/.claude-plugin/plugin.json && rm -f plugins/paad/.claude-plugin/plugin.json.bak; \
 	sed -i.bak 's|^      "version": "[^"]*"|      "version": "$(VERSION)"|' .claude-plugin/marketplace.json && rm -f .claude-plugin/marketplace.json.bak; \
 	for dir in $(SKILL_DIRS); do \
@@ -63,6 +65,66 @@ bump-version: ## Bump version across plugin.json, marketplace.json, and all SKIL
 		sed -i.bak "s|Running paad:$$name v$$old_ver\"|Running paad:$$name v$(VERSION)\"|g" "$$file" && rm -f "$$file.bak"; \
 	done; \
 	echo "Bumped to $(VERSION)."
+
+export: ## Regenerate kiro_and_antigravity/ and pi/ from the plugin sources
+	@python3 scripts/convert_skills.py
+
+release: ## Roll the changelog, bump, regenerate exports, test (usage: make release VERSION=X.Y.Z)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make release VERSION=X.Y.Z"; \
+		exit 1; \
+	fi
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" = "main" ]; then \
+		echo "FAIL: release from a branch, never by committing to main directly."; \
+		echo "      Create a release branch first, then re-run."; \
+		exit 1; \
+	fi
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "FAIL: working tree is dirty — commit or stash before cutting a release."; \
+		git status --short | sed 's/^/  /'; \
+		exit 1; \
+	fi
+	@python3 scripts/roll_changelog.py $(VERSION)
+	@$(MAKE) --no-print-directory bump-version VERSION=$(VERSION)
+	@$(MAKE) --no-print-directory export
+	@$(MAKE) --no-print-directory test
+	@echo ""
+	@echo "Release $(VERSION) prepared. Review the diff, then:"
+	@echo "  git commit -a -m 'release: paad $(VERSION)'"
+	@echo "  <merge this branch into main and push>"
+	@echo "  make tag        # annotates the merge commit and pushes the tag"
+
+tag: ## Tag the released version on main and push it (run after merging the release branch)
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" != "main" ]; then \
+		echo "FAIL: the tag goes on the commit that shipped — check out main first (you are on $$branch)."; \
+		exit 1; \
+	fi; \
+	if [ -n "$$(git status --porcelain)" ]; then \
+		echo "FAIL: working tree is dirty — the tag would not describe what you think it does."; \
+		git status --short | sed 's/^/  /'; \
+		exit 1; \
+	fi; \
+	ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
+	tag="paad--v$$ver"; \
+	if ! grep -qF "## [$$ver] — " CHANGELOG.md; then \
+		echo "FAIL: CHANGELOG.md has no '## [$$ver]' section. Did 'make release VERSION=$$ver' run and get merged?"; \
+		exit 1; \
+	fi; \
+	git fetch --quiet --tags origin; \
+	if git rev-parse -q --verify "refs/tags/$$tag" >/dev/null; then \
+		echo "FAIL: $$tag already exists (pointing at $$(git rev-parse --short $$tag)). Tags are not moved once published."; \
+		exit 1; \
+	fi; \
+	if [ "$$(git rev-parse HEAD)" != "$$(git rev-parse origin/main)" ]; then \
+		echo "FAIL: main is not in sync with origin/main. Push the merge first — a tag on an unpushed"; \
+		echo "      commit points at a tree nobody else can fetch."; \
+		exit 1; \
+	fi; \
+	git tag -a "$$tag" -m "paad $$ver"; \
+	git push origin "$$tag"; \
+	echo "Tagged $$tag on $$(git rev-parse --short HEAD) and pushed."
 
 check-digraphs: ## Check every skill (except help) has a digraph
 	@fail=0; \
@@ -165,7 +227,7 @@ check-dispatch-sites: ## Check every specialist/verifier dispatch site names the
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All 9 dispatch sites name paad:paad-analyst (review 2, dedup 2, a11y 3, architecture 2); none leaked into the export."
 
-check-export-current: ## Check kiro_and_antigravity/ matches a fresh export of the skills
+check-export-current: ## Check kiro_and_antigravity/ and pi/ match a fresh export
 	@tmp=$$(mktemp -d); \
 	trap 'rm -rf "$$tmp"' EXIT INT TERM; \
 	mkdir -p "$$tmp/plugins" "$$tmp/scripts"; \
@@ -176,11 +238,15 @@ check-export-current: ## Check kiro_and_antigravity/ matches a fresh export of t
 		sed 's/^/  /' "$$tmp/err"; \
 		exit 1; \
 	fi; \
-	if ! diff -ru kiro_and_antigravity "$$tmp/kiro_and_antigravity" >"$$tmp/export.diff" 2>&1; then \
-		echo "FAIL: kiro_and_antigravity/ is stale — a skill changed but the export was not regenerated,"; \
-		echo "      or a hand-added file is living under kiro_and_antigravity/ (everything there is generated)."; \
-		echo "      Fix with: python3 scripts/convert_skills.py   (then commit the result)"; \
-		head -40 "$$tmp/export.diff" | sed 's/^/  /'; \
-		exit 1; \
-	fi; \
-	echo "Export in kiro_and_antigravity/ is current."
+	fail=0; \
+	for dir in kiro_and_antigravity pi; do \
+		if ! diff -ru "$$dir" "$$tmp/$$dir" >"$$tmp/export.diff" 2>&1; then \
+			echo "FAIL: $$dir/ is stale — a source file changed but the export was not regenerated,"; \
+			echo "      or a hand-added file is living under $$dir/ (everything there is generated)."; \
+			echo "      Fix with: make export   (then commit the result)"; \
+			head -40 "$$tmp/export.diff" | sed 's/^/  /'; \
+			fail=1; \
+		fi; \
+	done; \
+	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
+	echo "Exports in kiro_and_antigravity/ and pi/ are current."

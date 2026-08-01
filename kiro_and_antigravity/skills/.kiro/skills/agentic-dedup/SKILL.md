@@ -3,7 +3,7 @@ name: agentic-dedup
 description: "EXPERIMENTAL. Use when looking for meaningfully duplicated logic in a codebase, especially duplicate behavior hidden behind different names, different syntax, different control flow, or independently evolved implementations. Not for style issues, not for syntactic clone detection, and not for fixing what it finds."
 ---
 
-**On invocation:** announce "Running paad:agentic-dedup v1.22.0" before anything else.
+**On invocation:** announce "Running paad:agentic-dedup v1.23.0" before anything else.
 
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not

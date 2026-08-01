@@ -8,6 +8,20 @@ from pathlib import Path
 # Paths relative to repository root
 SOURCE_DIR = "plugins/paad/skills"
 TARGET_DIR = "kiro_and_antigravity/skills"
+SOURCE_AGENT = "plugins/paad/agents/paad-analyst.md"
+PI_AGENT_DIR = "pi/agents"
+
+# Claude Code tool names -> Pi's. Pi has no Glob; `find` plus `ls` cover what
+# the analyst used it for. Every name here is read-only, which is the whole
+# point of the file — an unmapped name is a hard error rather than a silent
+# drop, because dropping one quietly hands the Pi analyst a different toolset
+# than the Claude Code one it is supposed to mirror.
+PI_TOOLS = {
+    "Read": ["read"],
+    "Grep": ["grep"],
+    "Glob": ["find", "ls"],
+    "Bash": ["bash"],
+}
 
 
 def neutralize(text):
@@ -42,13 +56,60 @@ def neutralize(text):
     return text
 
 
+def convert_pi_agent():
+    """Emit the Pi copy of the read-only analyst agent.
+
+    Pi has no `agents` key in its package manifest, so this file cannot ship
+    as part of the package — the user drops it into ~/.pi/agent/agents/ by
+    hand. Generating it anyway keeps it from drifting out of sync with
+    plugins/paad/agents/paad-analyst.md, which is the file that actually
+    defines the role; `make check-export-current` fails if it does.
+
+    The body is copied verbatim, NOT neutralized: Pi loads the skills straight
+    out of plugins/paad/skills, so the paad/ output paths and /paad: names the
+    Kiro export rewrites are still correct here. Only the tool list changes.
+    """
+    source = Path(SOURCE_AGENT)
+    text = source.read_text(encoding="utf-8")
+
+    match = re.search(r"^tools:\s*(.+)$", text, flags=re.MULTILINE)
+    if not match:
+        raise SystemExit(f"{SOURCE_AGENT}: no `tools:` line — cannot build the Pi agent")
+
+    claude_tools = [t.strip() for t in match.group(1).split(",") if t.strip()]
+    unknown = [t for t in claude_tools if t not in PI_TOOLS]
+    if unknown:
+        raise SystemExit(
+            f"{SOURCE_AGENT}: no Pi equivalent for {', '.join(unknown)} — "
+            f"add it to PI_TOOLS in {__file__} (read-only tools only)"
+        )
+
+    pi_tools = []
+    for tool in claude_tools:
+        for mapped in PI_TOOLS[tool]:
+            if mapped not in pi_tools:
+                pi_tools.append(mapped)
+
+    text = text[: match.start()] + "tools: " + ", ".join(pi_tools) + text[match.end() :]
+
+    target_dir = Path(PI_AGENT_DIR)
+    shutil.rmtree(target_dir, ignore_errors=True)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / source.name
+    target.write_text(text, encoding="utf-8")
+    print(f"Wrote {target} (tools: {', '.join(pi_tools)})")
+
+
 def convert_skills():
     # Detect root if possible, but assume relative to cwd
     kiro_skills_root = Path(TARGET_DIR) / ".kiro" / "skills"
     agent_skills_root = Path(TARGET_DIR) / ".agent" / "skills"
-    
-    kiro_skills_root.mkdir(parents=True, exist_ok=True)
-    agent_skills_root.mkdir(parents=True, exist_ok=True)
+
+    # Wipe first: a renamed, deleted, or newly skipped skill would otherwise
+    # leave its old copy behind forever, since nothing else prunes the export.
+    for root in (kiro_skills_root, agent_skills_root):
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir(parents=True, exist_ok=True)
     
     skip_names = ["makefile", "help"]
     unwanted_headers = ["Arguments", "Input Resolution", "Pre-flight Checks", "Document classification"]
@@ -161,3 +222,4 @@ Please refer to that file for the full criteria.
 
 if __name__ == "__main__":
     convert_skills()
+    convert_pi_agent()

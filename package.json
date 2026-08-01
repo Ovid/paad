@@ -1,0 +1,26 @@
+{
+  "name": "paad",
+  "version": "1.23.0",
+  "private": true,
+  "description": "Architecture analysis, code quality, and development workflow skills by Ovid",
+  "keywords": [
+    "pi-package",
+    "architecture",
+    "code-quality",
+    "analysis"
+  ],
+  "author": {
+    "name": "Curtis \"Ovid\" Poe"
+  },
+  "homepage": "https://github.com/Ovid/paad",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ovid/paad.git"
+  },
+  "license": "MIT",
+  "pi": {
+    "skills": [
+      "./plugins/paad/skills"
+    ]
+  }
+}

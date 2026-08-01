@@ -92,8 +92,8 @@ It doesn't replace your current AI-assisted development tools; it complements
 them. You like [Superpowers](https://github.com/obra/superpowers/)? Use it
 with PAAD for even better results.
 
-PAAD supports **Claude Code** natively, along with support for **Cursor**,
-**Kiro**, and **Antigravity**.
+PAAD supports **Claude Code** natively and ships as an experimental **Pi**
+package. It also supports **Cursor**, **Kiro**, and **Antigravity**.
 
 ## Star History
 
@@ -213,7 +213,10 @@ If you're not using Claude Code, see other examples below.
 
 #### Updating the plugin
 
-Installing pins you to the version that was current at the time. New skills and fixes do **not** arrive on their own — you have to pull them, and it takes two steps, because the marketplace catalog and the plugin are refreshed separately.
+New skills and fixes do **not** arrive on their own. Claude Code disables
+auto-update for third-party marketplaces by default, and PAAD is one — so you
+pull updates yourself, in two steps, because the marketplace catalog and the
+plugin are refreshed separately.
 
 Refresh the marketplace catalog from GitHub:
 
@@ -227,7 +230,20 @@ Then update the plugin itself:
 /plugin update paad@paad
 ```
 
-Restart Claude Code to apply the update.
+Then run `/reload-plugins` to load the new version, or restart Claude Code.
+
+What gates delivery is the version number, not how often you run those two
+commands. PAAD sets an explicit `version` in `plugin.json`, which Claude Code
+uses as the cache key for update detection — if the version you have matches
+the one being offered, the update is skipped. So a release reaches you when the
+version changes, and commits pushed to `main` without a version bump never
+reach an install that already exists.
+
+If you'd rather updates arrive on their own, turn auto-update on for this
+marketplace: run `/plugin`, go to **Marketplaces**, select **paad**, and choose
+**Enable auto-update**. Claude Code then refreshes in the background shortly
+after a session starts. The session you're in keeps the version it launched
+with; you'll be prompted to run `/reload-plugins` when a new one lands.
 
 To confirm which version you're on, run any skill — every skill announces its
 own name and version on invocation (`Running paad:vibe v<version>`). Compare
@@ -244,6 +260,62 @@ other skills, you can drop the `paad:`: `/pushback`. Claude Code also
 recognizes skill names in natural language, so prompts such as “run a pushback
 review on this spec” or “review the architecture of this module” should
 trigger the corresponding skill.
+
+### Pi — experimental
+
+Pi support is **not settled**. The package layout, the skills it exposes, and
+the extension it depends on may change — or the packaging may be withdrawn — in
+**any** release, including a patch release. The Claude Code plugin is the
+supported path; if Pi is your daily driver, pin your version and please [file
+what breaks](https://github.com/Ovid/paad/issues).
+
+Install PAAD directly from Git:
+
+```bash
+pi install git:github.com/Ovid/paad
+```
+
+To try a local checkout without installing it permanently:
+
+```bash
+pi -e .
+```
+
+Invoke a skill with `/skill:<name>` or by name.
+
+#### The multi-agent skills need two more pieces
+
+`agentic-review`, `agentic-architecture`, `agentic-a11y`, and `agentic-dedup`
+fan out to subagents. Pi has no subagent support of its own, and Pi's package
+manifest has no way to declare agents, so neither piece can ship inside the
+package. Without both of them installed, those four skills still *run* — the
+orchestrator simply does every lens itself, in one context, holding the full
+toolset. You get no parallelism, no context isolation, and **no read-only
+guarantee on code the skill is only supposed to read**. Nothing errors and
+nothing warns you.
+
+**1. A subagent extension.** Pi ships one as an
+[example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent),
+not as an installable package — it is a clone-and-symlink into `~/.pi/agent/`,
+not `pi install`. Follow that example's own README.
+
+**2. The read-only analyst.** This repo generates a Pi copy of the analyst
+agent the Claude Code plugin dispatches. Copy it in:
+
+```bash
+cp pi/agents/paad-analyst.md ~/.pi/agent/agents/
+```
+
+It restricts the agent to `read, grep, find, ls, bash`, which is what keeps an
+analysis subagent from editing your code to test whether a finding was real.
+
+Two known rough edges even with both installed. The skills name their subagent
+type in Claude Code's syntax (`subagent_type: paad:paad-analyst`), which is not
+how Pi's example extension dispatches — you may have to nudge the assistant
+toward the `paad-analyst` agent by name. And that extension caps parallel work
+at 8 tasks, while `agentic-review` asks for 12 dispatches on diffs over 500
+lines; the skill has a documented two-pass fallback for exactly this case, so
+say yes to it rather than accepting a half-coverage review.
 
 ### Cursor
 
@@ -316,9 +388,9 @@ cp -r kiro_and_antigravity/skills/.agent/skills/pushback .agent/skills/
 
 ### Using skills outside Claude Code
 
-As with Claude Code, with Cursor, Kiro, and Antigravity, skills are
-automatically recognized by your assistant. You do not need a special prefix.
-You can simply ask the assistant to perform the task, such as:
+As with Claude Code, with Pi, Cursor, Kiro, and Antigravity, skills are
+automatically recognized by your assistant. You can simply ask the assistant to
+perform the task, such as:
 
 * “Run a pushback review on this spec”
 * “Check whether this plan aligns with the requirements”
@@ -689,14 +761,15 @@ Run all checks with:
 make test
 ```
 
-This validates the marketplace and plugin structure, then runs consistency
-checks such as version sync, digraph presence, help and README coverage, and
-frontmatter validation. Use `make help` to see all available targets.
+This validates the marketplace and Claude plugin structure, then runs
+consistency checks such as package version sync, digraph presence, help and
+README coverage, and frontmatter validation. Use `make help` to see all
+available targets.
 
 Individual checks can also be run separately:
 
 ```bash
-make check-versions     # marketplace.json ↔ plugin.json version sync
+make check-versions     # package.json ↔ marketplace.json ↔ plugin.json version sync
 make check-digraphs     # every skill (except help) has a digraph
 make check-help         # every skill is documented in paad:help
 make check-readme       # every skill is documented in README.md
@@ -717,7 +790,7 @@ Key rules from `CLAUDE.md`:
 * Every skill except `help` must include a Graphviz digraph covering its
   decision points
 * Skill folder names must match the `name` field in `SKILL.md` frontmatter
-* Bump the version in both `plugin.json` and `marketplace.json`
+* Use `make bump-version VERSION=X.Y.Z` to keep all versioned files in sync
 * Update `README.md`, `paad:help`, and `CLAUDE.md` when adding or changing
   skills
 
