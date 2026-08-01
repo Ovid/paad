@@ -167,7 +167,7 @@ check-dispatch-sites: ## Check every specialist/verifier dispatch site names the
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All 9 dispatch sites name paad:paad-analyst (review 2, dedup 2, a11y 3, architecture 2); none leaked into the export."
 
-check-export-current: ## Check kiro_and_antigravity/ matches a fresh export of the skills
+check-export-current: ## Check kiro_and_antigravity/ and pi/ match a fresh export
 	@tmp=$$(mktemp -d); \
 	trap 'rm -rf "$$tmp"' EXIT INT TERM; \
 	mkdir -p "$$tmp/plugins" "$$tmp/scripts"; \
@@ -178,11 +178,15 @@ check-export-current: ## Check kiro_and_antigravity/ matches a fresh export of t
 		sed 's/^/  /' "$$tmp/err"; \
 		exit 1; \
 	fi; \
-	if ! diff -ru kiro_and_antigravity "$$tmp/kiro_and_antigravity" >"$$tmp/export.diff" 2>&1; then \
-		echo "FAIL: kiro_and_antigravity/ is stale — a skill changed but the export was not regenerated,"; \
-		echo "      or a hand-added file is living under kiro_and_antigravity/ (everything there is generated)."; \
-		echo "      Fix with: python3 scripts/convert_skills.py   (then commit the result)"; \
-		head -40 "$$tmp/export.diff" | sed 's/^/  /'; \
-		exit 1; \
-	fi; \
-	echo "Export in kiro_and_antigravity/ is current."
+	fail=0; \
+	for dir in kiro_and_antigravity pi; do \
+		if ! diff -ru "$$dir" "$$tmp/$$dir" >"$$tmp/export.diff" 2>&1; then \
+			echo "FAIL: $$dir/ is stale — a source file changed but the export was not regenerated,"; \
+			echo "      or a hand-added file is living under $$dir/ (everything there is generated)."; \
+			echo "      Fix with: python3 scripts/convert_skills.py   (then commit the result)"; \
+			head -40 "$$tmp/export.diff" | sed 's/^/  /'; \
+			fail=1; \
+		fi; \
+	done; \
+	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
+	echo "Exports in kiro_and_antigravity/ and pi/ are current."

@@ -253,10 +253,6 @@ the extension it depends on may change — or the packaging may be withdrawn —
 supported path; if Pi is your daily driver, pin your version and please [file
 what breaks](https://github.com/Ovid/paad/issues).
 
-PAAD requires an extension for parallel subagent dispatch. Pi provides an
-[official
-example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent).
-
 Install PAAD directly from Git:
 
 ```bash
@@ -270,6 +266,40 @@ pi -e .
 ```
 
 Invoke a skill with `/skill:<name>` or by name.
+
+#### The multi-agent skills need two more pieces
+
+`agentic-review`, `agentic-architecture`, `agentic-a11y`, and `agentic-dedup`
+fan out to subagents. Pi has no subagent support of its own, and Pi's package
+manifest has no way to declare agents, so neither piece can ship inside the
+package. Without both of them installed, those four skills still *run* — the
+orchestrator simply does every lens itself, in one context, holding the full
+toolset. You get no parallelism, no context isolation, and **no read-only
+guarantee on code the skill is only supposed to read**. Nothing errors and
+nothing warns you.
+
+**1. A subagent extension.** Pi ships one as an
+[example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent),
+not as an installable package — it is a clone-and-symlink into `~/.pi/agent/`,
+not `pi install`. Follow that example's own README.
+
+**2. The read-only analyst.** This repo generates a Pi copy of the analyst
+agent the Claude Code plugin dispatches. Copy it in:
+
+```bash
+cp pi/agents/paad-analyst.md ~/.pi/agent/agents/
+```
+
+It restricts the agent to `read, grep, find, ls, bash`, which is what keeps an
+analysis subagent from editing your code to test whether a finding was real.
+
+Two known rough edges even with both installed. The skills name their subagent
+type in Claude Code's syntax (`subagent_type: paad:paad-analyst`), which is not
+how Pi's example extension dispatches — you may have to nudge the assistant
+toward the `paad-analyst` agent by name. And that extension caps parallel work
+at 8 tasks, while `agentic-review` asks for 12 dispatches on diffs over 500
+lines; the skill has a documented two-pass fallback for exactly this case, so
+say yes to it rather than accepting a half-coverage review.
 
 ### Cursor
 

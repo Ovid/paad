@@ -14,10 +14,17 @@ what a plugin user sees.
 - **Pi package support, experimental.** A root `package.json` declares the
   skills directory as a [Pi](https://pi.dev/) package, so
   `pi install git:github.com/Ovid/paad` installs every canonical PAAD skill.
-  The multi-agent skills need a Pi extension that provides parallel subagent
-  dispatch; without one they have no supported execution path. Packaging and
-  layout may change or be withdrawn in **any** release, including a patch
-  release — the semver promise the Claude Code plugin carries does not apply.
+  The multi-agent skills additionally need a Pi subagent extension and a
+  read-only analyst agent, neither of which can ship inside the package — Pi's
+  manifest has no way to declare agents. Without them those skills run every
+  lens in one context with the full toolset, silently: no parallelism, no
+  context isolation, and no read-only guarantee. The README says so, and
+  `scripts/convert_skills.py` now generates `pi/agents/paad-analyst.md` — a Pi
+  translation of the plugin's analyst, restricted to
+  `read, grep, find, ls, bash` — for users to drop into `~/.pi/agent/agents/`.
+  Packaging and layout may change or be withdrawn in **any** release, including
+  a patch release — the semver promise the Claude Code plugin carries does not
+  apply.
 
 ### Changed
 - **Every skill that writes a file now ends by listing what it wrote.** Runs
