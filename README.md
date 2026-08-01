@@ -92,8 +92,8 @@ It doesn't replace your current AI-assisted development tools; it complements
 them. You like [Superpowers](https://github.com/obra/superpowers/)? Use it
 with PAAD for even better results.
 
-PAAD supports **Claude Code** natively and ships as a **Pi** package. It also
-supports **Cursor**, **Kiro**, and **Antigravity**.
+PAAD supports **Claude Code** natively and ships as an experimental **Pi**
+package. It also supports **Cursor**, **Kiro**, and **Antigravity**.
 
 ## Star History
 
@@ -245,7 +245,13 @@ recognizes skill names in natural language, so prompts such as “run a pushback
 review on this spec” or “review the architecture of this module” should
 trigger the corresponding skill.
 
-### Pi
+### Pi — experimental
+
+Pi support is **not settled**. The package layout, the skills it exposes, and
+the extension it depends on may change — or the packaging may be withdrawn — in
+**any** release, including a patch release. The Claude Code plugin is the
+supported path; if Pi is your daily driver, pin your version and please [file
+what breaks](https://github.com/Ovid/paad/issues).
 
 PAAD requires an extension for parallel subagent dispatch. Pi provides an
 [official
