@@ -213,7 +213,19 @@ If you're not using Claude Code, see other examples below.
 
 #### Updating the plugin
 
-Installing pins you to the version that was current at the time. New skills and fixes do **not** arrive on their own — you have to pull them, and it takes two steps, because the marketplace catalog and the plugin are refreshed separately.
+Updates arrive on their own. Claude Code refreshes the marketplace catalog in
+the background after startup and auto-updates installed plugins, so a new PAAD
+release reaches you without your doing anything.
+
+What gates it is the version, not your attention. PAAD sets an explicit
+`version` in `plugin.json`, which Claude Code uses as the cache key for update
+detection — if the version you have matches the one being offered, the update
+is skipped. So you receive a release when the version number changes, and
+commits pushed without a version bump never reach an existing install.
+
+To pull an update immediately rather than waiting for the background refresh,
+run both steps by hand — the marketplace catalog and the plugin are refreshed
+separately.
 
 Refresh the marketplace catalog from GitHub:
 

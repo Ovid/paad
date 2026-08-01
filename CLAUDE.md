@@ -75,7 +75,13 @@ When changing a skill's behavior, arguments, or output, review `plugins/paad/ski
 
 ## Releasing
 
-There is no build and no artifact upload. Users install from this repo via `/plugin marketplace add Ovid/paad`, and `/plugin marketplace update paad` re-fetches the default branch — so **merging to `main` is the release**. The version bump, changelog, and tag are what make that release legible; the tag is a marker after the fact, not the delivery mechanism.
+There is no build and no artifact upload. Users install from this repo via `/plugin marketplace add Ovid/paad`, and Claude Code refreshes the marketplace in the background and auto-updates installed plugins.
+
+**The version bump is the release, not the merge.** Claude Code resolves a plugin's version from `plugin.json` first and uses it as the cache key for update detection: if the resolved version matches what a user already has, `/plugin update` and auto-update skip the plugin. Because `plugin.json` sets `version` explicitly, commits merged to `main` without a bump never reach an existing install. Merging is safe; shipping is the bump.
+
+One leak in that: a *new* install clones the marketplace at `main`'s tip and gets whatever is there, version field notwithstanding. So user-facing work left unbumped on `main` reaches new users while existing ones stay behind, and both report the same version number. Don't leave it sitting — bump in the same cycle, or accept that "1.22.0" means two different things in the field. (Pinning the marketplace entry to a tag via a `git-subdir` source with `ref` would close this; the entry currently uses the relative-path form and does not.)
+
+The changelog and tag are what make a release legible; the tag is a marker after the fact, not the delivery mechanism.
 
 Release from a branch, never by committing to `main` directly.
 
