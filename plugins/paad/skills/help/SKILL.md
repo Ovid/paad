@@ -437,6 +437,11 @@ skill that writes and commits code.
 Builds a test suite that catches real regressions, in phases, across as
 many sessions as it takes. One command on day 1 and on day 90.
 
+Run it once to get a roadmap, then KEEP RUNNING IT — one phase of tests
+per run — until it tells you the roadmap is finished. A 14-phase roadmap
+takes 15 invocations. Running it once leaves you with a plan and no
+tests.
+
 Output: paad/test-roadmap/test-roadmap.md (the roadmap, and the memory)
         Tests, committed one phase per commit, on your working branch
 
@@ -467,6 +472,8 @@ What it does:
      - Runs your whole suite, once normally and once under coverage;
        will not call a phase done while the run is noisy
      - Commits the phase and marks it done
+     - Ends by telling you where you are (Phase 8 of 14 — 7 done, 6 to
+       go) and to run it again, until no phases remain
 
   Logs concrete bugs it finds along the way. It never fixes them.
 

@@ -376,7 +376,23 @@ It never refactors anything. The report is the deliverable.
 
 High coverage numbers lie. A line can be "covered" by a test that asserts nothing — green forever, catching nothing. So when you finally refactor the scary part of a legacy codebase, the suite stays quiet and the regression ships anyway.
 
-`test-roadmap` builds the suite that does *not* stay quiet. It pins your code's **current** behavior, deliberately including the buggy parts, so that the day you start changing things the tests break loudly and tell you exactly what you changed. One command, run again each session: it plans the suite in phases, then writes those phases one at a time across as many sessions as it takes.
+`test-roadmap` builds the suite that does *not* stay quiet. It pins your code's **current** behavior, deliberately including the buggy parts, so that the day you start changing things the tests break loudly and tell you exactly what you changed.
+
+**Run it once to get a roadmap. Then keep running it — one phase of tests per run — until the roadmap is done.**
+
+That is the whole usage model, and it is the one thing people get wrong: they run `/paad:test-roadmap`, get a plan, and stop with zero tests written. The command does something different every time you invoke it, because it looks for `paad/test-roadmap/test-roadmap.md` and routes on whether it exists:
+
+| Invocation | What it does |
+| --- | --- |
+| **1st run** — no roadmap yet | Detects your stack, grades the tests you already have, and writes a phased plan to `paad/test-roadmap/test-roadmap.md`. **Writes no tests.** |
+| **2nd run** | Writes Phase 1's tests, proves they catch the bug they claim to, commits them, marks the phase done. |
+| **3rd run** | Phase 2. |
+| **…** | …one phase per run… |
+| **Final run** | The last phase lands and the skill tells you the roadmap is finished. Then you stop. |
+
+So a 14-phase roadmap takes 15 invocations. Each run ends by telling you where you are (`Phase 8 of 14 — 7 done, 6 to go`) and whether to run it again. One phase per run is deliberate: each phase gets written, verified against a deliberately injected bug, and committed on its own, with a clean context.
+
+Sessions don't need to be consecutive, or even the same session — the roadmap file is the memory, so you can pick it up tomorrow, on a fresh clone, after a squash merge, and it resumes from what has already landed.
 
 * **Arguments:** `/paad:test-roadmap` (no arguments — the presence of the roadmap file selects build mode or execute mode)
 * **Every phase names the bug it would catch** — a phase that cannot answer *"what breakage makes these tests go red?"* is coverage theater, and gets rewritten or dropped

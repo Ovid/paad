@@ -10,6 +10,15 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Changed
+- **`test-roadmap` now says how it is meant to be used, every run.** Developers
+  were running it once, getting a roadmap, and stopping with no tests written.
+  Build mode's handoff now states that it planned the work and wrote no tests,
+  and that one phase lands per run. Execute mode gains a final step: name the
+  next phase and say to run `/paad:test-roadmap` again — or, when every phase has
+  landed, say the roadmap is finished and stop inviting further runs. The README
+  and `paad:help` entries lead with the same run-once-then-repeat model.
+
 ## [1.22.0] — 2026-07-26
 
 ### Changed
