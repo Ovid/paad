@@ -213,19 +213,10 @@ If you're not using Claude Code, see other examples below.
 
 #### Updating the plugin
 
-Updates arrive on their own. Claude Code refreshes the marketplace catalog in
-the background after startup and auto-updates installed plugins, so a new PAAD
-release reaches you without your doing anything.
-
-What gates it is the version, not your attention. PAAD sets an explicit
-`version` in `plugin.json`, which Claude Code uses as the cache key for update
-detection — if the version you have matches the one being offered, the update
-is skipped. So you receive a release when the version number changes, and
-commits pushed without a version bump never reach an existing install.
-
-To pull an update immediately rather than waiting for the background refresh,
-run both steps by hand — the marketplace catalog and the plugin are refreshed
-separately.
+New skills and fixes do **not** arrive on their own. Claude Code disables
+auto-update for third-party marketplaces by default, and PAAD is one — so you
+pull updates yourself, in two steps, because the marketplace catalog and the
+plugin are refreshed separately.
 
 Refresh the marketplace catalog from GitHub:
 
@@ -239,7 +230,20 @@ Then update the plugin itself:
 /plugin update paad@paad
 ```
 
-Restart Claude Code to apply the update.
+Then run `/reload-plugins` to load the new version, or restart Claude Code.
+
+What gates delivery is the version number, not how often you run those two
+commands. PAAD sets an explicit `version` in `plugin.json`, which Claude Code
+uses as the cache key for update detection — if the version you have matches
+the one being offered, the update is skipped. So a release reaches you when the
+version changes, and commits pushed to `main` without a version bump never
+reach an install that already exists.
+
+If you'd rather updates arrive on their own, turn auto-update on for this
+marketplace: run `/plugin`, go to **Marketplaces**, select **paad**, and choose
+**Enable auto-update**. Claude Code then refreshes in the background shortly
+after a session starts. The session you're in keeps the version it launched
+with; you'll be prompted to run `/reload-plugins` when a new one lands.
 
 To confirm which version you're on, run any skill — every skill announces its
 own name and version on invocation (`Running paad:vibe v<version>`). Compare

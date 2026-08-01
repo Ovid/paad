@@ -75,7 +75,7 @@ When changing a skill's behavior, arguments, or output, review `plugins/paad/ski
 
 ## Releasing
 
-There is no build and no artifact upload. Users install from this repo via `/plugin marketplace add Ovid/paad`, and Claude Code refreshes the marketplace in the background and auto-updates installed plugins.
+There is no build and no artifact upload. Users install from this repo via `/plugin marketplace add Ovid/paad`. Claude Code disables auto-update for third-party marketplaces by default, so most users pull a release by hand with `/plugin marketplace update paad` then `/plugin update paad@paad`; the ones who opted into auto-update get it in the background shortly after a session starts.
 
 **The version bump is the release, not the merge.** Claude Code resolves a plugin's version from `plugin.json` first and uses it as the cache key for update detection: if the resolved version matches what a user already has, `/plugin update` and auto-update skip the plugin. Because `plugin.json` sets `version` explicitly, commits merged to `main` without a bump never reach an existing install. Merging is safe; shipping is the bump.
 
