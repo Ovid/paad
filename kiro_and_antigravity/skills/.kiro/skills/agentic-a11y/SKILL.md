@@ -433,6 +433,15 @@ These patterns produce low-quality audits. Avoid them:
 ## Post-Audit
 
 After writing the report:
-1. Tell the user the report location and finding counts by severity
+1. **List every file this run wrote or changed, before anything else** — a
+   report the developer does not know exists is a report nobody reads. One line
+   per path, each marked new or updated, even when there is only one:
+
+   ```
+   Files written or updated:
+     new      .reviews/a11y-reviews/a11y-2026-08-01-10-42-13.md
+   ```
+
+   Then give the finding counts by severity
 2. Tell them: "To address these findings, work through the Quick Wins first, then tackle Critical and Serious issues. Fix each issue with a per-fix commit. If you have the [superpowers](https://github.com/obra/superpowers/) plugin installed, you can use the `receiving-code-review` skill and point it at this report for a guided workflow."
 3. Do **not** auto-fix anything. The report is the deliverable.

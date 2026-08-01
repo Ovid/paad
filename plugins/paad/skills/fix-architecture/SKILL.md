@@ -465,7 +465,14 @@ After the developer stops or the batch is complete:
 1. Print summary:
    - Number of flaws fixed, skipped, won't-fixed this session
    - Remaining unfixed flaws in the report
-   - Updated report path
+   - **Every file this session wrote or updated**, one line per path, each
+     marked new or updated — the report always, since its status fields are the
+     record of what happened here and developers routinely miss that it changed:
+
+     ```
+     Files written or updated:
+       updated  paad/architecture-reviews/architecture-2026-07-14-09-10-05.md
+     ```
 2. Suggest: "Run `/paad:fix-architecture` again in a fresh session to continue fixing remaining flaws."
 
 ## Status Values

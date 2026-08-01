@@ -66,7 +66,22 @@ learn there were thirteen more. Nothing in the phase's output implies "come
 back" unless the run says so, so every run says so — explicitly, as its last
 words.
 
-After the run instructions of step 7, recompute the counts from the roadmap
+**First, list every file this run wrote or updated.** The test files are visible
+in the run instructions, but the roadmap and the findings log are not, and a
+developer who never learns a bug was logged never reads it. One line per path,
+each marked new or updated:
+
+```
+Files written or updated:
+  new      tests/integration/billing/test_retry.py
+  updated  paad/test-roadmap/test-roadmap.md          (Phase 3 marked done)
+  updated  paad/test-roadmap/test-roadmap-findings.md (F4 added)
+```
+
+Name the findings log only when this run actually added an entry to it, and say
+what the entry was about in a few words, so a real bug does not sit unread.
+
+Then recompute the counts from the roadmap
 (`references/test-pushback.md § Talking to the developer`) and end the run one
 of two ways:
 

@@ -74,6 +74,7 @@ digraph scope_critique_resolution {
   "ASK where to write the spec first" [shape=box];
   "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
   "Write .reviews/pushback/<date>-<spec>-pushback.md" [shape=box];
+  "List every file written or updated" [shape=box];
   "Done" [shape=box];
 
   "Unrelated features bundled?" -> "Identify groups, recommend splitting, ask" [label="yes"];
@@ -107,8 +108,9 @@ digraph scope_critique_resolution {
   "ASK where to write the spec first" -> "Update spec or write report?";
   "Update spec or write report?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="update spec"];
   "Update spec or write report?" -> "Write .reviews/pushback/<date>-<spec>-pushback.md" [label="write report"];
-  "Apply agreed changes; leave undiscussed requirements alone" -> "Done";
-  "Write .reviews/pushback/<date>-<spec>-pushback.md" -> "Done";
+  "Apply agreed changes; leave undiscussed requirements alone" -> "List every file written or updated";
+  "Write .reviews/pushback/<date>-<spec>-pushback.md" -> "List every file written or updated";
+  "List every file written or updated" -> "Done";
 }
 ```
 
@@ -263,6 +265,18 @@ Issues not yet discussed (user stopped early). Listed for future reference.
 ### If the spec came from conversation history
 
 Ask: "The spec isn't saved to a file yet. Want me to write it to a file first?" Suggest a reasonable path based on the project structure (e.g., `docs/plans/`, `docs/specs/`). Then proceed with the chosen output option (update or report).
+
+### List every file you wrote or updated
+
+End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated and the report if one was written:
+
+```
+Files written or updated:
+  updated  docs/specs/checkout-prd.md
+  new      .reviews/pushback/2026-08-01-checkout-pushback.md
+```
+
+Say it even when only one file changed, and even when the user watched you change it.
 
 ## Common Mistakes
 

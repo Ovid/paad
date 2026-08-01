@@ -325,6 +325,15 @@ These patterns produce low-quality architecture analyses. Avoid them:
 ## Post-Analysis
 
 After writing the report:
-1. Tell the user the report location and finding counts (strengths and flaws by impact level)
+1. **List every file this run wrote or changed, before anything else** — a
+   report the developer does not know exists is a report nobody reads. One line
+   per path, each marked new or updated, even when there is only one:
+
+   ```
+   Files written or updated:
+     new      .reviews/architecture/architecture-2026-08-01-10-42-13.md
+   ```
+
+   Then give the finding counts (strengths and flaws by impact level)
 2. Print a brief summary (3-6 bullet points) of the highest-impact strengths and risks
 3. Do **not** propose fixes. The report is the deliverable.

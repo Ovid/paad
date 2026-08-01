@@ -11,6 +11,15 @@ what a plugin user sees.
 ## [Unreleased]
 
 ### Changed
+- **Every skill that writes a file now ends by listing what it wrote.** Runs
+  were leaving reports, indexes, backlogs, roadmaps, findings logs, and edited
+  spec documents in the repo without the developer noticing. `agentic-review`,
+  `agentic-architecture`, `agentic-dedup`, `agentic-a11y`, `alignment`,
+  `pushback`, `fix-architecture`, and `test-roadmap` now print a
+  `Files written or updated:` block — one line per path, marked new or
+  updated — before the summary and next-step advice. `alignment` and `pushback`
+  had no closing announcement at all; the others named the report but not the
+  index or backlog they also touched.
 - **`test-roadmap` now says how it is meant to be used, every run.** Developers
   were running it once, getting a roadmap, and stopping with no tests written.
   Build mode's handoff now states that it planned the work and wrote no tests,

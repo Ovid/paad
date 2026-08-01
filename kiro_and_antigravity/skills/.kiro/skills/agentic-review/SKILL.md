@@ -226,7 +226,18 @@ These patterns produce low-quality reviews. Avoid them:
 ## Post-Review
 
 After writing the report:
-1. Report path and counts: `Critical: N (in-scope) / X (out-of-scope), Important: …, Suggestion: …`.
+1. **Files written or updated, then counts.** Lead with every file this run
+   wrote or changed — a report the developer does not know exists is a report
+   nobody reads. One line per path, each marked new or updated, and never omit
+   `backlog.md` just because the report is the interesting file:
+
+   ```
+   Files written or updated:
+     new      .reviews/code/review-2026-08-01-10-42-13.md
+     updated  .reviews/code/backlog.md
+   ```
+
+   Then the counts: `Critical: N (in-scope) / X (out-of-scope), Important: …, Suggestion: …`.
 2. Backlog state: `Backlog: X new entries added, Y re-confirmed, Z total active.`
 3. **Out-of-scope summary** — clearly announce the out-of-scope counts and, when any were found, the exact locations they were written to. This step must not be skipped or merged into step 1; it is the user's primary signal that pre-existing bugs or scope-creep additions surfaced and where to find them. Cover both flavors:
    - **Out-of-scope bugs** (pre-existing, persist to backlog).

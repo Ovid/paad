@@ -173,6 +173,14 @@ prevent. Execute mode already commits each `Landed:` line the same way (step
 5); build mode committing its own output is the same rule at the front of the
 lifecycle, not a new one.
 
+**Then list every file this run wrote**, one line per path — the roadmap is the
+whole deliverable of build mode and it is easy to miss among the conversation:
+
+```
+Files written or updated:
+  new  .reviews/test-roadmap/test-roadmap.md  (14 phases)
+```
+
 **Then tell the developer the total, in plain words.** Build mode's approach
 menus fire *before* any plan exists, so during them there is no phase total to
 show — the first instant it is knowable is right here, once Stage 5 has written

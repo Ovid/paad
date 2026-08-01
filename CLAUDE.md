@@ -52,6 +52,7 @@ paad/
 - **Changelog**: `CHANGELOG.md` tracks user-facing changes to the plugin, newest first. Land every user-facing change under `[Unreleased]` as you make it; the release rolls that section into a version. Repo-only churn (docs, `.claude/skills/`, README wording, design notes) doesn't need an entry. See "Releasing" for the rollover steps.
 - **Validation**: run `claude plugin validate .` (marketplace) and `claude plugin validate ./plugins/paad` (plugin) before committing
 - **Announce on invocation**: every `SKILL.md` must begin its body with the line `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` so users see which skill ran and which version produced the behavior. The literal version string must match `plugin.json`.
+- **Announce the artifacts on completion**: any skill that writes or updates a file must end its run by listing every path it touched, one line per path marked new or updated, before the summary or next-step advice. Reports, indexes, backlogs, roadmaps, findings logs, and the developer's own spec/plan documents all count. Developers routinely miss that a run left an artifact in the repo, and an artifact nobody reads is the same as no artifact. Say it even when a single file changed and even when the user watched it happen. Skills that write nothing (`help`) are exempt.
 
 ## Adding a new skill
 

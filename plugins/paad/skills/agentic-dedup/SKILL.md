@@ -858,7 +858,18 @@ Use these heuristics during discovery, but never report from heuristics alone.
 
 After writing the report:
 
-1. Tell the user the report location and finding counts by severity.
+1. **List every file this run wrote or changed, before anything else** — a
+   report the developer does not know exists is a report nobody reads. One line
+   per path, each marked new or updated, and never omit `INDEX.md` just because
+   the report itself is the interesting file:
+
+   ```
+   Files written or updated:
+     new      paad/dedup-reviews/dedup-2026-08-01-10-42-13.md
+     updated  paad/dedup-reviews/INDEX.md
+   ```
+
+   Then give the finding counts by severity.
 2. Highlight any exact semantic duplicates that are safe to consolidate.
 3. Highlight any near-duplicates where contract tests are safer than shared implementation.
 4. Do **not** auto-refactor anything. The report is the deliverable.
