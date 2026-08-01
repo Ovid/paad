@@ -448,44 +448,6 @@ not build on flawed assumptions.
 * **Flexible output** — update the spec in place or write a separate report to
   `paad/pushback-reviews/`
 
-#### `/paad:rethink [what to re-examine]`
-
-`pushback` argues with a spec. `rethink` argues with an answer — including one
-of `pushback`'s. When options have been laid out and one has been chosen, it
-goes and checks whether the premises under that choice actually hold.
-
-The distinction it exists for: a recommendation can be correct *and* unsound.
-The premises may hold and yet have been taken on faith from a source nobody
-tested. That answer is right today and will stay right until the day it isn't,
-with no one watching. `rethink` reports that case as its own verdict rather
-than waving the recommendation through.
-
-* **Arguments:** `/paad:rethink` (the most recent option set) or
-  `/paad:rethink the caching approach` (when several decisions are live)
-* **Premise extraction** — writes out everything the recommendation depends on,
-  including the unstated assumptions, sorted into checkable now, checkable by
-  experiment, and not checkable at all
-* **Primary sources only** — verifies against the software, not its
-  documentation; a claim sourced from a doc is checked against the thing the
-  doc describes
-* **Five verdicts** — Sound, Lucky (holds but unchecked), Wrong reason (false
-  premise, surviving conclusion), Premise false, and Ungrounded (with the
-  cheapest experiment that would settle it)
-* **Evidence per premise** — every claim names what was checked to reach it
-* **Plain-terms walkthrough** — you probably ran this because you weren't sure
-  about the options, so it re-presents them without jargon or internal names,
-  with pros *and* cons for each, and says what verification changed about where
-  each one stands
-* **A recommendation, with its reason** — and where the call also turns on
-  something it can't see (a deadline, headcount, an unshipped roadmap) it gives
-  you both halves: the option the evidence supports, plus the specific missing
-  input and what it would flip the answer to. It goes silent only when the
-  evidence supports no default at all
-* **No option list** — deliberately unlike `pushback`. It proposes an
-  alternative only when verification exposed a real defect, and then exactly
-  one, tied to that defect
-* **Writes nothing** — no report, no edits. The conversation is the deliverable
-
 ---
 
 ### Alignment
@@ -729,6 +691,44 @@ surfaces when one side is fixed and the other is not.
   across runs
 
 It never refactors anything. The report is the deliverable.
+
+#### `/paad:rethink [what to re-examine]` — experimental
+
+`pushback` argues with a spec. `rethink` argues with an answer — including one
+of `pushback`'s. When options have been laid out and one has been chosen, it
+goes and checks whether the premises under that choice actually hold.
+
+The distinction it exists for: a recommendation can be correct *and* unsound.
+The premises may hold and yet have been taken on faith from a source nobody
+tested. That answer is right today and will stay right until the day it isn't,
+with no one watching. `rethink` reports that case as its own verdict rather
+than waving the recommendation through.
+
+* **Arguments:** `/paad:rethink` (the most recent option set) or
+  `/paad:rethink the caching approach` (when several decisions are live)
+* **Premise extraction** — writes out everything the recommendation depends on,
+  including the unstated assumptions, sorted into checkable now, checkable by
+  experiment, and not checkable at all
+* **Primary sources only** — verifies against the software, not its
+  documentation; a claim sourced from a doc is checked against the thing the
+  doc describes
+* **Five verdicts** — Sound, Lucky (holds but unchecked), Wrong reason (false
+  premise, surviving conclusion), Premise false, and Ungrounded (with the
+  cheapest experiment that would settle it)
+* **Evidence per premise** — every claim names what was checked to reach it
+* **Plain-terms walkthrough** — you probably ran this because you weren't sure
+  about the options, so it re-presents them without jargon or internal names,
+  with pros *and* cons for each, and says what verification changed about where
+  each one stands
+* **A recommendation, with its reason** — and where the call also turns on
+  something it can't see (a deadline, headcount, an unshipped roadmap) it gives
+  you both halves: the option the evidence supports, plus the specific missing
+  input and what it would flip the answer to. It goes silent only when the
+  evidence supports no default at all
+* **No option list** — deliberately unlike `pushback`. It proposes an
+  alternative only when verification exposed a real defect, and then exactly
+  one, tied to that defect
+* **Writes nothing** — no report, no edits. The conversation is the deliverable
 
 #### `/paad:test-roadmap` — experimental
 

@@ -1,11 +1,13 @@
 ---
 name: rethink
-description: Use when options, a recommendation, or an already-chosen approach are on the table and the reasoning under them has not been independently checked — especially when the case rests on cited documentation, remembered behavior, or premises nobody verified. Not for generating alternatives, and not for critiquing a spec, which is /paad:pushback.
+description: EXPERIMENTAL. Use when options, a recommendation, or an already-chosen approach are on the table and the reasoning under them has not been independently checked — especially when the case rests on cited documentation, remembered behavior, or premises nobody verified. Not for generating alternatives, and not for critiquing a spec, which is /paad:pushback.
 ---
 
 **On invocation:** announce "Running paad:rethink v1.23.0" before anything else.
 
 # Rethink
+
+**Experimental.** Arguments, verdicts, and output shape may change — or this skill may be withdrawn — in any release, including a patch release. The semver promise the settled skills carry does not apply here. If you build a workflow on it, pin your plugin version and [file what breaks](https://github.com/Ovid/paad/issues).
 
 Checks whether the reasoning under a set of options actually holds. Someone — you, the user, or another skill — laid out choices and picked one. `rethink` goes and verifies the premises that choice rests on, against primary sources, and reports what it found.
 

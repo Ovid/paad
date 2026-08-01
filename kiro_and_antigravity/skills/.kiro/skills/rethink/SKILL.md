@@ -7,6 +7,8 @@ name: rethink
 
 # Rethink
 
+**Experimental.** Arguments, verdicts, and output shape may change — or this skill may be withdrawn — in any release, including a patch release. The semver promise the settled skills carry does not apply here. If you build a workflow on it, pin your plugin version and [file what breaks](https://github.com/Ovid/paad/issues).
+
 Checks whether the reasoning under a set of options actually holds. Someone — you, the user, or another skill — laid out choices and picked one. `rethink` goes and verifies the premises that choice rests on, against primary sources, and reports what it found.
 
 **A recommendation can be correct and still be unsound.** The two most common results are not "right" and "wrong" — they are *right, and checked* versus *right, and merely lucky*. A conclusion that happens to hold, arrived at by trusting a source nobody tested, will hold until the day it doesn't, and nobody will be watching. Saying so is the point of this skill.

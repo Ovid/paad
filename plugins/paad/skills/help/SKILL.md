@@ -47,12 +47,12 @@ Available skills:
   /paad:alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
   /paad:makefile                             Create or update a Makefile with standard targets
   /paad:pushback [spec-file]                 Spec/PRD critic (finds issues before you build)
-  /paad:rethink [what to re-examine]         Verify the premises under options already on the table
   /paad:vibe [task description]              Safe vibe coding with TDD guardrails
 
 Experimental — may change or be withdrawn in any release, including patches:
 
   /paad:agentic-dedup [scope]                Find semantic duplication (same meaning, different code)
+  /paad:rethink [what to re-examine]         Verify the premises under options already on the table
   /paad:test-roadmap                         Plan and build a test suite that catches real regressions
 
 Picking between them:
@@ -66,8 +66,8 @@ Picking between them:
   Have no tests, or tests you distrust? test-roadmap (experimental; the only
                                         skill that writes and commits code)
   Have one spec, is it any good?        pushback
-  Been handed options, are they sound?  rethink (checks premises, does not
-                                        invent alternatives)
+  Been handed options, are they sound?  rethink (experimental; checks premises,
+                                        does not invent alternatives)
   Have a spec AND a plan, do they match? alignment (needs both; does not read code)
   Making a small change?                vibe (1-3 files, same module)
   Change is clearly multi-module?       write a plan, then alignment against it
@@ -354,10 +354,13 @@ Works within an existing conversation — no fresh session needed.
 ### rethink
 
 ```
-/paad:rethink [what to re-examine]
+/paad:rethink [what to re-examine]          EXPERIMENTAL
 
 Independently verifies the premises under options that are already on
 the table. Reports what it checked, and how it checked it.
+
+Experimental: arguments, verdicts, and output shape may change — or the
+skill may be withdrawn — in any release, including a patch release.
 
 Output: none — it speaks in the conversation and writes no files.
 

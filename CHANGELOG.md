@@ -11,8 +11,10 @@ what a plugin user sees.
 ## [Unreleased]
 
 ### Added
-- **`paad:rethink` — verify the premises under options you have already been
-  given.** Where `pushback` critiques a spec before anyone builds it, `rethink`
+- **`paad:rethink` (experimental) — verify the premises under options you have
+  already been given.** Shipped experimental alongside `agentic-dedup` and
+  `test-roadmap`: its arguments, verdicts, and output shape may change, or the
+  skill may be withdrawn, in any release including a patch. Where `pushback` critiques a spec before anyone builds it, `rethink`
   critiques an *answer*: it extracts everything a recommendation depends on,
   including the assumptions nobody stated, and checks them against primary
   sources — the software, not the documentation describing it. It reports one
