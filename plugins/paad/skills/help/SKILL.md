@@ -318,8 +318,12 @@ No fresh session needed — this is a lightweight workflow skill.
 /paad:pushback [spec-file]
 
 Critically reviews a spec, PRD, or design before you start building.
+Every finding must name a concrete consequence and the mechanism behind
+it; candidates that can't are dropped and reported as discards.
 
-Output: paad/pushback-reviews/
+Output: the conversation, plus your spec if you ask for edits.
+        Writes paad/pushback-reviews/ only when issues go undiscussed
+        or you ask for a report.
 
 Arguments:
   /paad:pushback path/to/spec.md    Review a specific file

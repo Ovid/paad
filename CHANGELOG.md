@@ -35,6 +35,33 @@ what a plugin user sees.
   answer to. It goes silent only when the evidence supports no default at all.
 
 ### Changed
+- **`paad:pushback` now has to defend every finding it raises.** Before an issue
+  is presented it must be statable as "if the spec ships as written, **Y**
+  happens, because **Z**" — Y a concrete consequence, Z a mechanism resting on a
+  named file and line, command output, or commit. Candidates that can't fill
+  both are dropped, and the run reports how many were discarded, so a short
+  review is visibly short on purpose rather than short on effort. Omissions
+  still qualify: "the spec permits both A and B, they produce different results,
+  and nothing selects between them" is defensible even before the code exists.
+  A bug in the surrounding code earns a ranked slot only when it makes the
+  spec's own deliverable unreachable; otherwise it gets one line at the end.
+  Pressure-testing showed the real work happens while writing Z — you cannot
+  fill it without going to the code, and going to the code is what kills the
+  findings that don't survive.
+- **`paad:pushback` no longer writes a report by default.** It wrote one on
+  every run, including a hundred-plus lines restating a review the user had just
+  watched happen. Now the report is for what the conversation loses: it lands
+  when issues went undiscussed, or when you ask for one. Its summary drops the
+  derivable counts and states in a sentence what has to happen before
+  implementation, instead of a ready/not-ready verdict that reviewers kept
+  overriding anyway. The end-of-run question now offers spec, report, or both,
+  which is what it always meant.
+- **`paad:pushback` asks before editing your spec after you stop the review.**
+  "Good enough" ends the review, not just the current issue; applying changes
+  you already agreed to is fine, but it confirms first.
+- **`paad:pushback` no longer counts requirements to decide a spec is too big.**
+  A dozen requirements can be facets of one small change. It estimates the diff
+  instead.
 - **`paad-analyst` can now read the web.** The read-only analysis subagent
   gains `WebSearch` and `WebFetch` so `rethink` can check a claim against a
   vendor's own documentation. It holds repository and network access at the
