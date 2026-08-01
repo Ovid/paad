@@ -93,6 +93,7 @@ def convert_pi_agent():
     text = text[: match.start()] + "tools: " + ", ".join(pi_tools) + text[match.end() :]
 
     target_dir = Path(PI_AGENT_DIR)
+    shutil.rmtree(target_dir, ignore_errors=True)
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / source.name
     target.write_text(text, encoding="utf-8")
@@ -103,9 +104,12 @@ def convert_skills():
     # Detect root if possible, but assume relative to cwd
     kiro_skills_root = Path(TARGET_DIR) / ".kiro" / "skills"
     agent_skills_root = Path(TARGET_DIR) / ".agent" / "skills"
-    
-    kiro_skills_root.mkdir(parents=True, exist_ok=True)
-    agent_skills_root.mkdir(parents=True, exist_ok=True)
+
+    # Wipe first: a renamed, deleted, or newly skipped skill would otherwise
+    # leave its old copy behind forever, since nothing else prunes the export.
+    for root in (kiro_skills_root, agent_skills_root):
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir(parents=True, exist_ok=True)
     
     skip_names = ["makefile", "help"]
     unwanted_headers = ["Arguments", "Input Resolution", "Pre-flight Checks", "Document classification"]
