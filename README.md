@@ -228,7 +228,7 @@ Open `/plugin`, go to the **Installed** tab, select **paad**, and choose
 **Update now**. Then run `/reload-plugins` to load the new version.
 
 That single action already refreshes the marketplace catalog from GitHub before
-it looks for a new version, so there's no separate catalog step to run first.
+it looks for a new version.
 
 To script it instead, from a shell outside Claude Code:
 
