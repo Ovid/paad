@@ -10,6 +10,90 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.24.0] — 2026-08-01
+
+### Added
+- **`paad:rethink` (experimental) — verify the premises under options you have
+  already been given.** Shipped experimental alongside `agentic-dedup` and
+  `test-roadmap`: its arguments, verdicts, and output shape may change, or the
+  skill may be withdrawn, in any release including a patch. Where `pushback` critiques a spec before anyone builds it, `rethink`
+  critiques an *answer*: it extracts everything a recommendation depends on,
+  including the assumptions nobody stated, and checks them against primary
+  sources — the software, not the documentation describing it. It reports one
+  of five verdicts, and the one that earns its keep is **Lucky**: premises that
+  hold but that nobody checked. A conclusion that is right by luck reads
+  exactly like one that is right by method, right up until it isn't.
+
+  It deliberately does not produce an option list. An alternative appears only
+  when verification exposed a defect, and then exactly one, tied to that
+  defect. It writes no files.
+
+  Because you probably ran it *unsure* about the options, it does not stop at
+  the verdict. Every run ends by re-presenting the options in plain language —
+  no jargon, no internal names, pros and cons for each — and recommending one
+  with its reason. Where the call also turns on something it cannot see, like a
+  deadline or an unshipped roadmap, it gives both halves: the option the
+  evidence supports, plus the specific missing input and what it would flip the
+  answer to. It goes silent only when the evidence supports no default at all.
+
+### Changed
+- **`paad:pushback` now has to defend every finding it raises.** Before an issue
+  is presented it must be statable as "if the spec ships as written, **Y**
+  happens, because **Z**" — Y a concrete consequence, Z a mechanism resting on a
+  named file and line, command output, or commit. Candidates that can't fill
+  both are dropped, and the run reports how many were discarded, so a short
+  review is visibly short on purpose rather than short on effort. Omissions
+  still qualify: "the spec permits both A and B, they produce different results,
+  and nothing selects between them" is defensible even before the code exists.
+  A bug in the surrounding code earns a ranked slot only when it makes the
+  spec's own deliverable unreachable; otherwise it gets one line at the end.
+  Pressure-testing showed the real work happens while writing Z — you cannot
+  fill it without going to the code, and going to the code is what kills the
+  findings that don't survive.
+- **`paad:pushback` no longer writes a report by default.** It wrote one on
+  every run, including a hundred-plus lines restating a review the user had just
+  watched happen. Now the report is for what the conversation loses: it lands
+  when issues went undiscussed, or when you ask for one. Its summary drops the
+  derivable counts and states in a sentence what has to happen before
+  implementation, instead of a ready/not-ready verdict that reviewers kept
+  overriding anyway. The end-of-run question now offers spec, report, or both,
+  which is what it always meant.
+- **`paad:pushback` asks before editing your spec after you stop the review.**
+  "Good enough" ends the review, not just the current issue; applying changes
+  you already agreed to is fine, but it confirms first.
+- **`paad:pushback` no longer counts requirements to decide a spec is too big.**
+  A dozen requirements can be facets of one small change. It estimates the diff
+  instead.
+- **`paad-analyst` can now read the web.** The read-only analysis subagent
+  gains `WebSearch` and `WebFetch` so `rethink` can check a claim against a
+  vendor's own documentation. It holds repository and network access at the
+  same time, so its instructions now forbid putting repository content into an
+  outbound request — no source, paths, or identifiers in a search query, and no
+  URL assembled from anything it read. The other four dispatching skills inherit
+  the capability; they had no reason to leave the repository before and still
+  don't, and the agent is told to prefer the local answer.
+
+  On Pi this maps to nothing, because Pi has no web tool. `rethink` there
+  verifies against the repository alone and returns `Ungrounded` for anything
+  that needs an outside source. See README's Pi section.
+
+- **`vibe` and `makefile` now announce what they wrote too.** 1.23.0 gave the
+  `Files written or updated:` block to the eight skills that produce reports and
+  left out the two that write code and configuration. `vibe` was the gap that
+  mattered — it is the skill that writes and commits source. Both now close a
+  run with the file list, and `make check-announce` enforces it rather than
+  relying on anyone noticing.
+- **The announce block names artifacts, not every path.** The rule said "every
+  path it touched", which on a large run buries the line that needed reading.
+  The test is visibility, not file type: reports, indexes, backlogs, roadmaps,
+  findings logs, and edited spec and plan documents get named individually,
+  because a developer never sees them land. Source and test files are the work
+  they are already watching, so they come as a count with a pointer to the diff;
+  naming a few is allowed, never required. `fix-architecture` motivated it — its
+  prose demanded every file while its own example listed only the report, so a
+  session touching thirty files was told to list all thirty. `test-roadmap`
+  execute mode gets the same threshold.
+
 ## [1.23.0] — 2026-08-01
 
 ### Added
@@ -524,7 +608,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.23.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.24.0...HEAD
+[1.24.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.24.0
 [1.23.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.23.0
 [1.22.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.22.0
 [1.21.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.21.0

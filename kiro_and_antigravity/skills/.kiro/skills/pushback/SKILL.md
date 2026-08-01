@@ -3,7 +3,7 @@ name: pushback
 
 ---
 
-**On invocation:** announce "Running paad:pushback v1.23.0" before anything else.
+**On invocation:** announce "Running paad:pushback v1.24.0" before anything else.
 
 # Spec Pushback
 
@@ -57,9 +57,12 @@ digraph scope_critique_resolution {
   "Spec large?" [shape=diamond];
   "Meaningful split exists?" [shape=diamond];
   "Issues found?" [shape=diamond];
+  "Can you name Y and Z?" [shape=diamond];
   "User says good enough / stop?" [shape=diamond];
   "More issues to present?" [shape=diamond];
-  "Update spec or write report?" [shape=diamond];
+  "Update spec, write report, or both?" [shape=diamond];
+  "Stopped early?" [shape=diamond];
+  "Unresolved issues, or user asked for a report?" [shape=diamond];
   "Spec saved to a file?" [shape=diamond];
 
   "Identify groups, recommend splitting, ask" [shape=box];
@@ -68,12 +71,15 @@ digraph scope_critique_resolution {
   "Suggest the split — what each piece delivers alone" [shape=box];
   "Flag the size, explain why splitting isn't practical" [shape=box];
   "Say nothing about size" [shape=box];
-  "Rank findings by severity" [shape=box];
+  "Drop it; report it as a discard" [shape=box];
+  "Rank surviving findings by severity" [shape=box];
   "Present one issue: problem, options best-to-worst, recommendation" [shape=box];
   "Wait for the user's response" [shape=box];
   "ASK where to write the spec first" [shape=box];
+  "ASK before editing after a stop signal" [shape=box];
   "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
   "Write .reviews/pushback/<date>-<spec>-pushback.md" [shape=box];
+  "Skip the report — conversation and diff carry it" [shape=box];
   "List every file written or updated" [shape=box];
   "Done" [shape=box];
 
@@ -93,9 +99,12 @@ digraph scope_critique_resolution {
   "Flag the size, explain why splitting isn't practical" -> "Issues found?";
   "Say nothing about size" -> "Issues found?";
 
-  "Issues found?" -> "Rank findings by severity" [label="yes"];
+  "Issues found?" -> "Can you name Y and Z?" [label="yes"];
   "Issues found?" -> "Spec saved to a file?" [label="no"];
-  "Rank findings by severity" -> "Present one issue: problem, options best-to-worst, recommendation";
+  "Can you name Y and Z?" -> "Rank surviving findings by severity" [label="yes"];
+  "Can you name Y and Z?" -> "Drop it; report it as a discard" [label="no"];
+  "Drop it; report it as a discard" -> "Rank surviving findings by severity";
+  "Rank surviving findings by severity" -> "Present one issue: problem, options best-to-worst, recommendation";
   "Present one issue: problem, options best-to-worst, recommendation" -> "Wait for the user's response";
   "Wait for the user's response" -> "User says good enough / stop?";
   "User says good enough / stop?" -> "Spec saved to a file?" [label="yes — remainder goes to Unresolved Issues"];
@@ -103,13 +112,19 @@ digraph scope_critique_resolution {
   "More issues to present?" -> "Present one issue: problem, options best-to-worst, recommendation" [label="yes"];
   "More issues to present?" -> "Spec saved to a file?" [label="no"];
 
-  "Spec saved to a file?" -> "Update spec or write report?" [label="yes"];
+  "Spec saved to a file?" -> "Update spec, write report, or both?" [label="yes"];
   "Spec saved to a file?" -> "ASK where to write the spec first" [label="no — came from conversation"];
-  "ASK where to write the spec first" -> "Update spec or write report?";
-  "Update spec or write report?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="update spec"];
-  "Update spec or write report?" -> "Write .reviews/pushback/<date>-<spec>-pushback.md" [label="write report"];
-  "Apply agreed changes; leave undiscussed requirements alone" -> "List every file written or updated";
+  "ASK where to write the spec first" -> "Update spec, write report, or both?";
+  "Update spec, write report, or both?" -> "Stopped early?" [label="update spec"];
+  "Update spec, write report, or both?" -> "Unresolved issues, or user asked for a report?" [label="report only"];
+  "Stopped early?" -> "ASK before editing after a stop signal" [label="yes"];
+  "Stopped early?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="no"];
+  "ASK before editing after a stop signal" -> "Apply agreed changes; leave undiscussed requirements alone";
+  "Apply agreed changes; leave undiscussed requirements alone" -> "Unresolved issues, or user asked for a report?";
+  "Unresolved issues, or user asked for a report?" -> "Write .reviews/pushback/<date>-<spec>-pushback.md" [label="yes"];
+  "Unresolved issues, or user asked for a report?" -> "Skip the report — conversation and diff carry it" [label="no"];
   "Write .reviews/pushback/<date>-<spec>-pushback.md" -> "List every file written or updated";
+  "Skip the report — conversation and diff carry it" -> "List every file written or updated";
   "List every file written or updated" -> "Done";
 }
 ```
@@ -154,10 +169,12 @@ If the user splits, continue reviewing the remaining spec. If they choose to rev
 ### Check 2: Spec Size
 
 Use heuristic signals to assess whether the spec is too large to implement safely:
-- Many distinct features or requirements (roughly 8+)
 - Multiple unrelated system areas affected
 - Very long document
 - Estimated implementation would touch many modules across the codebase
+
+Requirement count is not a signal — estimate the diff instead. A spec can list
+a dozen requirements that are all facets of one small change.
 
 **If large AND a meaningful split exists** where each piece delivers independent value: suggest the split with a brief explanation of what each piece delivers on its own.
 
@@ -182,6 +199,47 @@ Analyze the spec against these categories:
 | **Ambiguity** | Requirements that could be interpreted multiple ways — vague success criteria, undefined terms, unclear scope boundaries |
 | **Security concerns** | Requirements that introduce or ignore security risks — auth gaps, data exposure, injection surfaces, missing rate limits, privilege escalation |
 
+### Every finding must be a claim you can defend
+
+Before presenting an issue, state it to yourself in this form:
+
+> If the spec ships as written, **Y** happens, because **Z**.
+
+- **Y** is a concrete consequence — a wrong result, a crash, a rewrite, data
+  loss, or a decision made by whoever types first.
+- **Z** is the mechanism, and you must be able to name what it rests on: a file
+  and line, a command and its output, a commit, or a specific step an
+  implementer would take and why the spec leaves it open.
+
+If you cannot fill both, drop the finding. "This could be clearer" with no Y is
+an observation. A Y with no Z is a guess. Neither is pushback, and a review made
+of them is why spec review gets called a rubber stamp.
+
+Writing Z is not a formatting step — you cannot fill it without going to the
+code, and going to the code is what kills the findings that don't survive.
+
+**An omission is a legitimate finding when Z is a divergence you can name** —
+"the spec permits both A and B, they produce different <concrete thing>, and
+nothing in the document selects between them." That is defensible even though
+the code does not exist yet. "The spec should mention error handling" is not,
+unless you can say what breaks without it.
+
+**A defect outside the spec is a finding only if it makes the spec's own
+deliverable unreachable.** If the requirements describe a command, endpoint, or
+path that does not exist and this spec does not create it, the document cannot
+be implemented as written — that is pushback. A defect that merely coexists with
+the spec may be a real bug, but it belongs in a one-line mention at the end, not
+in the severity ranking.
+
+**Missing test coverage is a finding only when you can name what ships broken.**
+"Requirement X has no test" is a risk. "This work edits `_render`, no test
+executes `cli.py`, so a spacing change ships green" is a finding — it names the
+path the work touches and what passes review anyway.
+
+Say how many candidates you dropped and why. A review that reports two findings
+and five discards is visibly not a rubber stamp; one that reports two findings
+and says nothing about the rest looks like it stopped early.
+
 ### Presentation order
 
 1. Rank all findings by severity (most impactful first)
@@ -204,14 +262,25 @@ Analyze the spec against these categories:
 
 After all issues are addressed (or user says "good enough" / "stop"):
 
-Ask: **"Would you like me to update the spec directly, or write a separate pushback report?"**
+**If the spec came from conversation history and was never saved to a file, settle that first.** Ask "The spec isn't saved to a file yet. Where should I write it?" and suggest a path that fits the project (`docs/plans/`, `docs/specs/`). The question below assumes there is a file to update.
+
+Then ask: **"Would you like me to update the spec directly, write a separate pushback report, or both?"**
+
+**Default to no report.** If every issue was resolved and the spec was updated,
+the conversation and the spec diff already carry the outcome — a report restates
+what the user just watched happen. Write one when the user asks for it, or when
+issues went undiscussed. Findings the user stopped before reaching exist nowhere
+else once the session ends; that is what the file is for.
 
 ### If updating the spec
 
 - Apply agreed-upon changes to the original file
 - Add/modify requirements based on the user's responses
 - Don't touch requirements that weren't discussed
-- If the spec came from conversation history and hasn't been saved to a file, ask: "The spec isn't saved to a file yet. Where should I write it?" — suggest a reasonable path
+- **After a stop signal, ask before editing.** "Good enough" ends the review,
+  not just the current issue. Applying changes the user already agreed to is
+  fine — confirm first. Editing a spec the author has stopped reading is how a
+  change lands that nobody reviewed.
 
 ### If writing a report
 
@@ -256,15 +325,11 @@ Issues not yet discussed (user stopped early). Listed for future reference.
 
 ## Summary
 
-- **Issues found:** N
-- **Issues resolved:** M
-- **Unresolved:** N - M
-- **Spec status:** <ready for implementation / needs further work>
+- **Issues found:** N (plus K candidates dropped for lacking a defensible consequence)
+- **Unresolved:** N - M   <!-- omit this line entirely when nothing is unresolved -->
+- **Status:** <one or two sentences: what has to happen before implementation
+  starts, and what can ride along. Not a verdict word.>
 ```
-
-### If the spec came from conversation history
-
-Ask: "The spec isn't saved to a file yet. Want me to write it to a file first?" Suggest a reasonable path based on the project structure (e.g., `docs/plans/`, `docs/specs/`). Then proceed with the chosen output option (update or report).
 
 ### List every file you wrote or updated
 
@@ -287,6 +352,10 @@ These patterns produce pushback that reads well and changes nothing. Avoid them:
 | Critiquing the spec without checking the codebase | Phase 1 is first for a reason. "This contradicts what already shipped" outranks every stylistic concern. |
 | Listing every issue at once | One at a time, most impactful first. A wall of twenty findings gets skimmed and dismissed. |
 | Raising a problem without options | Every issue needs concrete options, best to worst, with a recommendation. "This is ambiguous" is an observation, not pushback. |
+| Raising an issue you can't state as "Y happens, because Z" | Drop it and count it as a discard. A finding you can't defend costs the user more to read than it costs you to cut. |
+| Filing a bug in the surrounding code as a spec finding | One line at the end. It gets a ranked slot only when it makes the spec's own deliverable unreachable. |
+| Writing a report nobody asked for after resolving everything | The conversation and the spec diff already say it. Reports exist to carry what the user never saw. |
+| Editing the spec after "good enough" | The stop signal ends the review. Confirm before you touch their file. |
 | Suggesting a split because the spec is long | Length isn't the test — independent value is. Split only when each piece ships something useful on its own. |
 | Mistaking sequenced work for bundled features | Phases of one coherent feature belong together. Cohesion is about whether they'd be separate PRs, not whether they're separate steps. |
 | Softening findings to seem agreeable | The skill's whole value is saying what a reviewer would say before the code exists. Hedged criticism is worse than none. |

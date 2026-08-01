@@ -11,7 +11,7 @@ description: >
 compatibility: Requires git
 ---
 
-**On invocation:** announce "Running paad:test-roadmap v1.23.0" before anything else.
+**On invocation:** announce "Running paad:test-roadmap v1.24.0" before anything else.
 
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
