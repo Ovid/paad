@@ -66,10 +66,12 @@ learn there were thirteen more. Nothing in the phase's output implies "come
 back" unless the run says so, so every run says so — explicitly, as its last
 words.
 
-**First, list every file this run wrote or updated.** The test files are visible
-in the run instructions, but the roadmap and the findings log are not, and a
-developer who never learns a bug was logged never reads it. One line per path,
-each marked new or updated:
+**First, list every artifact this run wrote or updated.** The test files are
+visible in the run instructions, but the roadmap and the findings log are not,
+and a developer who never learns a bug was logged never reads it. One line per
+path, each marked new or updated. Name the test files too when a phase landed
+only a few; past a handful, give them as a count with a pointer to the diff, so
+the roadmap and findings lines stay the first thing read:
 
 ```
 Files written or updated:

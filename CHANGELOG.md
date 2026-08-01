@@ -39,6 +39,12 @@ what a plugin user sees.
   `vibe`, and `makefile` had no closing announcement at all; the others named
   the report but not the index or backlog they also touched. `vibe` mattered
   most of the four — it is the skill that writes and commits source code.
+  The block names *artifacts* by path — reports, indexes, backlogs, roadmaps,
+  findings logs, edited spec and plan documents — because those are what a
+  developer never sees land. Source and test files are the work they are already
+  watching, so they come as a count with a pointer to the diff instead: a
+  `fix-architecture` session that touched thirty files used to be told to list
+  all thirty, which buried the one line that needed reading.
 - **`test-roadmap` now says how it is meant to be used, every run.** Developers
   were running it once, getting a roadmap, and stopping with no tests written.
   Build mode's handoff now states that it planned the work and wrote no tests,
