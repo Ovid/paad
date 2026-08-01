@@ -10,6 +10,8 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.23.0] — 2026-08-01
+
 ### Added
 - **Pi package support, experimental.** A root `package.json` declares the
   skills directory as a [Pi](https://pi.dev/) package, so
@@ -522,7 +524,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.22.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.23.0...HEAD
+[1.23.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.23.0
 [1.22.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.22.0
 [1.21.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.21.0
 [1.20.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.20.0
