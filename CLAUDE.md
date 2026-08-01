@@ -80,7 +80,7 @@ Edit the SKILL.md, then run `make export && make test`. If the change alters beh
 
 ## Releasing
 
-There is no build and no artifact upload. Users install from this repo via `/plugin marketplace add Ovid/paad`. Claude Code disables auto-update for third-party marketplaces by default, so most users pull a release by hand from the `/plugin` panel — **Installed** → **paad** → **Update now** — or with `claude plugin update paad@paad` from a shell; the ones who opted into auto-update get it in the background shortly after a session starts. There is no `/plugin update` subcommand: it silently opens the plugin browser and discards its arguments. The panel action refreshes the marketplace catalog itself before checking, so no separate `/plugin marketplace update` step is needed.
+There is no build and no artifact upload. Users install from this repo via `/plugin marketplace add Ovid/paad`. Claude Code disables auto-update for third-party marketplaces by default, so most users pull a release by hand from the `/plugin` panel — **Installed** → **paad** → **Update now** — or with `claude plugin update paad@paad` from a shell; the ones who opted into auto-update get it in the background shortly after a session starts. The panel action refreshes the marketplace catalog itself before checking, so no separate `/plugin marketplace update` step is needed.
 
 **The version bump is the release, not the merge.** Claude Code resolves a plugin's version from `plugin.json` first and uses it as the cache key for update detection: if the resolved version matches what a user already has, both a manual update and auto-update skip the plugin. Because `plugin.json` sets `version` explicitly, commits merged to `main` without a bump never reach an existing install. Merging is safe; shipping is the bump.
 
@@ -103,7 +103,7 @@ Release from a branch, never by committing to `main` directly — and release fr
 5. **Tag it.** On `main`, after the merge is pushed: `make tag`. It reads the version from `plugin.json`, builds the name as `paad--v` + version (double hyphen — it namespaces the plugin inside the marketplace repo), annotates, and pushes. It refuses if you're not on `main`, if the tree is dirty, if `main` is out of sync with `origin/main`, if the changelog has no matching section, or if the tag already exists.
 
    The tag goes on the merge commit because that's the tree users receive. Published tags don't get moved.
-6. **Sanity-check the published side.** In Claude Code: `/plugin` → **Installed** → **paad** → **Update now**, restart, and run any skill — the announce line should read `vX.Y.Z`. Cheapest way to catch a bump that never made it to `main`. This is the one step no target automates, because it happens in the app. Do not substitute `/plugin update paad@paad`: it is not a subcommand, it silently opens the plugin browser, and the check then reads the old version and reports a false alarm.
+6. **Sanity-check the published side.** In Claude Code: `/plugin` → **Installed** → **paad** → **Update now**, restart, and run any skill — the announce line should read `vX.Y.Z`. Cheapest way to catch a bump that never made it to `main`. This is the one step no target automates, because it happens in the app. Use the panel action; a check run against a plugin that was never actually updated reads the old version and reports a false alarm.
 
 This project does not use GitHub Releases (`gh release create`) — the tag is the record. Don't add one unless Ovid asks.
 

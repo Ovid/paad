@@ -157,10 +157,9 @@ This is the cheapest way to catch a bump that never made it to `main`.
 
 Step 1 refreshes the marketplace catalog itself before it checks for a new
 version, so there is no separate `/plugin marketplace update paad` to run
-first. Do not tell him to run `/plugin update paad@paad` — `update` is not one
-of `/plugin`'s subcommands, so it silently opens the plugin browser and drops
-its arguments. The version check at step 3 would then read the *old* version
-and report a release that shipped fine as broken.
+first. Step 1 is the panel action and nothing else — if the plugin never
+actually updated, the version check at step 3 reads the *old* version and
+reports a release that shipped fine as broken.
 
 Then report what shipped: the version, the tag, the commit it points at, and a
 one-line summary of the changelog section.

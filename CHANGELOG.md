@@ -10,6 +10,15 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Fixed
+- **The README's update instructions no longer mention `/plugin update`.** That
+  slash command does not exist — `update` is not one of `/plugin`'s
+  subcommands, so it silently opens the plugin browser and discards its
+  arguments. The README carried it as a warning, which still left readers a
+  command string to try. The panel action (**Installed** → **paad** → **Update
+  now**) and the `claude plugin update paad@paad` shell CLI are what work, and
+  they are now all the docs describe.
+
 ## [1.24.0] — 2026-08-01
 
 ### Added
