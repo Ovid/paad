@@ -10,6 +10,8 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.24.0] — 2026-08-01
+
 ### Added
 - **`paad:rethink` (experimental) — verify the premises under options you have
   already been given.** Shipped experimental alongside `agentic-dedup` and
@@ -606,7 +608,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.23.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.24.0...HEAD
+[1.24.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.24.0
 [1.23.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.23.0
 [1.22.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.22.0
 [1.21.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.21.0
