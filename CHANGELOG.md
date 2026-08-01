@@ -10,6 +10,8 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.24.1] — 2026-08-01
+
 ### Fixed
 - **The README's update instructions no longer mention `/plugin update`.** That
   slash command does not exist — `update` is not one of `/plugin`'s
@@ -617,7 +619,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.24.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.24.1...HEAD
+[1.24.1]: https://github.com/Ovid/paad/releases/tag/paad--v1.24.1
 [1.24.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.24.0
 [1.23.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.23.0
 [1.22.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.22.0
