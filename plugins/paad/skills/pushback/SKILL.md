@@ -3,7 +3,7 @@ name: pushback
 description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling. Not for cross-checking a spec against a plan — that's /paad:alignment.
 ---
 
-**On invocation:** announce "Running paad:pushback v1.21.0" before anything else.
+**On invocation:** announce "Running paad:pushback v1.22.0" before anything else.
 
 # Spec Pushback
 
@@ -74,6 +74,7 @@ digraph scope_critique_resolution {
   "ASK where to write the spec first" [shape=box];
   "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
   "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [shape=box];
+  "List every file written or updated" [shape=box];
   "Done" [shape=box];
 
   "Unrelated features bundled?" -> "Identify groups, recommend splitting, ask" [label="yes"];
@@ -107,8 +108,9 @@ digraph scope_critique_resolution {
   "ASK where to write the spec first" -> "Update spec or write report?";
   "Update spec or write report?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="update spec"];
   "Update spec or write report?" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [label="write report"];
-  "Apply agreed changes; leave undiscussed requirements alone" -> "Done";
-  "Write paad/pushback-reviews/<date>-<spec>-pushback.md" -> "Done";
+  "Apply agreed changes; leave undiscussed requirements alone" -> "List every file written or updated";
+  "Write paad/pushback-reviews/<date>-<spec>-pushback.md" -> "List every file written or updated";
+  "List every file written or updated" -> "Done";
 }
 ```
 
@@ -272,6 +274,18 @@ Issues not yet discussed (user stopped early). Listed for future reference.
 ### If the spec came from conversation history
 
 Ask: "The spec isn't saved to a file yet. Want me to write it to a file first?" Suggest a reasonable path based on the project structure (e.g., `docs/plans/`, `docs/specs/`). Then proceed with the chosen output option (update or report).
+
+### List every file you wrote or updated
+
+End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated and the report if one was written:
+
+```
+Files written or updated:
+  updated  docs/specs/checkout-prd.md
+  new      paad/pushback-reviews/2026-08-01-checkout-pushback.md
+```
+
+Say it even when only one file changed, and even when the user watched you change it.
 
 ## Common Mistakes
 

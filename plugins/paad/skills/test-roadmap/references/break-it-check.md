@@ -34,32 +34,52 @@ result means for the developer is spelled out in *Explaining results*, below.
 Six steps, in order. The order is load-bearing — steps 1 and 2 each protect
 against a failure mode that only shows up if they run first.
 
-1. **Sweep, then create one worktree for the phase.** First reclaim any strand
-   left by a crashed or aborted prior run:
+1. **Sweep, then create one worktree for the phase.** First fix this run's
+   identity: run `echo "$(date +%Y%m%d-%H%M%S)-$$"` **once**, at the first
+   `break-it-check` of the session, and reuse the exact string it prints —
+   shape `<YYYYMMDD-HHMMSS>-<pid>` — as `<run-id>` for every phase after it.
+   **Run the command; never invent an id, and never copy one out of any
+   example.** Two runs holding the same id sweep each other's live worktrees,
+   which is the failure the id exists to prevent. Never regenerate it per
+   phase either: a run that changes its own id stops recognizing its own
+   strands.
 
-   - `git worktree prune` — reclaims only records whose checkout directory is
-     already gone; it cannot touch a live worktree.
-   - Enumerate `git worktree list --porcelain`, **filter to paths under
-     `.git/test-roadmap-worktrees/`, and force-remove only those.**
+   Then reclaim strands left by a crashed or aborted prior run:
 
-   The filter-to-prefix is the whole guarantee here. This is **not** "remove
-   all worktrees" — that would be wrong, because a developer may have their
-   own hand-made worktree checked out elsewhere on the same repo, and this
-   sweep must never touch it. The prefix is fixed and lives inside `.git`, so
-   the sweep can identify its own worktrees by path alone and nothing it
-   creates ever lands in the working tree.
+   - `git worktree prune` — reclaims records whose directory is gone or
+     unreachable; it never deletes checked-out files.
+   - Enumerate `git worktree list --porcelain` and force-remove a worktree
+     **iff one of its path components is exactly `paad-test-roadmap-<run-id>`**
+     — split the path on `/` and compare components for **equality**. Never a
+     substring or "contains" test: run-ids differ only by PID, so a sibling's
+     `paad-test-roadmap-20260726-141133-481712` *contains* your
+     `paad-test-roadmap-20260726-141133-4817`, and a contains-test
+     force-removes that sibling's live worktree mid-mutation. Never match on a
+     `${TMPDIR:-/tmp}/…` prefix you construct either: git records the
+     symlink-resolved path (`/var/…` prints as `/private/var/…`) and `$TMPDIR`
+     already ends in `/`, so a constructed prefix matches nothing and the sweep
+     silently becomes a no-op.
+   - **Do not add an age or mtime arm to catch what run-id scoping leaves
+     behind.** The worktree is created once and reused for the whole phase, so
+     its mtime does not move while a slow suite runs — any threshold you pick
+     force-removes a live phase mid-mutation, which is that same failure
+     rescheduled onto a timer. *Why a disposable worktree* covers what happens
+     to those strands instead.
 
-   Then create the phase's worktree: `git worktree add
-   .git/test-roadmap-worktrees/<phase> HEAD`.
+   Then create the phase's worktree. Name the directory `phase-<N>` — never the
+   roadmap's phase title, which is prose (`Phase X of Y`) and would silently
+   nest if it ever contained a `/`:
 
-   This worktree is **reused across the baseline run and every mutation in
-   the phase** — one worktree per phase, not one per mutation. That reuse is
-   structural, not an optimization to skip if time-pressed: a fresh checkout
-   excludes gitignored artifacts (no `node_modules/`, `target/`, no venv), and
-   the skill cannot know, language-agnostically, what install command would
-   repopulate them or how long it takes. Paying that cost once per phase
-   instead of once per mutation is the only mitigation available that doesn't
-   require hardcoding an ecosystem's build tooling.
+   ```
+   git worktree add "${TMPDIR:-/tmp}/paad-test-roadmap-<run-id>/phase-<N>" HEAD
+   ```
+
+   That worktree is **reused across the baseline run and every mutation in the
+   phase** — one per phase, not one per mutation. This is structural, not an
+   optimization to drop under time pressure: a fresh checkout has none of the
+   gitignored build artifacts (`node_modules/`, `target/`, venv) that the skill
+   cannot language-agnostically reinstall, so the cost is paid once per phase
+   rather than once per mutation. See *Why a disposable worktree* for the full cost.
 
 2. **Copy the phase's new test files into the worktree, *then* mutate.**
    Never the other way around. In colocated-test ecosystems — Rust's
@@ -207,6 +227,29 @@ that broke every such fence (in Rust/Zig/D the test file *is* under `src/`)
 becomes irrelevant, because you're mutating a copy you're about to throw
 away regardless.
 
+**Why `$TMPDIR` and not somewhere under the repo.** Nothing this gate creates
+may land in the working tree: a second full checkout under the repo root is
+visible to test discovery, linters, the `find`/`grep` recon in this plugin's
+own skills, and `git status` — and the skill cannot exempt it, because it does
+not edit the developer's `.gitignore`. An earlier draft used
+`.git/test-roadmap-worktrees/`, which satisfied that property but hard-fails
+wherever `.git` is a *file* rather than a directory: a `git worktree` checkout,
+a submodule, a `--separate-git-dir` repo. `$TMPDIR` keeps the
+nothing-in-the-working-tree property, behaves identically in all three of those
+repo shapes, and gives the sweep a fixed path component to match on.
+
+The **run-id** in that path is what keeps one run's sweep off another's live
+worktree. This is not hypothetical caution about a rare double-booking: a
+sibling's sweep force-removing a live worktree out from under a running
+mutation **has been reproduced**. Two agents on one repo is not exotic — a
+developer can open a second session while one sits mid-phase, and both modes
+of this skill are built to resume across sittings. Path prefix alone
+identifies "worktrees this skill made," not "worktrees belonging to *my*
+run." The `paad-test-roadmap-` half of the component is what keeps the
+sweep off the developer's *own* hand-made worktrees; the run-id half is what
+keeps it off a concurrent session. Both live in the path, so both are
+answerable from `git worktree list` output alone.
+
 The same kind of crash the write-fence could not survive can still strand
 the **worktree itself** — the disposable checkout, plus its
 `.git/worktrees/` record — on any exit that skips step 5: a failure-table
@@ -215,10 +258,24 @@ hygiene, not a safety gap — the developer's tree is never touched either
 way, so Inviolate #2 holds regardless of whether step 5 ever runs — but the
 leak this time is closed the way the write-fence's window was **not**: on
 the next entry, never on the current exit. Step 1's sweep (`git worktree
-prune`, plus a force-remove filtered to test-roadmap's own prefix) runs on
-the one path a crash cannot skip — the start of the next run — so a strand
-left by a dead session dies at the start of the next one instead of
-persisting indefinitely. On-exit removal (step 5) is only the fast path;
+prune`, plus a force-remove filtered to test-roadmap's own path component
+**and** this run's id) runs on the one path a crash cannot skip — the start
+of the next phase — so a strand left by a short-circuited phase dies when
+the session next enters the gate, instead of persisting for the rest of the
+run.
+
+A strand left by a session that died *outright* is out of the run-id sweep's
+reach by design, and what reclaims it is `$TMPDIR` — eventually, with an
+honest ceiling: `systemd-tmpfiles` defaults to ten days on Linux, many
+container and CI images run no cleaner at all, and a project-local `$TMPDIR`
+may never be swept. So "the OS reclaims it" can mean "not for ten days" or
+"never." That is accepted rather than fixed because the residue is bounded and
+non-destructive: disk held by a checkout, plus a phantom row in `git worktree
+list` until the directory does go away and `git worktree prune` clears the
+record. The developer's tree is untouched either way, which is the property
+this design actually protects — and every mechanism that would reclaim it
+sooner (an age arm, an unscoped prefix sweep) buys that back by risking a live
+sibling's worktree. On-exit removal (step 5) is only the fast path;
 the sweep is the guarantee, because no on-exit cleanup survives a crash this
 design already declined to trust once.
 

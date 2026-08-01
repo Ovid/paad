@@ -3,7 +3,7 @@ name: agentic-architecture
 description: Use when assessing the architectural health of a codebase — before a major refactor, when onboarding to an unfamiliar repo, after rapid growth, when planning a redesign, or to surface structural strengths and risks before they become expensive. Not for fixing what it finds, and not for reviewing a branch diff.
 ---
 
-**On invocation:** announce "Running paad:agentic-architecture v1.21.0" before anything else.
+**On invocation:** announce "Running paad:agentic-architecture v1.22.0" before anything else.
 
 # Agentic Architecture Analysis
 
@@ -139,7 +139,7 @@ Each specialist agent prompt must include:
 - Repo overview and structure snapshot
 - Steering file contents with the staleness caveat
 - Their assigned flaw types and strength categories with descriptions
-- Instruction: "You are an architecture specialist focused on [DOMAIN]. Find both **strengths** and **flaws** in the assigned categories. For each finding report: the category (flaw type number or strength category), file:line, a short label, 1-2 sentence explanation, concrete evidence (path, symbol, excerpt), impact level (High/Medium/Low), and your confidence (0-100). Only report findings with confidence >= 60. Validate every candidate by reading the actual code — do not infer from file names alone."
+- Instruction: "You are an architecture specialist focused on [DOMAIN]. Find both **strengths** and **flaws** in the assigned categories. For each finding report: the category (flaw type number or strength category), file:line, a short label, 1-2 sentence explanation, concrete evidence (path, symbol, excerpt), impact level (High/Medium/Low), and your confidence (0-100). Only report findings with confidence >= 60. Validate every candidate by reading the actual code — do not infer from file names alone. Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged — their caches, coverage files, and build output are fine. If confirming a finding would require changing code, do not — cap that finding's confidence at 79 and state what would confirm it."
 
 **Structure & Boundaries additional instruction:** "Look for: module-level mutable variables, singletons, static mutables; very large classes/files with high fan-in/fan-out; single logical changes requiring edits across many files; business logic in services while domain objects are just data bags; modules grouping unrelated behaviors; drifting responsibilities between layers; generic helper modules growing into grab-bags. Also look for the positive: clean module organization, high cohesion, strong domain modeling, pragmatic abstractions."
 
@@ -157,7 +157,7 @@ Each specialist agent prompt must include:
 
 ## Phase 3: Verification
 
-After all specialists complete, dispatch a single **Verifier** agent with all findings. The verifier:
+After all specialists complete, dispatch a single **Verifier** agent using the Agent tool, passing all findings. The verifier:
 
 1. For each finding, reads the actual current code at the referenced file:line
 2. Confirms the strength or flaw exists and is accurately described
@@ -167,7 +167,7 @@ After all specialists complete, dispatch a single **Verifier** agent with all fi
 6. Deduplicates findings flagged by multiple specialists (note which specialists agreed — cross-specialist agreement increases confidence)
 7. Ensures every finding has concrete evidence (file path, symbol, excerpt) — drops findings without evidence
 
-**Verifier prompt must include:** "You are verifying architecture findings. For each finding, read the actual code and confirm the strength or flaw exists. Be skeptical — file size alone doesn't make a god object, and many imports don't necessarily mean tight coupling. Check git history for context. A finding reported by multiple specialists is more likely real. Drop anything you cannot confirm by reading the code."
+**Verifier prompt must include:** "You are verifying architecture findings. For each finding, read the actual code and confirm the strength or flaw exists. Be skeptical — file size alone doesn't make a god object, and many imports don't necessarily mean tight coupling. Check git history for context. A finding reported by multiple specialists is more likely real. Drop anything you cannot confirm by reading the code. Do not modify any file in the repository. You may run read-only commands (existing tests, linters, type checkers) unchanged — their caches, coverage files, and build output are fine. If confirming a finding would require changing code, do not — drop it under that same rule, rather than lowering its confidence or impact level."
 
 ## Phase 4: Report
 
@@ -325,6 +325,15 @@ These patterns produce low-quality architecture analyses. Avoid them:
 ## Post-Analysis
 
 After writing the report:
-1. Tell the user the report location and finding counts (strengths and flaws by impact level)
+1. **List every file this run wrote or changed, before anything else** — a
+   report the developer does not know exists is a report nobody reads. One line
+   per path, each marked new or updated, even when there is only one:
+
+   ```
+   Files written or updated:
+     new      .reviews/architecture/architecture-2026-08-01-10-42-13.md
+   ```
+
+   Then give the finding counts (strengths and flaws by impact level)
 2. Print a brief summary (3-6 bullet points) of the highest-impact strengths and risks
 3. Do **not** propose fixes. The report is the deliverable.

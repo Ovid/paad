@@ -3,7 +3,7 @@ name: alignment
 description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents. Needs both documents; not for checking code against a spec.
 ---
 
-**On invocation:** announce "Running paad:alignment v1.21.0" before anything else.
+**On invocation:** announce "Running paad:alignment v1.22.0" before anything else.
 
 # Alignment Check
 
@@ -78,6 +78,7 @@ digraph analysis_and_resolution {
   "SKIP the TDD rewrite" [shape=box];
   "Rewrite tasks in the action document" [shape=box];
   "Write rewritten tasks to a new file" [shape=box];
+  "List every file written or updated" [shape=box];
   "Done" [shape=box];
 
   "Check 1: requirements coverage" -> "Check 2: scope compliance";
@@ -108,9 +109,10 @@ digraph analysis_and_resolution {
   "Tasks already red/green/refactor, or not code work?" -> "Rewrite in place?" [label="no"];
   "Rewrite in place?" -> "Rewrite tasks in the action document" [label="yes"];
   "Rewrite in place?" -> "Write rewritten tasks to a new file" [label="no — user prefers a new file"];
-  "SKIP the TDD rewrite" -> "Done";
-  "Rewrite tasks in the action document" -> "Done";
-  "Write rewritten tasks to a new file" -> "Done";
+  "SKIP the TDD rewrite" -> "List every file written or updated";
+  "Rewrite tasks in the action document" -> "List every file written or updated";
+  "Write rewritten tasks to a new file" -> "List every file written or updated";
+  "List every file written or updated" -> "Done";
 }
 ```
 
@@ -288,6 +290,19 @@ If neither condition applies, rewrite action items in red/green/refactor format 
 ```
 
 Rewrite the tasks in the action document in-place, or write to a new file if the user prefers.
+
+### Step 3: List every file you wrote or updated
+
+End the session with the file list, always — this skill edits the developer's own requirements and plan documents, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the report, every spec or plan document changed in Step 1, and any task file rewritten in Step 2:
+
+```
+Files written or updated:
+  updated  docs/specs/checkout-prd.md
+  updated  docs/plans/checkout-tasks.md
+  new      .reviews/alignment/2026-08-01-checkout-alignment.md
+```
+
+Say it even when only one file changed, and even when the user watched you change it.
 
 ## Common Mistakes
 

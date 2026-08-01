@@ -8,7 +8,7 @@ with writing tests.
 
 ## The execute-mode loop
 
-Seven steps, in order:
+Eight steps, in order:
 
 1. **Read `## Decisions` from the roadmap. Never re-ask anything recorded
    there.** The chosen test framework/runner, suite strategy, phase ordering,
@@ -51,6 +51,63 @@ Seven steps, in order:
    could drift out of sync with them.
 7. **Surface run instructions for the tests just landed.** See *Run
    instructions*, below.
+8. **Hand off to the next run — or say the roadmap is finished.** One phase
+   lands per run, so the run always ends by telling the developer whether to
+
+   step is not optional and is not merged into step 7: a developer who is not
+   told to run it again assumes one invocation was the whole skill, and stops
+   with a roadmap and one phase of tests.
+
+### Ending the run
+
+**The single most common way this skill fails is a developer running it once
+and stopping.** They get a roadmap, or a roadmap plus one phase, and never
+learn there were thirteen more. Nothing in the phase's output implies "come
+back" unless the run says so, so every run says so — explicitly, as its last
+words.
+
+**First, list every file this run wrote or updated.** The test files are visible
+in the run instructions, but the roadmap and the findings log are not, and a
+developer who never learns a bug was logged never reads it. One line per path,
+each marked new or updated:
+
+```
+Files written or updated:
+  new      tests/integration/billing/test_retry.py
+  updated  .reviews/test-roadmap/test-roadmap.md          (Phase 3 marked done)
+  updated  .reviews/test-roadmap/test-roadmap-findings.md (F4 added)
+```
+
+Name the findings log only when this run actually added an entry to it, and say
+what the entry was about in a few words, so a real bug does not sit unread.
+
+Then recompute the counts from the roadmap
+(`references/test-pushback.md § Talking to the developer`) and end the run one
+of two ways:
+
+- **Phases remain** — name the next one and say plainly that another
+  invocation is what runs it:
+
+  ```
+
+  takes another 6 runs to finish the roadmap.
+
+  Next is Phase 8 of 14 — 7 done, 6 to go after this: Logger level filtering
+  & message formatting.
+  ```
+
+  Say *why* it is another run, not a continuation: each phase is written,
+  proved against an injected bug, and committed on its own, and a fresh run
+  keeps the context clear for the phase it is working on. A new session is
+  fine — the roadmap file is the memory, and the run picks up from it.
+
+- **No phases remain** (every phase in the roadmap has a populated `Landed:`)
+  — do not ask for another run. Say the roadmap is finished: all N phases are
+  done, the tests are committed on this branch, and point at
+  `.reviews/test-roadmap/test-roadmap-findings.md` if it has entries, since that
+  bug list is the developer's to act on and this skill never will. Running the
+  skill again in this state is a no-op that finds nothing to do, so do not
+  invite it.
 
 ### Run instructions
 

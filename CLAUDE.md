@@ -18,6 +18,8 @@ paad/
 │   └── paad/                      ← the "paad" plugin (namespace for all skills)
 │       ├── .claude-plugin/
 │       │   └── plugin.json        ← plugin manifest (name, version, metadata)
+│       ├── agents/
+│       │   └── paad-analyst.md    ← read-only subagent type (not a skill)
 │       └── skills/
 │           ├── agentic-a11y/
 │           │   └── SKILL.md       ← /paad:agentic-a11y skill
@@ -50,6 +52,7 @@ paad/
 - **Changelog**: `CHANGELOG.md` tracks user-facing changes to the plugin, newest first. Land every user-facing change under `[Unreleased]` as you make it; the release rolls that section into a version. Repo-only churn (docs, `.claude/skills/`, README wording, design notes) doesn't need an entry. See "Releasing" for the rollover steps.
 - **Validation**: run `claude plugin validate .` (marketplace) and `claude plugin validate ./plugins/paad` (plugin) before committing
 - **Announce on invocation**: every `SKILL.md` must begin its body with the line `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` so users see which skill ran and which version produced the behavior. The literal version string must match `plugin.json`.
+- **Announce the artifacts on completion**: any skill that writes or updates a file must end its run by listing every path it touched, one line per path marked new or updated, before the summary or next-step advice. Reports, indexes, backlogs, roadmaps, findings logs, and the developer's own spec/plan documents all count. Developers routinely miss that a run left an artifact in the repo, and an artifact nobody reads is the same as no artifact. Say it even when a single file changed and even when the user watched it happen. Skills that write nothing (`help`) are exempt.
 
 ## Adding a new skill
 
@@ -62,7 +65,7 @@ paad/
 7. Bump the version with `make bump-version VERSION=X.Y.Z` (updates `plugin.json`, `marketplace.json`, and every SKILL.md announce line in one shot)
 8. Update `README.md` to document the new skill under "Available Skills", including argument syntax in the heading
 9. Add the new skill to `paad:help` — both the overview table and a detailed help section
-10. Run `make test` to verify all checks pass (validate, version sync, skill-version announce, digraphs, help, README, frontmatter, references)
+10. Run `make test` to verify all checks pass (validate, version sync, skill-version announce, digraphs, help, README, frontmatter, references, dispatch sites)
 11. Add the skill to `CHANGELOG.md` under `[Unreleased]` (`### Added`), then follow "Releasing" — step 7 above already did the version bump
 
 ## Modifying an existing skill
@@ -82,7 +85,7 @@ Release from a branch, never by committing to `main` directly.
    - Open a fresh, empty `## [Unreleased]` above it.
    - Update the link refs at the bottom: point `[Unreleased]` at `compare/paad--vX.Y.Z...HEAD` and add a `[X.Y.Z]` line for the new tag.
    - If `[Unreleased]` was empty, there is nothing to release — stop and ask.
-4. **Verify.** `make test` must pass (validate, version sync, announce lines, digraphs, help, README, frontmatter, references). Read the output; don't assume.
+4. **Verify.** `make test` must pass (validate, version sync, announce lines, digraphs, help, README, frontmatter, references, dispatch sites). Read the output; don't assume.
 5. **Commit and merge.** Commit the bump plus changelog roll, then merge the branch into `main` and push. That commit is the release.
 6. **Tag the merge commit** — annotated, on `main`, after the merge:
 

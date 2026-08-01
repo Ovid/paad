@@ -173,13 +173,26 @@ prevent. Execute mode already commits each `Landed:` line the same way (step
 5); build mode committing its own output is the same rule at the front of the
 lifecycle, not a new one.
 
+**Then list every file this run wrote**, one line per path — the roadmap is the
+whole deliverable of build mode and it is easy to miss among the conversation:
+
+```
+Files written or updated:
+  new  .reviews/test-roadmap/test-roadmap.md  (14 phases)
+```
+
 **Then tell the developer the total, in plain words.** Build mode's approach
 menus fire *before* any plan exists, so during them there is no phase total to
 show — the first instant it is knowable is right here, once Stage 5 has written
+every phase. State it at the handoff, and make the loop explicit — **this run
+planned the work, it did not do any of it**, and one phase lands per run from
 
-start Phase 1 of 14."* This is the developer's first sight of the end of the
-tunnel, and from here on every phase the skill names carries its `Phase X of Y`
-per `references/test-pushback.md § Talking to the developer`.
+to write Phase 1 of 14, and keep running it: one phase per run, 14 runs to
+finish."* This is the developer's first sight of the end of the tunnel, and from
+here on every phase the skill names carries its `Phase X of Y` per
+`references/test-pushback.md § Talking to the developer`. A developer who stops
+after this run has a plan and zero tests, so do not end build mode without
+saying what the next invocation does.
 
 ### The canonical phase format
 

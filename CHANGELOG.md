@@ -10,6 +10,61 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Changed
+- **Every skill that writes a file now ends by listing what it wrote.** Runs
+  were leaving reports, indexes, backlogs, roadmaps, findings logs, and edited
+  spec documents in the repo without the developer noticing. `agentic-review`,
+  `agentic-architecture`, `agentic-dedup`, `agentic-a11y`, `alignment`,
+  `pushback`, `fix-architecture`, and `test-roadmap` now print a
+  `Files written or updated:` block — one line per path, marked new or
+  updated — before the summary and next-step advice. `alignment` and `pushback`
+  had no closing announcement at all; the others named the report but not the
+  index or backlog they also touched.
+- **`test-roadmap` now says how it is meant to be used, every run.** Developers
+  were running it once, getting a roadmap, and stopping with no tests written.
+  Build mode's handoff now states that it planned the work and wrote no tests,
+  and that one phase lands per run. Execute mode gains a final step: name the
+  next phase and say to run `/paad:test-roadmap` again — or, when every phase has
+  landed, say the roadmap is finished and stop inviting further runs. The README
+  and `paad:help` entries lead with the same run-once-then-repeat model.
+
+## [1.22.0] — 2026-07-26
+
+### Changed
+- **Analysis subagents no longer carry file-editing tools.** `agentic-review`,
+  `agentic-dedup`, `agentic-a11y`, and `agentic-architecture` now dispatch every
+  specialist and verifier as `paad-analyst`, a subagent type whose toolset omits
+  `Edit`, `Write`, and `NotebookEdit`. Subagents had been observed editing source
+  code to test whether a finding was real. Running the existing test suite, a
+  linter, or a type checker unchanged is still allowed.
+  This closes the observed failure mode, not the whole category: `Bash` stays,
+  because the `agentic-dedup` and `agentic-architecture` specialists do their own
+  `git`/`find` recon, so a subagent that ignores its instructions can still reach
+  `sed -i` or shell redirection. That is prose-enforced, not mechanical.
+- Each dispatch prompt also states the rule in prose, because the exported
+  Kiro/Antigravity copies have no subagent-type mechanism and the prose is the
+  only protection there. Specialists cap a finding's confidence at 79 when
+  confirming it would require a code change and say what would confirm it;
+  verifiers apply their skill's existing drop rule instead of a cap.
+- In Claude Code, `agentic-a11y` and `agentic-architecture` subagents now receive
+  untrusted-input handling, which they previously had no form of — their
+  specialists and verifiers ran against arbitrary repositories with no injection
+  defense. This arrives via the shared `paad-analyst` role prompt, which the Kiro
+  and Antigravity exports do not include, so those copies still lack it.
+
+### Fixed
+- **`test-roadmap`: the `break-it-check` worktree no longer lands under `.git/`.**
+  `git worktree add .git/…` hard-fails with `could not create leading
+  directories` wherever `.git` is a file rather than a directory — a submodule, a
+  `git worktree add` checkout, or a `--separate-git-dir` repo. It now goes to
+  `${TMPDIR:-/tmp}/paad-test-roadmap-<run-id>/<phase>`, which keeps the original
+  guarantee that nothing the gate creates lands in your working tree.
+- **`test-roadmap`: the worktree sweep no longer destroys a concurrent session's
+  work.** It filtered by path prefix, which identifies "worktrees under this
+  path" rather than "worktrees belonging to my run" — so a second session's sweep
+  force-removed a live sibling worktree mid-mutation. It now requires an exact
+  path-component match on the current run's id.
+
 ## [1.21.0] — 2026-07-26
 
 ### Added
@@ -451,6 +506,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.20.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.22.0...HEAD
+[1.22.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.22.0
+[1.21.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.21.0
 [1.20.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.20.0
 [1.19.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.19.0
