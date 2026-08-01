@@ -12,66 +12,66 @@ Also, address me as "Ovid" for further verification that you have read this file
 
 ```
 paad/
-├── package.json                        ← Pi package manifest
 ├── .claude-plugin/
 │   └── marketplace.json           ← marketplace catalog (lists all plugins)
 ├── plugins/
-│   └── paad/                      ← the "paad" plugin (namespace for all skills)
+│   └── paad/                      ← the "paad" plugin — the only distributed thing here
 │       ├── .claude-plugin/
 │       │   └── plugin.json        ← plugin manifest (name, version, metadata)
 │       ├── agents/
 │       │   └── paad-analyst.md    ← read-only subagent type (not a skill)
 │       └── skills/
-│           ├── agentic-a11y/
-│           │   └── SKILL.md       ← /paad:agentic-a11y skill
-│           ├── agentic-architecture/
-│           │   └── SKILL.md       ← /paad:agentic-architecture skill
 │           ├── agentic-review/
-│           │   └── SKILL.md       ← /paad:agentic-review skill
-│           ├── alignment/
-│           │   └── SKILL.md       ← /paad:alignment skill
-│           ├── fix-architecture/
-│           │   └── SKILL.md       ← /paad:fix-architecture skill
-│           ├── help/
-│           │   └── SKILL.md       ← /paad:help skill
-│           ├── makefile/
-│           │   └── SKILL.md       ← /paad:makefile skill
-│           ├── pushback/
-│           │   └── SKILL.md       ← /paad:pushback skill
-│           └── vibe/
-│               └── SKILL.md       ← /paad:vibe skill
+│           │   ├── SKILL.md       ← one folder per skill → /paad:agentic-review
+│           │   └── references/    ← optional; loaded on demand by the skill
+│           └── <one folder per skill>
+├── kiro_and_antigravity/          ← GENERATED export (Kiro / Cursor / Antigravity)
+├── pi/                            ← GENERATED export (Pi agent)
+├── package.json                   ← Pi package manifest (version + pi.skills path)
+├── scripts/
+│   ├── convert_skills.py          ← generates kiro_and_antigravity/ and pi/
+│   ├── check_references.py
+│   ├── lint_digraphs.py
+│   └── roll_changelog.py
+├── Makefile                       ← every check, plus the release sequence
+├── .claude/skills/                ← project-local skills (/roadmap, /release) — not distributed
+├── paad/code-reviews/             ← committed output from paad's own skills
+├── docs/, notes/                  ← plans, roadmap, design notes
+├── CHANGELOG.md
 ├── CLAUDE.md                      ← this file
 └── README.md
 ```
+
+`kiro_and_antigravity/` and `pi/` are produced from `plugins/paad/` by `make export`. Everything in them is generated — edit the source or the generator, never the output. README tells non-Claude-Code users to copy straight out of `kiro_and_antigravity/`, so a stale export on `main` is wrong content shipped to real users.
 
 ## Key conventions
 
 - **Marketplace name**: `paad`
 - **Plugin name**: `paad` (so all skills are invoked as `/paad:<skill-name>`)
 - **Skill naming**: skill folder names become the suffix after `paad:` — e.g., `skills/agentic-architecture/` → `/paad:agentic-architecture`
-- **Versioning**: `package.json`, `marketplace.json`, and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. Run `make bump-version VERSION=X.Y.Z` to update all manifests and skill announce lines at once; `make check-versions` and `make check-skill-versions` (run as part of `make test`) catch drift.
+- **Versioning**: `package.json`, `marketplace.json`, and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. `make bump-version VERSION=X.Y.Z` updates all of them at once, and `make release` runs it — don't invoke it by hand outside a release. `make check-versions` and `make check-skill-versions` (part of `make test`) catch drift.
 - **Changelog**: `CHANGELOG.md` tracks user-facing changes to the plugin, newest first. Land every user-facing change under `[Unreleased]` as you make it; the release rolls that section into a version. Repo-only churn (docs, `.claude/skills/`, README wording, design notes) doesn't need an entry. See "Releasing" for the rollover steps.
-- **Validation**: run `claude plugin validate .` (marketplace) and `claude plugin validate ./plugins/paad` (plugin) before committing
+- **Verification**: `make export && make test` before committing. It regenerates `kiro_and_antigravity/` and `pi/` from the plugin sources, then runs every check — including `claude plugin validate` on the marketplace and the plugin. Never hand-edit anything it generates; if the output is wrong, fix the generator.
 - **Announce on invocation**: every `SKILL.md` must begin its body with the line `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` so users see which skill ran and which version produced the behavior. The literal version string must match `plugin.json`.
 - **Announce the artifacts on completion**: any skill that writes or updates a file must end its run by listing every path it touched, one line per path marked new or updated, before the summary or next-step advice. Reports, indexes, backlogs, roadmaps, findings logs, and the developer's own spec/plan documents all count. Developers routinely miss that a run left an artifact in the repo, and an artifact nobody reads is the same as no artifact. Say it even when a single file changed and even when the user watched it happen. Skills that write nothing (`help`) are exempt.
 
 ## Adding a new skill
 
-1. Create `plugins/paad/skills/<skill-name>/SKILL.md` with frontmatter (`name`, `description`) and instructions
+`make export && make test` owns the mechanical half — validate, version sync, announce lines, digraph lint, help and README coverage, frontmatter, references, dispatch sites, export currency. Run it and fix what it reports; the steps below are only the parts it can't decide for you.
+
+1. Create `plugins/paad/skills/<skill-name>/SKILL.md` with frontmatter (`name` matching the folder, `description`) and instructions
 2. Add the on-invocation announce line as the very first line of the body (after the closing `---` of frontmatter): `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` — the version literal must match `plugin.json`
 3. Consider `$ARGUMENTS` support — if the skill could benefit from user-provided scope (a file path, directory, branch name, etc.), add an Arguments section documenting usage. Users shouldn't need to remember flags; keep arguments positional and intuitive (e.g., `/paad:skillname path/to/scope`).
 4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow, placed immediately after the intro paragraphs and before the first `##` heading. The only exception is `paad:help`, which is a simple display skill. See "Digraph requirements" below.
-5. Validate with `claude plugin validate ./plugins/paad`
-6. Test locally with `claude --plugin-dir ./plugins/paad`
-7. Bump the version with `make bump-version VERSION=X.Y.Z` (updates `package.json`, `plugin.json`, `marketplace.json`, and every SKILL.md announce line in one shot)
-8. Update `README.md` to document the new skill under "Available Skills", including argument syntax in the heading
-9. Add the new skill to `paad:help` — both the overview table and a detailed help section
-10. Run `make test` to verify all checks pass (validate, version sync, skill-version announce, digraphs, help, README, frontmatter, references, dispatch sites)
-11. Add the skill to `CHANGELOG.md` under `[Unreleased]` (`### Added`), then follow "Releasing" — step 7 above already did the version bump
+5. Document it in `README.md` under "Available Skills" (argument syntax in the heading) and in `paad:help` — both the overview table and a detailed help section
+6. Add a `### Added` entry under `[Unreleased]` in `CHANGELOG.md`
+7. Run `make export && make test`, then drive the skill for real: `claude --plugin-dir ./plugins/paad`
+
+**Don't bump the version here.** The bump is the release — run `/release` when the work is ready to ship. See "Releasing".
 
 ## Modifying an existing skill
 
-When changing a skill's behavior, arguments, or output, review `plugins/paad/skills/help/SKILL.md` and update the corresponding help text to match. Add a `CHANGELOG.md` entry under `[Unreleased]` if the change is visible to plugin users.
+Edit the SKILL.md, then run `make export && make test`. If the change alters behavior, arguments, or output, update the matching help text in `plugins/paad/skills/help/SKILL.md`. If it's visible to plugin users, add a `CHANGELOG.md` entry under `[Unreleased]`. The version is the release's job, not this edit's.
 
 ## Releasing
 
