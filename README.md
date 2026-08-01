@@ -209,6 +209,11 @@ Install the plugin:
 /plugin install paad@paad
 ```
 
+This opens the plugin's details, where you choose an installation scope — user
+(all your projects), project (shared with collaborators on this repository), or
+local (just you, just this repository). Then run `/reload-plugins` to activate
+the skills in your current session.
+
 If you're not using Claude Code, see other examples below.
 
 #### Updating the plugin
@@ -224,16 +229,28 @@ Refresh the marketplace catalog from GitHub:
 /plugin marketplace update paad
 ```
 
-Then update the plugin itself:
+Then update the plugin itself: open `/plugin`, go to the **Installed** tab,
+select **paad**, and choose **Update now**. Then run `/reload-plugins` to load
+the new version.
+
+There is no `/plugin update` slash command, despite what the Claude Code docs
+currently say — `update` is not one of `/plugin`'s subcommands, and
+`/plugin update paad@paad` silently opens the plugin browser instead of
+updating anything. The update action lives in the panel.
+
+If you'd rather script it, both steps have shell equivalents that run outside
+Claude Code:
 
 ```bash
-/plugin update paad@paad
+claude plugin marketplace update paad
+claude plugin update paad@paad
 ```
 
-Then run `/reload-plugins` to load the new version, or restart Claude Code.
+Those write the new version to disk but don't affect a session that's already
+running; restart Claude Code to pick it up.
 
-What gates delivery is the version number, not how often you run those two
-commands. PAAD sets an explicit `version` in `plugin.json`, which Claude Code
+What gates delivery is the version number, not how often you run those steps.
+PAAD sets an explicit `version` in `plugin.json`, which Claude Code
 uses as the cache key for update detection — if the version you have matches
 the one being offered, the update is skipped. So a release reaches you when the
 version changes, and commits pushed to `main` without a version bump never
@@ -250,7 +267,7 @@ own name and version on invocation (`Running paad:vibe v<version>`). Compare
 that against the version in
 [`plugins/paad/.claude-plugin/plugin.json`](plugins/paad/.claude-plugin/plugin.json).
 If a skill documented here is missing entirely, you're on an older version —
-run the two commands above.
+run through the update steps above.
 
 #### Invoking skills
 
