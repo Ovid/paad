@@ -10,6 +10,24 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Changed
+- **`vibe` and `makefile` now announce what they wrote too.** 1.23.0 gave the
+  `Files written or updated:` block to the eight skills that produce reports and
+  left out the two that write code and configuration. `vibe` was the gap that
+  mattered — it is the skill that writes and commits source. Both now close a
+  run with the file list, and `make check-announce` enforces it rather than
+  relying on anyone noticing.
+- **The announce block names artifacts, not every path.** The rule said "every
+  path it touched", which on a large run buries the line that needed reading.
+  The test is visibility, not file type: reports, indexes, backlogs, roadmaps,
+  findings logs, and edited spec and plan documents get named individually,
+  because a developer never sees them land. Source and test files are the work
+  they are already watching, so they come as a count with a pointer to the diff;
+  naming a few is allowed, never required. `fix-architecture` motivated it — its
+  prose demanded every file while its own example listed only the report, so a
+  session touching thirty files was told to list all thirty. `test-roadmap`
+  execute mode gets the same threshold.
+
 ## [1.23.0] — 2026-08-01
 
 ### Added
@@ -33,18 +51,11 @@ what a plugin user sees.
   were leaving reports, indexes, backlogs, roadmaps, findings logs, and edited
   spec documents in the repo without the developer noticing. `agentic-review`,
   `agentic-architecture`, `agentic-dedup`, `agentic-a11y`, `alignment`,
-  `pushback`, `fix-architecture`, `test-roadmap`, `vibe`, and `makefile` now
-  print a `Files written or updated:` block — one line per path, marked new or
-  updated — before the summary and next-step advice. `alignment`, `pushback`,
-  `vibe`, and `makefile` had no closing announcement at all; the others named
-  the report but not the index or backlog they also touched. `vibe` mattered
-  most of the four — it is the skill that writes and commits source code.
-  The block names *artifacts* by path — reports, indexes, backlogs, roadmaps,
-  findings logs, edited spec and plan documents — because those are what a
-  developer never sees land. Source and test files are the work they are already
-  watching, so they come as a count with a pointer to the diff instead: a
-  `fix-architecture` session that touched thirty files used to be told to list
-  all thirty, which buried the one line that needed reading.
+  `pushback`, `fix-architecture`, and `test-roadmap` now print a
+  `Files written or updated:` block — one line per path, marked new or
+  updated — before the summary and next-step advice. `alignment` and `pushback`
+  had no closing announcement at all; the others named the report but not the
+  index or backlog they also touched.
 - **`test-roadmap` now says how it is meant to be used, every run.** Developers
   were running it once, getting a roadmap, and stopping with no tests written.
   Build mode's handoff now states that it planned the work and wrote no tests,
