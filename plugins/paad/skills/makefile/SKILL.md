@@ -28,6 +28,7 @@ digraph makefile_flow {
     "Force the one-shot flag for the detected stack" [shape=box];
     "Verify the tool exits on its own before adding flags" [shape=box];
     "ASK the user how to handle test output" [shape=box];
+    "Announce the file written or updated" [shape=box];
     "Done" [shape=box];
 
     "Detect stack" -> "Makefile exists?";
@@ -48,9 +49,10 @@ digraph makefile_flow {
     "Approved?" -> "Skip change" [label="no"];
     "Apply change" -> "Existing target needs change?" [label="next target"];
     "Skip change" -> "Existing target needs change?" [label="next target"];
-    "Test tool supports balanced output?" -> "Done" [label="yes"];
+    "Test tool supports balanced output?" -> "Announce the file written or updated" [label="yes"];
     "Test tool supports balanced output?" -> "ASK the user how to handle test output" [label="no — only silent or firehose"];
-    "ASK the user how to handle test output" -> "Done";
+    "ASK the user how to handle test output" -> "Announce the file written or updated";
+    "Announce the file written or updated" -> "Done";
 }
 ```
 
@@ -69,6 +71,7 @@ Creates or updates a project Makefile with standard targets. **Never modifies an
 2. Check if Makefile exists
 3. Creating → build from scratch with all required targets mapped to detected stack
 4. Updating → add missing targets; STOP and ask before changing any existing one
+5. Announce the file you wrote — see "Announce What You Wrote"
 
 ## Stack Detection
 
@@ -160,6 +163,17 @@ Common approaches by stack:
 | **prove (Perl)** | Default is fine; avoid `--verbose` |
 
 **If the testing tool doesn't support balanced output** (e.g., only offers silent vs. firehose), inform the user and ask how they'd like to handle it rather than guessing.
+
+## Announce What You Wrote
+
+End the run with the file list, always. One line per path, marked new or updated:
+
+```
+Files written or updated:
+  updated  Makefile
+```
+
+Say it even though only one file changed, and even when the user watched you change it. If you were asked to change an existing target and stopped for approval instead, say that too — an unapproved target is not a written one.
 
 ## Common Mistakes
 

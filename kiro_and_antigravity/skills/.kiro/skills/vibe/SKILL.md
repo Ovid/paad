@@ -198,7 +198,17 @@ Every excuse below was produced by an agent working a real timed task under this
 
 ## Step 4: Post-fix Summary
 
-After the fix is complete, provide a brief summary:
+Lead with the file list, always — this skill writes and commits source code, and a change nobody notices is worse than no change. One line per path, each marked new or updated, covering every test file touched in RED, every source file changed in GREEN, and anything REFACTOR moved or renamed:
+
+```
+Files written or updated:
+  new      src/checkout/total.test.ts
+  updated  src/checkout/total.ts
+```
+
+Say it even when only one file changed, and even when the user watched you change it.
+
+Then a brief summary:
 
 - **What changed:** files modified, lines added/removed
 - **Tests added:** the RED tests and what they verify

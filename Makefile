@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-export-current bump-version export release tag
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-current bump-version export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-export-current ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-current ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -196,36 +196,53 @@ check-frontmatter: ## Check every SKILL.md has name/description and name matches
 check-references: ## Check every references/ dispatch resolves and every reference file is named
 	@python3 scripts/check_references.py
 
-check-dispatch-sites: ## Check every specialist/verifier dispatch site names the read-only subagent
+check-dispatch-sites: ## Check every subagent dispatch site names the read-only analyst
+# Inverted on purpose: flag any dispatch site that is NOT paad:paad-analyst, rather
+# than counting the ones that are. Counting known-good sites passes a new skill that
+# dispatches a write-capable subagent, which is the failure this exists to catch.
+# Residual hole: a dispatch site written without a 'subagent_type' line is invisible here.
 	@fail=0; \
-	for pair in agentic-review:2 agentic-dedup:2 agentic-a11y:3 agentic-architecture:2; do \
-		name=$${pair%:*}; want=$${pair#*:}; \
+	bad=$$(grep -rn 'subagent_type' "$(SKILLS_DIR)" | grep -vF 'subagent_type: paad:paad-analyst' || true); \
+	if [ -n "$$bad" ]; then \
+		echo "FAIL: dispatch site(s) not using the read-only analyst. Every analysis subagent must be"; \
+		echo "      dispatched as 'subagent_type: paad:paad-analyst' — specialists and verifiers must not"; \
+		echo "      carry Edit/Write/NotebookEdit. Offending lines:"; \
+		echo "$$bad" | sed 's/^/  /'; \
+		fail=1; \
+	fi; \
+	for name in agentic-review agentic-dedup agentic-a11y agentic-architecture; do \
 		file="$(SKILLS_DIR)/$$name/SKILL.md"; \
 		if [ ! -f "$$file" ]; then \
-			echo "FAIL: $$name has no SKILL.md (expected $$want dispatch site(s) in it)"; \
+			echo "FAIL: $$name has no SKILL.md (it is expected to dispatch analysis subagents)"; \
 			fail=1; \
-			continue; \
-		fi; \
-		got=$$(grep -cF 'subagent_type: paad:paad-analyst' "$$file" || true); \
-		if [ "$$got" != "$$want" ]; then \
-			echo "FAIL: $$name names paad:paad-analyst at $$got dispatch site(s), expected $$want (if this change is intentional, update the counts in check-dispatch-sites)"; \
+		elif ! grep -qF 'subagent_type: paad:paad-analyst' "$$file"; then \
+			echo "FAIL: $$name no longer dispatches paad:paad-analyst anywhere — if it stopped dispatching"; \
+			echo "      subagents on purpose, drop it from the list in check-dispatch-sites."; \
 			fail=1; \
 		fi; \
 	done; \
-	counts=$$(grep -rcF 'subagent_type: paad:paad-analyst' "$(SKILLS_DIR)" | grep -v ':0$$' || true); \
-	total=$$(echo "$$counts" | awk -F: '{n+=$$2} END {print n+0}'); \
-	if [ "$$total" != "9" ]; then \
-		echo "FAIL: expected 9 dispatch sites across $(SKILLS_DIR), found $$total (if this change is intentional, update the counts in check-dispatch-sites). Sites found:"; \
-		echo "$$counts" | sed 's/^/  /'; \
-		fail=1; \
-	fi; \
 	if grep -rqF 'subagent_type' kiro_and_antigravity/skills 2>/dev/null; then \
 		echo "FAIL: 'subagent_type' survived into the export — neutralize() in scripts/convert_skills.py did not match this dispatch site's wording. Occurrences:"; \
 		grep -rnF 'subagent_type' kiro_and_antigravity/skills | sed 's/^/  /'; \
 		fail=1; \
 	fi; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
-	echo "All 9 dispatch sites name paad:paad-analyst (review 2, dedup 2, a11y 3, architecture 2); none leaked into the export."
+	echo "Every dispatch site names paad:paad-analyst; none leaked into the export."
+
+check-announce: ## Check every skill that writes files announces what it wrote
+	@fail=0; \
+	for dir in $(SKILL_DIRS); do \
+		name=$$(basename "$$dir"); \
+		if [ "$$name" = "help" ]; then continue; fi; \
+		if ! grep -rqF 'Files written or updated' "$$dir" 2>/dev/null; then \
+			echo "FAIL: $$name has no 'Files written or updated:' block. Any skill that writes or updates"; \
+			echo "      a file must end its run by listing every path it touched. Only 'help' is exempt,"; \
+			echo "      because it writes nothing — if this skill also writes nothing, exempt it here."; \
+			fail=1; \
+		fi; \
+	done; \
+	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
+	echo "All skills announce the files they write (help excluded)."
 
 check-export-current: ## Check kiro_and_antigravity/ and pi/ match a fresh export
 	@tmp=$$(mktemp -d); \

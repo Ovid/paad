@@ -30,7 +30,7 @@ digraph release {
     "Create release branch" [shape=box];
     "make release VERSION=X.Y.Z" [shape=box];
     "Passed?" [shape=diamond];
-    "STOP — report the failure, do not hand-patch" [shape=box, style=bold];
+    "STOP — report the failure and the half-applied state" [shape=box, style=bold];
     "Show the diff, get sign-off" [shape=box];
     "Commit, merge to main, push" [shape=box];
     "make tag" [shape=box];
@@ -46,7 +46,7 @@ digraph release {
     "On a branch?" -> "make release VERSION=X.Y.Z" [label="on a branch"];
     "Create release branch" -> "make release VERSION=X.Y.Z";
     "make release VERSION=X.Y.Z" -> "Passed?";
-    "Passed?" -> "STOP — report the failure, do not hand-patch" [label="no"];
+    "Passed?" -> "STOP — report the failure and the half-applied state" [label="no"];
     "Passed?" -> "Show the diff, get sign-off" [label="yes"];
     "Show the diff, get sign-off" -> "Commit, merge to main, push";
     "Commit, merge to main, push" -> "make tag";
@@ -86,7 +86,14 @@ change to one of them does not force a major.
 ## 3. Cut it
 
 Confirm you are on a branch, not `main` — `make release` refuses on `main`, but
-say so before running rather than after. Create one if needed.
+say so before running rather than after.
+
+Release from the branch that already carries the unreleased work, so the feature
+and its bump merge together. `main` holding user-facing work that has not been
+bumped is the leak CLAUDE.md describes under "Releasing": a new install clones
+`main`'s tip and gets it, while existing installs stay behind on the same version
+number. If the work is already merged and there is no such branch, cut one off
+`main` and say that the window is open until it lands.
 
 ```bash
 make release VERSION=X.Y.Z
@@ -99,6 +106,16 @@ That single command rolls the changelog with today's real date, opens a fresh
 **If it fails, stop and report the failure.** Do not hand-patch around it. A
 failing check at this point means either the release is not ready or a generator
 is wrong, and both need a decision from Ovid.
+
+Report the state along with the failure, because it is not clean: `make release`
+mutates before it verifies, so a failure at `make test` leaves the changelog
+rolled and every version string bumped. Say so, and say that re-running
+`make release` will not work — it refuses on the now-dirty tree, and
+`roll_changelog.py` refuses a second time on a version that already has a
+section. Once Ovid has decided and the cause is fixed, the way forward is
+`make export && make test` and then commit; the way out is `git checkout -- .`,
+which discards the roll and the bump together. Neither is the hand-patching this
+step forbids — that means editing the generated output to make a check pass.
 
 ## 4. Show the work before committing
 
