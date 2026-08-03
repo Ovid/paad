@@ -9,6 +9,42 @@ reviews what the AI is about to work on — the spec, the plan, the architecture
 code — while you can still change it. That's **P**ushback, **A**lignment,
 **A**rchitecture, plus the **D**iscipline to actually run them.
 
+## Quick start
+
+In Claude Code:
+
+```
+/plugin marketplace add Ovid/paad
+/plugin install paad@paad
+```
+
+Pick a scope when the details panel opens, then `/reload-plugins`. Run
+`/paad:help` to see everything.
+
+Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
+**Antigravity**, and ships an experimental **Pi** package — see
+[Installation](#installation).
+
+### The skills
+
+| Skill | What it does |
+|---|---|
+| `/pushback [spec-file]` | Argues with your spec before anyone builds it |
+| `/alignment [files...]` | Checks that the plan and the spec say the same thing |
+| `/agentic-review [base-branch] [path]` | Six specialists review your branch before merge |
+| `/agentic-architecture [path...]` | Five specialists find structural debt while it's cheap |
+| `/fix-architecture [report]` | Works through those findings one at a time, test-first |
+| `/agentic-a11y [path]` | Accessibility audit against WCAG 2.2 AA, by disability category |
+| `/vibe [task]` | Small fixes, TDD guardrails still on |
+| `/makefile` | Creates or updates a project `Makefile` |
+| `/paad:help [skill-name]` | Lists the skills, or explains one |
+| `/agentic-dedup [scope]` | Finds duplicated *meaning*, not duplicated text — experimental |
+| `/rethink [topic]` | Checks whether the premises under a recommendation hold — experimental |
+| `/test-roadmap` | Builds a test suite that catches real regressions — experimental |
+
+Full descriptions are further down. The rest of this page is why any of it is
+worth your tokens.
+
 ## "AI slop" is technical debt with better marketing
 
 We have been accumulating technical debt since long before AI showed up, and
@@ -432,6 +468,8 @@ perform the task, such as:
 The assistant will follow the procedures defined in the skill files.
 
 ---
+
+## Skill reference
 
 ### Pushback
 
