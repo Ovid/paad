@@ -1,8 +1,13 @@
-# PAAD — Defense-in-Depth for AI-Assisted Development
+# PAAD — Engineering-driven AI, not AI-driven engineering
 
 <p align="center">
   <img src="images/paad.png" alt="PAAD — Pushback, Alignment, Architecture, Discipline" width="600">
 </p>
+
+**PAAD** (rhymes with "pad") is a set of skills for AI coding assistants. It
+reviews what the AI is about to work on — the spec, the plan, the architecture, the
+code — while you can still change it. That's **P**ushback, **A**lignment,
+**A**rchitecture, plus the **D**iscipline to actually run them.
 
 ## "AI slop" is technical debt with better marketing
 
@@ -20,11 +25,40 @@ What AI changed is not the nature of the debt. It's the speed it arrives at.
 That's the problem and it isn't new. It's just faster than the review
 habits most teams have, so the debt lands before anyone looks at it.
 
-**PAAD** (pronounced "pad") is how you stay on top of it — the same review
-layers your team already believes in, applied at the speed the assistant is
-working.
+The model reads every line of your repository in seconds. It has never once
+heard about the outage that put that validation check there.
 
-## Engineering-driven AI, not AI-driven engineering
+**PAAD** is how you stay on top of it — the same review layers your team
+already believes in, applied at the speed the assistant is working.
+
+## The four letters
+
+Four points where the AI is about to decide something for you:
+
+| Area | What it means |
+|------|---------------|
+| **P**ushback | Argues with your spec before anyone builds it |
+| **A**lignment | Checks that the plan and the spec actually say the same thing |
+| **A**rchitecture | Finds the structural debt while it's still cheap to fix |
+| **D**iscipline | Yours, not the tool's — running the first three when the deadline says don't |
+
+The first three are reviews you run. The fourth is the one thing in the list
+the assistant will never bring for you.
+
+Your team already runs specs, tests, code review, CI, QA, and incident
+response — layers that exist because mistakes are cheap to fix early and
+expensive to fix late, and because humans are stochastic. AI is stochastic
+too. PAAD's argument isn't that AI needs *special* safeguards; it's that AI
+needs the *same* safeguards, running fast enough to keep up with it.
+
+It doesn't replace your current AI-assisted development tools; it complements
+them. You like [Superpowers](https://github.com/obra/superpowers/)? Use it
+with PAAD.
+
+PAAD supports **Claude Code** natively and ships as an experimental **Pi**
+package. It also supports **Cursor**, **Kiro**, and **Antigravity**.
+
+## Who's driving
 
 Most organizations adopting AI right now have it backwards. A developer tells
 the AI what to do and hopes the AI can take over. The AI is happy to oblige —
@@ -53,8 +87,8 @@ gives you visibility and control, not autopilot.
 
 An engineer has to drive this — including knowing when the tool is wrong.
 
-- **PAAD reports; you decide.** It doesn't know your deadline, your users, or
-  which risk you're willing to carry. A finding is an argument, not a verdict.
+- **PAAD reports; you decide.** A finding is an argument, not a verdict — see
+  [The AI sees all of your code and none of your context](#the-ai-sees-all-of-your-code-and-none-of-your-context).
 - **It's non-deterministic**, like the assistant it's checking. Run it twice
   on the same branch and you'll get overlapping, not identical, results. Run
   the important ones more than once.
@@ -70,40 +104,61 @@ If you want the assistant to think for you, PAAD is the wrong tool. It exists
 for engineers who want to stay responsible for the result and need help
 keeping up.
 
-## The four letters
+## The AI sees all of your code and none of your context
 
-PAAD is a system of AI agent skills addressing four common failure modes in
-AI-assisted development:
+The model reads your repository faster and more patiently than any human will.
+That part is real, and it's why PAAD works at all.
 
-| Area | What it addresses |
-|------|-------------------|
-| **P**ushback | Weak specs, hidden assumptions, vague requirements, and risky omissions before implementation begins |
-| **A**lignment | Gaps between requirements, design, implementation plans, and the work that is actually about to happen |
-| **A**rchitecture | Structural issues that make code harder to extend, reason about, and maintain over time |
-| **D**iscipline | The need to consistently apply review, testing, and quality checks instead of skipping them under time pressure |
+But the expensive decisions in software rarely turn on what's in the
+repository. They turn on what isn't.
 
-Your team already runs specs, tests, code review, CI, QA, and incident
-response — layers that exist because mistakes are cheap to fix early and
-expensive to fix late, and because humans are stochastic. AI is stochastic
-too. PAAD's argument isn't that AI needs *special* safeguards; it's that AI
-needs the *same* safeguards, running fast enough to keep up with it.
+| The model sees | The engineer knows |
+|---|---|
+| Every line, in seconds | Which lines are load-bearing, and why |
+| That the retry logic is duplicated | That the gateway already retries, so this layer is the bug |
+| That a validation check looks redundant | That it was added after the outage nobody wrote up |
+| That the design is internally consistent | That next quarter's volume breaks it |
+| That two modules should be merged | That they belong to two teams and three release trains |
+| That the data handling is convoluted | That the partner feed is malformed and the fix is a phone call |
 
-It doesn't replace your current AI-assisted development tools; it complements
-them. You like [Superpowers](https://github.com/obra/superpowers/)? Use it
-with PAAD for even better results.
+None of the facts in the right-hand column are in the codebase. Most were never
+written down anywhere. They live in the people who were there — which is what
+experience actually is, once you stop treating it as a personality trait.
 
-PAAD supports **Claude Code** natively and ships as an experimental **Pi**
-package. It also supports **Cursor**, **Kiro**, and **Antigravity**.
+**The failure mode isn't silence. It's confidence.** An assistant missing the
+right-hand column doesn't stop and say it lacks context. It produces a
+thorough, well-reasoned, entirely plausible recommendation about the half it
+can see. It will tidy the retry logic instead of deleting it. It will remove
+the check that prevented the outage. It will hand you a tasteful list of
+improvements to an architecture that should be thrown away.
 
-## Star History
+That advice is not obviously wrong. It's the same shape as the good advice,
+which is exactly why it survives review by anyone who doesn't already know
+better.
 
-<a href="https://github.com/Ovid/star-history">
-  <picture>
-    <source media="(prefers-color-scheme: dark)"  srcset=".github/star-history/dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset=".github/star-history/light.svg">
-    <img alt="Star history for Ovid/paad: 59 stars as of 2026-07-25" src=".github/star-history/light.svg" width="800">
-  </picture>
-</a>
+### Why this matters to whoever is paying for it
+
+The argument for keeping engineers in charge is usually made on feelings —
+trust, craft, morale. Here it's simpler than that, and it's measurable.
+
+**Seniority isn't nostalgia. It's an input the model doesn't have.** The
+engineer who remembers the outage is not being sentimental; they are supplying
+a fact that is absent from every file the AI just read. Remove them from the
+decision and you haven't made the process leaner, you've deleted critical
+input and added confident output.
+
+Which produces the line worth remembering when the reports look clean:
+**"the AI found no problems" is not the same as "there are no problems."** It
+means the AI found no problems *in what it could see*. Whether that's
+reassuring depends entirely on how much of the decision lived outside the
+repository — and only a person can answer that.
+
+This is why PAAD reports instead of deciding, and why every skill in it ends
+with a human choice rather than a merge. Not because the AI is untrustworthy in
+some abstract way, but because it's working from a partial input and the
+engineer is holding the rest. **Engineering-driven AI is the arrangement where
+those two halves actually meet.** AI-driven engineering is the one where the
+half that was written down wins by default.
 
 ## Why people are using PAAD
 
@@ -121,12 +176,7 @@ One user described `pushback` this way:
 
 > “I'm using it for every non-trivial change, and so far, I think I've argued with 2 of maybe 40 recommendations. It has improved EVERY SINGLE spec I've fed it so far.”
 
-Others have shared similar quotes. For one pair-programming session where I
-was teaching AI-assisted development, a developer was astonished when they ran
-`pushback` and it explained why his carefully thought out spec could not
-possibly work.
-
-If "English is the new programming language," `pushback` is the code review.
+If English is the new programming language, `pushback` is the code review.
 In practice, `pushback` consistently improves specifications, and `alignment`
 catches gaps between the intended work and the implementation plan before
 those gaps become expensive.
@@ -143,19 +193,19 @@ accessibility review, and smaller task execution with guardrails. But
 `pushback`, `alignment`, and `agentic-review` currently form the core workflow
 that delivers the most consistent day-to-day value.
 
-## Design philosophy
+## What it costs you
 
 PAAD is built to be honest about risk. If your spec is weak, your plan is
 misaligned, an architectural decision is fragile, or a change introduces
-problems, you hear about it early and plainly. It's for developers and teams
-who want better outcomes from AI-assisted coding, not just faster output.
+problems, you hear about it early and plainly. It's for people who want the
+speed and still want to be able to defend the result.
 
-That honesty has a price, and it's tokens. A single feature can cost three or
-four times as many, because you're paying to review the spec, review the plan,
-and review the code on top of writing it. The bet is that this is cheaper than
-shipping the wrong thing and rebuilding it — a good bet for software you'll
-maintain for years, a bad one for a prototype you'll throw away on Friday.
-Match the ceremony to the stakes.
+That honesty has a price, and it's tokens. A single feature will cost more
+because you're paying to review the spec, review the plan, and review the code
+on top of writing it. The bet is that this is cheaper than shipping the wrong
+thing and rebuilding it — a good bet for software you'll maintain for years, a
+bad one for a prototype you'll throw away on Friday. Spend the review on the
+code you'll still be living with next year.
 
 ## Workflow
 
@@ -164,11 +214,6 @@ to write production-quality code with
 it](https://curtispoe.org/articles/watching-claude-sonnet-outperform-opus).
 
 If you are new to PAAD, start with `/paad:help` to see the available skills and when to use them.
-
-Before working in a repository, I usually run `/paad:makefile` to create a
-consistent interface for common tasks such as building, testing, linting,
-formatting, and coverage. That foundation makes it much easier for both
-developers and AI agents to work against the same quality checks.
 
 A typical workflow looks like this:
 
@@ -180,6 +225,9 @@ A typical workflow looks like this:
 5. Implement the change.
 6. Run `agentic-review` on the working branch before merging (often more than
    once).
+
+Not sure if the AI is presenting you with the best options? Run `rethink` to
+check whether the premises behind a recommendation actually hold.
 
 Depending on the type of work, I also use (see below for full descriptions):
 
@@ -230,45 +278,12 @@ Open `/plugin`, go to the **Installed** tab, select **paad**, and choose
 That single action already refreshes the marketplace catalog from GitHub before
 it looks for a new version.
 
-To script it instead, from a shell outside Claude Code:
-
-```bash
-claude plugin update paad@paad
-```
-
-That defaults to the `user` scope. If you installed PAAD at project or local
-scope, pass `--scope project` or `--scope local` to match, or it will report
-the plugin isn't installed. It writes the new version to disk without touching
-a session that's already running; restart Claude Code to pick it up.
-
-What gates delivery is the version number, not how often you run those steps.
-PAAD sets an explicit `version` in `plugin.json`, which Claude Code
-uses as the cache key for update detection — if the version you have matches
-the one being offered, the update is skipped. So a release reaches you when the
-version changes, and commits pushed to `main` without a version bump never
-reach an install that already exists.
-
-If you'd rather updates arrive on their own, turn auto-update on for this
-marketplace: run `/plugin`, go to **Marketplaces**, select **paad**, and choose
-**Enable auto-update**. Claude Code then refreshes in the background shortly
-after a session starts. The session you're in keeps the version it launched
-with; you'll be prompted to run `/reload-plugins` when a new one lands.
-
 To confirm which version you're on, run any skill — every skill announces its
 own name and version on invocation (`Running paad:vibe v<version>`). Compare
 that against the version in
 [`plugins/paad/.claude-plugin/plugin.json`](plugins/paad/.claude-plugin/plugin.json).
 If a skill documented here is missing entirely, you're on an older version —
 run through the update steps above.
-
-#### Invoking skills
-
-You can invoke skills explicitly with the fully-qualified commands
-`/paad:pushback`, `/paad:alignment` and so on. If there are no conflicts with
-other skills, you can drop the `paad:`: `/pushback`. Claude Code also
-recognizes skill names in natural language, so prompts such as “run a pushback
-review on this spec” or “review the architecture of this module” should
-trigger the corresponding skill.
 
 ### Pi — experimental
 
@@ -420,16 +435,16 @@ The assistant will follow the procedures defined in the skill files.
 
 ### Pushback
 
-#### `/paad:pushback [spec-file]`
+#### `/pushback [spec-file]`
 
-If "English is the source code, pushback is the code review."
+If English is the new programming language, `pushback` is the code review.
 
 AI assistants rarely tell you that your spec has problems. `pushback` does. It
 critically reviews specs, PRDs, and design plans before work begins so you do
 not build on flawed assumptions.
 
-* **Arguments:** `/paad:pushback path/to/spec.md` (specific file) or
-  `/paad:pushback` (auto-detect from conversation history or common file
+* **Arguments:** `/pushback path/to/spec.md` (specific file) or
+  `/pushback` (auto-detect from conversation history or common file
   locations)
 * **Source control reality check** — scans recent git history for commits that
   conflict with what the spec assumes, presented before other analysis
@@ -447,14 +462,14 @@ not build on flawed assumptions.
 
 ### Alignment
 
-#### `/paad:alignment [files...]`
+#### `/alignment [files...]`
 
 AI assistants drift off-scope. `alignment` catches that by checking whether
 requirements, design documents, and implementation plans actually match before
 code gets written.
 
-* **Arguments:** `/paad:alignment` (auto-detect) or `/paad:alignment
-  requirements.md plan.md` (specific files) or `/paad:alignment docs/specs/
+* **Arguments:** `/alignment` (auto-detect) or `/alignment
+  requirements.md plan.md` (specific files) or `/alignment docs/specs/
   docs/plans/` (directories)
 * **Auto-detection** — scans `.kiro/`, `specs/` (spec-kit), `docs/plans/`,
   `docs/specs/`, and common filenames; classifies documents as intent
@@ -474,7 +489,7 @@ code gets written.
 
 ### Architecture
 
-#### `/paad:agentic-architecture [path...]`
+#### `/agentic-architecture [path...]`
 
 AI can build quickly on weak foundations. `agentic-architecture` identifies
 those structural problems before they compound. Five specialists review the
@@ -482,8 +497,8 @@ codebase from different angles so issues do not hide behind a single
 reviewer’s blind spots. This skill is diagnostic only; it does not propose
 fixes.
 
-* **Arguments:** `/paad:agentic-architecture` (full repo) or
-  `/paad:agentic-architecture src/` (scoped) or `/paad:agentic-architecture
+* **Arguments:** `/agentic-architecture` (full repo) or
+  `/agentic-architecture src/` (scoped) or `/agentic-architecture
   packages/api/ packages/shared/` (multiple directories)
 * **Parallel analysis** — five specialists run simultaneously, followed by a
   verification phase that filters false positives by reading code and checking
@@ -497,15 +512,15 @@ fixes.
 * **Hotspots** — identifies the files and directories most worth reviewing
 * **Report** — written to `paad/architecture-reviews/`
 
-#### `/paad:fix-architecture [report]`
+#### `/fix-architecture [report]`
 
 Architecture analysis tells you what is wrong. `fix-architecture` helps you
 resolve those findings one at a time with a test-first workflow. Each fix is
 validated, tested, tracked, and committed so the work can continue across
 multiple sessions.
 
-* **Arguments:** `/paad:fix-architecture` (find most recent report) or
-  `/paad:fix-architecture path/to/report.md` (specific report)
+* **Arguments:** `/fix-architecture` (find most recent report) or
+  `/fix-architecture path/to/report.md` (specific report)
 * **Pre-flight checks** — branch protection, report staleness detection, test
   infrastructure verification, and baseline test run
 * **Developer conversation** — confirms solo versus team workflow, batch size,
@@ -536,7 +551,7 @@ together is a reliable way to introduce new bugs.
 Code quality rarely degrades in one dramatic change. More often, it slips
 through a series of small decisions that each seem reasonable in isolation.
 
-#### `/paad:agentic-review [base-branch] [path]`
+#### `/agentic-review [base-branch] [path]`
 
 Discipline means reviewing before merging, every time. `agentic-review` uses
 multiple specialist agents to examine your branch for logic errors, edge
@@ -547,9 +562,9 @@ Where typical AI review features tend to provide shallow, opportunistic
 feedback, `agentic-review` is designed as a deliberate pre-merge quality gate:
 parallel analysis, finding verification, deduplication, and severity ranking.
 
-* **Arguments:** `/paad:agentic-review` (diff against `main`) or
-  `/paad:agentic-review develop` (diff against `develop`) or
-  `/paad:agentic-review main src/auth/` (scoped to a directory)
+* **Arguments:** `/agentic-review` (diff against `main`) or
+  `/agentic-review develop` (diff against `develop`) or
+  `/agentic-review main src/auth/` (scoped to a directory)
 * **Parallel review** — six specialists examine your branch simultaneously
   (Logic & Correctness, Error Handling & Edge Cases, Contract & Integration,
   Concurrency & State, Security, Spec Compliance), then findings are verified
@@ -565,7 +580,7 @@ parallel analysis, finding verification, deduplication, and severity ranking.
 
 Requires a feature branch (not `main` or `master`) with committed changes.
 
-#### `/paad:agentic-a11y [path]`
+#### `/agentic-a11y [path]`
 
 Discipline also means accessibility is not treated as an afterthought.
 `agentic-a11y` scans your codebase for meaningful accessibility barriers and
@@ -577,7 +592,7 @@ Supports **web, iOS, Android, React Native, Flutter, desktop, CLI, and
 games**. Evaluates against WCAG 2.2 AA, applied through WCAG2ICT for non-web
 platforms, with AAA noted as bonus recommendations.
 
-* **Arguments:** `/paad:agentic-a11y` (full repo) or `/paad:agentic-a11y
+* **Arguments:** `/agentic-a11y` (full repo) or `/agentic-a11y
   src/components/` (scoped to a directory or file)
 * **Automatic platform detection** — identifies the project’s platform and
   adapts checks accordingly
@@ -601,7 +616,7 @@ platforms, with AAA noted as bonus recommendations.
 
 ### Workflow
 
-#### `/paad:makefile`
+#### `/makefile`
 
 Creates or updates a project `Makefile` with standard targets such as `help`,
 `all`, `test`, `cover`, `lint`, and `format`. It detects your stack
@@ -610,12 +625,12 @@ automatically and never modifies an existing target without asking first.
 Note: this skill might be removed in the future, or moved to a different
 namespace. Let me know if you rely on it.
 
-#### `/paad:vibe [task description]`
+#### `/vibe [task description]`
 
 Speed without recklessness. `vibe` supports smaller fixes and quick changes
 while keeping TDD guardrails in place.
 
-* **Arguments:** `/paad:vibe` (prompt for the task)
+* **Arguments:** `/vibe` (prompt for the task)
 * **Pre-flight checks** before writing code:
 
   * test infrastructure exists; if not, warn and ask how to proceed
@@ -650,7 +665,7 @@ the other skills carry does not apply to them. If you build a workflow on one,
 pin your plugin version, and please [file what
 breaks](https://github.com/Ovid/paad/issues).
 
-#### `/paad:agentic-dedup [scope]` — experimental
+#### `/agentic-dedup [scope]` — experimental
 
 Duplication that a clone detector finds is the easy kind. The expensive kind
 is two pieces of code that *mean* the same thing while looking nothing alike —
@@ -661,10 +676,10 @@ surfaces when one side is fixed and the other is not.
 
 `agentic-dedup` hunts for shared meaning rather than shared text, and reports only what survives verification.
 
-* **Arguments:** `/paad:agentic-dedup` (whole repo) or `/paad:agentic-dedup
-  src/auth/` (scoped) or `/paad:agentic-dedup --changed main` (seeded from the
-  branch diff) or `/paad:agentic-dedup --type-constraints` (schemas, type
-  aliases, validators, DB constraints) or `/paad:agentic-dedup --domain
+* **Arguments:** `/agentic-dedup` (whole repo) or `/agentic-dedup
+  src/auth/` (scoped) or `/agentic-dedup --changed main` (seeded from the
+  branch diff) or `/agentic-dedup --type-constraints` (schemas, type
+  aliases, validators, DB constraints) or `/agentic-dedup --domain
   "payments"` (scoped to a domain term)
 * **Six discovery strategies** — name and concept search, behavioral
   fingerprints, type and constraint equivalence, control-flow normalization,
@@ -687,7 +702,7 @@ surfaces when one side is fixed and the other is not.
 
 It never refactors anything. The report is the deliverable.
 
-#### `/paad:rethink [what to re-examine]` — experimental
+#### `/rethink [what to re-examine]` — experimental
 
 `pushback` argues with a spec. `rethink` argues with an answer — including one
 of `pushback`'s. When options have been laid out and one has been chosen, it
@@ -699,8 +714,8 @@ tested. That answer is right today and will stay right until the day it isn't,
 with no one watching. `rethink` reports that case as its own verdict rather
 than waving the recommendation through.
 
-* **Arguments:** `/paad:rethink` (the most recent option set) or
-  `/paad:rethink the caching approach` (when several decisions are live)
+* **Arguments:** `/rethink` (the most recent option set) or
+  `/rethink the caching approach` (when several decisions are live)
 * **Premise extraction** — writes out everything the recommendation depends on,
   including the unstated assumptions, sorted into checkable now, checkable by
   experiment, and not checkable at all
@@ -725,7 +740,7 @@ than waving the recommendation through.
   one, tied to that defect
 * **Writes nothing** — no report, no edits. The conversation is the deliverable
 
-#### `/paad:test-roadmap` — experimental
+#### `/test-roadmap` — experimental
 
 PAAD is risky to use with codebases without a strong test suite. This skill
 builds that suite for you.
@@ -744,7 +759,7 @@ what you changed.
 run — until the roadmap is done.**
 
 That is the whole usage model, and it is the one thing people get wrong: they
-run `/paad:test-roadmap`, get a plan, and stop with zero tests written. The
+run `/test-roadmap`, get a plan, and stop with zero tests written. The
 command does something different every time you invoke it, because it looks
 for `paad/test-roadmap/test-roadmap.md` and routes on whether it exists:
 
@@ -765,7 +780,7 @@ Sessions don't need to be consecutive, or even the same session — the roadmap
 file is the memory, so you can pick it up tomorrow, on a fresh clone, after a
 squash merge, and it resumes from what has already landed.
 
-* **Arguments:** `/paad:test-roadmap` (no arguments — the presence of the
+* **Arguments:** `/test-roadmap` (no arguments — the presence of the
   roadmap file selects build mode or execute mode)
 * **Every phase names the bug it would catch** — a phase that cannot answer
   *"what breakage makes these tests go red?"* is coverage theater, and gets
@@ -795,6 +810,23 @@ branch never fills up with half-built tests.
 skill reports, advises, or edits documents; this one adds tests and commits
 them, one commit per phase, onto the branch you are on.
 
+## Invoking skills
+
+The headings above spell each skill with a leading slash — `/pushback`,
+`/agentic-review` — because that's the shortest thing that works. You often
+don't need to type it at all.
+
+Claude Code recognizes these skills by name in an ordinary sentence, so "run
+pushback on this spec" or "review the architecture of this module" reaches the
+right one. When you'd rather be explicit, the bare slash command does it:
+`/pushback on the options you just gave me`.
+
+The fully-qualified `/paad:pushback` form exists for one job — disambiguation.
+When a name is already taken, the `paad:` prefix says which one you mean.
+`/paad:help` is the live example: bare `/help` is Claude Code's own built-in, so
+that one always needs the prefix. Nothing else in PAAD currently collides, so
+until you install a plugin that shares a name, you can ignore it.
+
 ## Local Development
 
 Test the plugin locally without installing it:
@@ -804,7 +836,7 @@ claude --plugin-dir ./plugins/paad
 ```
 
 Then invoke skills with `/paad:help` to see available commands, or try
-`/paad:vibe`, `/paad:pushback`, and the rest directly.
+`/vibe`, `/pushback`, and the rest directly.
 
 After making changes, run `/reload-plugins` inside Claude Code to pick up
 updates without restarting.
@@ -849,6 +881,16 @@ Key rules from `CLAUDE.md`:
 * Use `make bump-version VERSION=X.Y.Z` to keep all versioned files in sync
 * Update `README.md`, `paad:help`, and `CLAUDE.md` when adding or changing
   skills
+
+## Star History
+
+<a href="https://github.com/Ovid/star-history">
+  <picture>
+    <source media="(prefers-color-scheme: dark)"  srcset=".github/star-history/dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/star-history/light.svg">
+    <img alt="Star history for Ovid/paad: 59 stars as of 2026-07-25" src=".github/star-history/light.svg" width="800">
+  </picture>
+</a>
 
 ## License
 
