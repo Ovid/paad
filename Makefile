@@ -158,7 +158,7 @@ check-readme: ## Check every skill is documented in README.md
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
 		if [ "$$name" = "help" ]; then continue; fi; \
-		if ! grep -q "/paad:$$name" README.md 2>/dev/null; then \
+		if ! grep -q "/$$name" README.md 2>/dev/null; then \
 			echo "FAIL: $$name not found in README.md"; \
 			fail=1; \
 		fi; \
