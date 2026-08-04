@@ -2,13 +2,16 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-current bump-version export release tag
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-current check-kb-brain bump-version export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-current ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-current check-kb-brain ## Run all checks
 	@echo "All checks passed."
+
+check-kb-brain: ## Run KB-Brain tooling unit tests
+	@python3 -m unittest discover -s plugins/paad/skills/kb-brain/tests -p 'test_*.py' -b
 
 validate: ## Validate marketplace and all plugins
 	@claude plugin validate .

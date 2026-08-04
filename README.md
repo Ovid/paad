@@ -37,6 +37,8 @@ Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
 | `/agentic-a11y [path]` | Accessibility audit against WCAG 2.2 AA, by disability category |
 | `/vibe [task]` | Small fixes, TDD guardrails still on |
 | `/makefile` | Creates or updates a project `Makefile` |
+| `/kb-brain [action...]` | Repository-native working knowledge base for humans and agents |
+| `/brief-ruminate [brief] [milestone]` | Expand one brief milestone into a candidate spec for human review |
 | `/paad:help [skill-name]` | Lists the skills, or explains one |
 | `/agentic-dedup [scope]` | Finds duplicated *meaning*, not duplicated text — experimental |
 | `/rethink [topic]` | Checks whether the premises under a recommendation hold — experimental |
@@ -662,6 +664,52 @@ automatically and never modifies an existing target without asking first.
 
 Note: this skill might be removed in the future, or moved to a different
 namespace. Let me know if you rely on it.
+
+#### `/kb-brain [action...]`
+
+Agents forget. Sessions end. The next run invents a different answer to a
+question you already settled. `kb-brain` keeps a repository-native working
+knowledge base under `kb-brain/` — mutable context, decisions, failures,
+improvements, debt, and focused task workspaces — while stable architecture
+stays in `docs/`.
+
+* **Arguments:** `/kb-brain init [level]`, `/kb-brain start <slug> [level]`,
+  `/kb-brain record <section> [title]`, `/kb-brain status [task-id]`,
+  `/kb-brain index`, `/kb-brain check`, `/kb-brain close [task-id]`,
+  `/kb-brain amend <closed-task-id> <record-path>`, `/kb-brain route <text>`
+* **Levels:** `minimal`, `standard` (default), `strict` — raise freely; lowering
+  below the repository default needs explicit human approval
+* **Permissions:** sub-agents append findings, questions, failures, conflicts,
+  and handoffs; only the lead or human owner changes scope, assignments,
+  confirmed decisions, or closes a workspace
+* **Closure:** sealed with `SEAL.json`; later corrections are amendments, not
+  edits to history
+* **Tooling:** copies `scripts/kb_brain.py` and Make targets into the target
+  repo on init — no bulk ingest of existing `docs/`
+
+Does not automatically wire into other PAAD skills. Invoke it explicitly, or
+point agents at it from `AGENTS.md`.
+
+#### `/brief-ruminate [brief-path] [milestone-id]`
+
+A human writes the project brief. `brief-ruminate` expands **one** milestone
+into a repository-grounded candidate specification for human review. It stops
+at `review-needed`. It does not approve the spec, plan the work, or run
+`pushback` / `alignment` / `agentic-review` for you.
+
+* **Arguments:** `/brief-ruminate <brief-path>`,
+  `/brief-ruminate <brief-path> <milestone-id>`,
+  `/brief-ruminate next <brief-path>`, `/brief-ruminate status <brief-path>`
+* **Storage:** `kb-brain/briefs/<slug>/` for the brief and milestones;
+  `kb-brain/specs/<slug>/` for candidate specs
+* **Selection:** without a milestone id, recommends the next valuable and
+  sufficiently unblocked milestone — not merely the first one
+* **Stop conditions:** missing controlling decisions, invented product
+  behaviour, unresolved ownership overlap, or an oversized milestone without an
+  accepted split — record the blocker and leave the work unapproved
+
+Requires `kb-brain/` to be present. Only a human may mark a spec
+`approved-spec`.
 
 #### `/vibe [task description]`
 

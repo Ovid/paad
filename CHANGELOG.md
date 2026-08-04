@@ -10,6 +10,24 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Added
+- **`paad:kb-brain` — repository-native working knowledge for humans and
+  agents.** Initializes a `kb-brain/` tree (separate from stable `docs/`),
+  routes durable notes to the right section, and gives every managed task a
+  focused workspace with index-first retrieval. Sub-agents may append findings,
+  questions, failures, conflicts, and handoffs; only the lead or human owner
+  changes scope, assignments, confirmed decisions, or closure. Closed
+  workspaces are sealed (`SEAL.json`) and corrected only via amendments.
+  Ships templates plus stdlib `scripts/kb_brain.py` (`init` / `start` / `new` /
+  `index` / `check` / `close` / `amend`) and Make targets. Does not wire
+  automatic KBB behaviour into existing skills.
+- **`paad:brief-ruminate` — brief-to-milestone-spec expansion.** Reads a
+  human-owned brief, repository evidence, and KB-Brain context, then expands
+  one milestone into a candidate specification at `review-needed`. Stops before
+  approval, planning, or implementation; only a human may mark
+  `approved-spec`. Does not auto-run `pushback`, `alignment`, or
+  `agentic-review`.
+
 ## [1.24.1] — 2026-08-01
 
 ### Fixed

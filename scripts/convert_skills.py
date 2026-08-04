@@ -203,6 +203,37 @@ def convert_skills():
                     shutil.copy2(ref_file, target)
             print(f"  + {len(list(dst_refs.rglob('*.md')))} reference file(s)")
 
+        # Copy templates/ and scripts/ verbatim (md templates still neutralized
+        # so any paad/ output paths match the exported skill). These are part
+        # of the skill package for Kiro/Cursor/Antigravity users who copy the
+        # export tree; Claude Code and Pi load them from plugins/paad/skills.
+        for bundle in ("templates", "scripts"):
+            src_bundle = skill_path / bundle
+            dst_bundle = kiro_skill_dir / bundle
+            if dst_bundle.exists():
+                shutil.rmtree(dst_bundle)
+            if not src_bundle.is_dir():
+                continue
+            dst_bundle.mkdir()
+            count = 0
+            for src_file in sorted(src_bundle.rglob("*")):
+                if "__pycache__" in src_file.parts or src_file.suffix in (".pyc", ".pyo"):
+                    continue
+                target = dst_bundle / src_file.relative_to(src_bundle)
+                if src_file.is_dir():
+                    target.mkdir(exist_ok=True)
+                elif src_file.suffix == ".md":
+                    text = neutralize(src_file.read_text(encoding="utf-8"))
+                    text = re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
+                    target.write_text(text, encoding="utf-8")
+                    count += 1
+                else:
+                    ensure_parent = target.parent
+                    ensure_parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(src_file, target)
+                    count += 1
+            print(f"  + {count} {bundle} file(s)")
+
 
         # Write Antigravity wrapper
         h1_match = re.search(r'^#\s*(.*)', cleaned_content, re.MULTILINE)
