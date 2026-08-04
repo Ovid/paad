@@ -45,6 +45,8 @@ Available skills:
   /paad:fix-architecture [report]            Fix architectural flaws from an analysis report
   /paad:agentic-review [base-branch] [path]  Multi-agent code review of current branch (bug hunting)
   /paad:alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
+  /paad:brief-ruminate [brief] [milestone]   Expand one brief milestone into a candidate spec
+  /paad:kb-brain [action...]                 Repository-native working knowledge base
   /paad:makefile                             Create or update a Makefile with standard targets
   /paad:pushback [spec-file]                 Spec/PRD critic (finds issues before you build)
   /paad:vibe [task description]              Safe vibe coding with TDD guardrails
@@ -66,6 +68,9 @@ Picking between them:
   Have no tests, or tests you distrust? test-roadmap (experimental; the only
                                         skill that writes and commits code)
   Have one spec, is it any good?        pushback
+  Have a brief, need a milestone spec?  brief-ruminate (candidate only; human
+                                        approves before pushback/planning)
+  Need shared agent/human memory?       kb-brain (workspaces + sealed history)
   Been handed options, are they sound?  rethink (experimental; checks premises,
                                         does not invent alternatives)
   Have a spec AND a plan, do they match? alignment (needs both; does not read code)
@@ -274,6 +279,72 @@ What it does:
   6. Updates documents or writes a separate report
 
 Works within an existing conversation — no fresh session needed.
+```
+
+### brief-ruminate
+
+```
+/paad:brief-ruminate [brief-path] [milestone-id]
+
+Expand one human-owned brief milestone into a repository-grounded
+candidate specification. Stops at review-needed. Does not approve,
+plan, or implement. Does not auto-run pushback, alignment, or
+agentic-review.
+
+Requires kb-brain/ (run /paad:kb-brain init first).
+
+Arguments:
+  /paad:brief-ruminate path/to/BRIEF.md
+  /paad:brief-ruminate path/to/BRIEF.md M-001
+  /paad:brief-ruminate next path/to/BRIEF.md
+  /paad:brief-ruminate status path/to/BRIEF.md
+
+What it does:
+  1. Reads the human-owned brief (never silently rewrites its intent)
+  2. Picks or confirms a milestone that is valuable and unblocked
+     (not merely first in the list)
+  3. Reads ACTIVE.md plus selective repo and KBB evidence
+  4. Records consequential questions, assumptions, dependencies,
+     and conflicts instead of inventing product behaviour
+  5. Writes kb-brain/specs/<slug>/M-NNN-…-spec.md at review-needed
+  6. Updates the brief milestone index and stops for human review
+
+Only a human may mark a spec approved-spec.
+```
+
+### kb-brain
+
+```
+/paad:kb-brain [action...]
+
+Repository-native working knowledge base for humans and agents.
+Stable docs stay in docs/; mutable working memory lives in kb-brain/.
+
+Arguments:
+  /paad:kb-brain init [minimal|standard|strict]
+  /paad:kb-brain start <task-slug> [minimal|standard|strict]
+  /paad:kb-brain record <section> [title]
+  /paad:kb-brain status [task-id]
+  /paad:kb-brain index [task-id]
+  /paad:kb-brain check [path]
+  /paad:kb-brain close [task-id]
+  /paad:kb-brain amend <closed-task-id> <record-path>
+  /paad:kb-brain route <description-of-knowledge>
+
+What it does:
+  1. Initializes kb-brain/ (no bulk ingest of docs/)
+  2. Starts a focused task workspace under work/active/
+  3. Routes durable notes to the right section or workspace
+  4. Regenerates indexes and ACTIVE.md (ownership + blockers,
+     not conflicts)
+  5. Validates frontmatter, IDs, links, and seals (kb-check)
+  6. Closes with SEAL.json; amendments only after closure
+
+Sub-agents may append findings, questions, failures, conflicts,
+handoffs, improvements, and tech-debt. Only the lead or human
+owner changes scope, assignments, confirmed decisions, or closes.
+
+Does not change the behaviour of other PAAD skills.
 ```
 
 ### makefile
