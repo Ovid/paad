@@ -10,37 +10,7 @@ Also, address me as "Ovid" for further verification that you have read this file
 
 ## Project structure
 
-```
-paad/
-├── .claude-plugin/
-│   └── marketplace.json           ← marketplace catalog (lists all plugins)
-├── plugins/
-│   └── paad/                      ← the "paad" plugin — the only distributed thing here
-│       ├── .claude-plugin/
-│       │   └── plugin.json        ← plugin manifest (name, version, metadata)
-│       ├── agents/
-│       │   └── paad-analyst.md    ← read-only subagent type (not a skill)
-│       └── skills/
-│           ├── agentic-review/
-│           │   ├── SKILL.md       ← one folder per skill → /paad:agentic-review
-│           │   └── references/    ← optional; loaded on demand by the skill
-│           └── <one folder per skill>
-├── kiro_and_antigravity/          ← GENERATED export (Kiro / Cursor / Antigravity)
-├── pi/                            ← GENERATED export (Pi agent)
-├── package.json                   ← Pi package manifest (version + pi.skills path)
-├── scripts/
-│   ├── convert_skills.py          ← generates kiro_and_antigravity/ and pi/
-│   ├── check_references.py
-│   ├── lint_digraphs.py
-│   └── roll_changelog.py
-├── Makefile                       ← every check, plus the release sequence
-├── .claude/skills/                ← project-local skills (/roadmap, /release) — not distributed
-├── paad/code-reviews/             ← committed output from paad's own skills
-├── docs/, notes/                  ← plans, roadmap, design notes
-├── CHANGELOG.md
-├── CLAUDE.md                      ← this file
-└── README.md
-```
+`plugins/paad/` is the only thing this repo distributes — everything else is scaffolding around it. `paad/code-reviews/` is committed output from paad's own skills, and `.claude/skills/` holds project-local skills that are not distributed. `package.json` is Pi's package manifest, not a Node one — this is not a JS project; it carries the version and the `pi.skills` path, and nothing else.
 
 `kiro_and_antigravity/` and `pi/` are produced from `plugins/paad/` by `make export`. Everything in them is generated — edit the source or the generator, never the output. README tells non-Claude-Code users to copy straight out of `kiro_and_antigravity/`, so a stale export on `main` is wrong content shipped to real users.
 
@@ -90,22 +60,7 @@ The changelog and tag are what make a release legible; the tag is a marker after
 
 Release from a branch, never by committing to `main` directly — and release from *the branch that carries the unreleased work*. Commit the feature, run `make release` on that same branch, then merge once. That is what "bump in the same cycle" means: you still don't bump as you edit, you bump as the last commit before the merge. Merging user-facing work to `main` ahead of its bump is what opens the leak above, because `main`'s tip is what a new install clones.
 
-**Use `/release`.** The project-local skill at `.claude/skills/release/SKILL.md` drives the whole sequence and owns the judgment calls the Makefile can't make. The steps below are what it does, and what to follow if you're releasing by hand.
-
-1. **Pick the version.** Semver against what is in `[Unreleased]`: new skill or new user-facing behavior → minor; wording, digraph, or bug fixes only → patch. A renamed or removed skill is breaking — call it out in the changelog even though this project has stayed on `1.x`. If `[Unreleased]` is empty there is nothing to release — stop and ask.
-2. **Cut it.** `make release VERSION=X.Y.Z` — one command, on a branch. It rolls the changelog (renames `## [Unreleased]` to `## [X.Y.Z] — <today>` using the system date, opens a fresh empty `[Unreleased]`, and rewrites both link refs), runs `make bump-version`, regenerates `kiro_and_antigravity/` and `pi/` via `make export`, then runs `make test`. It refuses on `main`, on a dirty tree, when `[Unreleased]` is empty, and when the version already has a section.
-
-   Never hand-edit the generated pieces — `package.json`, `plugin.json`, `marketplace.json`, SKILL.md announce lines, changelog version headings, link refs, or anything under `kiro_and_antigravity/` and `pi/`. `make check-versions`, `check-skill-versions`, and `check-export-current` exist because drift happens. If the generated result is wrong, fix the generator.
-3. **Read the output.** `make release` fails loudly; don't assume it passed. Review the diff before committing.
-
-   `make release` mutates before it verifies, so a failure at `make test` leaves the changelog rolled and the version bumped. That work is good — keep it. Fix what the check reported, run `make export && make test`, then commit. Don't re-run `make release`: it refuses on the now-dirty tree, and `roll_changelog.py` refuses a second time on a version that already has a section. To abandon the release instead, `git checkout -- .` before anything else. Fixing the cause and re-verifying is not the hand-editing the next step forbids.
-4. **Commit and merge.** `git commit -a -m "release: paad X.Y.Z"`, then merge the branch into `main` and push.
-5. **Tag it.** On `main`, after the merge is pushed: `make tag`. It reads the version from `plugin.json`, builds the name as `paad--v` + version (double hyphen — it namespaces the plugin inside the marketplace repo), annotates, and pushes. It refuses if you're not on `main`, if the tree is dirty, if `main` is out of sync with `origin/main`, if the changelog has no matching section, or if the tag already exists.
-
-   The tag goes on the merge commit because that's the tree users receive. Published tags don't get moved.
-6. **Sanity-check the published side.** In Claude Code: `/plugin` → **Installed** → **paad** → **Update now**, restart, and run any skill — the announce line should read `vX.Y.Z`. Cheapest way to catch a bump that never made it to `main`. This is the one step no target automates, because it happens in the app. Use the panel action; a check run against a plugin that was never actually updated reads the old version and reports a false alarm.
-
-This project does not use GitHub Releases (`gh release create`) — the tag is the record. Don't add one unless Ovid asks.
+**Use `/release`.** The project-local skill at `.claude/skills/release/SKILL.md` drives the whole sequence and owns the judgment calls the Makefile can't make — which number to bump to, whether a release is wanted at all, and the in-app verification afterwards. Read it if you're releasing by hand.
 
 ## Digraph requirements
 
