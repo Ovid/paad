@@ -10,6 +10,39 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Changed
+- **`/paad:pushback` no longer assumes the thing it reviews is a spec.** Its
+  input scan now also looks at agent steering files (`CLAUDE.md`, `AGENTS.md`,
+  `.cursorrules`, `.kiro/steering/`, `.github/copilot-instructions.md`) and
+  generated analysis (`paad/*-reviews/`), and the fallback prompt asks for a
+  *document* rather than a spec.
+
+  This one fixes a measured failure, not a hypothetical one. Invoked bare in a
+  repo whose only document was a `CLAUDE.md`, the old skill found no candidate
+  and asked "What spec should I review?" — it had located the file and
+  explicitly ruled it out, reasoning that a steering file "describes what the
+  codebase already does, not work proposed for implementation, so it is not a
+  spec candidate." The scan list was a confident wrong instruction and the
+  model obeyed it. With the widened list it finds `CLAUDE.md` and offers it.
+  Three runs per version, clean separation: 0/3 before, 3/3 after.
+
+  Claude Code only. The Kiro and Antigravity exports strip the whole Input
+  Resolution section, because the `$ARGUMENTS` mechanism it describes does not
+  exist there — so this widening does not reach those copies, which still
+  expect you to name the document.
+
+### Fixed
+- **`/paad:pushback`'s reality check no longer hides old invalidating
+  commits.** Phase 1 ran `git log --oneline -50 --since="2 weeks ago"`. The two
+  limits are ANDed and the date one usually binds first, so a document
+  invalidated by an eight-month-old commit was reported clean — the commit that
+  broke it fell outside the window and was never read. The command is now
+  `git log --oneline -50`: the limit is 50 commits, not a date.
+- **`/paad:pushback`'s first digraph pointed at the wrong phase.** All three of
+  its terminal nodes read "Proceed to Spec Critique" (Phase 2), skipping
+  Phase 1.5 Scope Shape entirely, and the scope/critique digraph had no entry
+  edge. The sinks now name Scope Shape and connect to it.
+
 ### Added
 - **`/paad:handoff` — hands this session's work to a fresh session, in
   writing. Experimental.** Writes a `handoff.md` a human can read and correct,

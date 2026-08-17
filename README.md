@@ -29,7 +29,7 @@ Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
 
 | Skill | What it does |
 |---|---|
-| `/pushback [spec-file]` | Argues with your spec before anyone builds it |
+| `/pushback [document]` | Argues with your spec before anyone builds it |
 | `/alignment [files...]` | Checks that the plan and the spec say the same thing |
 | `/agentic-review [base-branch] [path]` | Six specialists review your branch before merge |
 | `/agentic-architecture [path...]` | Five specialists find structural debt while it's cheap |
@@ -474,17 +474,19 @@ The assistant will follow the procedures defined in the skill files.
 
 ### Pushback
 
-#### `/pushback [spec-file]`
+#### `/pushback [document]`
 
 If English is the new programming language, `pushback` is the code review.
 
 AI assistants rarely tell you that your spec has problems. `pushback` does. It
 critically reviews specs, PRDs, and design plans before work begins so you do
-not build on flawed assumptions.
+not build on flawed assumptions — and it works the same way on any document
+that makes claims about the code, such as an agent steering file (`CLAUDE.md`,
+`AGENTS.md`) or a generated analysis report.
 
 * **Arguments:** `/pushback path/to/spec.md` (specific file) or
-  `/pushback` (auto-detect from conversation history or common file
-  locations)
+  `/pushback` (auto-detect from conversation history, common file locations,
+  agent steering files, or generated reports)
 * **Source control reality check** — scans recent git history for commits that
   conflict with what the spec assumes, presented before other analysis
 * **Scope shape check** — flags unrelated features bundled together and

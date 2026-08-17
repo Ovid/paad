@@ -46,7 +46,7 @@ Available skills:
   /paad:agentic-review [base-branch] [path]  Multi-agent code review of current branch (bug hunting)
   /paad:alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
   /paad:makefile                             Create or update a Makefile with standard targets
-  /paad:pushback [spec-file]                 Spec/PRD critic (finds issues before you build)
+  /paad:pushback [document]                  Spec/PRD/doc critic (finds issues before you build)
   /paad:vibe [task description]              Safe vibe coding with TDD guardrails
 
 Experimental — may change or be withdrawn in any release, including patches:
@@ -66,7 +66,8 @@ Picking between them:
                                         never refactors)
   Have no tests, or tests you distrust? test-roadmap (experimental; the only
                                         skill that writes and commits code)
-  Have one spec, is it any good?        pushback
+  Have one document, is it any good?    pushback (a spec, a steering file, a
+                                        generated report)
   Been handed options, are they sound?  rethink (experimental; checks premises,
                                         does not invent alternatives)
   Out of context, work unfinished?      handoff (experimental; writes a file for
@@ -318,9 +319,11 @@ No fresh session needed — this is a lightweight workflow skill.
 ### pushback
 
 ```
-/paad:pushback [spec-file]
+/paad:pushback [document]
 
-Critically reviews a spec, PRD, or design before you start building.
+Critically reviews a spec, PRD, or design before you start building —
+or any document that makes claims about the code, such as an agent
+steering file (CLAUDE.md, AGENTS.md) or a generated analysis report.
 Every finding must name a concrete consequence and the mechanism behind
 it; candidates that can't are dropped and reported as discards.
 
@@ -333,7 +336,9 @@ Arguments:
   /paad:pushback                    Auto-detect from conversation or files
 
 Auto-detection checks: conversation history first, then common locations
-(docs/plans/, docs/specs/, requirements.md, PRD.md, spec.md).
+(docs/plans/, docs/specs/, requirements.md, PRD.md, spec.md), then agent
+steering files (CLAUDE.md, AGENTS.md, .cursorrules, .kiro/steering/,
+.github/copilot-instructions.md) and generated analysis (paad/*-reviews/).
 
 What it does:
   1. Reality check: scans git history for conflicts with what the

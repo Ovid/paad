@@ -24,27 +24,27 @@ digraph pushback {
   "Use that file" [shape=box];
   "Confirm with user" [shape=box];
   "Present candidates, ask user" [shape=box];
-  "ASK: what spec to review?" [shape=box];
+  "ASK: what document to review?" [shape=box];
   "Present conflicts, resolve first" [shape=box];
-  "Proceed to Spec Critique" [shape=box];
+  "Proceed to Scope Shape" [shape=box];
 
   "Has $ARGUMENTS?" -> "Use that file" [label="yes"];
   "Has $ARGUMENTS?" -> "Conversation has spec?" [label="no"];
   "Conversation has spec?" -> "Confirm with user" [label="yes"];
   "Conversation has spec?" -> "Found in common locations?" [label="no"];
   "Found in common locations?" -> "Present candidates, ask user" [label="yes"];
-  "Found in common locations?" -> "ASK: what spec to review?" [label="no"];
+  "Found in common locations?" -> "ASK: what document to review?" [label="no"];
 
   "Use that file" -> "Git repo?";
   "Confirm with user" -> "Git repo?";
   "Present candidates, ask user" -> "Git repo?";
-  "ASK: what spec to review?" -> "Git repo?";
+  "ASK: what document to review?" -> "Git repo?";
 
   "Git repo?" -> "Source control conflicts?" [label="yes"];
-  "Git repo?" -> "Proceed to Spec Critique" [label="no"];
+  "Git repo?" -> "Proceed to Scope Shape" [label="no"];
   "Source control conflicts?" -> "Present conflicts, resolve first" [label="yes"];
-  "Source control conflicts?" -> "Proceed to Spec Critique" [label="no"];
-  "Present conflicts, resolve first" -> "Proceed to Spec Critique";
+  "Source control conflicts?" -> "Proceed to Scope Shape" [label="no"];
+  "Present conflicts, resolve first" -> "Proceed to Scope Shape";
 }
 ```
 
@@ -52,6 +52,7 @@ digraph pushback {
 
 ```dot
 digraph scope_critique_resolution {
+  "Proceed to Scope Shape" [shape=box];
   "Unrelated features bundled?" [shape=diamond];
   "User splits them out?" [shape=diamond];
   "Spec large?" [shape=diamond];
@@ -82,6 +83,8 @@ digraph scope_critique_resolution {
   "Skip the report — conversation and diff carry it" [shape=box];
   "List every file written or updated" [shape=box];
   "Done" [shape=box];
+
+  "Proceed to Scope Shape" -> "Unrelated features bundled?";
 
   "Unrelated features bundled?" -> "Identify groups, recommend splitting, ask" [label="yes"];
   "Unrelated features bundled?" -> "Spec large?" [label="no"];
@@ -135,12 +138,17 @@ digraph scope_critique_resolution {
 
 ## Input Resolution
 
-Resolve the spec to review in this order:
+Resolve the document to review in this order:
 
 1. **`$ARGUMENTS` contains a file path** → use that file
 2. **Conversation history contains a spec/plan/design** (from brainstorming, plan writing, or the user describing what they want) → confirm with user: "I see the design we just discussed — should I review that?"
-3. **Scan common locations** → look for recently modified files in `docs/plans/`, `docs/specs/`, and files named `requirements.md`, `PRD.md`, `spec.md`, or similar in the repo root. If one obvious candidate, confirm. If multiple, present the list and ask.
-4. **Nothing found** → ask: "What spec should I review? Give me a file path, or describe what you want to build and I'll push back on that."
+3. **Scan common locations** → look for recently modified files in:
+   - `docs/plans/`, `docs/specs/`, and files named `requirements.md`, `PRD.md`, `spec.md`, or similar in the repo root
+   - agent steering files: `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `.kiro/steering/`, `.github/copilot-instructions.md`
+   - generated analysis: `paad/*-reviews/`, and equivalent report directories
+
+   If one obvious candidate, confirm. If multiple, present the list and ask.
+4. **Nothing found** → ask: "What document should I review? Give me a file path, or describe what you want to build and I'll push back on that."
 
 ## Phase 1: Reality Check (Source Control)
 
@@ -148,7 +156,7 @@ Resolve the spec to review in this order:
 
 Before analyzing the spec itself, check whether recent codebase changes conflict with what the spec assumes:
 
-1. Run `git log --oneline -50 --since="2 weeks ago"` (whichever limit is reached first)
+1. Run `git log --oneline -50`. Two weeks is the usual span of interest, but the limit is 50 commits, not a date — a document written eight months ago was invalidated by commits from eight months ago, and a date window would report it clean. Widen further if the document predates what 50 commits covers.
 2. Read commit messages and, for relevant-looking commits, check the actual diffs
 3. Compare against the spec's assumptions — does the spec reference code, tables, APIs, infrastructure, or patterns that have recently been changed, removed, or replaced?
 4. **If conflicts found:** present them upfront before any other analysis. For each conflict:
