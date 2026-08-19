@@ -783,11 +783,35 @@ rediscovering them.
   before you ran it
 * **Severity that means something** — Critical is reachable-and-unauthenticated,
   not "looks scary". Hardening notes live in their own section so they cannot be
-  mistaken for exploitable findings
-* **Never exploits anything** — it does not start the application, connect to a
-  database, send a request to any host, or write proof-of-concept code.
-  Confirmation comes from reading. Testing a running system is a different job
-  with a different authorization scope
+  mistaken for exploitable findings. Whether a finding was actually executed is
+  a separate `unproven` field and never lowers its severity: a traced smuggling
+  path is "High, unproven", not Medium, because a hedged rank is a claim about
+  impact you have not earned and the downgraded row is the one nobody fixes
+* **A verifier that tries to break the findings** — it defaults to refuted when
+  uncertain, and it clears a control by enumerating every caller that reaches
+  the value without passing through it, not by reading where the control lives.
+  A sanitizer on the serialization path says nothing about the sibling accessor
+  that skips it
+* **Chains that cross category boundaries survive the split** — six specialists
+  covering ten categories means a weakness assembled from a default in one
+  category and a leak in another arrives as two harmless-looking halves that
+  each fail the exploitability gate alone. Specialists report what they see
+  outside their own categories as fragments rather than dropping it, and the
+  verifier — the only component holding all six outputs — composes before it
+  rejects. A chain link is supposed to look harmless on its own
+* **Reads by default; asks before it runs anything** — no specialist and no
+  verifier starts the application, connects to a database, or sends a request to
+  any host. Where a sink is reachable in-process, it offers a proof script per
+  finding that exits 0 while the weakness is open, and lays out both sides
+  before you decide. It never executes without a yes, and declining costs you
+  nothing but the `unproven` mark. Testing a *deployed* system is a different
+  job with a different authorization scope, and out of scope in every mode
+* **It tells you what it did not find** — every run ends by saying the report is
+  not a complete list of the weaknesses and is not evidence the rest is secure.
+  Zero findings means one reviewer looked once, inside ten categories, at one
+  scope. Business logic, race conditions, and tenant isolation are outside the
+  Top 10 and were never in scope. A clean report read as an all-clear leaves you
+  worse off than never having run it
 * **Credentials are reported by location, never by value** — a secret pasted
   into a report file is a second copy of the leak, and rotation goes to the top
   of the remediation order because it is the one item that cannot wait

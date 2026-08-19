@@ -23,10 +23,27 @@ vulnerability until a path has been traced from untrusted input to the
 dangerous operation, and the controls already sitting in that path have been
 read.
 
-**This skill never exploits anything.** It reads code. It does not start the
-application, send requests to any host, write or run proof-of-concept
-exploits, or modify a single file outside its own report. Confirmation comes
-from reading, always.
+**This skill reads code by default and never modifies a file outside its own
+report.** Specialists and the verifier never execute anything: no starting the
+application, no requests to any host, no proof-of-concept code. Confirmation
+comes from reading.
+
+**Proof by execution is available, and it is the user's call, never yours.**
+After verification, offer it for the High and Medium findings whose sink is
+reachable in-process, with the trade-offs laid out (see "Optional proof stage"
+in Phase 4). A finding confirmed by reading can be wrong in a way a runnable
+proof cannot; a runnable proof means executing attacker-shaped input against
+code that may not be the user's. Ask, list both sides, honor the answer, and
+never execute without one.
+
+**No report from this skill is a complete list of the weaknesses in the code.**
+Zero findings does not mean zero vulnerabilities — it means this run, with these
+categories, at this scope, found none it could prove reachable. Thirty findings
+does not mean thirty is all there is. The categories bound what was looked for,
+the scope bounds where, and neither bounds what exists. This is not modesty
+boilerplate: a developer who reads a clean report as an all-clear is worse off
+than one who never ran the skill, because they now have a reason to stop
+looking. Say it in the report and say it again when the run ends.
 
 **Pre-flight:**
 
@@ -68,11 +85,17 @@ digraph session {
   "Verifier returned on retry?" [shape=diamond];
   "User says proceed unverified?" [shape=diamond];
   "STOP: surface verifier failure, write no report" [shape=box, style=bold];
+  "Any High/Medium sink reachable in-process?" [shape=diamond];
+  "Offer proof stage: pros, cons, ask once" [shape=box];
+  "User authorized proof?" [shape=diamond];
+  "Write self-proving scripts, exit 0 = open" [shape=box];
+  "Mark findings unproven, keep severity" [shape=box];
   "Phase 5: Report (verified findings)" [shape=box];
   "Phase 5: Report (Specialist Findings — Unverified banner)" [shape=box];
   "Report: no reachable findings in scope" [shape=box];
   "Post-Review: warn the report is a vulnerability roadmap" [shape=box, style=bold];
-  "Done — do NOT fix, do NOT exploit" [shape=doublecircle];
+  "Post-Review: state findings are NOT complete, clean != secure" [shape=box, style=bold];
+  "Done — do NOT fix" [shape=doublecircle];
 
   "Phase 1: Reconnaissance" -> "Live credential seen?";
   "Live credential seen?" -> "STOP: report location, never the value, tell user to rotate" [label="yes"];
@@ -86,17 +109,25 @@ digraph session {
   "Retry that specialist ONCE" -> "Phase 4: Verifier (exploitability gate)" [label="record outcome map either way"];
   "Any specialist errored/timed_out/malformed?" -> "Phase 4: Verifier (exploitability gate)" [label="no"];
   "Phase 4: Verifier (exploitability gate)" -> "Verifier returned?";
-  "Verifier returned?" -> "Phase 5: Report (verified findings)" [label="yes"];
+  "Verifier returned?" -> "Any High/Medium sink reachable in-process?" [label="yes"];
   "Verifier returned?" -> "Retry verifier ONCE" [label="no"];
   "Retry verifier ONCE" -> "Verifier returned on retry?";
-  "Verifier returned on retry?" -> "Phase 5: Report (verified findings)" [label="yes"];
+  "Verifier returned on retry?" -> "Any High/Medium sink reachable in-process?" [label="yes"];
   "Verifier returned on retry?" -> "User says proceed unverified?" [label="no"];
   "User says proceed unverified?" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="yes"];
   "User says proceed unverified?" -> "STOP: surface verifier failure, write no report" [label="no"];
+  "Any High/Medium sink reachable in-process?" -> "Offer proof stage: pros, cons, ask once" [label="yes"];
+  "Any High/Medium sink reachable in-process?" -> "Mark findings unproven, keep severity" [label="no — do not ask"];
+  "Offer proof stage: pros, cons, ask once" -> "User authorized proof?";
+  "User authorized proof?" -> "Write self-proving scripts, exit 0 = open" [label="yes"];
+  "User authorized proof?" -> "Mark findings unproven, keep severity" [label="no"];
+  "Write self-proving scripts, exit 0 = open" -> "Phase 5: Report (verified findings)" [label="failed proofs go to rejected table"];
+  "Mark findings unproven, keep severity" -> "Phase 5: Report (verified findings)";
   "Report: no reachable findings in scope" -> "Post-Review: warn the report is a vulnerability roadmap";
   "Phase 5: Report (verified findings)" -> "Post-Review: warn the report is a vulnerability roadmap";
   "Phase 5: Report (Specialist Findings — Unverified banner)" -> "Post-Review: warn the report is a vulnerability roadmap";
-  "Post-Review: warn the report is a vulnerability roadmap" -> "Done — do NOT fix, do NOT exploit";
+  "Post-Review: warn the report is a vulnerability roadmap" -> "Post-Review: state findings are NOT complete, clean != secure";
+  "Post-Review: state findings are NOT complete, clean != secure" -> "Done — do NOT fix";
 }
 ```
 
@@ -112,7 +143,11 @@ digraph exploitability {
   "REJECT: no demonstrated source" [shape=box, style=bold];
   "DOWNGRADE to Low, move to Hardening" [shape=box];
   "REJECT: control holds, note it" [shape=box, style=bold];
-  "KEEP: rank Critical/High/Medium by reach and impact" [shape=box];
+  "Enumerate every caller reaching the value without the control" [shape=box];
+  "Composes with a pooled fragment or another item?" [shape=diamond];
+  "Compose into ONE finding, re-enter this gate as the whole chain" [shape=box];
+  "FINALIZE: rejected or hardening note" [shape=box];
+  "KEEP: rank Critical/High/Medium by reach and impact; mark unproven, never downgrade for it" [shape=box];
 
   "Candidate finding" -> "Untrusted source named, with path:line?";
   "Untrusted source named, with path:line?" -> "REJECT: no demonstrated source" [label="no, and none exists"];
@@ -120,10 +155,17 @@ digraph exploitability {
   "Untrusted source named, with path:line?" -> "Call path traced from source to sink?" [label="yes"];
   "Call path traced from source to sink?" -> "DOWNGRADE to Low, move to Hardening" [label="no"];
   "Call path traced from source to sink?" -> "Existing control neutralizes it?" [label="yes"];
-  "Existing control neutralizes it?" -> "KEEP: rank Critical/High/Medium by reach and impact" [label="no"];
-  "Existing control neutralizes it?" -> "Control is complete and always applied?" [label="yes"];
-  "Control is complete and always applied?" -> "REJECT: control holds, note it" [label="yes"];
-  "Control is complete and always applied?" -> "KEEP: rank Critical/High/Medium by reach and impact" [label="no — partial, opt-in, or bypassable"];
+  "Existing control neutralizes it?" -> "KEEP: rank Critical/High/Medium by reach and impact; mark unproven, never downgrade for it" [label="no"];
+  "Existing control neutralizes it?" -> "Enumerate every caller reaching the value without the control" [label="yes"];
+  "Enumerate every caller reaching the value without the control" -> "Control is complete and always applied?";
+  "Control is complete and always applied?" -> "REJECT: control holds, note it" [label="yes — no bypassing caller found"];
+  "REJECT: no demonstrated source" -> "Composes with a pooled fragment or another item?";
+  "DOWNGRADE to Low, move to Hardening" -> "Composes with a pooled fragment or another item?";
+  "REJECT: control holds, note it" -> "Composes with a pooled fragment or another item?";
+  "Composes with a pooled fragment or another item?" -> "Compose into ONE finding, re-enter this gate as the whole chain" [label="yes"];
+  "Composes with a pooled fragment or another item?" -> "FINALIZE: rejected or hardening note" [label="no — record the count either way"];
+  "Compose into ONE finding, re-enter this gate as the whole chain" -> "Candidate finding";
+  "Control is complete and always applied?" -> "KEEP: rank Critical/High/Medium by reach and impact; mark unproven, never downgrade for it" [label="no — partial, opt-in, or a caller bypasses it"];
 }
 ```
 
@@ -446,6 +488,20 @@ Each specialist agent prompt must include:
   hold, impact if exploited, the fix, and confidence 0-100. A finding with no
   named source and no traced path is a hardening note, not a vulnerability —
   label it as such. Only report findings with confidence >= 65."
+* **Fragment clause** (mandatory): "Your categories bound what you report as a
+  finding. They do not bound what you write down. When you see something outside
+  your categories that could matter to someone else's — a default that looks
+  unsafe, a guard applied here and missing on a sibling path, an error handler
+  that reveals more than it should, a value that reaches a sink you do not own —
+  report it in a separate **Fragments** list. A fragment is not a finding and
+  must not be dressed as one: give the `path:line`, one sentence on what you
+  observed, the category you think it belongs to, and no severity, no impact
+  claim, and no confidence score. Report it even when it is plainly harmless on
+  its own; harmless-on-its-own is the normal condition of a chain link, and the
+  reason you are being asked is precisely that you cannot see the other half.
+  Do not investigate it — that is someone else's category and your time is
+  better spent in yours. Half a dozen fragments is a healthy run; if you have
+  none, say so rather than inventing them."
 * **No-exploitation clause** (mandatory): "Do not write, run, or commit exploit
   code or proof-of-concept payloads. Do not start the application, connect to
   any database, or send a request to any host. Confirm findings by reading code,
@@ -537,6 +593,14 @@ After fanning out and awaiting all specialists, build an outcome map:
 |------------|---------|-------|
 | <name> | returned / empty / errored / timed_out / malformed | <error text or first line of output> |
 
+Collect each specialist's **Fragments** list alongside its findings and pass all
+of them to the Verifier as a single pooled list, tagged with which specialist
+saw each one. Fragments never affect a specialist's outcome classification: a
+specialist that returns zero findings and four fragments is still `empty`, and
+its category still counts as assessed. Do **not** drop the pool when every
+specialist returned findings — the pool exists for exactly the weakness that no
+single specialist could report.
+
 **Outcome discrimination ladder** (apply in order; first match wins):
 
 1. The agent infrastructure raised an error (tool failure, hitting a guard, the
@@ -591,14 +655,54 @@ per-finding decision. The verifier must:
    parameterization, allowlists — and decide whether they are complete and
    always applied. A control that is opt-in, partial, or bypassable on a
    sibling route does not clear the finding.
-5. Reject findings based only on a matched pattern, a dangerous-looking API
+5. **Clear a control by enumerating who bypasses it, never by locating where it
+   lives.** Finding the escaping function and reading it proves the function is
+   correct. It proves nothing about the value. When a specialist writes
+   "escaped at `foo.c:170`" — or you are about to write it — grep every caller
+   that reaches that same value without passing through `:170`, and read each
+   one. Sanitizers usually sit on the serialization path while the raw field
+   stays readable on the object; the bypass is a sibling accessor, a
+   to-string-free copy, a cache written before the filter, a second entry point
+   added later. The finding you are clearing frequently contains the finding you
+   are missing: a report that a guarded API has 47 unguarded siblings is also a
+   list of 47 places to re-check every "but it is escaped" claim. Enumerate the
+   callers, or state plainly in the finding that you did not.
+6. **Compose before you reject.** You are the only component that sees every
+   specialist's output at once, and the partition guarantees some weaknesses
+   arrive in halves. Each specialist reports inside its own categories, so a
+   chain that crosses a category boundary reaches you as two items that both
+   fail the gate independently — a default nobody can route to, a leak with no
+   attacker-controlled source, a guard missing on a path whose sink belongs to
+   someone else. Rejecting each on its own merits is correct per-item and wrong
+   overall.
+
+   Before finalizing any rejection or hardening downgrade, lay the pooled
+   fragments, the hardening notes, and the about-to-be-rejected findings side by
+   side and ask of each pair: does one supply what the other is missing? The
+   shapes worth looking for are a source without a sink, a sink without a
+   source, a secret without a route to it, a route to a secret with no secret
+   named, and a control that holds on one path while a fragment names the
+   sibling path where it does not. A chain link is *supposed* to look harmless
+   alone; that is what makes this stage necessary rather than optional.
+
+   Where two or more items compose into a traced path from an
+   attacker-controlled source to impact, that composition is a single new
+   finding. Run it through the gate as one thing — its severity is the severity
+   of the whole chain, not of its strongest link — and record every contributing
+   item, with the specialist that supplied it, in **Composed from**. Items that
+   composed do not also appear as separate rejections.
+
+   Say what happened either way. "No compositions found across N fragments and M
+   hardening notes" is a real result and belongs in the metadata; silence there
+   is indistinguishable from having skipped the step.
+7. Reject findings based only on a matched pattern, a dangerous-looking API
    name, or the absence of a control the framework supplies by default.
-6. Reject duplicates across specialists, noting which specialists agreed —
+8. Reject duplicates across specialists, noting which specialists agreed —
    agreement is corroboration, not two findings.
-7. Check the fix each finding proposes. A fix that introduces a different
+9. Check the fix each finding proposes. A fix that introduces a different
    weakness, or that the codebase's architecture cannot accommodate, gets
    rewritten or the finding is downgraded to "needs design decision".
-8. Assign severity:
+10. Assign severity:
 
    * **Critical** — reachable by an unauthenticated attacker and leads to
      remote code execution, authentication or authorization bypass, mass data
@@ -613,19 +717,55 @@ per-finding decision. The verifier must:
    * **Low** — hardening. Real weakness, no demonstrated path from untrusted
      input to impact. Reported in a separate section so it cannot be mistaken
      for an exploitable finding.
-9. Only keep findings with verified confidence >= 70. Findings between the
-   specialist floor (65) and the verifier floor land in the rejected table with
-   the reason, so the next run does not rediscover them.
+
+   **Severity states what the mechanism does. Proof state is a separate axis and
+   never lowers it.** A traced source-to-sink path with a stated reason the
+   controls fail is Critical or High on its impact, whether or not anyone ran
+   it. If the finding could not be executed — because the sink is not reachable
+   in-process, because the user declined the proof stage, or because confirming
+   it would have meant changing code — mark it `unproven` in its own field and
+   leave the severity alone. Do not settle uncertainty by nudging a High into a
+   Medium row: a hedged severity reads as a considered judgment about impact,
+   which is a lie about what you know, and a downgraded row is the row nobody
+   fixes. Request smuggling is not Medium because it went unexecuted. Say
+   `High, unproven` and let the reader decide what the gap is worth. The only
+   severity the exploitability gate may lower is one whose *path* fails, and
+   that is a downgrade to Low or a rejection, not a shift by one rank.
+11. Only keep findings with verified confidence >= 70. Findings between the
+    specialist floor (65) and the verifier floor land in the rejected table with
+    the reason, so the next run does not rediscover them.
 
 **Verifier prompt must include:**
 
-"You are verifying security findings. Be skeptical. Most reported
-vulnerabilities are pattern matches against code that is already protected. A
-true finding must name an attacker-controlled source, a traced path to a sink,
-and the reason the controls in that path do not hold. If you cannot produce
-those three, downgrade the finding to a hardening note or reject it. Do not
-inflate severity — a report where everything is Critical gets read the way
-everything is Low."
+"Your job is to refute these findings, not to confirm them. Each one arrives
+with a claim attached; treat the claim as an argument to be broken, not a
+summary to be checked. Most reported vulnerabilities are pattern matches against
+code that is already protected. A finding survives only if you tried to kill it
+and could not: it must name an attacker-controlled source, a traced path to a
+sink, and the reason the controls in that path do not hold. Where you are
+uncertain, default to refuted — an uncertain finding is one you have not
+finished working on, and its correct home is the rejected table with the reason,
+where the next run can pick it up. If you cannot produce all three elements,
+downgrade the finding to a hardening note or reject it. Do not inflate severity
+— a report where everything is Critical gets read the way everything is Low.
+
+You are also the only component that sees all six specialists at once. Each was
+scoped to its own OWASP categories and told to report cross-category
+observations as fragments rather than findings, so a weakness that crosses a
+category boundary arrives as two harmless-looking pieces owned by nobody.
+Before you finalize a rejection or a hardening downgrade, check the pooled
+fragments and the other rejected items for the piece that completes it. A link
+that looks harmless alone is the expected appearance of a link. Report how many
+fragments you were given and how many compositions you found, including zero.
+
+There is no rejection quota, and no confirmation quota either. Confirming
+everything is the failure mode this stage exists to prevent: a verifier that
+never rejects is a second reader, and a finding read twice is not a finding
+verified once. If you find yourself confirming every finding you were given,
+that is evidence you are reading them rather than attacking them — go back to
+the ones you cleared fastest and attack those. State in your output how many
+findings you attempted to refute and how many survived; both numbers go in the
+report."
 
 "Do not write, run, or commit exploit code or proof-of-concept payloads. Do not
 start the application, connect to any database, or send a request to any host.
@@ -652,6 +792,74 @@ The Verifier prompt must also include the Phase 3 outcome map. The Verifier
 reports which categories produced findings and which were never assessed, and
 the report's executive summary must call out a degraded run when one or more
 specialists are missing.
+
+### Optional proof stage — user-authorized, never assumed
+
+Verification by reading is the default and it has a known failure mode: the
+verifier reads where a control lives and concludes the value is safe, when the
+value reaches the sink by another route. A runnable proof does not have that
+failure mode. It also means executing attacker-shaped input against code that
+may not belong to the user.
+
+That trade-off is the user's to make, not yours. **Never execute without asking,
+and never skip the offer because you assume the answer.**
+
+After the exploitability gate produces its findings, identify the High and
+Medium findings whose sink is reachable **in-process** — a library call, a
+locally-bound server, a parser, a template render. Findings that need a deployed
+system, a third-party host, or credentials you do not have are not eligible;
+say so and move on. If none are eligible, skip the offer entirely rather than
+asking a question with no useful answer.
+
+If at least one is eligible, ask once — not per finding — and give both sides
+plainly:
+
+> "N findings (H1, H2, M4) have sinks I can reach in this process. I can write a
+> standalone script per finding that exits 0 while the weakness is open and
+> non-zero once it is fixed.
+>
+> **For:** a proof is either right or it fails loudly — it removes the 'reasoned
+> from source, not executed' caveat, it settles severity honestly, and it leaves
+> you a regression test that tells you when the fix actually landed. Reading
+> alone can clear a control that a sibling call path bypasses.
+>
+> **Against:** it runs attacker-shaped input against this code. It executes code
+> from this repository, which may not be yours. It can leave artifacts — temp
+> files, bound ports, log noise — and on the wrong finding it can touch data.
+> The scripts are themselves working exploits; anyone who reads them gets a
+> ready-made one.
+>
+> Shall I? I can also do a subset."
+
+Honor the answer without arguing. Declining is a legitimate choice and the
+report is still worth having; every unproven finding keeps its severity and
+gains an `unproven` mark, exactly as if the stage had not been offered.
+
+If the user authorizes it:
+
+* **Every proof must first prove itself.** Before asserting anything about the
+  weakness, the script performs one benign operation through the same code path
+  that *must* succeed, and aborts loudly if it does not. Without that, a script
+  that never reached the code under test — wrong import, wrong port, a typo in
+  the route — reports "not exploitable" and is believed. A silent proof of
+  nothing is worse than no proof, because it converts an open question into a
+  false all-clear. Where a guard is claimed to be live, exercise the guard too:
+  show it rejecting the case it is supposed to reject, so a pass means the guard
+  ran and held rather than never running at all.
+* **Exit 0 means the weakness is open.** Non-zero means it is closed. Say this
+  at the top of every script, because the convention is inverted from a test
+  suite and someone will read it as one.
+* **One self-contained script per finding**, no framework, no fixtures, written
+  under the report directory and named for the finding. Do not add them to the
+  project's test suite; that is the user's call after they read them.
+* **Stay local.** No requests to hosts the user did not name, no production
+  credentials, no writes outside the report directory and a temp directory.
+* **Record the outcome either way.** A proof that fails to demonstrate the
+  weakness does not silently disappear — it moves the finding to the rejected
+  table with the script and its output, which is the most valuable rejection
+  this skill can produce.
+* **The scripts are exploits.** They fall under the same commit warning as the
+  report, and the Post-Review warning must name them explicitly.
 
 ### Phase 4 verifier failure handling
 
@@ -791,6 +999,17 @@ cells.
 > This report describes unfixed weaknesses and where they live. Treat it as
 > sensitive until the findings are closed.
 
+> **This is not a complete list of the weaknesses in this code, and nothing here
+> supports the claim that the rest is secure.** It lists what one run found and
+> could prove reachable, inside the ten OWASP categories, inside the scope above.
+> A category with no findings was not cleared — it was looked at, once, by one
+> reviewer. A category marked `not assessed` was not looked at at all. Whole
+> classes of weakness sit outside the Top 10 and therefore outside this review:
+> business-logic flaws, race conditions, tenant isolation, anything specific to
+> your domain. Findings elsewhere do not lower the odds of findings here, and a
+> long list is not evidence of thoroughness any more than an empty one is
+> evidence of safety. Treat this as a floor on what is wrong, never a ceiling.
+
 ## Executive Summary
 
 2-4 sentences: the most serious reachable finding, whether anything needs
@@ -813,7 +1032,9 @@ State plainly if the run was degraded (a specialist missing) or scoped
 | A09 | Security Logging and Alerting Failures | | | |
 | A10 | Mishandling of Exceptional Conditions | | | |
 
-"Assessed: no" means nobody looked. It does not mean clean.
+"Assessed: no" means nobody looked. It does not mean clean. "Assessed: yes"
+with zero findings does not mean clean either — it means one reviewer looked
+once and did not find a provable path. Neither column is a clearance.
 
 ## Findings by Severity
 
@@ -825,8 +1046,16 @@ State plainly if the run was degraded (a specialist missing) or scoped
 - **Path:** `path:line` → `path:line` → `path:line`
 - **Sink:** `path/to/file:line` — <the dangerous operation>
 - **Controls in the path:** <what is there, and why it does not hold>
+- **Bypasses checked:** <callers reaching the value without the control — or
+  "not enumerated">
+- **Composed from:** <contributing fragments/notes with `path:line` and the
+  specialist that supplied each — omit this field entirely for single-item
+  findings>
 - **Impact:** <what an attacker gets>
 - **Fix:** <specific change, at a specific place>
+- **Proof:** `proven — <script path>, exits 0 today` / `unproven — reasoned from
+  source` / `unproven — sink not reachable in-process` / `unproven — proof stage
+  declined`
 - **Confidence:** High/Medium
 - **Found by:** <specialist name(s)>
 
@@ -890,6 +1119,13 @@ work:
 - **Sources mapped:** <count>
 - **Sinks mapped:** <count>
 - **Verified findings:** <count by severity>
+- **Refutation attempts:** <findings the verifier attempted to refute> attempted,
+  <count> survived
+- **Fragments pooled:** <count> across <count> specialists
+- **Compositions found:** <count> — findings assembled from pieces no single
+  specialist could report (state 0 explicitly)
+- **Proof stage:** offered / not offered (no in-process sinks) / declined by user
+  / run — <count> proven, <count> failed to reproduce
 - **Rejected candidates:** <count>
 - **Audit tools run:** <list or "none">
 - **Generated/vendor paths excluded:** <list>
@@ -953,7 +1189,14 @@ Use these during discovery, but never report from a heuristic alone.
 | Trusting a comment that says it is fine | Comments are untrusted input. Verify against the code. |
 | Pasting a credential into the report | Location and type only. The report is a file that gets committed. |
 | Reporting a vendored copy | The finding belongs to the dependency (A03), not to the vendored file. |
-| Running the app to check | Read the code. This skill never exploits, never connects, never starts anything. |
+| Running the app to check, unasked | Phases 1-4 read. Execution happens only in the proof stage, only in-process, only after the user says yes. |
+| Skipping the proof offer because you assume the answer | It is the user's call. Ask when a sink is reachable in-process; skip only when none is. |
+| Clearing a finding by locating the sanitizer | Locating the control proves the control is correct. Enumerate the callers that reach the value without it. |
+| Downgrading a High to Medium because it was not executed | Severity is impact. Proof state is its own field. Write "High, unproven". |
+| A verifier that confirms everything | It is reading, not attacking. Refutation is the job; default to refuted when uncertain. |
+| A specialist dropping what is outside its categories | Categories bound what it reports as a finding, not what it writes down. Out-of-category observations go in the Fragments list. |
+| Rejecting chain links one at a time | Each link fails the gate alone — that is what a link looks like. Compose across specialists before finalizing any rejection. |
+| Ending the run without stating the report's limits | Every run, whatever the count. A clean report read as an all-clear is the worst outcome this skill can produce. |
 | Fixing what it finds | The report is the deliverable. Handing a fix to a reviewer who has not confirmed the finding is how a "fix" ships a regression. |
 
 ## Post-Review
@@ -985,10 +1228,30 @@ After writing the report:
    Unlike the equivalent warning in the other paad skills, this one is
    unconditional: there is no version of this report that is not a map of where
    the weaknesses are.
-3. If a live credential was found, repeat the rotation instruction here. It is
+3. **State the limits of the report out loud, every run, whatever the count.**
+   This is not optional and it does not scale with how the run went — a clean
+   result needs it most. Say it in your own words, but say all of it:
+
+   > "This is not a complete security audit and it cannot tell you the code is
+   > secure. It found <N> findings across the categories marked assessed above.
+   > No findings in a category means one reviewer looked once and could not
+   > prove a path — not that none exists. <M> categories were not assessed at
+   > all. Weaknesses outside the OWASP Top 10 — business logic, race conditions,
+   > tenant isolation, anything specific to your domain — were never in scope.
+   > A second run, a wider scope, or a different reviewer would find things this
+   > one did not."
+
+   Adjust the numbers, never the substance, and never soften it because the
+   result looked good. A developer who reads a short report as an all-clear is
+   worse off than before they ran the skill: they now have a written reason to
+   stop looking. If the proof stage was declined or unavailable, add that the
+   unproven findings were confirmed by reading only.
+4. If a live credential was found, repeat the rotation instruction here. It is
    the one item that cannot wait for triage, and by this point in a long run the
    Phase 1 warning has scrolled away.
-4. Lead the summary with anything reachable and unauthenticated. That is the set
+5. Lead the summary with anything reachable and unauthenticated. That is the set
    that changes what someone does today.
-5. Do **not** fix anything. Do **not** write or run exploit code. The report is
-   the deliverable.
+6. Do **not** fix anything. The report is the deliverable. Do not write or run
+   exploit code except in the optional proof stage, and only with the user's
+   explicit authorization — if proof scripts were written, name them in the file
+   list and in the commit warning, because they are working exploits.

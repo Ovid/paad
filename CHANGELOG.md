@@ -26,15 +26,53 @@ what a plugin user sees.
   the specialists, so where an ORM or template engine protects by default the
   finding is the opt-out rather than the call.
 
+  The verifier's job is to refute, not to confirm: it defaults to refuted when
+  uncertain, reports how many findings it attacked against how many survived,
+  and clears a control by enumerating every caller that reaches the value
+  without passing through it — never by reading where the control lives. A
+  sanitizer on the serialization path says nothing about a sibling accessor that
+  skips it, and the finding being cleared often contains the finding being
+  missed.
+
+  Six specialists cover ten categories, which means a weakness whose halves fall
+  in two different categories reaches the verifier as two items that each fail
+  the exploitability gate alone. Specialists therefore report out-of-category
+  observations as *fragments* — `path:line`, one sentence, no severity claim —
+  rather than dropping them, and the verifier composes across the pooled
+  fragments, hardening notes, and pending rejections before finalizing any of
+  them. A composition is re-run through the gate as a single finding carrying
+  the severity of the whole chain, and the count is reported even when it is
+  zero. A chain link looks harmless alone; that is what a link is.
+
+  Severity states impact. Whether a finding was executed is a separate
+  `unproven` field and never lowers its rank — a traced smuggling path is
+  "High, unproven", not Medium, because a hedged severity is a lie about impact
+  and a downgraded row is the row nobody fixes.
+
+  Analysis reads code: no specialist and no verifier starts the application,
+  connects to a database, or sends a request to any host. After verification the
+  skill offers an optional proof stage for findings whose sink is reachable
+  in-process — a standalone script per finding that exits 0 while the weakness
+  is open and non-zero once it is fixed, each one first proving it reached the
+  code at all so a script that never ran cannot report "secure". It asks before
+  executing anything, lays out both sides, and honors a no; declining costs only
+  the `unproven` mark. Deployed systems are out of scope in every mode.
+
   The report carries a coverage table across all ten categories where "not
   assessed" is stated rather than passed off as clean — including when a
   specialist times out. Live credentials are reported by location and type,
   never by value, and rotation leads the remediation order.
 
-  The skill never exploits: it does not start the application, connect to a
-  database, send a request to any host, or write proof-of-concept code. It never
-  fixes what it finds. Output goes to `paad/owasp-reviews/` with a persistent
-  `INDEX.md`.
+  Every run ends by stating what the report is not: not a complete list of the
+  weaknesses, and not evidence the rest is secure. Zero findings means one
+  reviewer looked once, inside ten categories, at one scope. Business logic,
+  race conditions, and tenant isolation sit outside the Top 10 and were never in
+  scope. The report says so at the top and the skill says so again out loud when
+  the run ends, whatever the count — a clean report read as an all-clear leaves
+  a developer worse off than never having run it.
+
+  It never fixes what it finds. Output goes to `paad/owasp-reviews/` with a
+  persistent `INDEX.md`.
 
   Experimental — arguments, output paths, and behavior may change or be
   withdrawn in any release, including a patch release.

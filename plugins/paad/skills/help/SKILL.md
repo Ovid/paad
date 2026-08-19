@@ -533,8 +533,18 @@ What it does:
      - Logging, Alerting & Detection       (A09)
   4. Exploitability gate: a finding must name an attacker-controlled
      source, a traced path to the sink, and why the existing controls do
-     not hold. Anything that cannot becomes a hardening note or is rejected
-  5. Writes a report with:
+     not hold. Anything that cannot becomes a hardening note or is rejected.
+     The verifier's job is to refute, not confirm, and it clears a control
+     by enumerating the callers that bypass it — not by reading where the
+     control lives, and it composes across specialists before rejecting —
+     each specialist reports out-of-category observations as fragments, so a
+     weakness split across two categories is not lost by both
+  5. Optional proof stage: where a sink is reachable in-process, offers to
+     write a standalone script per finding that exits 0 while the weakness
+     is open. Always asks first, with the trade-offs; never executes
+     without a yes. Declining costs nothing — unproven findings keep their
+     severity and are marked unproven
+  6. Writes a report with:
      - Coverage table across all ten categories — "not assessed" is
        stated, never passed off as clean
      - Findings ranked Critical / High / Medium, hardening notes separate
@@ -544,6 +554,12 @@ What it does:
 
 Live credentials are reported by location and type only — never by value,
 and rotation comes before anything else in the report.
+
+No report is a complete list of the weaknesses in the code, and the skill
+says so at the end of every run. Zero findings means one reviewer looked
+once inside ten categories and could not prove a path — not that the code
+is secure. Severity states impact; whether a finding was executed is a
+separate field and never lowers it.
 
 Best used in a fresh session — consumes significant context.
 ```
