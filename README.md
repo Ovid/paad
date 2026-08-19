@@ -811,7 +811,10 @@ rediscovering them.
   Zero findings means one reviewer looked once, inside ten categories, at one
   scope. Business logic, race conditions, and tenant isolation are outside the
   Top 10 and were never in scope. A clean report read as an all-clear leaves you
-  worse off than never having run it
+  worse off than never having run it. The same closing block says why committing
+  the report is a bad bet even once the findings are closed — history is
+  permanent, the report ages into a false clearance for code that has moved, and
+  the severity table outlives every caveat attached to it
 * **Credentials are reported by location, never by value** — a secret pasted
   into a report file is a second copy of the leak, and rotation goes to the top
   of the remediation order because it is the one item that cannot wait

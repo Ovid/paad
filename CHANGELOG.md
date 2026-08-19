@@ -69,7 +69,13 @@ what a plugin user sees.
   race conditions, and tenant isolation sit outside the Top 10 and were never in
   scope. The report says so at the top and the skill says so again out loud when
   the run ends, whatever the count — a clean report read as an all-clear leaves
-  a developer worse off than never having run it.
+  a developer worse off than never having run it. The same closing block gives
+  the reasons not to commit the report that survive the findings being fixed:
+  git history is permanent so deleting the file does not remove it, the report
+  ages into a false clearance for code that has since moved, and the severity
+  table travels to readers who never heard the caveats. The report's own header
+  repeats the staleness warning, because the spoken one does not travel with
+  the file.
 
   It never fixes what it finds. Output goes to `paad/owasp-reviews/` with a
   persistent `INDEX.md`.

@@ -556,7 +556,10 @@ Live credentials are reported by location and type only — never by value,
 and rotation comes before anything else in the report.
 
 No report is a complete list of the weaknesses in the code, and the skill
-says so at the end of every run. Zero findings means one reviewer looked
+says so at the end of every run — along with why committing the report is
+risky even after the findings are fixed: git history is permanent, the
+report ages into a false clearance, and the caveats do not travel with the
+severity table. Zero findings means one reviewer looked
 once inside ten categories and could not prove a path — not that the code
 is secure. Severity states impact; whether a finding was executed is a
 separate field and never lowers it.

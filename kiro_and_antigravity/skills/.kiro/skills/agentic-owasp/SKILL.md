@@ -94,7 +94,7 @@ digraph session {
   "Phase 5: Report (Specialist Findings — Unverified banner)" [shape=box];
   "Report: no reachable findings in scope" [shape=box];
   "Post-Review: warn the report is a vulnerability roadmap" [shape=box, style=bold];
-  "Post-Review: state findings are NOT complete, clean != secure" [shape=box, style=bold];
+  "Post-Review: findings NOT complete, clean != secure, say why committing is risky" [shape=box, style=bold];
   "Done — do NOT fix" [shape=doublecircle];
 
   "Phase 1: Reconnaissance" -> "Live credential seen?";
@@ -126,8 +126,8 @@ digraph session {
   "Report: no reachable findings in scope" -> "Post-Review: warn the report is a vulnerability roadmap";
   "Phase 5: Report (verified findings)" -> "Post-Review: warn the report is a vulnerability roadmap";
   "Phase 5: Report (Specialist Findings — Unverified banner)" -> "Post-Review: warn the report is a vulnerability roadmap";
-  "Post-Review: warn the report is a vulnerability roadmap" -> "Post-Review: state findings are NOT complete, clean != secure";
-  "Post-Review: state findings are NOT complete, clean != secure" -> "Done — do NOT fix";
+  "Post-Review: warn the report is a vulnerability roadmap" -> "Post-Review: findings NOT complete, clean != secure, say why committing is risky";
+  "Post-Review: findings NOT complete, clean != secure, say why committing is risky" -> "Done — do NOT fix";
 }
 ```
 
@@ -997,7 +997,10 @@ cells.
 **Mode:** full review / changed-code review / category review / dependency review
 
 > This report describes unfixed weaknesses and where they live. Treat it as
-> sensitive until the findings are closed.
+> sensitive until the findings are closed. It is true of the commit named above
+> and of nothing since: if you are reading it long after that date, it describes
+> code that has moved, and an old "no findings" row is not a clearance. If it was
+> committed, note that deleting the file does not remove it from history.
 
 > **This is not a complete list of the weaknesses in this code, and nothing here
 > supports the claim that the rest is secure.** It lists what one run found and
@@ -1197,6 +1200,7 @@ Use these during discovery, but never report from a heuristic alone.
 | A specialist dropping what is outside its categories | Categories bound what it reports as a finding, not what it writes down. Out-of-category observations go in the Fragments list. |
 | Rejecting chain links one at a time | Each link fails the gate alone — that is what a link looks like. Compose across specialists before finalizing any rejection. |
 | Ending the run without stating the report's limits | Every run, whatever the count. A clean report read as an all-clear is the worst outcome this skill can produce. |
+| Treating the commit question as settled once the findings are fixed | A committed report is permanent in history, ages into a false clearance, and travels without its caveats. Say all three. |
 | Fixing what it finds | The report is the deliverable. Handing a fix to a reviewer who has not confirmed the finding is how a "fix" ships a regression. |
 
 ## Post-Review
@@ -1246,6 +1250,39 @@ After writing the report:
    worse off than before they ran the skill: they now have a written reason to
    stop looking. If the proof stage was declined or unavailable, add that the
    unproven findings were confirmed by reading only.
+
+   **Then say why that makes committing the report a bad idea, in the same
+   breath.** Step 2 covered the obvious reason — it is a map of live weaknesses.
+   These reasons are different, they follow from the incompleteness you just
+   described, and they apply even after every finding is fixed:
+
+   > "I'd think twice before committing this report, for reasons beyond the
+   > findings themselves.
+   >
+   > **Committing is permanent.** Deleting the file later does not remove it —
+   > `git log -p` still has it, and so does every clone, fork, and mirror. Once
+   > it is pushed, removing it means rewriting history that other people have
+   > already pulled.
+   >
+   > **It ages into a false clearance.** This report is true of one commit. The
+   > code moves; the report does not. In six months a table saying 'A04: no
+   > findings' reads as 'A04 is fine' to someone who does not know it was one
+   > reviewer, one run, one scope — and the older it gets, the more authoritative
+   > it looks, exactly backwards from how much it is worth.
+   >
+   > **The caveats do not travel with the findings.** Whoever reads it next did
+   > not run it and did not hear any of what I just said. What survives is the
+   > severity table, screenshotted into a ticket or cited as evidence a security
+   > review was done. The limits are the part that gets skipped.
+   >
+   > Keeping it untracked — or somewhere with a date and an owner — costs
+   > nothing and avoids all three."
+
+   State this whatever the findings count, and *especially* at zero: a committed
+   clean report is the version most likely to be cited later as proof the code
+   was reviewed, and it is the version whose limits matter most. If proof
+   scripts were written, they are working exploits and everything above applies
+   to them more strongly.
 4. If a live credential was found, repeat the rotation instruction here. It is
    the one item that cannot wait for triage, and by this point in a long run the
    Phase 1 warning has scrolled away.
