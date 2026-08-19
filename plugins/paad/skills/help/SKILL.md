@@ -325,7 +325,9 @@ Critically reviews a spec, PRD, or design before you start building —
 or any document that makes claims about the code, such as an agent
 steering file (CLAUDE.md, AGENTS.md) or a generated analysis report.
 Every finding must name a concrete consequence and the mechanism behind
-it; candidates that can't are dropped and reported as discards.
+it; candidates that can't are dropped and reported as discards. Each
+finding also names the off-disk fact that would change its severity —
+or says it is unconditional.
 
 Output: the conversation, plus your spec if you ask for edits.
         Writes paad/pushback-reviews/ only when issues go undiscussed

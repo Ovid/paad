@@ -239,6 +239,15 @@ in the severity ranking.
 executes `cli.py`, so a spacing change ships green" is a finding — it names the
 path the work touches and what passes review anyway.
 
+**Name what would change your mind.** Almost every finding's severity turns
+partly on something not in the repository — a roadmap item, a deadline, who
+consumes this API, what operators actually want. When a specific off-disk fact
+would move a finding's severity or dissolve it, say so in the same breath: name
+the fact, and say what the finding becomes if it goes the other way. Name it
+concretely enough to act on — "it depends on your priorities" is not one. If
+nothing off-disk would move it, say the finding is unconditional and stand
+behind it.
+
 Say how many candidates you dropped and why. A review that reports two findings
 and five discards is visibly not a rubber stamp; one that reports two findings
 and says nothing about the rest looks like it stopped early.

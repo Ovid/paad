@@ -11,6 +11,28 @@ what a plugin user sees.
 ## [Unreleased]
 
 ### Changed
+- **`/paad:pushback` findings now name what would change their severity.** Each
+  finding states the off-disk fact — a roadmap item, a deadline, who consumes an
+  API, what operators actually want — that would move or dissolve it and what it
+  flips to, or says it is unconditional and stands behind it.
+
+  Ported from `/paad:rethink`, and the only one of four candidate ports that
+  survived testing. Discarded on evidence: a rule to verify claims about
+  external systems (already covered — 5/5 arms, including the no-skill controls,
+  defeated a trap built specifically to beat shallow verification), a ledger of
+  unverified load-bearing assumptions (every entry it produced was off-disk
+  context, near-identical run to run), and an "unsettled" verdict for findings
+  that can't be defended (it opened a hole in the Y-because-Z gate that produces
+  pushback's best measured result). Only this one had a real gap behind it:
+  0 of 17 stock findings named a flip condition.
+
+  Three phrasings were tested, three runs each. The one that shipped states the
+  principle and adds no output slot; the variant that added a required field
+  *without* the principle produced the campaign's only junk condition — "if
+  someone fixes this first it drops to moderate", true of every finding ever
+  written. 16/16 findings carried an actionable, genuinely off-disk condition,
+  5 of them correctly marked unconditional. Under rubber-stamp pressure the
+  finding and discard counts were unchanged from stock.
 - **`/paad:pushback` no longer assumes the thing it reviews is a spec.** Its
   input scan now also looks at agent steering files (`CLAUDE.md`, `AGENTS.md`,
   `.cursorrules`, `.kiro/steering/`, `.github/copilot-instructions.md`) and
