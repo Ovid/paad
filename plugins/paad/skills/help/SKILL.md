@@ -52,6 +52,7 @@ Available skills:
 Experimental — may change or be withdrawn in any release, including patches:
 
   /paad:agentic-dedup [scope]                Find semantic duplication (same meaning, different code)
+  /paad:agentic-owasp [scope]                Security review against the OWASP Top 10:2025
   /paad:handoff [save|resume]                Hand this session's work to a fresh session, in writing
   /paad:rethink [what to re-examine]         Verify the premises under options already on the table
   /paad:test-roadmap                         Plan and build a test suite that catches real regressions
@@ -64,6 +65,8 @@ Picking between them:
   Want accessibility barriers?          agentic-a11y (not general correctness)
   Want duplicated logic found?          agentic-dedup (experimental; reports,
                                         never refactors)
+  Worried about security specifically?  agentic-owasp (experimental; the OWASP
+                                        Top 10:2025, never exploits or fixes)
   Have no tests, or tests you distrust? test-roadmap (experimental; the only
                                         skill that writes and commits code)
   Have one document, is it any good?    pushback (a spec, a steering file, a
@@ -489,6 +492,58 @@ What it does:
      - A consolidation strategy with a safe migration sequence
 
 Never refactors anything. The report is the deliverable.
+
+Best used in a fresh session — consumes significant context.
+```
+
+### agentic-owasp
+
+```
+/paad:agentic-owasp [scope]
+
+EXPERIMENTAL — arguments, output paths, and behavior may change or be
+withdrawn in any release, including patch releases.
+
+Multi-agent security review of source code against the OWASP Top 10:2025.
+Reads code. Never starts the app, never sends a request anywhere, never
+writes exploit code, never fixes what it finds.
+
+Output: paad/owasp-reviews/<branch-or-scope>-<timestamp>-<sha>.md
+        paad/owasp-reviews/INDEX.md (persistent, newest run on top)
+
+Arguments:
+  /paad:agentic-owasp                     Review the repository
+  /paad:agentic-owasp src/api/            Scope to a path or module
+  /paad:agentic-owasp --changed main      Seed from the diff against main
+  /paad:agentic-owasp --category A01      One category, or A01,A05,A07
+  /paad:agentic-owasp --deps              Supply chain only: deps, CI/CD
+
+What it does:
+  1. Reconnaissance: framework defaults first — the ORM, template engine,
+     and middleware decide which findings are even real
+  2. Attack surface mapping: untrusted sources, dangerous sinks, and the
+     controls already sitting between them, each with path:line
+  3. Dispatches 6 specialist agents in parallel, covering all ten
+     categories with none left over:
+     - Access Control & Authentication     (A01, A07)
+     - Injection & Untrusted Input         (A05)
+     - Cryptography & Data Protection      (A04)
+     - Configuration & Supply Chain        (A02, A03)
+     - Design, Integrity & Failure Modes   (A06, A08, A10)
+     - Logging, Alerting & Detection       (A09)
+  4. Exploitability gate: a finding must name an attacker-controlled
+     source, a traced path to the sink, and why the existing controls do
+     not hold. Anything that cannot becomes a hardening note or is rejected
+  5. Writes a report with:
+     - Coverage table across all ten categories — "not assessed" is
+       stated, never passed off as clean
+     - Findings ranked Critical / High / Medium, hardening notes separate
+     - Dependency findings marked called vs present-but-unreachable
+     - Rejected candidates, so the next run does not rediscover them
+     - A remediation order, which is not severity order
+
+Live credentials are reported by location and type only — never by value,
+and rotation comes before anything else in the report.
 
 Best used in a fresh session — consumes significant context.
 ```

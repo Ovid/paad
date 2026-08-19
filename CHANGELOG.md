@@ -10,6 +10,35 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Added
+- **`/paad:agentic-owasp` (experimental) — security review against the OWASP Top
+  10:2025.** Six specialists cover all ten categories with none left over:
+  Access Control & Authentication (A01, A07), Injection & Untrusted Input (A05),
+  Cryptography & Data Protection (A04), Configuration & Supply Chain (A02, A03),
+  Design, Integrity & Failure Modes (A06, A08, A10), and Logging, Alerting &
+  Detection (A09).
+
+  Findings pass an exploitability gate before reaching the report: an
+  attacker-controlled source with `path:line`, a traced call path to the sink,
+  and a stated reason the controls already in that path do not hold. Anything
+  that cannot produce all three becomes a hardening note or is rejected with the
+  reason recorded. Framework defaults are read in reconnaissance and passed to
+  the specialists, so where an ORM or template engine protects by default the
+  finding is the opt-out rather than the call.
+
+  The report carries a coverage table across all ten categories where "not
+  assessed" is stated rather than passed off as clean — including when a
+  specialist times out. Live credentials are reported by location and type,
+  never by value, and rotation leads the remediation order.
+
+  The skill never exploits: it does not start the application, connect to a
+  database, send a request to any host, or write proof-of-concept code. It never
+  fixes what it finds. Output goes to `paad/owasp-reviews/` with a persistent
+  `INDEX.md`.
+
+  Experimental — arguments, output paths, and behavior may change or be
+  withdrawn in any release, including a patch release.
+
 ### Changed
 - **`/paad:pushback` findings now name what would change their severity.** Each
   finding states the off-disk fact — a roadmap item, a deadline, who consumes an

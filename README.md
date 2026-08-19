@@ -39,6 +39,7 @@ Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
 | `/makefile` | Creates or updates a project `Makefile` |
 | `/paad:help [skill-name]` | Lists the skills, or explains one |
 | `/agentic-dedup [scope]` | Finds duplicated *meaning*, not duplicated text — experimental |
+| `/agentic-owasp [scope]` | Reviews code against the OWASP Top 10:2025 — experimental |
 | `/rethink [topic]` | Checks whether the premises under a recommendation hold — experimental |
 | `/test-roadmap` | Builds a test suite that catches real regressions — experimental |
 | `/handoff [save\|resume]` | Hands this session's work to a fresh one, in writing — experimental |
@@ -742,6 +743,58 @@ surfaces when one side is fixed and the other is not.
   across runs
 
 It never refactors anything. The report is the deliverable.
+
+#### `/agentic-owasp [scope]` — experimental
+
+Most security review output is pattern matching wearing a suit. A tool greps for
+string concatenation near a SQL call and reports injection, without ever
+checking that the ORM two lines up parameterizes by default, that the value
+interpolated is an enum, or that the route is behind an admin middleware chain.
+The developer reads twenty findings, confirms the first three are wrong, and
+stops reading. The twenty-first was real.
+
+`agentic-owasp` reviews code against the [OWASP Top
+10:2025](https://owasp.org/Top10/2025/) and puts every candidate finding through
+an exploitability gate before it reaches the page. A finding has to name an
+attacker-controlled source with a line number, trace the call path to the
+dangerous operation hop by hop, and say which controls sit in that path and why
+they do not hold. Findings that cannot do all three become hardening notes or
+get rejected with the reason recorded — so the next run does not spend context
+rediscovering them.
+
+* **Arguments:** `/agentic-owasp` (whole repo) or `/agentic-owasp src/api/`
+  (scoped) or `/agentic-owasp --changed main` (seeded from the branch diff) or
+  `/agentic-owasp --category A01` (one category, or `A01,A05,A07`) or
+  `/agentic-owasp --deps` (dependencies, lockfiles, and CI/CD only)
+* **Six specialists, all ten categories, none orphaned** — Access Control &
+  Authentication (A01, A07), Injection & Untrusted Input (A05), Cryptography &
+  Data Protection (A04), Configuration & Supply Chain (A02, A03), Design,
+  Integrity & Failure Modes (A06, A08, A10), and Logging, Alerting & Detection
+  (A09). The 2025 list is the current one: supply chain and mishandled
+  exceptional conditions are new categories, and logging is now about
+  *alerting*, not just recording
+* **Framework defaults are read first** — what the ORM, template engine, and
+  middleware already do decides which findings are real. Where a framework
+  protects by default, the finding is the opt-out, and the report names the line
+  it is on
+* **A coverage table that admits what nobody looked at** — all ten categories,
+  each marked assessed or not. "No findings in A04" and "nobody checked A04" are
+  different sentences, and a report that blurs them leaves you worse off than
+  before you ran it
+* **Severity that means something** — Critical is reachable-and-unauthenticated,
+  not "looks scary". Hardening notes live in their own section so they cannot be
+  mistaken for exploitable findings
+* **Never exploits anything** — it does not start the application, connect to a
+  database, send a request to any host, or write proof-of-concept code.
+  Confirmation comes from reading. Testing a running system is a different job
+  with a different authorization scope
+* **Credentials are reported by location, never by value** — a secret pasted
+  into a report file is a second copy of the leak, and rotation goes to the top
+  of the remediation order because it is the one item that cannot wait
+* **Report** — written to `paad/owasp-reviews/`, with a persistent `INDEX.md`
+  across runs
+
+It never fixes anything. The report is the deliverable.
 
 #### `/handoff [save|resume]` — experimental
 
