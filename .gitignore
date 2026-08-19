@@ -2,3 +2,8 @@
 .DS_Store
 __pycache__/
 /spec-kit/
+handoff.md
+
+# These contain potential zero-days for projects. They must *not* be committed
+paad/owasp-reviews/
+paad/owasp-llm-reviews/
