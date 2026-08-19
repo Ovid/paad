@@ -29,7 +29,7 @@ Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
 
 | Skill | What it does |
 |---|---|
-| `/pushback [spec-file]` | Argues with your spec before anyone builds it |
+| `/pushback [document]` | Argues with your spec before anyone builds it |
 | `/alignment [files...]` | Checks that the plan and the spec say the same thing |
 | `/agentic-review [base-branch] [path]` | Six specialists review your branch before merge |
 | `/agentic-architecture [path...]` | Five specialists find structural debt while it's cheap |
@@ -41,6 +41,7 @@ Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
 | `/agentic-dedup [scope]` | Finds duplicated *meaning*, not duplicated text — experimental |
 | `/rethink [topic]` | Checks whether the premises under a recommendation hold — experimental |
 | `/test-roadmap` | Builds a test suite that catches real regressions — experimental |
+| `/handoff [save\|resume]` | Hands this session's work to a fresh one, in writing — experimental |
 
 Full descriptions are further down. The rest of this page is why any of it is
 worth your tokens.
@@ -473,17 +474,19 @@ The assistant will follow the procedures defined in the skill files.
 
 ### Pushback
 
-#### `/pushback [spec-file]`
+#### `/pushback [document]`
 
 If English is the new programming language, `pushback` is the code review.
 
 AI assistants rarely tell you that your spec has problems. `pushback` does. It
 critically reviews specs, PRDs, and design plans before work begins so you do
-not build on flawed assumptions.
+not build on flawed assumptions — and it works the same way on any document
+that makes claims about the code, such as an agent steering file (`CLAUDE.md`,
+`AGENTS.md`) or a generated analysis report.
 
 * **Arguments:** `/pushback path/to/spec.md` (specific file) or
-  `/pushback` (auto-detect from conversation history or common file
-  locations)
+  `/pushback` (auto-detect from conversation history, common file locations,
+  agent steering files, or generated reports)
 * **Source control reality check** — scans recent git history for commits that
   conflict with what the spec assumes, presented before other analysis
 * **Scope shape check** — flags unrelated features bundled together and
@@ -739,6 +742,47 @@ surfaces when one side is fixed and the other is not.
   across runs
 
 It never refactors anything. The report is the deliverable.
+
+#### `/handoff [save|resume]` — experimental
+
+Claude Code already has `/compact`, and for most of what you want it is
+enough. The gap `handoff` fills is narrow and specific: `/compact`'s summary is
+written by the machine, lands without being read, and lives inside the
+transcript where you cannot edit it. `handoff` writes the same kind of state to
+a file you can open, correct, and hand to a genuinely fresh session.
+
+That makes the review the point, not a courtesy. A handoff nobody reads is a
+worse `/compact` — same summary, more ceremony — and the skill says so out loud
+rather than letting it slide.
+
+The thing it guards against isn't forgetfulness. An agent writing a handoff
+unaided keeps the expensive material well: the approaches already tried and
+abandoned, the reasons behind them, the constraint you mentioned once an hour
+ago. What it gets wrong is the cheap material — a test's file path, which
+changes are really in the last commit, a line number, who said the sentence
+it's quoting. Those are settleable with a tool in seconds, and they arrive in
+exactly the same confident voice as everything it got right. A fresh session
+has no memory to catch them with.
+
+* **Arguments:** `/handoff` (infers from whether the session has history) or
+  `/handoff save` or `/handoff resume`
+* **Verifies before it writes** — commit, branch, dirty state, file paths, line
+  numbers, test names, and whether the suite actually passes are checked with
+  tools, not recalled. What can't be settled is marked inferred instead of
+  asserted
+* **Weighted toward what a fresh session can't reconstruct** — decisions and
+  their reasons, approaches ruled out and how far they got, constraints that
+  exist nowhere on disk. No architecture tour, no session narrative, nothing
+  `git diff` already shows
+* **Asks for the review that matters** — names the two or three claims it is
+  least sure of, rather than a general disclaimer you'd skim
+* **Checks for drift on the way back in** — compares the recorded commit
+  against HEAD, confirms the files it named still exist, and reports mismatches
+  before acting on anything
+* **Never deletes the handoff** — it's untracked, so git can't restore it. The
+  next save overwrites it
+* **Artifact** — `handoff.md` in the working directory, which it suggests you
+  add to `.gitignore`
 
 #### `/rethink [what to re-examine]` — experimental
 

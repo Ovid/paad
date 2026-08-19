@@ -10,6 +10,86 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Changed
+- **`/paad:pushback` findings now name what would change their severity.** Each
+  finding states the off-disk fact — a roadmap item, a deadline, who consumes an
+  API, what operators actually want — that would move or dissolve it and what it
+  flips to, or says it is unconditional and stands behind it.
+
+  Ported from `/paad:rethink`, and the only one of four candidate ports that
+  survived testing. Discarded on evidence: a rule to verify claims about
+  external systems (already covered — 5/5 arms, including the no-skill controls,
+  defeated a trap built specifically to beat shallow verification), a ledger of
+  unverified load-bearing assumptions (every entry it produced was off-disk
+  context, near-identical run to run), and an "unsettled" verdict for findings
+  that can't be defended (it opened a hole in the Y-because-Z gate that produces
+  pushback's best measured result). Only this one had a real gap behind it:
+  0 of 17 stock findings named a flip condition.
+
+  Three phrasings were tested, three runs each. The one that shipped states the
+  principle and adds no output slot; the variant that added a required field
+  *without* the principle produced the campaign's only junk condition — "if
+  someone fixes this first it drops to moderate", true of every finding ever
+  written. 16/16 findings carried an actionable, genuinely off-disk condition,
+  5 of them correctly marked unconditional. Under rubber-stamp pressure the
+  finding and discard counts were unchanged from stock.
+- **`/paad:pushback` no longer assumes the thing it reviews is a spec.** Its
+  input scan now also looks at agent steering files (`CLAUDE.md`, `AGENTS.md`,
+  `.cursorrules`, `.kiro/steering/`, `.github/copilot-instructions.md`) and
+  generated analysis (`paad/*-reviews/`), and the fallback prompt asks for a
+  *document* rather than a spec.
+
+  This one fixes a measured failure, not a hypothetical one. Invoked bare in a
+  repo whose only document was a `CLAUDE.md`, the old skill found no candidate
+  and asked "What spec should I review?" — it had located the file and
+  explicitly ruled it out, reasoning that a steering file "describes what the
+  codebase already does, not work proposed for implementation, so it is not a
+  spec candidate." The scan list was a confident wrong instruction and the
+  model obeyed it. With the widened list it finds `CLAUDE.md` and offers it.
+  Three runs per version, clean separation: 0/3 before, 3/3 after.
+
+  Claude Code only. The Kiro and Antigravity exports strip the whole Input
+  Resolution section, because the `$ARGUMENTS` mechanism it describes does not
+  exist there — so this widening does not reach those copies, which still
+  expect you to name the document.
+
+### Fixed
+- **`/paad:pushback`'s reality check no longer hides old invalidating
+  commits.** Phase 1 ran `git log --oneline -50 --since="2 weeks ago"`. The two
+  limits are ANDed and the date one usually binds first, so a document
+  invalidated by an eight-month-old commit was reported clean — the commit that
+  broke it fell outside the window and was never read. The command is now
+  `git log --oneline -50`: the limit is 50 commits, not a date.
+- **`/paad:pushback`'s first digraph pointed at the wrong phase.** All three of
+  its terminal nodes read "Proceed to Spec Critique" (Phase 2), skipping
+  Phase 1.5 Scope Shape entirely, and the scope/critique digraph had no entry
+  edge. The sinks now name Scope Shape and connect to it.
+
+### Added
+- **`/paad:handoff` — hands this session's work to a fresh session, in
+  writing. Experimental.** Writes a `handoff.md` a human can read and correct,
+  then reads it back on the other side. It exists for one gap `/compact` leaves
+  open: `/compact`'s summary is machine-authored, lands unreviewed, and lives
+  inside the transcript where it cannot be edited. That review is the only
+  thing `handoff` adds, and the skill says so — a handoff nobody reads is a
+  worse `/compact`.
+
+  The failure it guards against is not forgetfulness. Baseline testing showed
+  an agent writing a handoff unaided keeps the expensive material well —
+  approaches already ruled out, the reasons behind them, constraints stated
+  once in passing — and gets the *cheap* material wrong: a test's file path,
+  which changes are really in the last commit, a line number, who said a quoted
+  sentence. Those arrive in the same confident register as everything it got
+  right, and a fresh session has no memory to catch them with. So the skill
+  verifies what is checkable with tools before writing it, marks what is not as
+  inferred, and closes by naming the two or three claims that actually need
+  review rather than issuing a general disclaimer.
+
+  On the way back in it compares the recorded commit against HEAD, confirms the
+  files it named still exist, and reports mismatches before acting. It never
+  deletes `handoff.md` — the file is untracked, so git cannot restore it; the
+  next save overwrites it.
+
 ## [1.24.1] — 2026-08-01
 
 ### Fixed

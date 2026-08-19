@@ -46,12 +46,13 @@ Available skills:
   /paad:agentic-review [base-branch] [path]  Multi-agent code review of current branch (bug hunting)
   /paad:alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
   /paad:makefile                             Create or update a Makefile with standard targets
-  /paad:pushback [spec-file]                 Spec/PRD critic (finds issues before you build)
+  /paad:pushback [document]                  Spec/PRD/doc critic (finds issues before you build)
   /paad:vibe [task description]              Safe vibe coding with TDD guardrails
 
 Experimental — may change or be withdrawn in any release, including patches:
 
   /paad:agentic-dedup [scope]                Find semantic duplication (same meaning, different code)
+  /paad:handoff [save|resume]                Hand this session's work to a fresh session, in writing
   /paad:rethink [what to re-examine]         Verify the premises under options already on the table
   /paad:test-roadmap                         Plan and build a test suite that catches real regressions
 
@@ -65,9 +66,12 @@ Picking between them:
                                         never refactors)
   Have no tests, or tests you distrust? test-roadmap (experimental; the only
                                         skill that writes and commits code)
-  Have one spec, is it any good?        pushback
+  Have one document, is it any good?    pushback (a spec, a steering file, a
+                                        generated report)
   Been handed options, are they sound?  rethink (experimental; checks premises,
                                         does not invent alternatives)
+  Out of context, work unfinished?      handoff (experimental; writes a file for
+                                        a NEW session — /compact stays in this one)
   Have a spec AND a plan, do they match? alignment (needs both; does not read code)
   Making a small change?                vibe (1-3 files, same module)
   Change is clearly multi-module?       write a plan, then alignment against it
@@ -315,11 +319,15 @@ No fresh session needed — this is a lightweight workflow skill.
 ### pushback
 
 ```
-/paad:pushback [spec-file]
+/paad:pushback [document]
 
-Critically reviews a spec, PRD, or design before you start building.
+Critically reviews a spec, PRD, or design before you start building —
+or any document that makes claims about the code, such as an agent
+steering file (CLAUDE.md, AGENTS.md) or a generated analysis report.
 Every finding must name a concrete consequence and the mechanism behind
-it; candidates that can't are dropped and reported as discards.
+it; candidates that can't are dropped and reported as discards. Each
+finding also names the off-disk fact that would change its severity —
+or says it is unconditional.
 
 Output: the conversation, plus your spec if you ask for edits.
         Writes paad/pushback-reviews/ only when issues go undiscussed
@@ -330,7 +338,9 @@ Arguments:
   /paad:pushback                    Auto-detect from conversation or files
 
 Auto-detection checks: conversation history first, then common locations
-(docs/plans/, docs/specs/, requirements.md, PRD.md, spec.md).
+(docs/plans/, docs/specs/, requirements.md, PRD.md, spec.md), then agent
+steering files (CLAUDE.md, AGENTS.md, .cursorrules, .kiro/steering/,
+.github/copilot-instructions.md) and generated analysis (paad/*-reviews/).
 
 What it does:
   1. Reality check: scans git history for conflicts with what the
@@ -536,4 +546,63 @@ What it does:
   Logs concrete bugs it finds along the way. It never fixes them.
 
 Best used in a fresh session — consumes significant context.
+```
+
+### handoff
+
+```
+/paad:handoff [save|resume]                 EXPERIMENTAL
+
+Writes a handoff.md that lets a FRESH session continue this one's
+work, and reads it back on the other side.
+
+Experimental: arguments, file format, and behavior may change — or the
+skill may be withdrawn — in any release, including a patch release.
+
+Output: handoff.md in the working directory. Suggests you gitignore it.
+
+Arguments:
+  /paad:handoff          Infer: history above → save, empty session → resume
+  /paad:handoff save     Write a handoff regardless
+  /paad:handoff resume   Read the existing handoff regardless
+
+Why not just /compact:
+  /compact   summarizes and keeps working — same session, and the
+             summary is machine-written, unreviewed, and buried in
+             the transcript where you cannot edit it
+  --resume   restores the whole prior conversation, re-paying the
+             context cost you were escaping
+  /clear     genuinely fresh, carries nothing forward
+  handoff    a file a human reads and corrects BEFORE anything is
+             built on it
+
+  That review is the only thing it adds. A handoff nobody reads is a
+  worse /compact.
+
+Saving:
+  1. Checks .gitignore for handoff.md and suggests adding it —
+     never edits .gitignore itself
+  2. Verifies with tools what agents get wrong from memory:
+     commit and branch, what is really IN the last commit (not what
+     its message claims), file paths, line numbers, test names,
+     whether the suite passes. Unsettleable claims are marked
+     inferred, not asserted
+  3. Writes the file: goal and what done looks like, decisions and
+     why, approaches ruled out and how far they got, constraints the
+     user stated, the next step, the verify command
+     NOT: architecture tours, session narrative, anything git diff
+     already shows — padding makes the file too long to review
+  4. Names the two or three claims it is least sure of, instead of a
+     generic "review this, AI makes mistakes"
+
+Resuming:
+  1. Reads handoff.md, summarizes it in a few lines
+  2. Compares the recorded commit against HEAD and reports drift
+  3. Asks before proceeding
+  4. Confirms the files and state it names still exist, reports every
+     mismatch, asks again
+  5. Then starts the recorded next step
+
+  Never deletes handoff.md — it is untracked, so git cannot restore
+  it. The next save overwrites it.
 ```
