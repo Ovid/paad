@@ -766,6 +766,16 @@ rediscovering them.
   (scoped) or `/agentic-owasp --changed main` (seeded from the branch diff) or
   `/agentic-owasp --category A01` (one category, or `A01,A05,A07`) or
   `/agentic-owasp --deps` (dependencies, lockfiles, and CI/CD only)
+* **Breadth costs depth, and it costs it silently** — a wide pass does not return
+  a shallower version of a narrow one, it returns a *different* one. Measured on
+  a real framework: pointed at a single module, the review found its flagship
+  weakness in three runs out of three; a full-repository pass over 133 files read
+  that same module, filed a piece of the weakness as a hardening note, and
+  shipped without it. The wide run reported *more* findings overall, which is
+  exactly what hides the trade. So past roughly forty source files the skill
+  stops and asks: narrow to the untrusted-input surface, split into separate
+  subsystem passes, or take the wide pass with the dilution written into the
+  report. Prefer several scoped runs to one sweep
 * **Six specialists, all ten categories, none orphaned** — Access Control &
   Authentication (A01, A07), Injection & Untrusted Input (A05), Cryptography &
   Data Protection (A04), Configuration & Supply Chain (A02, A03), Design,
@@ -813,6 +823,14 @@ rediscovering them.
   outside their own categories as fragments rather than dropping it, and the
   verifier — the only component holding all seven outputs — composes before it
   rejects. A chain link is supposed to look harmless on its own
+* **Every fragment reaches the page, not just a count of them** — the pool is the
+  run's working set, and "63 fragments pooled" is not a record of it. Once the
+  session ends, a fragment that exists only as a number is gone, and nobody can
+  tell afterwards whether a sink was seen and dropped or never looked at. The
+  report lists each one with its `path:line`, the sentence the specialist wrote,
+  and where it ended up — composed into a finding, left without a counterpart, or
+  never traced. That is also what makes a run's conclusions checkable later
+  instead of taken on trust
 * **Reads by default; asks before it runs anything** — no specialist and no
   verifier starts the application, connects to a database, or sends a request to
   any host. Where a sink is reachable in-process, it offers a proof script per
