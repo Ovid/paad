@@ -3,7 +3,7 @@ name: rethink
 
 ---
 
-**On invocation:** announce "Running paad:rethink v1.24.1" before anything else.
+**On invocation:** announce "Running paad:rethink v1.30.0" before anything else.
 
 # Rethink
 

@@ -10,6 +10,8 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.30.0] — 2026-08-20
+
 ### Added
 - **`/paad:agentic-owasp` (experimental) — security review against the OWASP Top
   10:2025.** Six specialists cover all ten categories with none left over:
@@ -817,7 +819,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.24.1...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.30.0...HEAD
+[1.30.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.0
 [1.24.1]: https://github.com/Ovid/paad/releases/tag/paad--v1.24.1
 [1.24.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.24.0
 [1.23.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.23.0

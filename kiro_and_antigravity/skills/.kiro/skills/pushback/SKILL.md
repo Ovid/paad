@@ -3,7 +3,7 @@ name: pushback
 
 ---
 
-**On invocation:** announce "Running paad:pushback v1.24.1" before anything else.
+**On invocation:** announce "Running paad:pushback v1.30.0" before anything else.
 
 # Spec Pushback
 
