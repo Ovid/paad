@@ -13,202 +13,37 @@ what a plugin user sees.
 ## [1.30.0] — 2026-08-20
 
 ### Added
-- **`/paad:agentic-owasp` (experimental) — security review against the OWASP Top
-  10:2025.** Six specialists cover all ten categories with none left over:
-  Access Control & Authentication (A01, A07), Injection & Untrusted Input (A05),
-  Cryptography & Data Protection (A04), Configuration & Supply Chain (A02, A03),
-  Design, Integrity & Failure Modes (A06, A08, A10), and Logging, Alerting &
-  Detection (A09). A seventh, Mechanism & Round-Trip, owns no category at all.
-  An OWASP category names what a weakness *does*, so a hole in the seam between
-  two components that are each individually correct belongs to no category and
-  is owned by none of the six. It hunts two patterns instead — paired APIs that
-  disagree on a round trip, where what one renders the other parses back as
-  something else, and facts the codebase stores twice where the security
-  decision reads the copy the attacker writes — and files what it finds under
-  the category of the impact.
-
-  Findings pass an exploitability gate before reaching the report: an
-  attacker-controlled source with `path:line`, a traced call path to the sink,
-  and a stated reason the controls already in that path do not hold. Anything
-  that cannot produce all three becomes a hardening note or is rejected with the
-  reason recorded. Framework defaults are read in reconnaissance and passed to
-  the specialists, so where an ORM or template engine protects by default the
-  finding is the opt-out rather than the call.
-
-  The verifier's job is to refute, not to confirm: it defaults to refuted when
-  uncertain, reports how many findings it attacked against how many survived,
-  and clears a control by enumerating every caller that reaches the value
-  without passing through it — never by reading where the control lives. A
-  sanitizer on the serialization path says nothing about a sibling accessor that
-  skips it, and the finding being cleared often contains the finding being
-  missed.
-
-  When the subject is a library or a framework, its callers are applications
-  nobody in the repository can see, so "no in-repo caller passes request data
-  into that parameter" is true of every library and rejects nothing. Where the
-  project's own documentation, SYNOPSIS, or examples show the vulnerable call,
-  the documented API is the source: the doc reference stands in for the in-repo
-  one and the finding runs through the gate unchanged. Documentation that
-  teaches the unsafe call ships the defect to every downstream user.
-
-  Six specialists cover ten categories, which means a weakness whose halves fall
-  in two different categories reaches the verifier as two items that each fail
-  the exploitability gate alone. Specialists therefore report out-of-category
-  observations as *fragments* — `path:line`, one sentence, no severity claim —
-  rather than dropping them, and the verifier composes across the pooled
-  fragments, hardening notes, and pending rejections before finalizing any of
-  them. A composition is re-run through the gate as a single finding carrying
-  the severity of the whole chain, and the count is reported even when it is
-  zero. A chain link looks harmless alone; that is what a link is.
-
-  Every pooled fragment reaches the report, not just a count of them. An
-  **Unresolved Fragments** table lists each one with its `path:line`, the
-  sentence the specialist wrote, and where it ended up — composed into a
-  finding, left without a counterpart, or never traced. A count dies with the
-  session; the table is what lets a later reader tell a sink that was seen and
-  dropped from one nobody ever looked at, and what makes a run's conclusions
-  reproducible after its context is gone.
-
-  Scope is gated on size, because breadth costs depth silently. Past roughly
-  forty source files the skill stops and offers the choice — narrow to the
-  untrusted-input surface, split into separate subsystem passes, or take one
-  wide pass with `Scope dilution accepted: yes` recorded in the metadata. A wide
-  run does not return a shallower version of a narrow one; it returns a
-  different result, reporting *more* findings overall while missing ones a
-  narrow pass over the same files finds every time, which is exactly what makes
-  the trade invisible without the record.
-
-  Severity states impact. Whether a finding was executed is a separate
-  `unproven` field and never lowers its rank — a traced smuggling path is
-  "High, unproven", not Medium, because a hedged severity is a lie about impact
-  and a downgraded row is the row nobody fixes.
-
-  Analysis reads code: no specialist and no verifier starts the application,
-  connects to a database, or sends a request to any host. Two execution gates,
-  each its own separate up-front consent and neither touching a live system:
-  before specialists launch, an optional benign-execution offer lets them run
-  read-only in-process probes — the project's existing tests, a deparse, a
-  pure-function call on ordinary input — to settle questions reading cannot
-  answer (a language-semantics subtlety, a round trip, a return value), never a
-  payload and never the network; and after verification the skill offers an
-  optional proof stage for findings whose sink is reachable
-  in-process — a standalone script per finding that exits 0 while the weakness
-  is open and non-zero once it is fixed, each one first proving it reached the
-  code at all so a script that never ran cannot report "secure". The offer is
-  worked down the severity order rather than by whichever proof looks easiest —
-  a run that proves its footnotes with a one-liner and leaves its Criticals
-  "reasoned from source" aimed the tool at the cheapest question — and "offered"
-  is not a recordable outcome: the offer has an answer, the metadata records it,
-  and every finding left unproven says why. It asks before executing anything,
-  lays out both sides, and honors a no; declining costs only the `unproven`
-  mark. Deployed systems are out of scope in every mode.
-
-  The report carries a coverage table across all ten categories where "not
-  assessed" is stated rather than passed off as clean — including when a
-  specialist times out. Live credentials are reported by location and type,
-  never by value, and rotation leads the remediation order.
-
-  Every run ends by stating what the report is not: not a complete list of the
-  weaknesses, and not evidence the rest is secure. Zero findings means one
-  reviewer looked once, inside ten categories, at one scope. Business logic,
-  race conditions, and tenant isolation sit outside the Top 10 and were never in
-  scope. It also says that a second run would surface a different set — the
-  specialists sample a large space and the sampling is not stable, the more so
-  the larger the codebase — so two runs are better unioned than diffed, and one
-  clean run is weak evidence. The report says so at the top and the skill says
-  so again out loud when
-  the run ends, whatever the count — a clean report read as an all-clear leaves
-  a developer worse off than never having run it. The same closing block gives
-  the reasons not to commit the report that survive the findings being fixed:
-  git history is permanent so deleting the file does not remove it, the report
-  ages into a false clearance for code that has since moved, and the severity
-  table travels to readers who never heard the caveats. The report's own header
-  repeats the staleness warning, because the spoken one does not travel with
-  the file.
-
-  It never fixes what it finds. Output goes to `paad/owasp-reviews/` with a
-  persistent `INDEX.md`.
-
-  Experimental — arguments, output paths, and behavior may change or be
-  withdrawn in any release, including a patch release.
-- **`/paad:handoff` — hands this session's work to a fresh session, in
-  writing. Experimental.** Writes a `handoff.md` a human can read and correct,
-  then reads it back on the other side. It exists for one gap `/compact` leaves
-  open: `/compact`'s summary is machine-authored, lands unreviewed, and lives
-  inside the transcript where it cannot be edited. That review is the only
-  thing `handoff` adds, and the skill says so — a handoff nobody reads is a
-  worse `/compact`.
-
-  The failure it guards against is not forgetfulness. Baseline testing showed
-  an agent writing a handoff unaided keeps the expensive material well —
-  approaches already ruled out, the reasons behind them, constraints stated
-  once in passing — and gets the *cheap* material wrong: a test's file path,
-  which changes are really in the last commit, a line number, who said a quoted
-  sentence. Those arrive in the same confident register as everything it got
-  right, and a fresh session has no memory to catch them with. So the skill
-  verifies what is checkable with tools before writing it, marks what is not as
-  inferred, and closes by naming the two or three claims that actually need
-  review rather than issuing a general disclaimer.
-
-  On the way back in it compares the recorded commit against HEAD, confirms the
-  files it named still exist, and reports mismatches before acting. It never
-  deletes `handoff.md` — the file is untracked, so git cannot restore it; the
-  next save overwrites it.
+- **`/paad:agentic-owasp [scope]` — multi-agent security review against the
+  OWASP Top 10:2025. Experimental.** Seven specialists cover the ten categories;
+  a finding ships only if it traces an attacker-controlled source to a sink and
+  says why the controls in that path do not hold, otherwise it becomes a
+  hardening note. It reads code — it never starts the app, reaches a host, or
+  runs attacker-shaped input without its own explicit yes, and it never fixes
+  what it finds. Reports land in `paad/owasp-reviews/`. See README for the
+  design and `/paad:help agentic-owasp` for arguments.
+- **`/paad:handoff [save|resume]` — hands this session's work to a fresh
+  session, in writing. Experimental.** Writes a `handoff.md` you can read and
+  correct before anything is built on it, which is the one thing `/compact`
+  cannot offer. Verifies with tools whatever is checkable, marks the rest
+  inferred. See `/paad:help handoff`.
 
 ### Changed
-- **`/paad:pushback` findings now name what would change their severity.** Each
-  finding states the off-disk fact — a roadmap item, a deadline, who consumes an
-  API, what operators actually want — that would move or dissolve it and what it
-  flips to, or says it is unconditional and stands behind it.
-
-  Ported from `/paad:rethink`, and the only one of four candidate ports that
-  survived testing. Discarded on evidence: a rule to verify claims about
-  external systems (already covered — 5/5 arms, including the no-skill controls,
-  defeated a trap built specifically to beat shallow verification), a ledger of
-  unverified load-bearing assumptions (every entry it produced was off-disk
-  context, near-identical run to run), and an "unsettled" verdict for findings
-  that can't be defended (it opened a hole in the Y-because-Z gate that produces
-  pushback's best measured result). Only this one had a real gap behind it:
-  0 of 17 stock findings named a flip condition.
-
-  Three phrasings were tested, three runs each. The one that shipped states the
-  principle and adds no output slot; the variant that added a required field
-  *without* the principle produced the campaign's only junk condition — "if
-  someone fixes this first it drops to moderate", true of every finding ever
-  written. 16/16 findings carried an actionable, genuinely off-disk condition,
-  5 of them correctly marked unconditional. Under rubber-stamp pressure the
-  finding and discard counts were unchanged from stock.
-- **`/paad:pushback` no longer assumes the thing it reviews is a spec.** Its
-  input scan now also looks at agent steering files (`CLAUDE.md`, `AGENTS.md`,
-  `.cursorrules`, `.kiro/steering/`, `.github/copilot-instructions.md`) and
-  generated analysis (`paad/*-reviews/`), and the fallback prompt asks for a
-  *document* rather than a spec.
-
-  This one fixes a measured failure, not a hypothetical one. Invoked bare in a
-  repo whose only document was a `CLAUDE.md`, the old skill found no candidate
-  and asked "What spec should I review?" — it had located the file and
-  explicitly ruled it out, reasoning that a steering file "describes what the
-  codebase already does, not work proposed for implementation, so it is not a
-  spec candidate." The scan list was a confident wrong instruction and the
-  model obeyed it. With the widened list it finds `CLAUDE.md` and offers it.
-  Three runs per version, clean separation: 0/3 before, 3/3 after.
-
-  Claude Code only. The Kiro and Antigravity exports strip the whole Input
-  Resolution section, because the `$ARGUMENTS` mechanism it describes does not
-  exist there — so this widening does not reach those copies, which still
-  expect you to name the document.
+- **`/paad:pushback` findings now name what would change their severity** — the
+  off-disk fact that would move or dissolve the finding and what it flips to, or
+  an explicit "unconditional".
+- **`/paad:pushback` reviews documents, not just specs.** Its input scan now
+  finds agent steering files (`CLAUDE.md`, `AGENTS.md`, `.cursorrules`,
+  `.kiro/steering/`, copilot instructions) and generated `paad/*-reviews/`
+  output. Claude Code only: the Kiro and Antigravity exports strip the Input
+  Resolution section, so those copies still expect you to name the document.
 
 ### Fixed
-- **`/paad:pushback`'s reality check no longer hides old invalidating
-  commits.** Phase 1 ran `git log --oneline -50 --since="2 weeks ago"`. The two
-  limits are ANDed and the date one usually binds first, so a document
-  invalidated by an eight-month-old commit was reported clean — the commit that
-  broke it fell outside the window and was never read. The command is now
-  `git log --oneline -50`: the limit is 50 commits, not a date.
-- **`/paad:pushback`'s first digraph pointed at the wrong phase.** All three of
-  its terminal nodes read "Proceed to Spec Critique" (Phase 2), skipping
-  Phase 1.5 Scope Shape entirely, and the scope/critique digraph had no entry
-  edge. The sinks now name Scope Shape and connect to it.
+- **`/paad:pushback`'s reality check missed old invalidating commits.** Phase 1
+  ran `git log --oneline -50 --since="2 weeks ago"`; the two limits are ANDed and
+  the date usually bound first, so a document broken by an eight-month-old commit
+  was reported clean. Now `git log --oneline -50`.
+- **`/paad:pushback`'s first digraph sent all three terminal nodes to Phase 2,**
+  skipping Phase 1.5 Scope Shape, which itself had no entry edge. Both fixed.
 
 ## [1.24.1] — 2026-08-01
 
