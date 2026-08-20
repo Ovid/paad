@@ -24,6 +24,8 @@ digraph release {
     "Read [Unreleased]" [shape=box];
     "Anything there?" [shape=diamond];
     "STOP — ask whether a release is wanted" [shape=box, style=bold];
+    "Entries within the length rule?" [shape=diamond];
+    "STOP — trim first, as its own commit" [shape=box, style=bold];
     "Propose MAJOR/MINOR/PATCH with reasoning" [shape=box];
     "User confirms version?" [shape=diamond];
     "On a branch?" [shape=diamond];
@@ -38,7 +40,9 @@ digraph release {
 
     "Read [Unreleased]" -> "Anything there?";
     "Anything there?" -> "STOP — ask whether a release is wanted" [label="empty"];
-    "Anything there?" -> "Propose MAJOR/MINOR/PATCH with reasoning" [label="entries"];
+    "Anything there?" -> "Entries within the length rule?" [label="entries"];
+    "Entries within the length rule?" -> "STOP — trim first, as its own commit" [label="no"];
+    "Entries within the length rule?" -> "Propose MAJOR/MINOR/PATCH with reasoning" [label="yes"];
     "Propose MAJOR/MINOR/PATCH with reasoning" -> "User confirms version?";
     "User confirms version?" -> "Propose MAJOR/MINOR/PATCH with reasoning" [label="no"];
     "User confirms version?" -> "On a branch?" [label="yes"];
@@ -62,6 +66,42 @@ Read the `## [Unreleased]` section of `CHANGELOG.md`.
 version to bump to, and do not go hunting through `git log` for things that
 should have been logged — an unrecorded change is a changelog bug to fix first,
 as its own commit, not something to sweep into a release.
+
+## 1.5. Check the entries against the length rule
+
+CLAUDE.md sets it: **1–3 lines per entry, at most 8 for a new skill, ending in a
+pointer to `paad:help` or README.** Once this section rolls into a version
+heading it is published, and trimming it afterwards means editing released
+history. Catch it here.
+
+Read each bullet and ask what it is doing:
+
+| In the entry | Verdict |
+|---|---|
+| What changed, who it affects, what to do | Keep |
+| A pointer to `paad:help` or README | Keep |
+| How the feature works internally — phases, agents, gates | Cut |
+| Why the design is right, or what was rejected | Cut |
+| Testing evidence, run counts, measured before/after | Cut |
+
+The test from CLAUDE.md: **if it explains a mechanism, it is in the wrong file.**
+That material is worth keeping — it belongs in the commit message, in README, or
+in `paad:help`, all of which already exist. A changelog copy is a third copy that
+has to be hand-synced and drifts.
+
+Sanity check the size:
+
+```bash
+awk '/^## \[/{if(n)print len" lines  "n; n=$0; len=0; next} {len++} END{print len" lines  "n}' CHANGELOG.md | head -5
+```
+
+A section running past ~40 lines for a normal release is the signal. Sections in
+this file's history run to 200 lines; those are the mistake, not the precedent.
+
+**If entries are too long, stop and say so.** Trimming is its own commit *before*
+the release, exactly like a missing entry is — not a silent edit during it, and
+not something to fold into the release commit. Propose the shortened text, get
+sign-off, commit it, then start again at step 1.
 
 ## 2. Propose the version
 
