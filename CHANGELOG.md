@@ -129,6 +129,29 @@ what a plugin user sees.
 
   Experimental — arguments, output paths, and behavior may change or be
   withdrawn in any release, including a patch release.
+- **`/paad:handoff` — hands this session's work to a fresh session, in
+  writing. Experimental.** Writes a `handoff.md` a human can read and correct,
+  then reads it back on the other side. It exists for one gap `/compact` leaves
+  open: `/compact`'s summary is machine-authored, lands unreviewed, and lives
+  inside the transcript where it cannot be edited. That review is the only
+  thing `handoff` adds, and the skill says so — a handoff nobody reads is a
+  worse `/compact`.
+
+  The failure it guards against is not forgetfulness. Baseline testing showed
+  an agent writing a handoff unaided keeps the expensive material well —
+  approaches already ruled out, the reasons behind them, constraints stated
+  once in passing — and gets the *cheap* material wrong: a test's file path,
+  which changes are really in the last commit, a line number, who said a quoted
+  sentence. Those arrive in the same confident register as everything it got
+  right, and a fresh session has no memory to catch them with. So the skill
+  verifies what is checkable with tools before writing it, marks what is not as
+  inferred, and closes by naming the two or three claims that actually need
+  review rather than issuing a general disclaimer.
+
+  On the way back in it compares the recorded commit against HEAD, confirms the
+  files it named still exist, and reports mismatches before acting. It never
+  deletes `handoff.md` — the file is untracked, so git cannot restore it; the
+  next save overwrites it.
 
 ### Changed
 - **`/paad:pushback` findings now name what would change their severity.** Each
@@ -184,31 +207,6 @@ what a plugin user sees.
   its terminal nodes read "Proceed to Spec Critique" (Phase 2), skipping
   Phase 1.5 Scope Shape entirely, and the scope/critique digraph had no entry
   edge. The sinks now name Scope Shape and connect to it.
-
-### Added
-- **`/paad:handoff` — hands this session's work to a fresh session, in
-  writing. Experimental.** Writes a `handoff.md` a human can read and correct,
-  then reads it back on the other side. It exists for one gap `/compact` leaves
-  open: `/compact`'s summary is machine-authored, lands unreviewed, and lives
-  inside the transcript where it cannot be edited. That review is the only
-  thing `handoff` adds, and the skill says so — a handoff nobody reads is a
-  worse `/compact`.
-
-  The failure it guards against is not forgetfulness. Baseline testing showed
-  an agent writing a handoff unaided keeps the expensive material well —
-  approaches already ruled out, the reasons behind them, constraints stated
-  once in passing — and gets the *cheap* material wrong: a test's file path,
-  which changes are really in the last commit, a line number, who said a quoted
-  sentence. Those arrive in the same confident register as everything it got
-  right, and a fresh session has no memory to catch them with. So the skill
-  verifies what is checkable with tools before writing it, marks what is not as
-  inferred, and closes by naming the two or three claims that actually need
-  review rather than issuing a general disclaimer.
-
-  On the way back in it compares the recorded commit against HEAD, confirms the
-  files it named still exist, and reports mismatches before acting. It never
-  deletes `handoff.md` — the file is untracked, so git cannot restore it; the
-  next save overwrites it.
 
 ## [1.24.1] — 2026-08-01
 
