@@ -522,8 +522,14 @@ What it does:
   1. Reconnaissance: framework defaults first — the ORM, template engine,
      and middleware decide which findings are even real
   2. Attack surface mapping: untrusted sources, dangerous sinks, and the
-     controls already sitting between them, each with path:line
-  3. Dispatches 6 specialist agents in parallel, covering all ten
+     controls already sitting between them, each with path:line.
+     Then, before specialists launch, an optional benign-execution offer:
+     with your explicit yes, specialists may run read-only in-process
+     probes — your existing tests, a deparse, a pure-function call on
+     ordinary input — to settle questions reading cannot. Never a payload,
+     never a server or network, never a write; a separate decision from the
+     proof stage below, and off unless you say yes
+  3. Dispatches 7 specialist agents in parallel. Six cover all ten
      categories with none left over:
      - Access Control & Authentication     (A01, A07)
      - Injection & Untrusted Input         (A05)
@@ -531,6 +537,11 @@ What it does:
      - Configuration & Supply Chain        (A02, A03)
      - Design, Integrity & Failure Modes   (A06, A08, A10)
      - Logging, Alerting & Detection       (A09)
+     The seventh owns no category and hunts by mechanism instead:
+     - Mechanism & Round-Trip              (the seams)
+       Round-trip asymmetry between paired APIs, and facts the code
+       stores twice where a control reads only one copy. Files its
+       findings under the category of the impact.
   4. Exploitability gate: a finding must name an attacker-controlled
      source, a traced path to the sink, and why the existing controls do
      not hold. Anything that cannot becomes a hardening note or is rejected.
@@ -541,15 +552,21 @@ What it does:
      weakness split across two categories is not lost by both
   5. Optional proof stage: where a sink is reachable in-process, offers to
      write a standalone script per finding that exits 0 while the weakness
-     is open. Always asks first, with the trade-offs; never executes
-     without a yes. Declining costs nothing — unproven findings keep their
-     severity and are marked unproven
+     is open, worked down the severity order rather than by whichever
+     proof looks easiest. Always asks first, with the trade-offs; never
+     executes without a yes. Declining costs nothing — unproven findings
+     keep their severity, and each says why it went unproven
   6. Writes a report with:
      - Coverage table across all ten categories — "not assessed" is
        stated, never passed off as clean
      - Findings ranked Critical / High / Medium, hardening notes separate
      - Dependency findings marked called vs present-but-unreachable
-     - Rejected candidates, so the next run does not rediscover them
+     - Every pooled fragment listed individually — path:line, what the
+       specialist saw, where it ended up — not just a count, so a sink
+       that was seen and dropped stays distinguishable from one nobody
+       looked at once the session is gone
+     - Rejected candidates, each with the positive evidence that killed
+       it, so the next run does not rediscover them
      - A remediation order, which is not severity order
 
 Live credentials are reported by location and type only — never by value,
@@ -559,10 +576,19 @@ No report is a complete list of the weaknesses in the code, and the skill
 says so at the end of every run — along with why committing the report is
 risky even after the findings are fixed: git history is permanent, the
 report ages into a false clearance, and the caveats do not travel with the
-severity table. Zero findings means one reviewer looked
-once inside ten categories and could not prove a path — not that the code
-is secure. Severity states impact; whether a finding was executed is a
-separate field and never lowers it.
+severity table. Zero findings means one reviewer looked once inside ten
+categories and could not prove a path — not that the code is secure. Two
+runs find different things, and the larger the codebase the wider the gap,
+so union two runs rather than diffing them. Severity states impact;
+whether a finding was executed is a separate field and never lowers it.
+
+Scope is gated on size. Past roughly 40 source files the skill stops and
+offers a choice: narrow to the untrusted-input surface, split into separate
+subsystem passes, or take one wide pass with the dilution recorded in the
+report. Breadth costs depth, and it costs it silently — a wide run returns a
+different result rather than a shallower one, often reporting more findings
+overall while missing a weakness a narrow pass over the same file finds
+every time. Prefer several scoped runs to one repository-wide sweep.
 
 Best used in a fresh session — consumes significant context.
 ```

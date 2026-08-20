@@ -24,9 +24,20 @@ dangerous operation, and the controls already sitting in that path have been
 read.
 
 **This skill reads code by default and never modifies a file outside its own
-report.** Specialists and the verifier never execute anything: no starting the
-application, no requests to any host, no proof-of-concept code. Confirmation
-comes from reading.
+report.** Specialists and the verifier never start the application, reach any
+host, or run attacker-shaped input. By default they confirm by reading. With the
+user's explicit up-front authorization (the Phase 2.5 offer) they may
+additionally run **benign, in-process, read-only probes** — the project's
+existing tests, a deparse or `-c` check, a pure-function call on ordinary input —
+to settle a question reading cannot. That is never a payload, never a server,
+never the network, never a write. Attacker-shaped proof stays behind its own
+separate gate after Phase 4.
+
+**Two execution gates, never one.** The benign-probe offer (Phase 2.5, before
+specialists) and the attacker-shaped proof offer (after Phase 4) are distinct
+decisions with distinct authorizations. Neither implies the other; declining one
+says nothing about the other; and no execution of either kind happens without its
+own explicit yes.
 
 **Proof by execution is available, and it is the user's call, never yours.**
 After verification, offer it for the High and Medium findings whose sink is
@@ -51,19 +62,29 @@ looking. Say it in the report and say it again when the run ends.
 digraph preflight {
   "Conversation has history?" [shape=diamond];
   "Repository available?" [shape=diamond];
-  "Scope too large?" [shape=diamond];
+  "Count source files in scope" [shape=box];
+  "More than ~40 files?" [shape=diamond];
   "Proceed to Phase 1" [shape=box];
   "STOP: recommend new session" [shape=box, style=bold];
   "STOP: not in repo" [shape=box, style=bold];
+  "OFFER: narrow to untrusted-input surface, split into subsystem passes, or accept dilution" [shape=box, style=bold];
   "NARROW: choose seed scope" [shape=box];
+  "SPLIT: run coherent subsystems as separate reviews" [shape=box];
+  "RECORD: Scope dilution accepted = yes, with what was traded" [shape=box];
 
   "Conversation has history?" -> "STOP: recommend new session" [label="yes"];
   "Conversation has history?" -> "Repository available?" [label="no"];
   "Repository available?" -> "STOP: not in repo" [label="no"];
-  "Repository available?" -> "Scope too large?" [label="yes"];
-  "Scope too large?" -> "NARROW: choose seed scope" [label="yes"];
-  "Scope too large?" -> "Proceed to Phase 1" [label="no"];
+  "Repository available?" -> "Count source files in scope" [label="yes"];
+  "Count source files in scope" -> "More than ~40 files?";
+  "More than ~40 files?" -> "OFFER: narrow to untrusted-input surface, split into subsystem passes, or accept dilution" [label="yes"];
+  "More than ~40 files?" -> "Proceed to Phase 1" [label="no"];
+  "OFFER: narrow to untrusted-input surface, split into subsystem passes, or accept dilution" -> "NARROW: choose seed scope" [label="narrow"];
+  "OFFER: narrow to untrusted-input surface, split into subsystem passes, or accept dilution" -> "SPLIT: run coherent subsystems as separate reviews" [label="split"];
+  "OFFER: narrow to untrusted-input surface, split into subsystem passes, or accept dilution" -> "RECORD: Scope dilution accepted = yes, with what was traded" [label="user wants one wide pass"];
   "NARROW: choose seed scope" -> "Proceed to Phase 1" [label="user decides or best-effort scope chosen"];
+  "SPLIT: run coherent subsystems as separate reviews" -> "Proceed to Phase 1" [label="first subsystem"];
+  "RECORD: Scope dilution accepted = yes, with what was traded" -> "Proceed to Phase 1";
 }
 ```
 
@@ -76,7 +97,7 @@ digraph session {
   "STOP: report location, never the value, tell user to rotate" [shape=box, style=bold];
   "Phase 2: Attack Surface Mapping" [shape=box];
   "Surface found?" [shape=diamond];
-  "Phase 3: Specialist Review (6 agents, parallel)" [shape=box];
+  "Phase 3: Specialist Review (7 agents, parallel)" [shape=box];
   "Any specialist errored/timed_out/malformed?" [shape=diamond];
   "Retry that specialist ONCE" [shape=box];
   "Phase 4: Verifier (exploitability gate)" [shape=box];
@@ -85,6 +106,7 @@ digraph session {
   "Verifier returned on retry?" [shape=diamond];
   "User says proceed unverified?" [shape=diamond];
   "STOP: surface verifier failure, write no report" [shape=box, style=bold];
+  "Phase 2.5: Offer benign execution (tests/deparse/pure calls; NEVER payloads, servers, network, writes); ask once" [shape=box];
   "Any High/Medium sink reachable in-process?" [shape=diamond];
   "Offer proof stage: pros, cons, ask once" [shape=box];
   "User authorized proof?" [shape=diamond];
@@ -103,8 +125,9 @@ digraph session {
   "Live credential seen?" -> "Phase 2: Attack Surface Mapping" [label="no"];
   "Phase 2: Attack Surface Mapping" -> "Surface found?";
   "Surface found?" -> "Report: no reachable findings in scope" [label="no"];
-  "Surface found?" -> "Phase 3: Specialist Review (6 agents, parallel)" [label="yes"];
-  "Phase 3: Specialist Review (6 agents, parallel)" -> "Any specialist errored/timed_out/malformed?";
+  "Surface found?" -> "Phase 2.5: Offer benign execution (tests/deparse/pure calls; NEVER payloads, servers, network, writes); ask once" [label="yes"];
+  "Phase 2.5: Offer benign execution (tests/deparse/pure calls; NEVER payloads, servers, network, writes); ask once" -> "Phase 3: Specialist Review (7 agents, parallel)" [label="answer recorded; relax specialist clause only if yes"];
+  "Phase 3: Specialist Review (7 agents, parallel)" -> "Any specialist errored/timed_out/malformed?";
   "Any specialist errored/timed_out/malformed?" -> "Retry that specialist ONCE" [label="yes"];
   "Retry that specialist ONCE" -> "Phase 4: Verifier (exploitability gate)" [label="record outcome map either way"];
   "Any specialist errored/timed_out/malformed?" -> "Phase 4: Verifier (exploitability gate)" [label="no"];
@@ -140,6 +163,7 @@ digraph exploitability {
   "Call path traced from source to sink?" [shape=diamond];
   "Existing control neutralizes it?" [shape=diamond];
   "Control is complete and always applied?" [shape=diamond];
+  "Documented public API accepts the value?" [shape=diamond];
   "REJECT: no demonstrated source" [shape=box, style=bold];
   "DOWNGRADE to Low, move to Hardening" [shape=box];
   "REJECT: control holds, note it" [shape=box, style=bold];
@@ -150,8 +174,10 @@ digraph exploitability {
   "KEEP: rank Critical/High/Medium by reach and impact; mark unproven, never downgrade for it" [shape=box];
 
   "Candidate finding" -> "Untrusted source named, with path:line?";
-  "Untrusted source named, with path:line?" -> "REJECT: no demonstrated source" [label="no, and none exists"];
-  "Untrusted source named, with path:line?" -> "DOWNGRADE to Low, move to Hardening" [label="no, but the pattern is still weak"];
+  "Untrusted source named, with path:line?" -> "Documented public API accepts the value?" [label="no in-repo caller"];
+  "Documented public API accepts the value?" -> "REJECT: no demonstrated source" [label="no — and the subject is an application"];
+  "Documented public API accepts the value?" -> "Call path traced from source to sink?" [label="yes — cite the doc as the source"];
+  "Untrusted source named, with path:line?" -> "DOWNGRADE to Low, move to Hardening" [label="no source at all, but the pattern is still weak"];
   "Untrusted source named, with path:line?" -> "Call path traced from source to sink?" [label="yes"];
   "Call path traced from source to sink?" -> "DOWNGRADE to Low, move to Hardening" [label="no"];
   "Call path traced from source to sink?" -> "Existing control neutralizes it?" [label="yes"];
@@ -172,7 +198,9 @@ digraph exploitability {
 ## The Ten Categories
 
 The 2025 list. Every category is assigned to exactly one specialist in Phase 3;
-none is left uncovered.
+none is left uncovered. A seventh specialist owns no category at all — it looks
+for mechanisms that cross every category, and files what it finds under the
+category of the impact.
 
 | ID | Category | What it covers |
 |----|----------|----------------|
@@ -207,6 +235,12 @@ could reach, or a control that is missing where the design requires one.
 * A dependency that is unmaintained, pinned to a version with a known CVE, or
   installed from an untrusted source.
 * A CI workflow that runs untrusted pull-request code with access to secrets.
+* A documented public API that mangles, or fails to escape, a value the
+  project's own documentation shows being fed from a request.
+* A pair of APIs that disagree on a round trip — what one renders, the other
+  parses back as something else.
+* One fact held in two places, where the security decision reads the copy the
+  attacker writes.
 
 ## What Does Not Count
 
@@ -449,6 +483,66 @@ Read-only audit commands are permitted here where the toolchain provides them �
 failure as "not assessed", never as "clean", and record which ran in the
 report's metadata. Do **not** install tooling to make them run.
 
+## Phase 2.5: Benign-execution offer
+
+Reading alone has a known failure mode that is not the same as the one the proof
+stage fixes. The proof stage settles *whether a found finding is real*. This
+stage settles *questions a specialist cannot answer by reading at all* — a
+language-semantics subtlety (does this operator bind the way it looks like it
+does?), a round-trip (does `render(parse(x))` still mean `x`?), a return value on
+an ordinary input. Those are answered by running a pure function or a deparse,
+not by staring harder, and a specialist that cannot run them either caps its
+confidence or reasons its way to a wrong rejection. A single small command often
+settles what a page of prose cannot.
+
+**This is not the proof stage, and it never runs attacker-shaped input.** The
+authorizations are separate: this one is asked here, before specialists launch;
+the attacker-shaped proof offer is asked after Phase 4 (see "Optional proof
+stage" in Phase 4). A yes here is not a yes there, and neither is assumed.
+
+**Eligibility.** Offer this only when the subject is code you can exercise
+in-process without a payload — a library, a parser, a set of pure functions, a
+project with an existing test suite. If exercising the code at all would require
+starting a server, binding a port, or reaching a network or database, there is
+nothing benign to run here; skip the offer and say so.
+
+**Ask once, up front, and scope it narrowly.** Do not ask "may agents run code?"
+Ask exactly what will run:
+
+> "Before the specialists start, I can let them run **benign, read-only, in-process
+> probes** to settle questions reading cannot — your existing test suite, a
+> deparse or syntax check, a pure-function call on ordinary (non-attacker-shaped)
+> input to observe a round trip or a return value.
+>
+> **For:** it catches the class of bug where careful reading reaches the wrong
+> answer — a rejection that a one-line call would have overturned, a finding
+> capped at 79 for want of a fact a deparse settles. It raises confidence on real
+> findings and kills false ones earlier.
+>
+> **Against:** it executes this repository's own code, which may not be yours. It
+> is bounded to benign input and pure calls — no payloads, no server, no network,
+> no writes — but it is still execution, and it forfeits the 'nothing in this
+> repo ran until you said so' guarantee.
+>
+> This is a separate decision from the attacker-shaped proof I may offer at the
+> end. Shall I enable benign probes for the specialists?"
+
+**Honor the answer, and record it.** "Offered" is not an outcome — the offer ends
+in yes or no, and the report's Review Metadata records which. On **no** (or when
+the offer was not eligible), the specialists and the verifier run strictly
+read-only exactly as before: existing tests and audit tools are still allowed by
+the Read-only clause, but no new execution. On **yes**, include the *authorized*
+variant of the Benign-execution clause in every specialist prompt and in the
+verifier prompt.
+
+**The gate does not move; the payload stays downstream.** Benign execution feeds
+the specialists better hypotheses — it does not replace the verifier's
+refutation, and it does not touch the after-Phase-4 payload proofs. Every finding
+a benign probe informs still passes the exploitability gate, and any benign
+command a specialist runs must be recorded in the finding (exact command and
+output) so the verifier can re-run it. Attacker-shaped input never runs here,
+regardless of the answer.
+
 ## Phase 3: Specialist Review
 
 Dispatch agents in parallel using the Agent tool.
@@ -463,9 +557,17 @@ defaults from Phase 1, relevant files, tests, and steering files.
 | **Configuration & Supply Chain** | A02, A03 | Defaults, debug modes, CORS, headers, cloud and container permissions; dependency provenance and freshness, CI/CD trust, artifact signing, SBOM. |
 | **Design, Integrity & Failure Modes** | A06, A08, A10 | Controls that are missing rather than broken: rate limiting, tenant isolation, business-logic abuse. Deserialization and unsigned-update trust. Error paths that fail open, skip rollback, or leak internals. |
 | **Logging, Alerting & Detection** | A09 | Whether a breach would be visible: security events logged, logs alertable and tamper-evident, log injection, secrets and PII written to logs. |
+| **Mechanism & Round-Trip** | none — files under the category of the impact | The seams between components that are each correct. Round-trip asymmetry between paired APIs, and facts the codebase stores twice where a control reads only one copy. |
+
+The first six are organized by OWASP category, which is a taxonomy of
+consequences. The seventh is organized by mechanism, because the weakness that
+lives between two correct components belongs to no consequence category and so
+is owned by none of the six.
 
 If `--category` was supplied, dispatch only the specialists owning the named
-categories. If the codebase is large, partition each specialist's scope by
+categories, plus **Mechanism & Round-Trip**, which owns none and is dispatched
+on every run — filter its output to the named categories instead of dropping
+the agent. If the codebase is large, partition each specialist's scope by
 entry point or module, not alphabetically.
 
 ### Agent Prompt Template
@@ -502,10 +604,41 @@ Each specialist agent prompt must include:
   Do not investigate it — that is someone else's category and your time is
   better spent in yours. Half a dozen fragments is a healthy run; if you have
   none, say so rather than inventing them."
+* **Library clause** (mandatory, when the subject is a library or framework):
+  "This codebase is called by applications you cannot see. 'No caller in this
+  repository passes request data into that parameter' is true of every library
+  and rejects nothing. If the project's own documentation, SYNOPSIS, or examples
+  show the parameter being handed a value an application would take from a
+  request — a hash of parameters, a header echo, a name, a path segment — then
+  the documented call is the source. Cite the documentation with its `path:line`
+  in place of an in-repo source and report the finding. Documentation that
+  teaches the vulnerable call is worse than code that contains it, because it
+  ships the defect to every downstream user."
 * **No-exploitation clause** (mandatory): "Do not write, run, or commit exploit
   code or proof-of-concept payloads. Do not start the application, connect to
   any database, or send a request to any host. Confirm findings by reading code,
   call sites, configuration, and tests."
+* **Benign-execution clause** (mandatory — include exactly one variant, chosen by
+  the Phase 2.5 answer):
+  * *Default variant (benign execution NOT authorized):* "Do not execute the
+    subject's code beyond the read-only commands the Read-only clause permits. If
+    a question can only be settled by running something, do not — cap that
+    finding's confidence at 79 and state the exact command that would settle it."
+  * *Authorized variant (the user said yes in Phase 2.5):* "The user authorized
+    benign, in-process execution for this run. You MAY, to settle a question
+    reading cannot: run the project's existing tests; run a deparse or syntax
+    check (e.g. `perl -MO=Deparse`, `-c`, `python -c`, `node --check`); call a
+    pure library function on ordinary, non-attacker-shaped input to observe a
+    round trip or a return value. You MUST NOT, even so: pass attacker-shaped or
+    payload input to anything; start the application; bind or connect to any
+    port, socket, or database; send a request to any host; or write, patch, or
+    mutate any file — including to 'test whether a finding is real'. If a
+    question can only be settled by any of those, do not — leave it for the
+    after-Phase-4 proof stage, cap the finding at 79, and say what would confirm
+    it. When a benign probe settles a question, record the exact command and its
+    output in the finding so the verifier can re-run it; a probe you ran but did
+    not record did not happen. A finding confirmed by a benign probe is not
+    capped at 79 — it was settled without changing code."
 * **Credential clause** (mandatory): "If you encounter what appears to be a real
   credential, never reproduce its value in your output. Report the `path:line`
   and the credential type only."
@@ -522,7 +655,10 @@ Each specialist agent prompt must include:
   You may run read-only commands (existing tests, linters, type checkers,
   dependency audit tools) unchanged — their caches, coverage files, and build
   output are fine. If confirming a finding would require changing code, do not —
-  cap that finding's confidence at 79 and state what would confirm it."
+  cap that finding's confidence at 79 and state what would confirm it. (When the
+  Benign-execution clause's authorized variant is in force, its allowances and
+  its own limits govern what else you may run; this clause's no-writes rule still
+  holds absolutely.)"
 
 ### Access Control & Authentication Additional Instruction
 
@@ -580,6 +716,42 @@ target. Then check the opposite failure: credentials, tokens, session IDs, and
 PII being written into logs, and unescaped user input reaching a log line
 (CWE-117). Both directions are A09."
 
+### Mechanism & Round-Trip Additional Instruction
+
+"You are not organized by OWASP category. The other six are, and a category is
+a taxonomy of consequences — which means a weakness that lives in the seam
+between two components that are each individually correct belongs to no
+category and is owned by none of them. Yours is a taxonomy of mechanism. Two
+mechanisms, both of which you hunt by pattern rather than by consequence:
+
+**Round trip.** For every pair of APIs in scope that converts between
+representations — parse and render, encode and decode, serialize and
+deserialize, build and split, escape and unescape — check whether
+`render(parse(x))` and `parse(render(x))` still mean `x` for hostile `x`:
+separators, path segments, control characters, CR and LF, NUL, percent-encoding,
+HTML entities, quotes. The finding is the asymmetry: a value one side treats as
+data and the other as structure. Name both halves with `path:line`, the input
+that survives the round trip changed, and what the changed value now means. An
+output path that re-escapes while the parsed object keeps the raw bytes is a
+finding even though the printed form looks harmless — that asymmetry *is* the
+finding, because the security decision reads the object, not the print.
+
+**Two answers to one question.** Find every fact this codebase holds twice — a
+host from the request line and a host from a header, a length from a header and
+a length from the body, an identity from a token and an identity from a
+parameter, a value validated on one branch and compared on another — and ask
+which copy the security decision reads, and whether the attacker picks it. Where
+one function handles the same input in two branches with different strictness
+(a regex match here, an exact comparison there), that is the same defect in
+miniature and it is a finding. Name both storage sites with `path:line`, the
+control that reads one of them, and how an attacker makes the two disagree.
+
+Report under the OWASP category of the *impact*, not of the mechanism. Every
+other clause in this prompt — the exploitability gate, the confidence floor, the
+fragment list — applies to you unchanged. You will report fewer findings than
+the category specialists; the ones you report are the ones none of them can
+see."
+
 ### Specialist Outcomes — Handoff Contract for Phase 4
 
 Specialists can complete normally, time out, error, return empty, or return
@@ -630,6 +802,10 @@ Then:
    non-`returned` row must be called out explicitly: e.g. "Specialists missing:
    Cryptography & Data Protection (timed_out) — A04 not assessed."
 
+The Mechanism & Round-Trip specialist owns no category, so its absence marks no
+category `not assessed` — record its outcome in the map and say in the executive
+summary that the cross-category mechanism pass did not run.
+
 A run with one or more specialists missing is a **degraded** run; the report
 must say so in the executive summary, not just in metadata. For a security
 report this is the difference between "we found nothing in A04" and "nobody
@@ -648,6 +824,18 @@ per-finding decision. The verifier must:
 1. Read the actual current code at every referenced location.
 2. For each finding, confirm the untrusted source exists and is genuinely
    attacker-controlled at the named `path:line`.
+
+   **When the subject is a library or a framework, its callers are applications
+   you cannot see.** "No in-repo caller passes request data into this parameter"
+   is true of every library and rejects nothing — the library's callers are the
+   applications, and they are the thing being protected. If the project's own
+   documentation, SYNOPSIS, or examples show the parameter taking a value an
+   application would read from a request, the documented call *is* the source:
+   cite the doc with its `path:line`, mark the finding `reachable via documented
+   public API`, and run it through the rest of the gate unchanged. Documentation
+   that teaches the vulnerable call is worse than code that contains it. Reserve
+   the "no caller reaches it" rejection for an application codebase, where an
+   unreachable parameter really is unreachable.
 3. Trace the call path from source to sink and reproduce it in the finding, hop
    by hop, with `path:line` at each hop. A finding whose path cannot be traced
    is not a vulnerability yet.
@@ -695,6 +883,13 @@ per-finding decision. The verifier must:
    Say what happened either way. "No compositions found across N fragments and M
    hardening notes" is a real result and belongs in the metadata; silence there
    is indistinguishable from having skipped the step.
+
+   **Then hand every fragment forward individually, composed or not.** The pool
+   is the run's working set, and a count is not a record of it: once the session
+   ends, a fragment that exists only as a number in the metadata is gone, and
+   nobody can tell afterwards whether a sink was seen and dropped or never seen.
+   Each one goes in the report's **Unresolved Fragments** table with its
+   `path:line`, the sentence the specialist wrote, and where it ended up.
 7. Reject findings based only on a matched pattern, a dangerous-looking API
    name, or the absence of a control the framework supplies by default.
 8. Reject duplicates across specialists, noting which specialists agreed —
@@ -749,14 +944,18 @@ where the next run can pick it up. If you cannot produce all three elements,
 downgrade the finding to a hardening note or reject it. Do not inflate severity
 — a report where everything is Critical gets read the way everything is Low.
 
-You are also the only component that sees all six specialists at once. Each was
-scoped to its own OWASP categories and told to report cross-category
+You are also the only component that sees all seven specialists at once. Six were
+scoped to their own OWASP categories and told to report cross-category
 observations as fragments rather than findings, so a weakness that crosses a
 category boundary arrives as two harmless-looking pieces owned by nobody.
 Before you finalize a rejection or a hardening downgrade, check the pooled
 fragments and the other rejected items for the piece that completes it. A link
 that looks harmless alone is the expected appearance of a link. Report how many
-fragments you were given and how many compositions you found, including zero.
+fragments you were given and how many compositions you found, including zero,
+and return the fragments themselves — each with its `path:line`, its original
+sentence, and what became of it. A number is not a record; the pool has to
+survive this session or the next reader cannot tell a dropped sink from an
+unseen one.
 
 There is no rejection quota, and no confirmation quota either. Confirming
 everything is the failure mode this stage exists to prevent: a verifier that
@@ -774,6 +973,16 @@ Do not modify any file in the repository. You may run read-only commands
 confirming a finding would require changing code or triggering the bug, do not —
 reject it as unverified and record in the rejected table what would have
 confirmed it."
+
+[Include only when the user authorized benign execution in Phase 2.5:] "Benign,
+in-process execution was authorized for this run. Where a specialist recorded a
+benign probe (a deparse, a pure-function call on ordinary input, an existing
+test) as the basis for a finding, you may **re-run that exact command** to
+confirm the specialist did not misreport its output — a recorded probe that does
+not reproduce is grounds to reject the finding. You may also run your own benign
+probe of the same kind to settle a refutation. The limits are unchanged: no
+attacker-shaped input, no application start, no port/socket/database, no host, no
+writes. Attacker-shaped confirmation stays in the after-Phase-4 proof stage."
 
 "If a finding reproduces what appears to be a real credential value, strip the
 value and keep only the `path:line` and credential type. Never carry a secret
@@ -804,12 +1013,20 @@ may not belong to the user.
 That trade-off is the user's to make, not yours. **Never execute without asking,
 and never skip the offer because you assume the answer.**
 
-After the exploitability gate produces its findings, identify the High and
-Medium findings whose sink is reachable **in-process** — a library call, a
+After the exploitability gate produces its findings, identify the Critical,
+High, and Medium findings whose sink is reachable **in-process** — a library call, a
 locally-bound server, a parser, a template render. Findings that need a deployed
 system, a third-party host, or credentials you do not have are not eligible;
 say so and move on. If none are eligible, skip the offer entirely rather than
 asking a question with no useful answer.
+
+**Eligibility is about the sink, not about how easy the proof looks.** If any
+part of this run already settled a question by running a one-line command — a
+`perl -e`, a `python -c`, a single call into the library under review — then the
+capability was there the whole time, and the top finding is one line away too. A
+report whose footnotes say "verified by running it" while its Criticals say
+"unproven — reasoned from source" aimed the tool at the cheapest question in the
+run. Order the offer by severity, never by convenience.
 
 If at least one is eligible, ask once — not per finding — and give both sides
 plainly:
@@ -830,6 +1047,9 @@ plainly:
 > ready-made one.
 >
 > Shall I? I can also do a subset."
+
+"Offered" is not an outcome. The offer ends in a yes, a subset, or a no, and the
+report records which — see the metadata field.
 
 Honor the answer without arguing. Declining is a legitimate choice and the
 report is still worth having; every unproven finding keeps its severity and
@@ -858,6 +1078,11 @@ If the user authorizes it:
   weakness does not silently disappear — it moves the finding to the rejected
   table with the script and its output, which is the most valuable rejection
   this skill can produce.
+* **Work down the severity order.** Every eligible Critical, then every High,
+  then Medium. If you stop early — a script that will not converge, a sink that
+  turns out to need state you cannot build — name the findings you did not
+  attempt and say per finding why. An `unproven` mark with no reason attached is
+  the failure this stage exists to remove.
 * **The scripts are exploits.** They fall under the same commit warning as the
   report, and the Post-Review warning must name them explicitly.
 
@@ -1011,7 +1236,10 @@ cells.
 > business-logic flaws, race conditions, tenant isolation, anything specific to
 > your domain. Findings elsewhere do not lower the odds of findings here, and a
 > long list is not evidence of thoroughness any more than an empty one is
-> evidence of safety. Treat this as a floor on what is wrong, never a ceiling.
+> evidence of safety. A second run would surface a different set — the search
+> space is large and sampling it is not stable, the more so the larger the
+> codebase — so compare this against another run by union, not by diff. Treat
+> this as a floor on what is wrong, never a ceiling.
 
 ## Executive Summary
 
@@ -1035,6 +1263,10 @@ State plainly if the run was degraded (a specialist missing) or scoped
 | A09 | Security Logging and Alerting Failures | | | |
 | A10 | Mishandling of Exceptional Conditions | | | |
 
+The Mechanism & Round-Trip specialist owns no row here; its findings are counted
+under the category of their impact, and its outcome appears in the specialist
+outcome map.
+
 "Assessed: no" means nobody looked. It does not mean clean. "Assessed: yes"
 with zero findings does not mean clean either — it means one reviewer looked
 once and did not find a provable path. Neither column is a clearance.
@@ -1045,7 +1277,8 @@ once and did not find a provable path. Neither column is a clearance.
 
 #### [C1] <one-line weakness> — A05, CWE-89
 
-- **Source:** `path/to/file:line` — <the attacker-controlled input>
+- **Source:** `path/to/file:line` — <the attacker-controlled input; for a
+  library, the documented public API with the doc's `path:line`>
 - **Path:** `path:line` → `path:line` → `path:line`
 - **Sink:** `path/to/file:line` — <the dangerous operation>
 - **Controls in the path:** <what is there, and why it does not hold>
@@ -1056,9 +1289,10 @@ once and did not find a provable path. Neither column is a clearance.
   findings>
 - **Impact:** <what an attacker gets>
 - **Fix:** <specific change, at a specific place>
-- **Proof:** `proven — <script path>, exits 0 today` / `unproven — reasoned from
-  source` / `unproven — sink not reachable in-process` / `unproven — proof stage
-  declined`
+- **Proof:** `proven — <script path>, exits 0 today` / `unproven — sink not
+  reachable in-process` / `unproven — proof stage declined` / `unproven — not
+  attempted: <reason>`. "Reasoned from source" is not a reason on its own; say
+  what stopped the proof.
 - **Confidence:** High/Medium
 - **Found by:** <specialist name(s)>
 
@@ -1090,10 +1324,30 @@ fixing, not worth paging anyone. One line each unless detail is needed.
 Audit tools run: <list, or "none available — dependency findings are from
 manifest inspection only">.
 
+## Unresolved Fragments
+
+Every pooled fragment that did not become a finding, compose into one, or land
+as a hardening note. **List them individually — a count is not a record.** A
+fragment is one line of observation nobody owned, and the pool is the run's
+working set: without it, a later reader cannot tell whether a sink was seen and
+dropped or never seen at all, and cannot reproduce how the run reached its
+conclusions. The count alone has been observed leaving a real, named sink
+unrecoverable once the session's context was gone.
+
+| Fragment | OWASP ID | Location | Observation | Why it went nowhere |
+|----------|----------|----------|-------------|---------------------|
+| F-<n> | A0x | `path:line` | <the one sentence the specialist wrote> | composed into <ID> / no counterpart in the pool / not traced |
+
+Fragments that *did* compose appear here too, pointing at the finding they fed,
+so the pool reads as a complete accounting rather than a leftovers bin.
+
 ## Rejected Candidates
 
-Findings that did not survive verification. This section prevents future
-reviewers from rediscovering the same false positives.
+Findings that did not survive verification — each with the positive evidence
+that killed it. Every row must say what was *found*, not what was missing: a
+control enumerated and holding, a source proven unreachable, a premise checked
+and false. This section prevents future reviewers from rediscovering the same
+false positives.
 
 | Candidate | OWASP ID | Reason rejected |
 |-----------|----------|-----------------|
@@ -1118,17 +1372,30 @@ work:
 - **Agents dispatched:** <list with category ownership>
 - **Specialists:** <outcome map; call out any non-`returned` row>
 - **Framework defaults recorded:** <ORM, template engine, auth library, etc.>
-- **Files scanned:** <count>
+- **Files scanned:** <count> of <count> tracked — and if the count is wide
+  enough that per-file attention thinned, say so here rather than letting the
+  number imply uniform depth
+- **Scope dilution accepted:** no / yes — <what was traded away, and why the
+  scope was not split>
 - **Sources mapped:** <count>
 - **Sinks mapped:** <count>
 - **Verified findings:** <count by severity>
 - **Refutation attempts:** <findings the verifier attempted to refute> attempted,
   <count> survived
-- **Fragments pooled:** <count> across <count> specialists
+- **Fragments pooled:** <count> across <count> specialists — every one of them
+  listed individually in **Unresolved Fragments**, not just counted here
+- **Round-trip and duplicate-fact pairs checked:** <count> — API pairs
+  round-tripped, facts found stored twice
 - **Compositions found:** <count> — findings assembled from pieces no single
   specialist could report (state 0 explicitly)
-- **Proof stage:** offered / not offered (no in-process sinks) / declined by user
-  / run — <count> proven, <count> failed to reproduce
+- **Benign execution (Phase 2.5):** not eligible (nothing to run in-process
+  without a payload) / not offered / declined by user / authorized —
+  <count> findings settled or informed by a recorded benign probe. "Offered" is
+  not a valid value; the offer has an answer and this field records it
+- **Proof stage:** not offered (no in-process sinks) / declined by user / run —
+  <count> proven, <count> failed to reproduce, <count> not attempted (each with
+  its reason in the finding). "Offered" is not a valid value; the offer has an
+  answer and this field records it
 - **Rejected candidates:** <count>
 - **Audit tools run:** <list or "none">
 - **Generated/vendor paths excluded:** <list>
@@ -1159,6 +1426,16 @@ Use these during discovery, but never report from a heuristic alone.
 * An action or base image pinned to a mutable tag in a job that reads secrets.
 * Any code path that differs between "development" and "production" in a way
   that weakens a control.
+* A parse/render or encode/decode pair whose halves disagree about what a
+  separator, an entity, or a control character means — round-trip a hostile
+  value through both and compare.
+* One fact held in two places — a host in the request line and a host in the
+  `Host` header, a length in a header and a length in the body — where a
+  security decision reads only one of the two.
+* Two branches of one function applying different strictness to the same input:
+  an unanchored regex on one side, an exact comparison on the other.
+* A documentation example, SYNOPSIS, or README snippet that demonstrates the
+  vulnerable call. The docs teaching it is the finding, not a mitigation.
 
 ### False-positive traps
 
@@ -1179,6 +1456,9 @@ Use these during discovery, but never report from a heuristic alone.
   tests. Say so and reject rather than padding the report.
 * An old dependency version with a CVE in a code path the project does not call.
   Report it as present-but-unreachable, not as Critical.
+* A round trip that is lossy in a way nothing security-relevant reads —
+  whitespace normalization, attribute reordering, a canonical form. The finding
+  is a value that changes *meaning* at a sink, not one that changes shape.
 
 ## Common Mistakes
 
@@ -1199,18 +1479,24 @@ Use these during discovery, but never report from a heuristic alone.
 | A verifier that confirms everything | It is reading, not attacking. Refutation is the job; default to refuted when uncertain. |
 | A specialist dropping what is outside its categories | Categories bound what it reports as a finding, not what it writes down. Out-of-category observations go in the Fragments list. |
 | Rejecting chain links one at a time | Each link fails the gate alone — that is what a link looks like. Compose across specialists before finalizing any rejection. |
+| Reporting the fragment pool as a count | The count dies with the session. List every fragment with its `path:line` and outcome, so a later reader can tell a sink that was seen and dropped from one nobody looked at. |
+| Reviewing the whole repository in one pass because it was asked for | Breadth costs depth silently, and a wide run reports *more* findings while missing ones a narrow pass finds every time. Past ~40 files, offer the choice: narrow, split, or accept the dilution on the record. |
+| Reading a rejection that says what was missing | "No source found" is an absence, not evidence. A rejection needs something *found* — a control that holds, a premise checked and false. Absence belongs in a hardening note or the fragment table. |
 | Ending the run without stating the report's limits | Every run, whatever the count. A clean report read as an all-clear is the worst outcome this skill can produce. |
 | Treating the commit question as settled once the findings are fixed | A committed report is permanent in history, ages into a false clearance, and travels without its caveats. Say all three. |
+| Rejecting a library finding because no in-repo caller reaches it | A library's callers are the applications. If the project's own docs show the vulnerable call, the doc is the source — cite it and run the gate. |
+| Proving the footnotes and leaving the Criticals unproven | Order the proof offer by severity, not by convenience. A one-liner that settles a hardening note settles a Critical too. |
+| Reading two components, finding both correct, and moving on | The hole is often the seam. Round-trip the paired APIs; find the facts stored twice and ask which copy the control reads. |
+| Recording the proof stage as "offered" | The offer has an answer. Record yes, subset, or no — and for anything unproven, why. |
 | Fixing what it finds | The report is the deliverable. Handing a fix to a reviewer who has not confirmed the finding is how a "fix" ships a regression. |
 
 ## Post-Review
 
-After writing the report:
+**Keep this short.** Six lines a developer reads beat six paragraphs they skip.
+Say each point once, in your own words, and stop.
 
-1. **List every file this run wrote or changed, before anything else** — a
-   report the developer does not know exists is a report nobody reads. One line
-   per path, each marked new or updated, and never omit `INDEX.md` just because
-   the report itself is the interesting file:
+1. **List the files first.** One line per path, marked new or updated, never
+   omitting `INDEX.md` just because the report is the interesting file:
 
    ```
    Files written or updated:
@@ -1218,77 +1504,35 @@ After writing the report:
      updated  .reviews/owasp-reviews/INDEX.md
    ```
 
-   Then give the finding counts by severity and name any category marked
-   `not assessed`.
-2. **Warn that the report is a vulnerability roadmap — every time, not
-   conditionally:**
+   Then the counts by severity, and name any category marked `not assessed`.
 
-   > "This report describes unfixed weaknesses and where they live. It is
-   > unencrypted on disk and will be committed if you `git add
-   > .reviews/owasp-reviews/`. If this branch is published or the repo is public,
-   > anyone reading the diff gets a list of what to attack and where. Confirm
-   > you want to commit, or move the report out of the tracked tree."
+2. **Lead with anything reachable and unauthenticated** — that is the set that
+   changes what someone does today. If a live credential was found, repeat the
+   rotation instruction here; by now the Phase 1 warning has scrolled away.
 
-   Unlike the equivalent warning in the other paad skills, this one is
-   unconditional: there is no version of this report that is not a map of where
-   the weaknesses are.
-3. **State the limits of the report out loud, every run, whatever the count.**
-   This is not optional and it does not scale with how the run went — a clean
-   result needs it most. Say it in your own words, but say all of it:
+3. **State three limits. One or two lines each, never a block quote each.**
 
-   > "This is not a complete security audit and it cannot tell you the code is
-   > secure. It found <N> findings across the categories marked assessed above.
-   > No findings in a category means one reviewer looked once and could not
-   > prove a path — not that none exists. <M> categories were not assessed at
-   > all. Weaknesses outside the OWASP Top 10 — business logic, race conditions,
-   > tenant isolation, anything specific to your domain — were never in scope.
-   > A second run, a wider scope, or a different reviewer would find things this
-   > one did not."
+   * **It is a map of live weaknesses.** Unencrypted on disk, committed the
+     moment someone runs `git add`. On a public repo or a published branch,
+     anyone reading the diff gets the attack list. This one is unconditional —
+     there is no version of this report that is not that map.
+   * **It is a floor, not a ceiling.** N findings, inside these categories,
+     inside this scope. A category with no findings means one reviewer looked
+     once. Business logic, race conditions, and tenant isolation were never in
+     scope at all.
+   * **Another run would find different things.** Same skill, same commit, a
+     different set — specialists sample a large space and the sampling is not
+     stable. **The larger the codebase, the wider the divergence**, and two
+     runs' outputs are better unioned than compared. So one clean run is weak
+     evidence, and on a big repository re-running is worth more than re-reading.
 
-   Adjust the numbers, never the substance, and never soften it because the
-   result looked good. A developer who reads a short report as an all-clear is
-   worse off than before they ran the skill: they now have a written reason to
-   stop looking. If the proof stage was declined or unavailable, add that the
-   unproven findings were confirmed by reading only.
+4. **Then why committing is a bad bet** — three reasons, one line each:
+   permanent (`git log -p` keeps it in every clone and fork); ages into a false
+   clearance (true of one commit, and more authoritative-looking the staler it
+   gets); the caveats do not travel (what survives is the severity table, cited
+   as proof a review happened). Say this at zero findings too — that is the
+   version most likely to be quoted back later.
 
-   **Then say why that makes committing the report a bad idea, in the same
-   breath.** Step 2 covered the obvious reason — it is a map of live weaknesses.
-   These reasons are different, they follow from the incompleteness you just
-   described, and they apply even after every finding is fixed:
-
-   > "I'd think twice before committing this report, for reasons beyond the
-   > findings themselves.
-   >
-   > **Committing is permanent.** Deleting the file later does not remove it —
-   > `git log -p` still has it, and so does every clone, fork, and mirror. Once
-   > it is pushed, removing it means rewriting history that other people have
-   > already pulled.
-   >
-   > **It ages into a false clearance.** This report is true of one commit. The
-   > code moves; the report does not. In six months a table saying 'A04: no
-   > findings' reads as 'A04 is fine' to someone who does not know it was one
-   > reviewer, one run, one scope — and the older it gets, the more authoritative
-   > it looks, exactly backwards from how much it is worth.
-   >
-   > **The caveats do not travel with the findings.** Whoever reads it next did
-   > not run it and did not hear any of what I just said. What survives is the
-   > severity table, screenshotted into a ticket or cited as evidence a security
-   > review was done. The limits are the part that gets skipped.
-   >
-   > Keeping it untracked — or somewhere with a date and an owner — costs
-   > nothing and avoids all three."
-
-   State this whatever the findings count, and *especially* at zero: a committed
-   clean report is the version most likely to be cited later as proof the code
-   was reviewed, and it is the version whose limits matter most. If proof
-   scripts were written, they are working exploits and everything above applies
-   to them more strongly.
-4. If a live credential was found, repeat the rotation instruction here. It is
-   the one item that cannot wait for triage, and by this point in a long run the
-   Phase 1 warning has scrolled away.
-5. Lead the summary with anything reachable and unauthenticated. That is the set
-   that changes what someone does today.
-6. Do **not** fix anything. The report is the deliverable. Do not write or run
-   exploit code except in the optional proof stage, and only with the user's
-   explicit authorization — if proof scripts were written, name them in the file
-   list and in the commit warning, because they are working exploits.
+5. **Do not fix anything.** The report is the deliverable. If proof scripts were
+   written they are working exploits: name them in the file list and in the
+   commit warning.

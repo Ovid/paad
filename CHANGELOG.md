@@ -16,7 +16,14 @@ what a plugin user sees.
   Access Control & Authentication (A01, A07), Injection & Untrusted Input (A05),
   Cryptography & Data Protection (A04), Configuration & Supply Chain (A02, A03),
   Design, Integrity & Failure Modes (A06, A08, A10), and Logging, Alerting &
-  Detection (A09).
+  Detection (A09). A seventh, Mechanism & Round-Trip, owns no category at all.
+  An OWASP category names what a weakness *does*, so a hole in the seam between
+  two components that are each individually correct belongs to no category and
+  is owned by none of the six. It hunts two patterns instead — paired APIs that
+  disagree on a round trip, where what one renders the other parses back as
+  something else, and facts the codebase stores twice where the security
+  decision reads the copy the attacker writes — and files what it finds under
+  the category of the impact.
 
   Findings pass an exploitability gate before reaching the report: an
   attacker-controlled source with `path:line`, a traced call path to the sink,
@@ -34,6 +41,14 @@ what a plugin user sees.
   skips it, and the finding being cleared often contains the finding being
   missed.
 
+  When the subject is a library or a framework, its callers are applications
+  nobody in the repository can see, so "no in-repo caller passes request data
+  into that parameter" is true of every library and rejects nothing. Where the
+  project's own documentation, SYNOPSIS, or examples show the vulnerable call,
+  the documented API is the source: the doc reference stands in for the in-repo
+  one and the finding runs through the gate unchanged. Documentation that
+  teaches the unsafe call ships the defect to every downstream user.
+
   Six specialists cover ten categories, which means a weakness whose halves fall
   in two different categories reaches the verifier as two items that each fail
   the exploitability gate alone. Specialists therefore report out-of-category
@@ -44,19 +59,47 @@ what a plugin user sees.
   the severity of the whole chain, and the count is reported even when it is
   zero. A chain link looks harmless alone; that is what a link is.
 
+  Every pooled fragment reaches the report, not just a count of them. An
+  **Unresolved Fragments** table lists each one with its `path:line`, the
+  sentence the specialist wrote, and where it ended up — composed into a
+  finding, left without a counterpart, or never traced. A count dies with the
+  session; the table is what lets a later reader tell a sink that was seen and
+  dropped from one nobody ever looked at, and what makes a run's conclusions
+  reproducible after its context is gone.
+
+  Scope is gated on size, because breadth costs depth silently. Past roughly
+  forty source files the skill stops and offers the choice — narrow to the
+  untrusted-input surface, split into separate subsystem passes, or take one
+  wide pass with `Scope dilution accepted: yes` recorded in the metadata. A wide
+  run does not return a shallower version of a narrow one; it returns a
+  different result, reporting *more* findings overall while missing ones a
+  narrow pass over the same files finds every time, which is exactly what makes
+  the trade invisible without the record.
+
   Severity states impact. Whether a finding was executed is a separate
   `unproven` field and never lowers its rank — a traced smuggling path is
   "High, unproven", not Medium, because a hedged severity is a lie about impact
   and a downgraded row is the row nobody fixes.
 
   Analysis reads code: no specialist and no verifier starts the application,
-  connects to a database, or sends a request to any host. After verification the
-  skill offers an optional proof stage for findings whose sink is reachable
+  connects to a database, or sends a request to any host. Two execution gates,
+  each its own separate up-front consent and neither touching a live system:
+  before specialists launch, an optional benign-execution offer lets them run
+  read-only in-process probes — the project's existing tests, a deparse, a
+  pure-function call on ordinary input — to settle questions reading cannot
+  answer (a language-semantics subtlety, a round trip, a return value), never a
+  payload and never the network; and after verification the skill offers an
+  optional proof stage for findings whose sink is reachable
   in-process — a standalone script per finding that exits 0 while the weakness
   is open and non-zero once it is fixed, each one first proving it reached the
-  code at all so a script that never ran cannot report "secure". It asks before
-  executing anything, lays out both sides, and honors a no; declining costs only
-  the `unproven` mark. Deployed systems are out of scope in every mode.
+  code at all so a script that never ran cannot report "secure". The offer is
+  worked down the severity order rather than by whichever proof looks easiest —
+  a run that proves its footnotes with a one-liner and leaves its Criticals
+  "reasoned from source" aimed the tool at the cheapest question — and "offered"
+  is not a recordable outcome: the offer has an answer, the metadata records it,
+  and every finding left unproven says why. It asks before executing anything,
+  lays out both sides, and honors a no; declining costs only the `unproven`
+  mark. Deployed systems are out of scope in every mode.
 
   The report carries a coverage table across all ten categories where "not
   assessed" is stated rather than passed off as clean — including when a
@@ -67,7 +110,11 @@ what a plugin user sees.
   weaknesses, and not evidence the rest is secure. Zero findings means one
   reviewer looked once, inside ten categories, at one scope. Business logic,
   race conditions, and tenant isolation sit outside the Top 10 and were never in
-  scope. The report says so at the top and the skill says so again out loud when
+  scope. It also says that a second run would surface a different set — the
+  specialists sample a large space and the sampling is not stable, the more so
+  the larger the codebase — so two runs are better unioned than diffed, and one
+  clean run is weak evidence. The report says so at the top and the skill says
+  so again out loud when
   the run ends, whatever the count — a clean report read as an all-clear leaves
   a developer worse off than never having run it. The same closing block gives
   the reasons not to commit the report that survive the findings being fixed:

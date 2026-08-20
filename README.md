@@ -773,6 +773,20 @@ rediscovering them.
   (A09). The 2025 list is the current one: supply chain and mishandled
   exceptional conditions are new categories, and logging is now about
   *alerting*, not just recording
+* **A seventh specialist organized by mechanism, not by consequence** — an OWASP
+  category names what a weakness *does*, so a hole in the seam between two
+  components that are each individually correct belongs to no category and is
+  owned by none of the six. The Mechanism & Round-Trip specialist hunts two
+  patterns instead: paired APIs that disagree on a round trip — what one renders,
+  the other parses back as something else — and facts the codebase stores twice,
+  where the security decision reads the copy the attacker writes. It files what
+  it finds under the category of the impact
+* **A library's callers are applications you cannot see** — "no caller in this
+  repository passes request data into that parameter" is true of every library
+  and rejects nothing. When the subject is a library or framework and its own
+  documentation shows the vulnerable call, the documented API is the source, and
+  the doc reference stands in for the in-repo one. Documentation that teaches
+  the unsafe call ships the defect to every downstream user
 * **Framework defaults are read first** — what the ORM, template engine, and
   middleware already do decides which findings are real. Where a framework
   protects by default, the finding is the opt-out, and the report names the line
@@ -792,19 +806,22 @@ rediscovering them.
   the value without passing through it, not by reading where the control lives.
   A sanitizer on the serialization path says nothing about the sibling accessor
   that skips it
-* **Chains that cross category boundaries survive the split** — six specialists
+* **Chains that cross category boundaries survive the split** — specialists
   covering ten categories means a weakness assembled from a default in one
   category and a leak in another arrives as two harmless-looking halves that
   each fail the exploitability gate alone. Specialists report what they see
   outside their own categories as fragments rather than dropping it, and the
-  verifier — the only component holding all six outputs — composes before it
+  verifier — the only component holding all seven outputs — composes before it
   rejects. A chain link is supposed to look harmless on its own
 * **Reads by default; asks before it runs anything** — no specialist and no
   verifier starts the application, connects to a database, or sends a request to
   any host. Where a sink is reachable in-process, it offers a proof script per
   finding that exits 0 while the weakness is open, and lays out both sides
-  before you decide. It never executes without a yes, and declining costs you
-  nothing but the `unproven` mark. Testing a *deployed* system is a different
+  before you decide. The offer is ordered by severity, not by whichever proof
+  looks easiest — a run that proves its footnotes and leaves its Criticals
+  "reasoned from source" aimed the tool at the cheapest question. It never
+  executes without a yes, declining costs you nothing but the `unproven` mark,
+  and every unproven finding says why it went unproven. Testing a *deployed* system is a different
   job with a different authorization scope, and out of scope in every mode
 * **It tells you what it did not find** — every run ends by saying the report is
   not a complete list of the weaknesses and is not evidence the rest is secure.
