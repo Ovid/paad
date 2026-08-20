@@ -38,6 +38,11 @@ Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
 | `/vibe [task]` | Small fixes, TDD guardrails still on |
 | `/makefile` | Creates or updates a project `Makefile` |
 | `/paad:help [skill-name]` | Lists the skills, or explains one |
+
+### Experimental skills
+
+| Skill | What it does |
+|---|---|
 | `/agentic-dedup [scope]` | Finds duplicated *meaning*, not duplicated text — experimental |
 | `/agentic-owasp [scope]` | Reviews code against the OWASP Top 10:2025 — experimental |
 | `/rethink [topic]` | Checks whether the premises under a recommendation hold — experimental |
@@ -745,6 +750,15 @@ surfaces when one side is fixed and the other is not.
 It never refactors anything. The report is the deliverable.
 
 #### `/agentic-owasp [scope]` — experimental
+
+> **Note**: this skill is experimental and may change in any release, including
+> a patch release. If you build a workflow on it, pin your plugin version.
+> Further, **it is not a replacement for static security tools or human review.** It
+> is a deeper automated backstop that can catch issues those tools miss, but it
+> is not a guarantee of security. 
+>
+> At present, static security tools are still the best way to catch many
+> security issues.
 
 Most security review output is pattern matching wearing a suit. A tool greps for
 string concatenation near a SQL call and reports injection, without ever
