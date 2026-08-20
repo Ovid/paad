@@ -38,7 +38,13 @@ Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
 | `/vibe [task]` | Small fixes, TDD guardrails still on |
 | `/makefile` | Creates or updates a project `Makefile` |
 | `/paad:help [skill-name]` | Lists the skills, or explains one |
+
+### Experimental skills
+
+| Skill | What it does |
+|---|---|
 | `/agentic-dedup [scope]` | Finds duplicated *meaning*, not duplicated text — experimental |
+| `/agentic-owasp [scope]` | Reviews code against the OWASP Top 10:2025 — experimental |
 | `/rethink [topic]` | Checks whether the premises under a recommendation hold — experimental |
 | `/test-roadmap` | Builds a test suite that catches real regressions — experimental |
 | `/handoff [save\|resume]` | Hands this session's work to a fresh one, in writing — experimental |
@@ -742,6 +748,129 @@ surfaces when one side is fixed and the other is not.
   across runs
 
 It never refactors anything. The report is the deliverable.
+
+#### `/agentic-owasp [scope]` — experimental
+
+> **Note**: this skill is experimental and may change in any release, including
+> a patch release. If you build a workflow on it, pin your plugin version.
+> Further, **it is not a replacement for static security tools or human review.** It
+> is a deeper automated backstop that can catch issues those tools miss, but it
+> is not a guarantee of security. 
+>
+> At present, static security tools are still the best way to catch many
+> security issues.
+
+Most security review output is pattern matching wearing a suit. A tool greps for
+string concatenation near a SQL call and reports injection, without ever
+checking that the ORM two lines up parameterizes by default, that the value
+interpolated is an enum, or that the route is behind an admin middleware chain.
+The developer reads twenty findings, confirms the first three are wrong, and
+stops reading. The twenty-first was real.
+
+`agentic-owasp` reviews code against the [OWASP Top
+10:2025](https://owasp.org/Top10/2025/) and puts every candidate finding through
+an exploitability gate before it reaches the page. A finding has to name an
+attacker-controlled source with a line number, trace the call path to the
+dangerous operation hop by hop, and say which controls sit in that path and why
+they do not hold. Findings that cannot do all three become hardening notes or
+get rejected with the reason recorded — so the next run does not spend context
+rediscovering them.
+
+* **Arguments:** `/agentic-owasp` (whole repo) or `/agentic-owasp src/api/`
+  (scoped) or `/agentic-owasp --changed main` (seeded from the branch diff) or
+  `/agentic-owasp --category A01` (one category, or `A01,A05,A07`) or
+  `/agentic-owasp --deps` (dependencies, lockfiles, and CI/CD only)
+* **Breadth costs depth, and it costs it silently** — a wide pass does not return
+  a shallower version of a narrow one, it returns a *different* one. Measured on
+  a real framework: pointed at a single module, the review found its flagship
+  weakness in three runs out of three; a full-repository pass over 133 files read
+  that same module, filed a piece of the weakness as a hardening note, and
+  shipped without it. The wide run reported *more* findings overall, which is
+  exactly what hides the trade. So past roughly forty source files the skill
+  stops and asks: narrow to the untrusted-input surface, split into separate
+  subsystem passes, or take the wide pass with the dilution written into the
+  report. Prefer several scoped runs to one sweep
+* **Six specialists, all ten categories, none orphaned** — Access Control &
+  Authentication (A01, A07), Injection & Untrusted Input (A05), Cryptography &
+  Data Protection (A04), Configuration & Supply Chain (A02, A03), Design,
+  Integrity & Failure Modes (A06, A08, A10), and Logging, Alerting & Detection
+  (A09). The 2025 list is the current one: supply chain and mishandled
+  exceptional conditions are new categories, and logging is now about
+  *alerting*, not just recording
+* **A seventh specialist organized by mechanism, not by consequence** — an OWASP
+  category names what a weakness *does*, so a hole in the seam between two
+  components that are each individually correct belongs to no category and is
+  owned by none of the six. The Mechanism & Round-Trip specialist hunts two
+  patterns instead: paired APIs that disagree on a round trip — what one renders,
+  the other parses back as something else — and facts the codebase stores twice,
+  where the security decision reads the copy the attacker writes. It files what
+  it finds under the category of the impact
+* **A library's callers are applications you cannot see** — "no caller in this
+  repository passes request data into that parameter" is true of every library
+  and rejects nothing. When the subject is a library or framework and its own
+  documentation shows the vulnerable call, the documented API is the source, and
+  the doc reference stands in for the in-repo one. Documentation that teaches
+  the unsafe call ships the defect to every downstream user
+* **Framework defaults are read first** — what the ORM, template engine, and
+  middleware already do decides which findings are real. Where a framework
+  protects by default, the finding is the opt-out, and the report names the line
+  it is on
+* **A coverage table that admits what nobody looked at** — all ten categories,
+  each marked assessed or not. "No findings in A04" and "nobody checked A04" are
+  different sentences, and a report that blurs them leaves you worse off than
+  before you ran it
+* **Severity that means something** — Critical is reachable-and-unauthenticated,
+  not "looks scary". Hardening notes live in their own section so they cannot be
+  mistaken for exploitable findings. Whether a finding was actually executed is
+  a separate `unproven` field and never lowers its severity: a traced smuggling
+  path is "High, unproven", not Medium, because a hedged rank is a claim about
+  impact you have not earned and the downgraded row is the one nobody fixes
+* **A verifier that tries to break the findings** — it defaults to refuted when
+  uncertain, and it clears a control by enumerating every caller that reaches
+  the value without passing through it, not by reading where the control lives.
+  A sanitizer on the serialization path says nothing about the sibling accessor
+  that skips it
+* **Chains that cross category boundaries survive the split** — specialists
+  covering ten categories means a weakness assembled from a default in one
+  category and a leak in another arrives as two harmless-looking halves that
+  each fail the exploitability gate alone. Specialists report what they see
+  outside their own categories as fragments rather than dropping it, and the
+  verifier — the only component holding all seven outputs — composes before it
+  rejects. A chain link is supposed to look harmless on its own
+* **Every fragment reaches the page, not just a count of them** — the pool is the
+  run's working set, and "63 fragments pooled" is not a record of it. Once the
+  session ends, a fragment that exists only as a number is gone, and nobody can
+  tell afterwards whether a sink was seen and dropped or never looked at. The
+  report lists each one with its `path:line`, the sentence the specialist wrote,
+  and where it ended up — composed into a finding, left without a counterpart, or
+  never traced. That is also what makes a run's conclusions checkable later
+  instead of taken on trust
+* **Reads by default; asks before it runs anything** — no specialist and no
+  verifier starts the application, connects to a database, or sends a request to
+  any host. Where a sink is reachable in-process, it offers a proof script per
+  finding that exits 0 while the weakness is open, and lays out both sides
+  before you decide. The offer is ordered by severity, not by whichever proof
+  looks easiest — a run that proves its footnotes and leaves its Criticals
+  "reasoned from source" aimed the tool at the cheapest question. It never
+  executes without a yes, declining costs you nothing but the `unproven` mark,
+  and every unproven finding says why it went unproven. Testing a *deployed* system is a different
+  job with a different authorization scope, and out of scope in every mode
+* **It tells you what it did not find** — every run ends by saying the report is
+  not a complete list of the weaknesses and is not evidence the rest is secure.
+  Zero findings means one reviewer looked once, inside ten categories, at one
+  scope. Business logic, race conditions, and tenant isolation are outside the
+  Top 10 and were never in scope. A clean report read as an all-clear leaves you
+  worse off than never having run it. The same closing block says why committing
+  the report is a bad bet even once the findings are closed — history is
+  permanent, the report ages into a false clearance for code that has moved, and
+  the severity table outlives every caveat attached to it
+* **Credentials are reported by location, never by value** — a secret pasted
+  into a report file is a second copy of the leak, and rotation goes to the top
+  of the remediation order because it is the one item that cannot wait
+* **Report** — written to `paad/owasp-reviews/`, with a persistent `INDEX.md`
+  across runs
+
+It never fixes anything. The report is the deliverable.
 
 #### `/handoff [save|resume]` — experimental
 
