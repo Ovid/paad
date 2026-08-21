@@ -3,7 +3,7 @@ name: fix-architecture
 
 ---
 
-**On invocation:** announce "Running paad:fix-architecture v1.30.0" before anything else.
+**On invocation:** announce "Running paad:fix-architecture v1.30.1" before anything else.
 
 # Fix Architecture
 
