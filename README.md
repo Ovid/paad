@@ -512,28 +512,58 @@ cp -r kiro_and_antigravity/skills/.agent/skills/pushback .agent/skills/
 
 #### Migrating to `npx skills`
 
-Install with `npx`, delete the skill directories you copied in, then move your
-existing reports so the skills can still find them:
+Three steps, in this order. **Skip any line whose directory you do not have.**
+
+**1. Ignore the OWASP reports before anything writes to `paad/`.** They can
+contain unfixed, exploitable findings, and nothing else in the migration puts
+them behind a `.gitignore` entry:
 
 ```bash
-mkdir -p paad
-mv .reviews/architecture   paad/architecture-reviews
-mv .reviews/code           paad/code-reviews
-mv .reviews/pushback       paad/pushback-reviews
-mv .reviews/alignment      paad/alignment-reviews
-mv .reviews/a11y-reviews   paad/a11y-reviews
-mv .reviews/dedup-reviews  paad/dedup-reviews
-mv .reviews/owasp-reviews  paad/owasp-reviews
-mv .reviews/test-roadmap   paad/test-roadmap
-rmdir .reviews
+echo 'paad/owasp-reviews/' >> .gitignore
 ```
 
-Skip any line whose directory you do not have. If you gitignored `.reviews/`,
-change that entry to `paad/`.
+If you gitignored `.reviews/`, delete that entry rather than repointing it at
+`paad/`. Only the OWASP reports are meant to stay out of git — the code-review
+backlog in particular is committed on purpose, and is what lets a review resume
+from what has already landed on a fresh clone.
+
+**2. Install with `npx`, then delete the copies.** Two loadable copies of a
+skill is the failure this migration exists to avoid, and the stale one still
+writes to `.reviews/`:
+
+```bash
+rm -rf .cursor/skills/{agentic-a11y,agentic-architecture,agentic-dedup,agentic-owasp,agentic-review,alignment,fix-architecture,handoff,pushback,rethink,test-roadmap,vibe}
+rm -rf .kiro/skills/{agentic-a11y,agentic-architecture,agentic-dedup,agentic-owasp,agentic-review,alignment,fix-architecture,handoff,pushback,rethink,test-roadmap,vibe}
+rm -rf .agent/skills/{agentic-a11y,agentic-architecture,agentic-dedup,agentic-owasp,agentic-review,alignment,fix-architecture,handoff,pushback,rethink,test-roadmap,vibe}
+```
+
+**3. Move your existing reports so the skills can still find them.** Each line
+creates its destination and moves the *contents* in. `mv .reviews/code
+paad/code-reviews` looks equivalent and is not: when the destination already
+exists — which it will if you have also used another install route — POSIX
+`mv` puts the reports one directory deeper and exits 0, so nothing tells you
+the skills can no longer see them.
+
+```bash
+mkdir -p paad/architecture-reviews && mv .reviews/architecture/*  paad/architecture-reviews/
+mkdir -p paad/code-reviews         && mv .reviews/code/*          paad/code-reviews/
+mkdir -p paad/pushback-reviews     && mv .reviews/pushback/*      paad/pushback-reviews/
+mkdir -p paad/alignment-reviews    && mv .reviews/alignment/*     paad/alignment-reviews/
+mkdir -p paad/a11y-reviews         && mv .reviews/a11y-reviews/*  paad/a11y-reviews/
+mkdir -p paad/dedup-reviews        && mv .reviews/dedup-reviews/* paad/dedup-reviews/
+mkdir -p paad/owasp-reviews        && mv .reviews/owasp-reviews/* paad/owasp-reviews/
+mkdir -p paad/test-roadmap         && mv .reviews/test-roadmap/*  paad/test-roadmap/
+rmdir .reviews/* .reviews
+```
+
+If a destination already had files in it, check for name collisions by hand —
+`mv` overwrites silently.
 
 Skipping the move is not fatal, but it is not free either: `fix-architecture`
-will report that no architecture review exists, and `test-roadmap` will build a
-fresh roadmap rather than resume the one you were partway through.
+will report that no architecture review exists, `test-roadmap` will build a
+fresh roadmap rather than resume the one you were partway through, and the
+`agentic-review` backlog is orphaned, so every out-of-scope bug it had already
+logged comes back under a new ID.
 
 ### Using skills outside Claude Code
 
