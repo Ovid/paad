@@ -155,34 +155,20 @@ stays, because those genuinely have no meaning outside Claude Code.
 The catch-all regex also carried a `(?<!Ovid/)` guard so that
 `github.com/Ovid/paad` survived. With the rewrites gone the guard goes too.
 
-## Bug fixed in passing
+## Split out: the export frontmatter bug
 
-`neutralize()` runs over `parts[0]`, which includes the YAML frontmatter, and
-line 59 deletes every line containing `/paad:`. Three skills mention a
-`/paad:` command inside their `description:` text, so the entire description
-line is deleted from the Kiro export:
+`neutralize()` runs over the YAML frontmatter and deletes descriptions from the
+Kiro export. It was filed here as a bug fixed in passing. It is not in passing —
+it affects four skills by two distinct causes, plus an inverse leak in the
+Antigravity wrappers, and it shares no line of `convert_skills.py` with the
+changes above.
 
-```
-kiro_and_antigravity/skills/.kiro/skills/fix-architecture/SKILL.md
-kiro_and_antigravity/skills/.kiro/skills/pushback/SKILL.md
-kiro_and_antigravity/skills/.kiro/skills/rethink/SKILL.md
-```
-
-`description` is required by the Agent Skills specification and is what Kiro
-matches a request against, so those three currently ship unfindable. The
-Antigravity wrappers are unaffected — they read the description off the raw
-content before neutralization.
-
-Fix: split the frontmatter off before neutralizing, and neutralize only the
-body. Add a check to `make test` that every exported `SKILL.md` still has a
-non-empty `name` and `description`.
+It now has its own spec: `2026-08-21-export-frontmatter-fix.md`.
 
 ## Verification
 
 - `make check-artifact-root` — every artifact-writing skill carries the
   preamble and a `scripts/paadrc.sh`; the copies match the shared source.
-- `make check-export-frontmatter` — every exported `SKILL.md` has a non-empty
-  `name` and `description`.
 - `make check-export-current` already catches a stale export.
 - A `demo`/self-check for `paadrc.sh` itself: absent file, present key, absent
   key, trailing slash, trailing whitespace, unknown key.
