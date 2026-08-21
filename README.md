@@ -104,8 +104,10 @@ It doesn't replace your current AI-assisted development tools; it complements
 them. You like [Superpowers](https://github.com/obra/superpowers/)? Use it
 with PAAD.
 
-PAAD supports **Claude Code** natively and ships as an experimental **Pi**
-package. It also supports **Cursor**, **Kiro**, and **Antigravity**.
+PAAD supports **Claude Code** natively, installs into 70+ other agents with one
+`npx` command, and ships as an experimental **Pi** package. Hand-copying the
+pre-converted **Kiro**/**Antigravity**/**Cursor** tree still works and is now
+deprecated.
 
 ## Who's driving
 
@@ -328,8 +330,11 @@ That single action already refreshes the marketplace catalog from GitHub before
 it looks for a new version.
 
 To confirm which version you're on, run any skill — every skill announces its
-own name and version on invocation (`Running paad:vibe v<version>`). Compare
-that against the version in
+own name and version on invocation (`Running paad:vibe v<version>`). This works
+because Claude Code resolves the version from `plugin.json` and uses it as the
+update-detection key; on the npx route there is no such key, the install tracks
+`main`, and the announced version only tells you which release the sources were
+last bumped to. Compare that against the version in
 [`plugins/paad/.claude-plugin/plugin.json`](plugins/paad/.claude-plugin/plugin.json).
 If a skill documented here is missing entirely, you're on an older version —
 run through the update steps above.
@@ -345,7 +350,8 @@ npx skills@latest add Ovid/paad
 It opens a picker. Everything under **Universal (`.agents/skills`)** — Amp,
 Antigravity, Cline, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Warp,
 Zed and others — is always included. The list below that is opt-in and holds
-another fifty-odd, Claude Code among them.
+another fifty-odd, Claude Code among them. **Kiro** is not on either list at
+the time of writing; copy out of `kiro_and_antigravity/` for that one.
 
 ```bash
 npx skills@latest add Ovid/paad --list                 # list the skills, install nothing
@@ -354,12 +360,29 @@ npx skills@latest add Ovid/paad -a cursor -a codex -y  # skip the pickers
 npx skills@latest add Ovid/paad --copy                 # real copies instead of symlinks
 ```
 
-One thing worth knowing before you run it.
+Three things worth knowing before you run it.
 
 **Skills refer to each other by slash command** — `/agentic-architecture`,
 `/pushback`. If your assistant does not take slash commands, ask for the skill
 by name instead: "run the pushback skill". The name is always the same; only
 the way you invoke it differs.
+
+**The multi-agent skills lose their read-only guarantee here.**
+`agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`, and
+`agentic-owasp` dispatch their specialists to `paad:paad-analyst`, a read-only
+agent that lives outside `skills/` and is Claude Code plugin syntax no other
+host can bind. Those skills still run — the orchestrator does every lens
+itself, in one context, holding the full toolset. You get no parallelism, no
+context isolation, and **no read-only guarantee on code the skill is only
+supposed to read**. Nothing errors and nothing warns you. This matters most for
+`agentic-owasp` and `agentic-dedup`, which are read-only by contract.
+
+**Updates track `main`, and there is no pinned form.** Re-run the same command
+to pull the latest; there is no version argument, so the version a skill
+announces on invocation is *not* a reliable way to tell two npx installs apart.
+Renamed or deleted skills are not pruned — this release renamed `help` to
+`paad-help`, so delete the stale `help` directory by hand if you installed
+before it.
 
 ### Pi — experimental
 
@@ -385,14 +408,16 @@ Invoke a skill with `/skill:<name>` or by name.
 
 #### The multi-agent skills need two more pieces
 
-`agentic-review`, `agentic-architecture`, `agentic-a11y`, and `agentic-dedup`
-fan out to subagents. Pi has no subagent support of its own, and Pi's package
+`agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`, and
+`agentic-owasp` fan out to subagents. Pi has no subagent support of its own, and Pi's package
 manifest has no way to declare agents, so neither piece can ship inside the
 package. Without both of them installed, those four skills still *run* — the
 orchestrator simply does every lens itself, in one context, holding the full
 toolset. You get no parallelism, no context isolation, and **no read-only
 guarantee on code the skill is only supposed to read**. Nothing errors and
-nothing warns you.
+nothing warns you. `agentic-owasp` is the one to weigh hardest: its specialists
+are forbidden from starting the app, sending requests, or writing exploit code,
+and that prohibition is prose, not a toolset.
 
 **1. A subagent extension.** Pi ships one as an
 [example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent),
@@ -812,7 +837,8 @@ These skills are shipped so they get real use, but they are **not settled**.
 Their arguments, output paths, and behavior may change — or the skill may be
 withdrawn — in **any** release, including a patch release. The semver promise
 the other skills carry does not apply to them. If you build a workflow on one,
-pin your plugin version, and please [file what
+pin your plugin version — on Claude Code and Pi you can; the npx route tracks
+`main` and has no pinned form, so budget for the churn instead. Please [file what
 breaks](https://github.com/Ovid/paad/issues).
 
 #### `/agentic-dedup [scope]` — experimental
@@ -855,7 +881,8 @@ It never refactors anything. The report is the deliverable.
 #### `/agentic-owasp [scope]` — experimental
 
 > **Note**: this skill is experimental and may change in any release, including
-> a patch release. If you build a workflow on it, pin your plugin version.
+> a patch release. If you build a workflow on it, pin your plugin version (not
+> available on the npx route, which tracks `main`).
 > Further, **it is not a replacement for static security tools or human review.** It
 > is a deeper automated backstop that can catch issues those tools miss, but it
 > is not a guarantee of security. 
