@@ -1142,8 +1142,8 @@ Individual checks can also be run separately:
 
 ```bash
 make check-versions     # package.json ↔ marketplace.json ↔ plugin.json version sync
-make check-digraphs     # every skill (except help) has a digraph
-make check-help         # every skill is documented in paad:paad-help
+make check-digraphs     # every skill (except paad-help) has a digraph
+make check-help         # every skill is documented in paad-help
 make check-readme       # every skill is documented in README.md
 make check-frontmatter  # SKILL.md frontmatter is valid, folder name matches
 make check-references   # references/ dispatches resolve; no orphaned reference files
@@ -1159,11 +1159,11 @@ make validate           # claude plugin validate on marketplace + plugins
 
 Key rules from `CLAUDE.md`:
 
-* Every skill except `help` must include a Graphviz digraph covering its
+* Every skill except `paad-help` must include a Graphviz digraph covering its
   decision points
 * Skill folder names must match the `name` field in `SKILL.md` frontmatter
 * Use `make bump-version VERSION=X.Y.Z` to keep all versioned files in sync
-* Update `README.md`, `paad:paad-help`, and `CLAUDE.md` when adding or changing
+* Update `README.md`, `paad-help`, and `CLAUDE.md` when adding or changing
   skills
 
 ## Star History

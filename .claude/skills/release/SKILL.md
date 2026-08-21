@@ -72,7 +72,7 @@ as its own commit, not something to sweep into a release.
 ## 1.5. Check the entries against the length rule
 
 CLAUDE.md sets it: **1–3 lines per entry, at most 8 for a new skill, ending in a
-pointer to `paad:help` or README.** Once this section rolls into a version
+pointer to `paad-help` or README.** Once this section rolls into a version
 heading it is published, and trimming it afterwards means editing released
 history. Catch it here.
 
@@ -81,14 +81,14 @@ Read each bullet and ask what it is doing:
 | In the entry | Verdict |
 |---|---|
 | What changed, who it affects, what to do | Keep |
-| A pointer to `paad:help` or README | Keep |
+| A pointer to `paad-help` or README | Keep |
 | How the feature works internally — phases, agents, gates | Cut |
 | Why the design is right, or what was rejected | Cut |
 | Testing evidence, run counts, measured before/after | Cut |
 
 The test from CLAUDE.md: **if it explains a mechanism, it is in the wrong file.**
 That material is worth keeping — it belongs in the commit message, in README, or
-in `paad:help`, all of which already exist. A changelog copy is a third copy that
+in `paad-help`, all of which already exist. A changelog copy is a third copy that
 has to be hand-synced and drifts.
 
 Sanity check the size:

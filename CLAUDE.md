@@ -33,7 +33,7 @@ Also, address me as "Ovid" for further verification that you have read this file
 
   The test is visibility, not file type. A developer never sees a report land in `paad/`, so it gets named. The source file they asked you to change is the work they are already watching, and on a large run enumerating it buries the artifact that needed saying. **Source and test files therefore need only a count and a pointer to the diff** — `12 source files changed across 3 modules (see git diff)`. Naming them individually is allowed when there are only a few, never required.
 
-  Developers routinely miss that a run left an artifact in the repo, and an artifact nobody reads is the same as no artifact. Say it even when a single file changed and even when the user watched it happen. Skills that write nothing (`help`) are exempt.
+  Developers routinely miss that a run left an artifact in the repo, and an artifact nobody reads is the same as no artifact. Say it even when a single file changed and even when the user watched it happen. Skills that write nothing (`paad-help`, `rethink`) are exempt — `make check-announce` holds the same two.
 
 ## Adding a new skill
 
