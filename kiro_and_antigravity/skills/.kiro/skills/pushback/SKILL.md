@@ -3,7 +3,7 @@ name: pushback
 
 ---
 
-**On invocation:** announce "Running paad:pushback v1.30.0" before anything else.
+**On invocation:** announce "Running paad:pushback v1.30.1" before anything else.
 
 # Spec Pushback
 
@@ -60,6 +60,7 @@ digraph scope_critique_resolution {
   "Issues found?" [shape=diamond];
   "Can you name Y and Z?" [shape=diamond];
   "User says good enough / stop?" [shape=diamond];
+  "Decision, or stop signal?" [shape=diamond];
   "More issues to present?" [shape=diamond];
   "Update spec, write report, or both?" [shape=diamond];
   "Stopped early?" [shape=diamond];
@@ -76,6 +77,7 @@ digraph scope_critique_resolution {
   "Rank surviving findings by severity" [shape=box];
   "Present one issue: problem, options best-to-worst, recommendation" [shape=box];
   "Wait for the user's response" [shape=box];
+  "Answer it, then re-put this issue's options" [shape=box];
   "ASK where to write the spec first" [shape=box];
   "ASK before editing after a stop signal" [shape=box];
   "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
@@ -109,7 +111,10 @@ digraph scope_critique_resolution {
   "Drop it; report it as a discard" -> "Rank surviving findings by severity";
   "Rank surviving findings by severity" -> "Present one issue: problem, options best-to-worst, recommendation";
   "Present one issue: problem, options best-to-worst, recommendation" -> "Wait for the user's response";
-  "Wait for the user's response" -> "User says good enough / stop?";
+  "Wait for the user's response" -> "Decision, or stop signal?";
+  "Decision, or stop signal?" -> "Answer it, then re-put this issue's options" [label="no — a question, objection, or new consideration"];
+  "Answer it, then re-put this issue's options" -> "Wait for the user's response";
+  "Decision, or stop signal?" -> "User says good enough / stop?" [label="yes"];
   "User says good enough / stop?" -> "Spec saved to a file?" [label="yes — remainder goes to Unresolved Issues"];
   "User says good enough / stop?" -> "More issues to present?" [label="no"];
   "More issues to present?" -> "Present one issue: problem, options best-to-worst, recommendation" [label="yes"];
@@ -259,8 +264,21 @@ and says nothing about the rest looks like it stopped early.
 3. For each issue:
    - State the problem clearly
    - Present specific options from best to worst, with your recommendation and a short explanation for each
-   - Wait for the user's response before presenting the next issue
+   - Wait for the user's decision before presenting the next issue
 4. The user can say "good enough" or "stop" at any point to end the review
+
+**A response is not a decision.** An issue stays open until the user picks an
+option, explicitly defers it, or stops the review. A question, an objection, a
+counter-example, or a new consideration is the user thinking about *this*
+issue — answer it, then put the same options back, revised if your answer
+changed them. If their input dissolves the issue or reshapes it into a
+different one, say so and re-put it; that is still not the next issue.
+
+Presenting the next issue is what tells the user the current one is closed, so
+never advance intending to chase the answer later. "Still need your call on
+[2]" appended after presenting [3] is this failure, not a mitigation for it —
+it splits their attention across two open issues and buries the one they were
+actually working on.
 
 ### Analysis guidance
 
@@ -363,6 +381,7 @@ These patterns produce pushback that reads well and changes nothing. Avoid them:
 |---------|-------------------|
 | Critiquing the spec without checking the codebase | Phase 1 is first for a reason. "This contradicts what already shipped" outranks every stylistic concern. |
 | Listing every issue at once | One at a time, most impactful first. A wall of twenty findings gets skimmed and dismissed. |
+| Treating any reply as an answer | A question is not a decision. Answer it, re-put the same options, stay on the issue. Advancing and adding "still need your call on [2]" is the failure, not a fix for it. |
 | Raising a problem without options | Every issue needs concrete options, best to worst, with a recommendation. "This is ambiguous" is an observation, not pushback. |
 | Raising an issue you can't state as "Y happens, because Z" | Drop it and count it as a discard. A finding you can't defend costs the user more to read than it costs you to cut. |
 | Filing a bug in the surrounding code as a spec finding | One line at the end. It gets a ranked slot only when it makes the spec's own deliverable unreachable. |

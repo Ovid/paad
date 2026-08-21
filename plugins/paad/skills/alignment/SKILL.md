@@ -3,7 +3,7 @@ name: alignment
 description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents. Needs both documents; not for checking code against a spec.
 ---
 
-**On invocation:** announce "Running paad:alignment v1.30.0" before anything else.
+**On invocation:** announce "Running paad:alignment v1.30.1" before anything else.
 
 # Alignment Check
 
@@ -60,6 +60,7 @@ digraph analysis_and_resolution {
   "Design docs present?" [shape=diamond];
   "Issues found?" [shape=diamond];
   "User says stop / good enough?" [shape=diamond];
+  "Decision, or stop signal?" [shape=diamond];
   "More issues to present?" [shape=diamond];
   "Update docs or write report?" [shape=diamond];
   "Docs saved to files?" [shape=diamond];
@@ -72,6 +73,7 @@ digraph analysis_and_resolution {
   "Order issues: missing requirements, then design gaps, then tasks" [shape=box];
   "Present one issue: severity, options best-to-worst, recommendation" [shape=box];
   "Wait for the user's response" [shape=box];
+  "Answer it, then re-put this issue's options" [shape=box];
   "Apply agreed changes; leave undiscussed items alone" [shape=box];
   "Write paad/alignment-reviews/<date>-<topic>-alignment.md" [shape=box];
   "ASK where to write the documents first" [shape=box];
@@ -91,7 +93,10 @@ digraph analysis_and_resolution {
   "Issues found?" -> "Docs saved to files?" [label="no"];
   "Order issues: missing requirements, then design gaps, then tasks" -> "Present one issue: severity, options best-to-worst, recommendation";
   "Present one issue: severity, options best-to-worst, recommendation" -> "Wait for the user's response";
-  "Wait for the user's response" -> "User says stop / good enough?";
+  "Wait for the user's response" -> "Decision, or stop signal?";
+  "Decision, or stop signal?" -> "Answer it, then re-put this issue's options" [label="no — a question, objection, or new consideration"];
+  "Answer it, then re-put this issue's options" -> "Wait for the user's response";
+  "Decision, or stop signal?" -> "User says stop / good enough?" [label="yes"];
   "User says stop / good enough?" -> "Docs saved to files?" [label="yes"];
   "User says stop / good enough?" -> "More issues to present?" [label="no"];
   "More issues to present?" -> "Present one issue: severity, options best-to-worst, recommendation" [label="yes"];
@@ -206,9 +211,22 @@ Present issues **dependency-ordered** so that fixing upstream problems first may
 - Explain the nature of the misalignment (missing coverage, out of scope, design gap)
 - Assign severity: **Critical** / **Important** / **Minor**
 - Present concrete options from best to worst, with recommendation
-- Wait for the user's response before presenting the next issue
+- Wait for the user's decision before presenting the next issue
 
 The user can say "good enough" or "stop" at any point.
+
+**A response is not a decision.** An issue stays open until the user picks an
+option, explicitly defers it, or stops the review. A question, an objection, a
+counter-example, or a new consideration is the user thinking about *this*
+issue — answer it, then put the same options back, revised if your answer
+changed them. If their input dissolves the issue or reshapes it into a
+different one, say so and re-put it; that is still not the next issue.
+
+Presenting the next issue is what tells the user the current one is closed, so
+never advance intending to chase the answer later. "Still need your call on
+[2]" appended after presenting [3] is this failure, not a mitigation for it —
+it splits their attention across two open issues and buries the one they were
+actually working on.
 
 ### Analysis guidance
 
@@ -345,6 +363,7 @@ These patterns produce alignment reviews that miss the drift they exist to catch
 | Treating the spec as ground truth | Phase 1 exists because git history may already contradict it. A plan perfectly aligned to a stale spec is still wrong. |
 | Guessing which document is intent and which is action | Classify explicitly. A "design doc" can be either, and getting it backwards inverts every finding. |
 | Presenting all issues at once | One at a time, dependency-ordered — missing requirements first, orphaned tasks last. Fixing a root cause often dissolves the symptoms below it. |
+| Treating any reply as an answer | A question is not a decision. Answer it, re-put the same options, stay on the issue. Advancing and adding "still need your call on [2]" is the failure, not a fix for it. |
 | Fixing symptoms before root causes | An orphaned task may exist because a requirement was never written down. Add the requirement and the orphan resolves itself. |
 | Rewriting tasks to TDD format when they're already in it | Phase 4 is conditional. Reformatting compliant tasks wastes the user's review attention. |
 | Inventing a requirement to justify a task the user wants | If a task has no requirement, say so. Back-filling requirements to match existing tasks launders scope creep into legitimacy. |

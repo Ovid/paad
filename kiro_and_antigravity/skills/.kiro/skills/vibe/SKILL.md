@@ -3,7 +3,7 @@ name: vibe
 description: Use when making a small, quick change — a bug fix, typo, minor feature, tweak, or anything the user calls "vibe coding" — that looks like 1-3 files in the same module
 ---
 
-**On invocation:** announce "Running paad:vibe v1.30.0" before anything else.
+**On invocation:** announce "Running paad:vibe v1.30.1" before anything else.
 
 # Safe Vibe Coding
 

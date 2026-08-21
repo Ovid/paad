@@ -10,6 +10,13 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.30.1] — 2026-08-21
+
+### Fixed
+- **`/paad:pushback` and `/paad:alignment` no longer advance to the next issue
+  when you ask a question about it.** They answer and re-put the same options;
+  only a decision or "stop" moves on. ([#13](https://github.com/Ovid/paad/issues/13))
+
 ## [1.30.0] — 2026-08-20
 
 ### Added
@@ -654,7 +661,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.30.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.30.1...HEAD
+[1.30.1]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.1
 [1.30.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.0
 [1.24.1]: https://github.com/Ovid/paad/releases/tag/paad--v1.24.1
 [1.24.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.24.0
