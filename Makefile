@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-current bump-version export release tag
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current bump-version export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-current ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -267,6 +267,18 @@ check-export-frontmatter: ## Check every exported SKILL.md kept a usable name an
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "Exported SKILL.md frontmatter is intact."
+
+check-export-commands: ## Check no Claude Code slash command survived into the export
+	@names=$$(echo "$(SKILL_NAMES)" | tr ' ' '|'); \
+	bad=$$(grep -rnE "(^|[^A-Za-z0-9._/-])/(paad:)?($$names)([^A-Za-z0-9/-]|$$)" kiro_and_antigravity/skills || true); \
+	if [ -n "$$bad" ]; then \
+		echo "FAIL: Claude Code slash command(s) survived into the export. Kiro, Antigravity and Cursor"; \
+		echo "      have no such command, so this instructs the agent to type something it cannot run."; \
+		echo "      neutralize()/neutralize_description() in scripts/convert_skills.py did not match:"; \
+		echo "$$bad" | sed 's/^/  /'; \
+		exit 1; \
+	fi; \
+	echo "No Claude Code slash commands survived into the export."
 
 check-export-current: ## Check kiro_and_antigravity/ and pi/ match a fresh export
 	@tmp=$$(mktemp -d); \

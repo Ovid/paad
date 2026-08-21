@@ -70,6 +70,32 @@ def fm_set(frontmatter, key, value):
     return frontmatter[: m.start()] + f"{key}: {value}" + frontmatter[end:]
 
 
+def _skill_command_re():
+    """Match a Claude Code invocation of one of paad's own skills.
+
+    Anchored on the skill names under SOURCE_DIR rather than on any bare
+    slash-word: `handoff` contrasts itself with Claude Code's `/compact` on
+    purpose, and that must survive. Longest name first so the alternation
+    cannot stop at a shorter prefix. Both spellings are matched because the
+    plugin-qualified `/paad:vibe` form still works in Claude Code and still
+    means nothing anywhere else. The lookbehind keeps a rewritten output path
+    (`.reviews/alignment/`) from looking like a command; the lookahead keeps
+    `/alignment-reviews/` and the trailing slash of a directory out of it.
+    """
+    names = sorted(
+        (p.name for p in Path(SOURCE_DIR).iterdir() if p.is_dir()),
+        key=len,
+        reverse=True,
+    )
+    alternation = "|".join(re.escape(name) for name in names)
+    return re.compile(
+        r"(?<![A-Za-z0-9._-])/(?:paad:)?(" + alternation + r")(?![A-Za-z0-9/-])"
+    )
+
+
+SKILL_COMMAND = _skill_command_re()
+
+
 def neutralize_paths(text):
     """Rewrite paad's output paths and drop Claude-Code-only fragments.
 
@@ -101,18 +127,17 @@ def neutralize(text):
     references/ directory, so a reference file never tells the agent to
     write to a path its own SKILL.md has already rewritten.
 
-    NOT for frontmatter. The /paad: rule below deletes whole lines, which
-    silently emptied three skills' description: fields for four months.
-    Frontmatter goes through neutralize_description().
+    NOT for frontmatter — that goes through neutralize_description(), which
+    spells the name out rather than leaving a bare word in the one string
+    these platforms match a request against.
     """
     text = neutralize_paths(text)
 
-    # Remove entire lines containing /paad: (usually follow-up suggestions
-    # or command examples — there are no /paad: commands outside Claude Code)
-    text = re.sub(r"^.*\/paad:[a-z0-9-]+.*$", "", text, flags=re.MULTILINE)
-
-    # Additional cleanup for any remaining /paad: mentions just in case
-    text = re.sub(r"\(?/paad:[a-z0-9-]+\)?", "", text)
+    # Drop the leading slash: `/agentic-dedup src/x/` -> `agentic-dedup src/x/`.
+    # The skill is called the same thing everywhere, only the way you invoke it
+    # differs, and keeping the name plus any arguments is what makes the
+    # sentence still readable when it carries an example invocation.
+    text = SKILL_COMMAND.sub(r"\1", text)
 
     return text
 
@@ -127,7 +152,7 @@ def neutralize_description(text):
     called the same thing everywhere, only the way you invoke it differs.
     """
     text = neutralize_paths(text)
-    return re.sub(r"`?/paad:([a-z0-9-]+)`?", r"the \1 skill", text)
+    return SKILL_COMMAND.sub(r"the \1 skill", text)
 
 
 def convert_pi_agent():
@@ -238,7 +263,7 @@ def convert_skills():
             # Clean up trailing whitespace and excessive newlines
             body = body.rstrip() + "\n"
 
-            cleaned_content += "\n" + header_line + body
+            cleaned_content += "\n" + neutralize_paths(header_line) + body
 
         # Final cleanup for consecutive empty lines
         cleaned_content = re.sub(r'\n{3,}', '\n\n', cleaned_content).strip() + "\n"

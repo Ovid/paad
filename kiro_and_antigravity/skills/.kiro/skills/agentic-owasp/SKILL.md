@@ -1156,7 +1156,7 @@ After interpolation, verify the final path:
 If either check fails after the slug rule has been applied, stop and surface the
 offending value rather than writing the report.
 
-### Update `paad/owasp-reviews/INDEX.md`
+### Update `.reviews/owasp-reviews/INDEX.md`
 
 After the report file is written, prepend a row to the `## Entries` table in
 `.reviews/owasp-reviews/INDEX.md` (newest entry on top). Create the index file if it

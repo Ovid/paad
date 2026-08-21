@@ -22,6 +22,12 @@ what a plugin user sees.
   command, 70+ assistants including Cursor, Codex, GitHub Copilot, Gemini CLI,
   Cline, and Zed. Claude Code users keep `/plugin install paad@paad`. See README.
 
+### Fixed
+- **Kiro and Antigravity copies no longer tell you to run a slash command they
+  do not have**, and they picked up cross-references, stop conditions, and
+  reference-file preambles the exporter had been silently discarding. Recopy
+  from `kiro_and_antigravity/` — or switch to the npx installer.
+
 ### Deprecated
 - **Copying out of `kiro_and_antigravity/` is deprecated** in favor of the npx
   installer. It still works and still writes reports to `.reviews/`; if you

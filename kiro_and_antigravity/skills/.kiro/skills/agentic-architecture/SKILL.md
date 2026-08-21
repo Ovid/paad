@@ -86,7 +86,7 @@ digraph analysis_flow {
 
 ## When NOT to Use This Skill
 
-- **You already have a recent report** — re-running burns a session to regenerate what you have. Read the existing report in `.reviews/architecture/` and use `/fix-architecture`, which handles staleness itself.
+- **You already have a recent report** — re-running burns a session to regenerate what you have. Read the existing report in `.reviews/architecture/` and use `fix-architecture`, which handles staleness itself.
 - **The scope is a handful of files** — architecture is about boundaries and relationships between components. Below that scale there's no structure to assess, and the report will pad.
 
 ## Phase 1: Reconnaissance
