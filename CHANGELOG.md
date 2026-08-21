@@ -10,6 +10,13 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Fixed
+- **`/paad:pushback` and `/paad:alignment` no longer move to the next issue
+  when you ask a question about the current one.** Asking, objecting, or raising
+  a new consideration keeps the issue open — they answer and re-put the same
+  options. Only a chosen option, an explicit defer, or "stop" advances the
+  review. ([#13](https://github.com/Ovid/paad/issues/13))
+
 ## [1.30.0] — 2026-08-20
 
 ### Added
