@@ -3,7 +3,7 @@ name: help
 description: Use when the user asks which paad skills exist, what a paad skill does, which one fits their situation, or how to invoke one — including "what can paad do", "list the paad skills", "is there a paad skill for X", or a request for the arguments of a named paad skill
 ---
 
-**On invocation:** announce "Running paad:help v1.30.1" before anything else.
+**On invocation:** announce "Running paad:help v1.30.2" before anything else.
 
 # paad Help
 

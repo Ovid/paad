@@ -3,7 +3,7 @@ name: agentic-architecture
 description: Use when assessing the architectural health of a codebase — before a major refactor, when onboarding to an unfamiliar repo, after rapid growth, when planning a redesign, or to surface structural strengths and risks before they become expensive. Not for fixing what it finds, and not for reviewing a branch diff.
 ---
 
-**On invocation:** announce "Running paad:agentic-architecture v1.30.1" before anything else.
+**On invocation:** announce "Running paad:agentic-architecture v1.30.2" before anything else.
 
 # Agentic Architecture Analysis
 

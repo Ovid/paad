@@ -10,6 +10,8 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.30.2] — 2026-08-21
+
 ### Fixed
 - **Kiro and Antigravity copies of `fix-architecture`, `pushback`, `rethink`, and
   `test-roadmap` shipped with a blank `description`** — those assistants had
@@ -666,7 +668,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.30.1...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.30.2...HEAD
+[1.30.2]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.2
 [1.30.1]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.1
 [1.30.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.0
 [1.24.1]: https://github.com/Ovid/paad/releases/tag/paad--v1.24.1

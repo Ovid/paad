@@ -4,7 +4,7 @@ description: EXPERIMENTAL. Analyzes a repository and any existing test suite, gr
 compatibility: Requires git
 ---
 
-**On invocation:** announce "Running paad:test-roadmap v1.30.1" before anything else.
+**On invocation:** announce "Running paad:test-roadmap v1.30.2" before anything else.
 
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
