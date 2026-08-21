@@ -145,11 +145,12 @@ def neutralize(text):
 def neutralize_description(text):
     """Neutralize a frontmatter description.
 
-    A description is one run of sentences and is what these platforms match
-    a request against, so it cannot afford neutralize()'s delete-the-line
-    rule — that leaves the skill with no description and nothing to match.
-    Name the sibling skill instead of its Claude Code command: the skill is
-    called the same thing everywhere, only the way you invoke it differs.
+    Same command rule as neutralize(), different replacement, because a
+    description is one unbroken run of sentences and is the one string these
+    platforms match a request against. Dropping the slash the way a body does
+    would leave a bare word mid-sentence ("that's alignment"), so the sibling
+    is named outright instead: "that's the alignment skill". The skill is
+    called the same thing everywhere; only the way you invoke it differs.
     """
     text = neutralize_paths(text)
     return SKILL_COMMAND.sub(r"the \1 skill", text)
