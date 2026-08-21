@@ -12,10 +12,14 @@ copies whole skill directories verbatim (exec bits preserved), and installs to
 growing. `kiro_and_antigravity/` keeps its `.reviews/` rewrites and is
 deprecated in the README, with a migration table for anyone switching routes.
 
-Two claims in the body are wrong and left standing for the record: nothing ever
-wrote `.reports/`, and `make check-export-current` diffs only
-`kiro_and_antigravity/` and `pi/`, so it would not have caught drift in a
-script copied into `plugins/paad/skills/*/scripts/`.
+**Everything below this line is the design as it stood when it was dropped, not
+instruction.** Read "Delete the five path rewrites", "the next run writes to
+`paad/`", and Open question 1's "Unverified" as what the author intended at the
+time — none of it is to be acted on, and the line citations it carries are only
+still accurate by accident. Two of its claims are also wrong and left standing
+for the record: nothing ever wrote `.reports/`, and `make check-export-current`
+diffs only `kiro_and_antigravity/` and `pi/`, so it would not have caught drift
+in a script copied into `plugins/paad/skills/*/scripts/`.
 
 **Touches:** every artifact-writing skill, `scripts/convert_skills.py`, `Makefile`, `README.md`, `CHANGELOG.md`
 
