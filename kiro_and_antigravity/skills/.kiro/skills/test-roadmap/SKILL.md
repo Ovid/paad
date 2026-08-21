@@ -1,17 +1,10 @@
 ---
 name: test-roadmap
-description: >
-  EXPERIMENTAL. Analyzes a repository and any existing test suite, grades
-  existing tests for weakness, classifies mocks, emits a phased roadmap for
-  building a test suite that catches real regressions, then executes those
-  phases one at a time. Use when planning or building a test suite, assessing
-  whether existing tests are worth anything, adding tests to a legacy codebase,
-  or when the user mentions test coverage, test strategy, or weak tests. Not for
-  reviewing a branch for bugs, and not for fixing the bugs it logs.
+description: EXPERIMENTAL. Analyzes a repository and any existing test suite, grades existing tests for weakness, classifies mocks, emits a phased roadmap for building a test suite that catches real regressions, then executes those phases one at a time. Use when planning or building a test suite, assessing whether existing tests are worth anything, adding tests to a legacy codebase, or when the user mentions test coverage, test strategy, or weak tests. Not for reviewing a branch for bugs, and not for fixing the bugs it logs.
 compatibility: Requires git
 ---
 
-**On invocation:** announce "Running paad:test-roadmap v1.30.1" before anything else.
+**On invocation:** announce "Running paad:test-roadmap v1.30.2" before anything else.
 
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
