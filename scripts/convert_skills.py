@@ -32,12 +32,49 @@ PI_TOOLS = {
 }
 
 
-def neutralize(text):
-    """Strip paad-plugin specifics from a chunk of skill prose.
+FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 
-    Applied to SKILL.md section bodies and to every file under a skill's
-    references/ directory, so a reference file never tells the agent to
-    write to a path its own SKILL.md has already rewritten.
+
+def _fm_entry(frontmatter, key):
+    """Locate a top-level frontmatter key: (match, value, end-of-entry).
+
+    Hand-rolled rather than PyYAML — this repo has no third-party Python
+    dependencies and one key lookup does not justify the first. Folded and
+    literal scalars (`>`, `|`) are joined into a single line: paad uses `>`
+    for long descriptions, and a one-line regex captures just the marker.
+    """
+    m = re.search(rf"^{key}:[ \t]*(.*)$", frontmatter, flags=re.MULTILINE)
+    if not m:
+        return None, "", 0
+    first = m.group(1).strip()
+    if first not in (">", "|", ">-", "|-", ">+", "|+"):
+        return m, first, m.end()
+    joined, end = [], m.end()
+    for line in frontmatter[m.end():].split("\n")[1:]:
+        if line.strip() and not line[:1].isspace():
+            break  # next top-level key
+        end += len(line) + 1
+        joined.append(line.strip())
+    return m, " ".join(part for part in joined if part), end
+
+
+def fm_value(frontmatter, key):
+    return _fm_entry(frontmatter, key)[1]
+
+
+def fm_set(frontmatter, key, value):
+    """Replace a key's value, collapsing a folded scalar onto one line."""
+    m, _, end = _fm_entry(frontmatter, key)
+    if not m:
+        return frontmatter
+    return frontmatter[: m.start()] + f"{key}: {value}" + frontmatter[end:]
+
+
+def neutralize_paths(text):
+    """Rewrite paad's output paths and drop Claude-Code-only fragments.
+
+    Safe on any text, including a single-line YAML value, because nothing
+    here deletes a whole line. The body-only rules live in neutralize().
     """
     # Neutralize "paad/" output paths to ".reviews/" or ".reports/".
     text = text.replace("paad/architecture-reviews/", ".reviews/architecture/")
@@ -54,6 +91,22 @@ def neutralize(text):
     # the fan-out. None of the /paad: rules below match this (they need a "/").
     text = re.sub(r" with `subagent_type: paad:[a-z0-9-]+`", "", text)
 
+    return text
+
+
+def neutralize(text):
+    """Strip paad-plugin specifics from a chunk of skill prose.
+
+    Applied to SKILL.md section bodies and to every file under a skill's
+    references/ directory, so a reference file never tells the agent to
+    write to a path its own SKILL.md has already rewritten.
+
+    NOT for frontmatter. The /paad: rule below deletes whole lines, which
+    silently emptied three skills' description: fields for four months.
+    Frontmatter goes through neutralize_description().
+    """
+    text = neutralize_paths(text)
+
     # Remove entire lines containing /paad: (usually follow-up suggestions
     # or command examples — there are no /paad: commands outside Claude Code)
     text = re.sub(r"^.*\/paad:[a-z0-9-]+.*$", "", text, flags=re.MULTILINE)
@@ -62,6 +115,19 @@ def neutralize(text):
     text = re.sub(r"\(?/paad:[a-z0-9-]+\)?", "", text)
 
     return text
+
+
+def neutralize_description(text):
+    """Neutralize a frontmatter description.
+
+    A description is one run of sentences and is what these platforms match
+    a request against, so it cannot afford neutralize()'s delete-the-line
+    rule — that leaves the skill with no description and nothing to match.
+    Name the sibling skill instead of its Claude Code command: the skill is
+    called the same thing everywhere, only the way you invoke it differs.
+    """
+    text = neutralize_paths(text)
+    return re.sub(r"`?/paad:([a-z0-9-]+)`?", r"the \1 skill", text)
 
 
 def convert_pi_agent():
@@ -135,21 +201,25 @@ def convert_skills():
         with open(skill_file, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Extract frontmatter for wrapper
-        name_match = re.search(r"name:\s*(.*)", content)
-        desc_match = re.search(r"description:\s*(.*)", content)
-        skill_name = name_match.group(1).strip() if name_match else skill_path.name
-        description = desc_match.group(1).strip() if desc_match else ""
+        # Frontmatter is parsed and rewritten on its own terms and never
+        # reaches neutralize() — see neutralize_description().
+        fm_match = FRONTMATTER.match(content)
+        frontmatter = fm_match.group(1) if fm_match else ""
+        body = content[fm_match.end():] if fm_match else content
+
+        skill_name = fm_value(frontmatter, "name") or skill_path.name
+        description = neutralize_description(fm_value(frontmatter, "description"))
 
         # Split into sections by headers (##)
         # We use a non-capturing group for the split but keep the header as part of the next chunk
         # Actually splitting by \n## works better if we prepend \n to content
-        parts = re.split(r'\n(##+ .*)', content)
-        
+        parts = re.split(r'\n(##+ .*)', body)
+
         # parts[0] is everything before the first ## — the intro, the
         # announce line, and (by paad convention) every digraph. Those
         # digraphs name output paths, so parts[0] gets neutralized on the
-        # same terms as the section bodies or the two disagree.
+        # same terms as the section bodies or the two disagree. The
+        # frontmatter is no longer in here; it is spliced back on below.
         cleaned_content = neutralize(parts[0])
 
         # Process header/body pairs
@@ -172,6 +242,16 @@ def convert_skills():
 
         # Final cleanup for consecutive empty lines
         cleaned_content = re.sub(r'\n{3,}', '\n\n', cleaned_content).strip() + "\n"
+
+        # Splice the frontmatter back on with only its description rewritten.
+        # Every other key — test-roadmap's compatibility: — keeps its place.
+        if fm_match:
+            cleaned_content = (
+                "---\n"
+                + fm_set(frontmatter, "description", description)
+                + "\n---\n\n"
+                + cleaned_content
+            )
         
         # Write Kiro Skill
         kiro_skill_dir = kiro_skills_root / skill_path.name

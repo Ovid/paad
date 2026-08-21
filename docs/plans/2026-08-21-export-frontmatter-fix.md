@@ -1,7 +1,7 @@
 # Design: exported skills keep their frontmatter
 
 **Date:** 2026-08-21
-**Status:** designed, not implemented
+**Status:** implemented; the open question below is still open
 **Touches:** `scripts/convert_skills.py`, `Makefile`
 **Split from:** `2026-08-21-paadrc-artifact-root-design.md`, where this was
 filed as "a bug fixed in passing". Verification showed it is neither in

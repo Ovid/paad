@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-current bump-version export release tag
+.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-current bump-version export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-current ## Run all checks
+test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-current ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -243,6 +243,30 @@ check-announce: ## Check every skill that writes files announces what it wrote
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All skills announce the files they write (help, rethink excluded)."
+
+check-export-frontmatter: ## Check every exported SKILL.md kept a usable name and description
+	@fail=0; \
+	for file in $$(find kiro_and_antigravity/skills -name SKILL.md | sort); do \
+		name=$$(awk '/^---$$/{n++; next} n==1 && /^name:/{sub(/^name:[ \t]*/,""); print; exit}' "$$file"); \
+		desc=$$(awk '/^---$$/{n++; next} n==1 && /^description:/{sub(/^description:[ \t]*/,""); print; exit}' "$$file"); \
+		if [ -z "$$name" ]; then \
+			echo "FAIL: $$file has no name in its frontmatter"; fail=1; \
+		fi; \
+		if [ -z "$$desc" ]; then \
+			echo "FAIL: $$file has an empty description — these platforms match requests against it"; fail=1; \
+		fi; \
+		case "$$desc" in \
+			">"|"|"|">-"|"|-") echo "FAIL: $$file description is a bare scalar marker, not text"; fail=1;; \
+		esac; \
+		case "$$desc" in \
+			*/paad:*) echo "FAIL: $$file description leaks a Claude Code command: $$desc"; fail=1;; \
+		esac; \
+		case "$$desc" in \
+			*paad/*) echo "FAIL: $$file description leaks a paad/ output path: $$desc"; fail=1;; \
+		esac; \
+	done; \
+	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
+	echo "Exported SKILL.md frontmatter is intact."
 
 check-export-current: ## Check kiro_and_antigravity/ and pi/ match a fresh export
 	@tmp=$$(mktemp -d); \
