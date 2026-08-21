@@ -36,7 +36,8 @@ Do NOT read files or run commands. All help text is below.
 When showing the overview, display exactly this:
 
 ```
-paad — impractical tools for software architecture, code quality, and development workflows.
+paad — Engineering-driven AI.
+Use your engineering excellence — the one thing AI reliably skips.
 
 Available skills:
 
