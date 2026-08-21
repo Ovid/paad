@@ -1,9 +1,9 @@
 ---
-name: help
+name: paad-help
 description: Use when the user asks which paad skills exist, what a paad skill does, which one fits their situation, or how to invoke one — including "what can paad do", "list the paad skills", "is there a paad skill for X", or a request for the arguments of a named paad skill
 ---
 
-**On invocation:** announce "Running paad:help v1.30.2" before anything else.
+**On invocation:** announce "Running paad:paad-help v1.30.2" before anything else.
 
 # paad Help
 
@@ -11,9 +11,10 @@ Show help for paad skills. If `$ARGUMENTS` matches a skill name, show detailed h
 
 ## Arguments
 
-- `/paad:help` — show all available skills
-- `/paad:help vibe` — show detailed help for a specific skill
-- `/paad:help agentic-review` — skill names with hyphens work too
+- `/paad-help` — show all available skills
+- `/paad-help vibe` — show detailed help for a specific skill
+- `/paad-help agentic-review` — skill names with hyphens work too
+
 
 ## Behavior
 
@@ -41,22 +42,22 @@ Use your engineering excellence — the one thing AI reliably skips.
 
 Available skills:
 
-  /paad:agentic-a11y [path]                  Accessibility audit (web, mobile, desktop, CLI, games)
-  /paad:agentic-architecture [path...]       Multi-agent architecture analysis (strengths & flaws)
-  /paad:fix-architecture [report]            Fix architectural flaws from an analysis report
-  /paad:agentic-review [base-branch] [path]  Multi-agent code review of current branch (bug hunting)
-  /paad:alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
-  /paad:makefile                             Create or update a Makefile with standard targets
-  /paad:pushback [document]                  Spec/PRD/doc critic (finds issues before you build)
-  /paad:vibe [task description]              Safe vibe coding with TDD guardrails
+  /agentic-a11y [path]                  Accessibility audit (web, mobile, desktop, CLI, games)
+  /agentic-architecture [path...]       Multi-agent architecture analysis (strengths & flaws)
+  /fix-architecture [report]            Fix architectural flaws from an analysis report
+  /agentic-review [base-branch] [path]  Multi-agent code review of current branch (bug hunting)
+  /alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
+  /makefile                             Create or update a Makefile with standard targets
+  /pushback [document]                  Spec/PRD/doc critic (finds issues before you build)
+  /vibe [task description]              Safe vibe coding with TDD guardrails
 
 Experimental — may change or be withdrawn in any release, including patches:
 
-  /paad:agentic-dedup [scope]                Find semantic duplication (same meaning, different code)
-  /paad:agentic-owasp [scope]                Security review against the OWASP Top 10:2025
-  /paad:handoff [save|resume]                Hand this session's work to a fresh session, in writing
-  /paad:rethink [what to re-examine]         Verify the premises under options already on the table
-  /paad:test-roadmap                         Plan and build a test suite that catches real regressions
+  /agentic-dedup [scope]                Find semantic duplication (same meaning, different code)
+  /agentic-owasp [scope]                Security review against the OWASP Top 10:2025
+  /handoff [save|resume]                Hand this session's work to a fresh session, in writing
+  /rethink [what to re-examine]         Verify the premises under options already on the table
+  /test-roadmap                         Plan and build a test suite that catches real regressions
 
 Picking between them:
 
@@ -82,7 +83,12 @@ Picking between them:
   Build is broken?                      none of these — makefile manages targets,
                                         it does not debug builds
 
-Run /paad:help <skill-name> for detailed help on a specific skill.
+Run /paad-help <skill-name> for detailed help on a specific skill.
+
+Invoking: the names above are slash commands on Claude Code. If your
+assistant does not take them, ask for the skill by name ("run the pushback
+skill"). If another plugin ships a skill with the same name, disambiguate with
+the paad: prefix — /paad:vibe rather than /vibe.
 ```
 
 ---
@@ -92,7 +98,7 @@ Run /paad:help <skill-name> for detailed help on a specific skill.
 ### agentic-a11y
 
 ```
-/paad:agentic-a11y [path]
+/agentic-a11y [path]
 
 Comprehensive multi-agent accessibility audit of user-facing code.
 
@@ -101,9 +107,9 @@ Target:   WCAG 2.2 AA baseline, AAA flagged as bonus recommendations.
 Output:   paad/a11y-reviews/
 
 Arguments:
-  /paad:agentic-a11y                    Audit all user-facing code in the repo
-  /paad:agentic-a11y src/components/    Scope to a directory
-  /paad:agentic-a11y Modal.tsx          Scope to a file
+  /agentic-a11y                    Audit all user-facing code in the repo
+  /agentic-a11y src/components/    Scope to a directory
+  /agentic-a11y Modal.tsx          Scope to a file
 
 What it does:
   1. Detects the platform(s) automatically
@@ -127,7 +133,7 @@ Best used in a fresh session — consumes significant context.
 ### agentic-architecture
 
 ```
-/paad:agentic-architecture [path...]
+/agentic-architecture [path...]
 
 Multi-agent architecture analysis. Diagnosis only — finds strengths and
 flaws with evidence but does not propose fixes.
@@ -135,9 +141,9 @@ flaws with evidence but does not propose fixes.
 Output: paad/architecture-reviews/
 
 Arguments:
-  /paad:agentic-architecture                          Full repo
-  /paad:agentic-architecture src/                     Scope to a directory
-  /paad:agentic-architecture packages/api/ packages/shared/  Multiple dirs
+  /agentic-architecture                          Full repo
+  /agentic-architecture src/                     Scope to a directory
+  /agentic-architecture packages/api/ packages/shared/  Multiple dirs
 
 What it does:
   1. Reconnaissance: repo overview, dependency snapshot, steering files
@@ -161,7 +167,7 @@ Best used in a fresh session — consumes significant context.
 ### fix-architecture
 
 ```
-/paad:fix-architecture [report]
+/fix-architecture [report]
 
 Guided fixing of architectural flaws from an agentic-architecture report.
 Test-first workflow with developer approval at every step.
@@ -169,12 +175,12 @@ Test-first workflow with developer approval at every step.
 Output: Updates the report in paad/architecture-reviews/ with fix status
 
 Arguments:
-  /paad:fix-architecture                         Find most recent report
-  /paad:fix-architecture path/to/report.md       Use a specific report
+  /fix-architecture                         Find most recent report
+  /fix-architecture path/to/report.md       Use a specific report
 
 Requirements:
   - Must be on a feature branch (not main/master/trunk)
-  - An architecture report must exist (run /paad:agentic-architecture first)
+  - An architecture report must exist (run /agentic-architecture first)
 
 What it does:
   1. Pre-flight: branch check, report staleness, test infrastructure,
@@ -204,7 +210,7 @@ Best used in a fresh session — consumes significant context.
 ### agentic-review
 
 ```
-/paad:agentic-review [base-branch] [path]
+/agentic-review [base-branch] [path]
 
 Multi-agent bug-hunting code review of the current branch.
 
@@ -212,9 +218,9 @@ Output:   paad/code-reviews/<branch>-<timestamp>.md (per-review)
           paad/code-reviews/backlog.md (project-wide, persistent)
 
 Arguments:
-  /paad:agentic-review                    Diff against main
-  /paad:agentic-review develop            Diff against a different branch
-  /paad:agentic-review main src/auth/     Scope to a directory
+  /agentic-review                    Diff against main
+  /agentic-review develop            Diff against a different branch
+  /agentic-review main src/auth/     Scope to a directory
 
 Requirements:
   - Must be on a feature branch (not main/master)
@@ -252,7 +258,7 @@ Best used in a fresh session — consumes significant context.
 ### alignment
 
 ```
-/paad:alignment [files...]
+/alignment [files...]
 
 Checks that requirements and implementation plans are aligned.
 Rewrites all tasks in TDD red/green/refactor format (mandatory).
@@ -260,9 +266,9 @@ Rewrites all tasks in TDD red/green/refactor format (mandatory).
 Output: paad/alignment-reviews/
 
 Arguments:
-  /paad:alignment                              Auto-detect documents
-  /paad:alignment requirements.md plan.md      Specific files
-  /paad:alignment docs/specs/ docs/plans/      Directories
+  /alignment                              Auto-detect documents
+  /alignment requirements.md plan.md      Specific files
+  /alignment docs/specs/ docs/plans/      Directories
 
 Auto-detection scans: .kiro/, specs/ (spec-kit), docs/plans/, docs/specs/,
 common filenames, and conversation history.
@@ -287,12 +293,12 @@ Works within an existing conversation — no fresh session needed.
 ### makefile
 
 ```
-/paad:makefile
+/makefile
 
 Creates or updates a project Makefile with standard targets.
 
 Arguments:
-  /paad:makefile    Create a new Makefile or update an existing one
+  /makefile    Create a new Makefile or update an existing one
 
 What it does:
   1. Detects your stack (reads CLAUDE.md, README, package.json, etc.)
@@ -323,7 +329,7 @@ No fresh session needed — this is a lightweight workflow skill.
 ### pushback
 
 ```
-/paad:pushback [document]
+/pushback [document]
 
 Critically reviews a spec, PRD, or design before you start building —
 or any document that makes claims about the code, such as an agent
@@ -338,8 +344,8 @@ Output: the conversation, plus your spec if you ask for edits.
         or you ask for a report.
 
 Arguments:
-  /paad:pushback path/to/spec.md    Review a specific file
-  /paad:pushback                    Auto-detect from conversation or files
+  /pushback path/to/spec.md    Review a specific file
+  /pushback                    Auto-detect from conversation or files
 
 Auto-detection checks: conversation history first, then common locations
 (docs/plans/, docs/specs/, requirements.md, PRD.md, spec.md), then agent
@@ -372,7 +378,7 @@ Works within an existing conversation — no fresh session needed.
 ### rethink
 
 ```
-/paad:rethink [what to re-examine]          EXPERIMENTAL
+/rethink [what to re-examine]          EXPERIMENTAL
 
 Independently verifies the premises under options that are already on
 the table. Reports what it checked, and how it checked it.
@@ -383,8 +389,8 @@ skill may be withdrawn — in any release, including a patch release.
 Output: none — it speaks in the conversation and writes no files.
 
 Arguments:
-  /paad:rethink                    Re-examine the most recent option set
-  /paad:rethink the caching approach   Name which decision, if several are live
+  /rethink                    Re-examine the most recent option set
+  /rethink the caching approach   Name which decision, if several are live
 
 What it does:
   1. Extracts every premise the recommendation depends on, including
@@ -423,13 +429,13 @@ premises nobody tested. Not for critiquing a spec — that is pushback.
 ### vibe
 
 ```
-/paad:vibe [task description]
+/vibe [task description]
 
 Safe vibe coding. Quick fixes with TDD guardrails.
 
 Arguments:
-  /paad:vibe fix the login timeout    Task description inline
-  /paad:vibe                          Ask what needs fixing
+  /vibe fix the login timeout    Task description inline
+  /vibe                          Ask what needs fixing
 
 What it does:
   1. Understands the task (asks clarifying questions if needed)
@@ -444,9 +450,9 @@ What it does:
      - GREEN: write minimal code to pass
      - REFACTOR: clean up duplication, hard-coded values, patterns
   4. Post-fix summary with contextual follow-up suggestions:
-     - Security-sensitive code → /paad:agentic-review
-     - UI changes → /paad:agentic-a11y
-     - Harder than expected → /paad:agentic-architecture
+     - Security-sensitive code → /agentic-review
+     - UI changes → /agentic-a11y
+     - Harder than expected → /agentic-architecture
 
 No fresh session needed — this is a lightweight workflow skill.
 ```
@@ -454,7 +460,7 @@ No fresh session needed — this is a lightweight workflow skill.
 ### agentic-dedup
 
 ```
-/paad:agentic-dedup [scope]
+/agentic-dedup [scope]
 
 EXPERIMENTAL — arguments, output paths, and behavior may change or be
 withdrawn in any release, including patch releases.
@@ -467,11 +473,11 @@ Output: paad/dedup-reviews/<branch-or-scope>-<timestamp>-<sha>.md
         paad/dedup-reviews/INDEX.md (persistent, newest run on top)
 
 Arguments:
-  /paad:agentic-dedup                     Scan the repository
-  /paad:agentic-dedup src/auth/           Scope to a path or module
-  /paad:agentic-dedup --changed main      Seed from the diff against main
-  /paad:agentic-dedup --type-constraints  Schemas, type aliases, validators
-  /paad:agentic-dedup --domain "payments" Scope to a domain term
+  /agentic-dedup                     Scan the repository
+  /agentic-dedup src/auth/           Scope to a path or module
+  /agentic-dedup --changed main      Seed from the diff against main
+  /agentic-dedup --type-constraints  Schemas, type aliases, validators
+  /agentic-dedup --domain "payments" Scope to a domain term
 
 What it does:
   1. Reconnaissance: manifest grouped by semantic domain, not by extension
@@ -500,7 +506,7 @@ Best used in a fresh session — consumes significant context.
 ### agentic-owasp
 
 ```
-/paad:agentic-owasp [scope]
+/agentic-owasp [scope]
 
 EXPERIMENTAL — arguments, output paths, and behavior may change or be
 withdrawn in any release, including patch releases.
@@ -513,11 +519,11 @@ Output: paad/owasp-reviews/<branch-or-scope>-<timestamp>-<sha>.md
         paad/owasp-reviews/INDEX.md (persistent, newest run on top)
 
 Arguments:
-  /paad:agentic-owasp                     Review the repository
-  /paad:agentic-owasp src/api/            Scope to a path or module
-  /paad:agentic-owasp --changed main      Seed from the diff against main
-  /paad:agentic-owasp --category A01      One category, or A01,A05,A07
-  /paad:agentic-owasp --deps              Supply chain only: deps, CI/CD
+  /agentic-owasp                     Review the repository
+  /agentic-owasp src/api/            Scope to a path or module
+  /agentic-owasp --changed main      Seed from the diff against main
+  /agentic-owasp --category A01      One category, or A01,A05,A07
+  /agentic-owasp --deps              Supply chain only: deps, CI/CD
 
 What it does:
   1. Reconnaissance: framework defaults first — the ORM, template engine,
@@ -597,7 +603,7 @@ Best used in a fresh session — consumes significant context.
 ### test-roadmap
 
 ```
-/paad:test-roadmap
+/test-roadmap
 
 EXPERIMENTAL — arguments, output paths, and behavior may change or be
 withdrawn in any release, including patch releases. This is the only paad
@@ -615,7 +621,7 @@ Output: paad/test-roadmap/test-roadmap.md (the roadmap, and the memory)
         Tests, committed one phase per commit, on your working branch
 
 Arguments:
-  /paad:test-roadmap    No arguments — the roadmap file decides the mode
+  /test-roadmap    No arguments — the roadmap file decides the mode
 
 Requirements:
   - A git checkout (bug injection runs in a disposable git worktree)
@@ -652,7 +658,7 @@ Best used in a fresh session — consumes significant context.
 ### handoff
 
 ```
-/paad:handoff [save|resume]                 EXPERIMENTAL
+/handoff [save|resume]                 EXPERIMENTAL
 
 Writes a handoff.md that lets a FRESH session continue this one's
 work, and reads it back on the other side.
@@ -663,9 +669,9 @@ skill may be withdrawn — in any release, including a patch release.
 Output: handoff.md in the working directory. Suggests you gitignore it.
 
 Arguments:
-  /paad:handoff          Infer: history above → save, empty session → resume
-  /paad:handoff save     Write a handoff regardless
-  /paad:handoff resume   Read the existing handoff regardless
+  /handoff          Infer: history above → save, empty session → resume
+  /handoff save     Write a handoff regardless
+  /handoff resume   Read the existing handoff regardless
 
 Why not just /compact:
   /compact   summarizes and keeps working — same session, and the

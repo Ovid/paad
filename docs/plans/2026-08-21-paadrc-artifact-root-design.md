@@ -1,7 +1,22 @@
 # Design: `.paadrc` and a single artifact root
 
 **Date:** 2026-08-21
-**Status:** designed, not implemented
+**Status:** SUPERSEDED — not implemented, and will not be
+
+`.paadrc` was dropped. Open question 1 was settled by verification instead:
+`npx skills@latest add Ovid/paad` works against this repository today. It
+discovers skills through `.claude-plugin/marketplace.json` → `plugins/paad`,
+copies whole skill directories verbatim (exec bits preserved), and installs to
+70+ agents. So every install route except the hand-copy tree already agrees on
+`paad/`, and the split this design existed to close is frozen rather than
+growing. `kiro_and_antigravity/` keeps its `.reviews/` rewrites and is
+deprecated in the README, with a migration table for anyone switching routes.
+
+Two claims in the body are wrong and left standing for the record: nothing ever
+wrote `.reports/`, and `make check-export-current` diffs only
+`kiro_and_antigravity/` and `pi/`, so it would not have caught drift in a
+script copied into `plugins/paad/skills/*/scripts/`.
+
 **Touches:** every artifact-writing skill, `scripts/convert_skills.py`, `Makefile`, `README.md`, `CHANGELOG.md`
 
 ## Why

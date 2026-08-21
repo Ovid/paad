@@ -89,9 +89,9 @@ digraph handoff_resume {
 
 ## Arguments
 
-- `/paad:handoff` — infer the mode. Conversation above this invocation means you are saving; an empty session means you are resuming. Say which way it went, in one line, before acting.
-- `/paad:handoff save` — write a handoff regardless
-- `/paad:handoff resume` — read the existing handoff regardless
+- `/handoff` — infer the mode. Conversation above this invocation means you are saving; an empty session means you are resuming. Say which way it went, in one line, before acting.
+- `/handoff save` — write a handoff regardless
+- `/handoff resume` — read the existing handoff regardless
 
 The inference is a convenience, not a guess worth defending. If it picks wrong, the user says `save` or `resume` and you obey without arguing.
 

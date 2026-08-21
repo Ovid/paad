@@ -19,11 +19,17 @@ In Claude Code:
 ```
 
 Pick a scope when the details panel opens, then `/reload-plugins`. Run
-`/paad:help` to see everything.
+`/paad-help` to see everything.
 
-Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
-**Antigravity**, and ships an experimental **Pi** package — see
-[Installation](#installation).
+Not using Claude Code? One command installs PAAD into 70+ other agents —
+Cursor, Codex, GitHub Copilot, Gemini CLI, Cline, Zed, Warp, Amp, OpenCode:
+
+```bash
+npx skills@latest add Ovid/paad
+```
+
+See [Installation](#installation) for the details, including the experimental
+**Pi** package.
 
 ### The skills
 
@@ -37,7 +43,7 @@ Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
 | `/agentic-a11y [path]` | Accessibility audit against WCAG 2.2 AA, by disability category |
 | `/vibe [task]` | Small fixes, TDD guardrails still on |
 | `/makefile` | Creates or updates a project `Makefile` |
-| `/paad:help [skill-name]` | Lists the skills, or explains one |
+| `/paad-help [skill-name]` | Lists the skills, or explains one |
 
 ### Experimental skills
 
@@ -256,7 +262,7 @@ There's a lot to take in with PAAD, [so I've written an article to explain how
 to write production-quality code with
 it](https://curtispoe.org/articles/watching-claude-sonnet-outperform-opus).
 
-If you are new to PAAD, start with `/paad:help` to see the available skills and when to use them.
+If you are new to PAAD, start with `/paad-help` to see the available skills and when to use them.
 
 A typical workflow looks like this:
 
@@ -328,6 +334,33 @@ that against the version in
 If a skill documented here is missing entirely, you're on an older version —
 run through the update steps above.
 
+### Every other agent — `npx skills`
+
+One command, and it covers 70+ agents:
+
+```bash
+npx skills@latest add Ovid/paad
+```
+
+It opens a picker. Everything under **Universal (`.agents/skills`)** — Amp,
+Antigravity, Cline, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Warp,
+Zed and others — is always included. The list below that is opt-in and holds
+another fifty-odd, Claude Code among them.
+
+```bash
+npx skills@latest add Ovid/paad --list                 # list the skills, install nothing
+npx skills@latest add Ovid/paad --skill pushback       # install one skill
+npx skills@latest add Ovid/paad -a cursor -a codex -y  # skip the pickers
+npx skills@latest add Ovid/paad --copy                 # real copies instead of symlinks
+```
+
+One thing worth knowing before you run it.
+
+**Skills refer to each other by slash command** — `/agentic-architecture`,
+`/pushback`. If your assistant does not take slash commands, ask for the skill
+by name instead: "run the pushback skill". The name is always the same; only
+the way you invoke it differs.
+
 ### Pi — experimental
 
 Pi support is **not settled**. The package layout, the skills it exposes, and
@@ -393,7 +426,22 @@ at 8 tasks, while `agentic-review` asks for 12 dispatches on diffs over 500
 lines; the skill has a documented two-pass fallback for exactly this case, so
 say yes to it rather than accepting a half-coverage review.
 
-### Cursor
+### Copying from `kiro_and_antigravity/` — deprecated
+
+**Prefer `npx skills@latest add Ovid/paad`.** The instructions below still work
+and are not being removed this release, but they are no longer the recommended
+route.
+
+They stay for one reason: this tree has the Claude-Code-only sections stripped
+and the `subagent_type:` fragments removed, which `npx skills` does not do. If
+that matters more to you than a one-line install, keep copying.
+
+**These copies write reports to `.reviews/`, not `paad/`.** That is deliberate
+and unchanged — every other install route uses `paad/`. Your existing reports
+do not follow you across, so if you switch, see
+[Migrating to `npx skills`](#migrating-to-npx-skills) below.
+
+#### Cursor
 
 PAAD skills use the same `SKILL.md` format that [Cursor
 skills](https://cursor.com/docs/skills) expect.
@@ -416,7 +464,7 @@ One skill (for example, `pushback`):
 cp -r kiro_and_antigravity/skills/.kiro/skills/pushback .cursor/skills/
 ```
 
-### Kiro
+#### Kiro
 
 All skills (bash/zsh):
 
@@ -436,7 +484,7 @@ One skill (for example, `pushback`):
 cp -r kiro_and_antigravity/skills/.kiro/skills/pushback .kiro/skills/
 ```
 
-### Antigravity
+#### Antigravity
 
 Antigravity skills function as wrappers that reference Kiro skill files, so
 you need both:
@@ -462,10 +510,35 @@ cp -r kiro_and_antigravity/skills/.kiro/skills/pushback .kiro/skills/
 cp -r kiro_and_antigravity/skills/.agent/skills/pushback .agent/skills/
 ```
 
+#### Migrating to `npx skills`
+
+Install with `npx`, delete the skill directories you copied in, then move your
+existing reports so the skills can still find them:
+
+```bash
+mkdir -p paad
+mv .reviews/architecture   paad/architecture-reviews
+mv .reviews/code           paad/code-reviews
+mv .reviews/pushback       paad/pushback-reviews
+mv .reviews/alignment      paad/alignment-reviews
+mv .reviews/a11y-reviews   paad/a11y-reviews
+mv .reviews/dedup-reviews  paad/dedup-reviews
+mv .reviews/owasp-reviews  paad/owasp-reviews
+mv .reviews/test-roadmap   paad/test-roadmap
+rmdir .reviews
+```
+
+Skip any line whose directory you do not have. If you gitignored `.reviews/`,
+change that entry to `paad/`.
+
+Skipping the move is not fatal, but it is not free either: `fix-architecture`
+will report that no architecture review exists, and `test-roadmap` will build a
+fresh roadmap rather than resume the one you were partway through.
+
 ### Using skills outside Claude Code
 
-As with Claude Code, with Pi, Cursor, Kiro, and Antigravity, skills are
-automatically recognized by your assistant. You can simply ask the assistant to
+However you installed them, skills are recognized automatically by your
+assistant. You can simply ask the assistant to
 perform the task, such as:
 
 * “Run a pushback review on this spec”
@@ -694,11 +767,11 @@ while keeping TDD guardrails in place.
   for security-sensitive changes, `agentic-a11y` for UI changes, or
   architecture review if the fix was harder than expected
 
-#### `/paad:help [skill-name]`
+#### `/paad-help [skill-name]`
 
 Shows help for all PAAD skills or detailed help for one skill.
 
-* **Arguments:** `/paad:help` (overview of all skills) or `/paad:help vibe`
+* **Arguments:** `/paad-help` (overview of all skills) or `/paad-help vibe`
   (detailed help for one skill)
 
 ---
@@ -1034,9 +1107,9 @@ right one. When you'd rather be explicit, the bare slash command does it:
 
 The fully-qualified `/paad:pushback` form exists for one job — disambiguation.
 When a name is already taken, the `paad:` prefix says which one you mean.
-`/paad:help` is the live example: bare `/help` is Claude Code's own built-in, so
-that one always needs the prefix. Nothing else in PAAD currently collides, so
-until you install a plugin that shares a name, you can ignore it.
+Nothing in PAAD currently collides, so until you install a plugin that shares a
+name, you can ignore it. The help skill is called `paad-help` rather than `help`
+for exactly this reason: `/help` is Claude Code's own built-in.
 
 ## Local Development
 
@@ -1046,7 +1119,7 @@ Test the plugin locally without installing it:
 claude --plugin-dir ./plugins/paad
 ```
 
-Then invoke skills with `/paad:help` to see available commands, or try
+Then invoke skills with `/paad-help` to see available commands, or try
 `/vibe`, `/pushback`, and the rest directly.
 
 After making changes, run `/reload-plugins` inside Claude Code to pick up
@@ -1070,7 +1143,7 @@ Individual checks can also be run separately:
 ```bash
 make check-versions     # package.json ↔ marketplace.json ↔ plugin.json version sync
 make check-digraphs     # every skill (except help) has a digraph
-make check-help         # every skill is documented in paad:help
+make check-help         # every skill is documented in paad:paad-help
 make check-readme       # every skill is documented in README.md
 make check-frontmatter  # SKILL.md frontmatter is valid, folder name matches
 make check-references   # references/ dispatches resolve; no orphaned reference files
@@ -1090,7 +1163,7 @@ Key rules from `CLAUDE.md`:
   decision points
 * Skill folder names must match the `name` field in `SKILL.md` frontmatter
 * Use `make bump-version VERSION=X.Y.Z` to keep all versioned files in sync
-* Update `README.md`, `paad:help`, and `CLAUDE.md` when adding or changing
+* Update `README.md`, `paad:paad-help`, and `CLAUDE.md` when adding or changing
   skills
 
 ## Star History

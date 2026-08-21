@@ -17,14 +17,14 @@ Also, address me as "Ovid" for further verification that you have read this file
 ## Key conventions
 
 - **Marketplace name**: `paad`
-- **Plugin name**: `paad` (so all skills are invoked as `/paad:<skill-name>`)
-- **Skill naming**: skill folder names become the suffix after `paad:` — e.g., `skills/agentic-architecture/` → `/paad:agentic-architecture`
+- **Plugin name**: `paad`. Skills are reachable by their bare name (`/pushback`); the `/paad:<skill-name>` form also works and is only needed to disambiguate against another plugin. Skill prose uses the bare form so the pointers work outside Claude Code.
+- **Skill naming**: the skill folder name is the skill name — e.g. `skills/agentic-architecture/` → `/agentic-architecture`, fully qualified `/paad:agentic-architecture`. The help skill is `paad-help`, not `help`, because `/help` is a Claude Code builtin.
 - **Versioning**: `package.json`, `marketplace.json` (the `plugins[0].version` field — `metadata.version` is the marketplace's own and stays put), and `plugin.json` use semver, plus every `SKILL.md` carries the plugin version inside its on-invocation announce line. `make bump-version VERSION=X.Y.Z` updates all of them at once, and `make release` runs it — don't invoke it by hand outside a release. `make check-versions` and `make check-skill-versions` (part of `make test`) catch drift.
 - **Changelog**: `CHANGELOG.md` tracks user-facing changes to the plugin, newest first. Land every user-facing change under `[Unreleased]` as you make it; the release rolls that section into a version. Repo-only churn (docs, `.claude/skills/`, README wording, design notes) doesn't need an entry. See "Releasing" for the rollover steps.
 
-  **Entry length: 1–3 lines. A new skill gets at most 8, and ends with a pointer to `paad:help` or README.** A changelog entry answers one question — *does this release affect me, and do I need to do anything?* Say what changed, who it hits, and what to do about it. Nothing else.
+  **Entry length: 1–3 lines. A new skill gets at most 8, and ends with a pointer to `paad:paad-help` or README.** A changelog entry answers one question — *does this release affect me, and do I need to do anything?* Say what changed, who it hits, and what to do about it. Nothing else.
 
-  What does **not** go in an entry: how the feature works internally, why the design is right, the alternatives rejected, the phases or agents it dispatches, the evidence behind it, run counts from testing. That material is real and worth keeping — it belongs in the commit message, in README (why it works this way), or in `paad:help` (how to use it). Putting it in the changelog makes a third copy that has to be hand-synced with the other two, and drifts.
+  What does **not** go in an entry: how the feature works internally, why the design is right, the alternatives rejected, the phases or agents it dispatches, the evidence behind it, run counts from testing. That material is real and worth keeping — it belongs in the commit message, in README (why it works this way), or in `paad:paad-help` (how to use it). Putting it in the changelog makes a third copy that has to be hand-synced with the other two, and drifts.
 
   The test: if you're explaining a mechanism, you're in the wrong file. If a reader would have to scroll to find out whether the release affects them, it's too long. Some past sections run to 200 lines — those are the mistake, not the precedent.
 - **Verification**: `make export && make test` before committing. It regenerates `kiro_and_antigravity/` and `pi/` from the plugin sources, then runs every check — including `claude plugin validate` on the marketplace and the plugin. Never hand-edit anything it generates; if the output is wrong, fix the generator.
@@ -41,10 +41,10 @@ Also, address me as "Ovid" for further verification that you have read this file
 
 1. Create `plugins/paad/skills/<skill-name>/SKILL.md` with frontmatter (`name` matching the folder, `description`) and instructions
 2. Add the on-invocation announce line as the very first line of the body (after the closing `---` of frontmatter): `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` — the version literal must match `plugin.json`
-3. Consider `$ARGUMENTS` support — if the skill could benefit from user-provided scope (a file path, directory, branch name, etc.), add an Arguments section documenting usage. Users shouldn't need to remember flags; keep arguments positional and intuitive (e.g., `/paad:skillname path/to/scope`).
-4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow, placed immediately after the intro paragraphs and before the first `##` heading. The only exception is `paad:help`, which is a simple display skill. See "Digraph requirements" below.
+3. Consider `$ARGUMENTS` support — if the skill could benefit from user-provided scope (a file path, directory, branch name, etc.), add an Arguments section documenting usage. Users shouldn't need to remember flags; keep arguments positional and intuitive (e.g., `/skillname path/to/scope`).
+4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow, placed immediately after the intro paragraphs and before the first `##` heading. The only exception is `paad:paad-help`, which is a simple display skill. See "Digraph requirements" below.
 5. If the skill dispatches subagents for analysis, dispatch every one of them as `subagent_type: paad:paad-analyst` — the read-only agent in `plugins/paad/agents/`. Specialists and verifiers must not carry `Edit`, `Write`, or `NotebookEdit`; subagents have been observed editing source code to test whether a finding was real.
-6. Document it in `README.md` under "Available Skills" (argument syntax in the heading) and in `paad:help` — both the overview table and a detailed help section
+6. Document it in `README.md` under "Available Skills" (argument syntax in the heading) and in `paad:paad-help` — both the overview table and a detailed help section
 7. Add a `### Added` entry under `[Unreleased]` in `CHANGELOG.md`
 8. Run `make export && make test`, then drive the skill for real: `claude --plugin-dir ./plugins/paad`
 
@@ -52,7 +52,7 @@ Also, address me as "Ovid" for further verification that you have read this file
 
 ## Modifying an existing skill
 
-Edit the SKILL.md, then run `make export && make test`. If the change alters behavior, arguments, or output, update the matching help text in `plugins/paad/skills/help/SKILL.md`. If it's visible to plugin users, add a `CHANGELOG.md` entry under `[Unreleased]`. The version is the release's job, not this edit's.
+Edit the SKILL.md, then run `make export && make test`. If the change alters behavior, arguments, or output, update the matching help text in `plugins/paad/skills/paad-help/SKILL.md`. If it's visible to plugin users, add a `CHANGELOG.md` entry under `[Unreleased]`. The version is the release's job, not this edit's.
 
 ## Releasing
 
@@ -70,7 +70,7 @@ Release from a branch, never by committing to `main` directly — and release fr
 
 ## Digraph requirements
 
-Every skill (except `paad:help`) must include at least one graphviz digraph (`\`\`\`dot` block) that visualizes the skill's decision points and flow. Digraphs must be:
+Every skill (except `paad:paad-help`) must include at least one graphviz digraph (`\`\`\`dot` block) that visualizes the skill's decision points and flow. Digraphs must be:
 
 - **Complete** — every decision point, stop condition, and branching path in the prose must appear in the digraph
 - **Accurate** — node labels, edge labels, and flow must match the prose exactly. If the prose changes, the digraph must be updated to match.
@@ -95,7 +95,7 @@ The repo also hosts **project-local** skills at `.claude/skills/<name>/SKILL.md`
 - **Not distributed** — they live in this repo only and are picked up automatically by Claude Code when it runs in this working directory. There is no marketplace, no `claude plugin validate` step, no `plugin.json`, no version field.
 - **No `make bump-version` impact** — `make bump-version` rewrites `package.json`, `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line. Project-local SKILL.md files are skipped on purpose. They have no announce-line version, no `paad:<name>` namespace.
 - **No `make test` checks** — the Makefile's check-frontmatter / check-digraphs / check-help / check-readme / check-skill-versions targets all walk `plugins/paad/skills/`. They do not enforce anything against `.claude/skills/`.
-- **Edit-and-commit only** — change the SKILL.md, commit, you're done. No version bump, no help table edit, no README entry, no `paad:help` cross-reference.
+- **Edit-and-commit only** — change the SKILL.md, commit, you're done. No version bump, no help table edit, no README entry, no `paad:paad-help` cross-reference.
 - **Naming** — invoke as `/<name>` (no `paad:` prefix), because they're not in a plugin. `/roadmap`, not `/paad:roadmap`.
 
 When reviewing or modifying a `.claude/skills/<name>/SKILL.md`, do not chase the paad-plugin conventions (announce lines, version literals, help / README cross-references). They don't apply here.

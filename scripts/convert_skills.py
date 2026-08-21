@@ -185,7 +185,7 @@ def convert_skills():
         shutil.rmtree(root, ignore_errors=True)
         root.mkdir(parents=True, exist_ok=True)
     
-    skip_names = ["makefile", "help"]
+    skip_names = ["makefile", "paad-help"]
     unwanted_headers = ["Arguments", "Input Resolution", "Pre-flight Checks", "Document classification"]
 
     for skill_path in Path(SOURCE_DIR).iterdir():

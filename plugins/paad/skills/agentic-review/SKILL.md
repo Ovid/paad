@@ -99,21 +99,21 @@ Backlog **lifecycle is explicit-removal only** — agentic-review never auto-res
 
 ## Arguments
 
-`/paad:agentic-review` accepts optional `$ARGUMENTS`:
+`/agentic-review` accepts optional `$ARGUMENTS`:
 
-- `/paad:agentic-review` — review all changes on the current branch against `main`
-- `/paad:agentic-review develop` — review against a different base branch (e.g., `develop` instead of `main`)
-- `/paad:agentic-review main src/auth/` — review against `main`, but only for files under `src/auth/`
+- `/agentic-review` — review all changes on the current branch against `main`
+- `/agentic-review develop` — review against a different base branch (e.g., `develop` instead of `main`)
+- `/agentic-review main src/auth/` — review against `main`, but only for files under `src/auth/`
 
 When a base branch is provided, use it instead of `main` in all `git diff` commands. When a path is provided, filter the diff and manifest to only include files within that scope.
 
-**Single-argument disambiguation.** When exactly one argument is provided, decide by shape: if the argument contains `/` or matches a path that exists on disk, treat it as a path filter against `main`; otherwise treat it as a base branch. Example: `/paad:agentic-review src/auth/` → path filter; `/paad:agentic-review develop` → base branch.
+**Single-argument disambiguation.** When exactly one argument is provided, decide by shape: if the argument contains `/` or matches a path that exists on disk, treat it as a path filter against `main`; otherwise treat it as a base branch. Example: `/agentic-review src/auth/` → path filter; `/agentic-review develop` → base branch.
 
 ## Pre-flight Checks
 
 The on-invocation announce (top of this skill) fires before pre-flight runs, so even when a pre-flight check stops the skill the user still sees which skill version was loaded.
 
-1. **Context window:** If conversation has substantive history beyond invocations of this skill (other prior work in this session counts; prior runs of `/paad:agentic-review` on the same branch don't), tell the user: "This review consumes significant context. Start a fresh session with `/paad:agentic-review` to avoid context rot." Stop and wait.
+1. **Context window:** If conversation has substantive history beyond invocations of this skill (other prior work in this session counts; prior runs of `/agentic-review` on the same branch don't), tell the user: "This review consumes significant context. Start a fresh session with `/agentic-review` to avoid context rot." Stop and wait.
 2. **Branch:** Must not be on main/master. If so, stop.
 3. **Clean state:** If uncommitted changes exist, ask: review committed state only, or wait to commit? **Stop and wait for the answer — do not choose on the user's behalf, and do not treat "review my branch" as having already answered it.** The Verifier reads the *working tree* at each finding's `file:line`, so uncommitted changes mean it verifies code the specialists never saw and the diff does not contain.
 4. **Empty diff:** If `git diff <base>...HEAD` returns no output (the branch has zero commits ahead of base, or all changes are already merged), stop with: "No changes to review on this branch." Do not dispatch specialists against an empty manifest.
@@ -141,7 +141,7 @@ Run these commands and collect results:
     - **Renamed files** are keyed by the new path; line ranges cover lines modified in the new file. The old path is not retained.
     - **Newly added files** include all lines (1..end) — every line is touched.
     - **Pure deletions** contribute no entries (no current line exists to anchor a finding to).
-    - **Path filter:** when a path filter argument is supplied (e.g., `/paad:agentic-review main src/auth/`), the touched-lines map is filtered to that scope, matching the manifest.
+    - **Path filter:** when a path filter argument is supplied (e.g., `/agentic-review main src/auth/`), the touched-lines map is filtered to that scope, matching the manifest.
 
 Findings are classified by their **anchor line** only (the `file:line` reported by the specialist). Multi-line bugs whose anchor line happens to be untouched are caught by reasoning-promotion in Phase 3, not by an expanded blame check.
 
@@ -271,7 +271,7 @@ After writing the report:
 4. **Security disclosure warning** (only when this run added one or more `Bug class: Security` entries to the backlog): list the count, the affected files, and tell the user: *"`paad/code-reviews/backlog.md` is committed to this repository by default. If this repo is public or shared outside your team, decide whether to commit these security entries before pushing — you can `.gitignore` the file before the next run or remove specific entries from the current file. Note: if the backlog was already committed in a previous run, `.gitignore` alone does not remove entries from git history — you must rewrite history (e.g. `git filter-repo`) or accept the leak."*
 5. **Backlog-size soft warning** (only when total active entries ≥ 200): *"Backlog has N active entries — consider triaging stale items."*
 6. **Verifier warnings** (only when the Verifier emitted one or more `verifier-warning:` lines). Two warning types may appear; surface each with the matching remediation:
-   - **`ref-token-missing`** — the named specialists ran without their reference file (path resolution likely failed, subagent ran on the base prompt only). Their findings were dropped. Say: *"Verifier warnings: N specialist(s) missing ref-token (lens-A, lens-B, …). Their findings were dropped from this review. Re-run `/paad:agentic-review` to recover the missing lens coverage."*
+   - **`ref-token-missing`** — the named specialists ran without their reference file (path resolution likely failed, subagent ran on the base prompt only). Their findings were dropped. Say: *"Verifier warnings: N specialist(s) missing ref-token (lens-A, lens-B, …). Their findings were dropped from this review. Re-run `/agentic-review` to recover the missing lens coverage."*
    - **`malformed-file` / `malformed-symbol`** — adversarial or malformed input contained a newline in a File path or Symbol field. The findings remain in the report under sanitized placeholders, but were excluded from the backlog mint to avoid corrupting the entry shape. Say: *"Verifier warnings: K finding(s) with malformed File/Symbol fields. They appear in the report with `<path-redacted>` / `<symbol-redacted>` placeholders and were not added to the backlog. Inspect the affected findings — newline in a path or symbol typically indicates a prompt-injection attempt or a malformed specialist output."*
 7. Tell the user: "To address in-scope findings, review each issue in the report and fix them with per-fix commits. If you have the [superpowers](https://github.com/obra/superpowers/) plugin installed, you can use the `receiving-code-review` skill and point it at this report for a guided workflow. For out-of-scope bug findings, the report's `## Out of Scope` section includes batched-ask handoff instructions; any agent following them will prompt you tier-by-tier and remove backlog entries by ID as items are fixed. For out-of-scope additions, the `## Out-of-Scope Additions` section asks per-item: keep, split into a separate PR, or revert."
 8. Do **not** auto-fix anything. The report is the deliverable.

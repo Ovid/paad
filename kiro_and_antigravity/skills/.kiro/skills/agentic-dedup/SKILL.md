@@ -179,7 +179,7 @@ list and confuse downstream prompts.
 repositories. After running the recon, count the captured paths; if the
 count is exactly 500, the recon **is** truncated. In that case either
 (a) recommend the user re-run with a path scope
-
+(`/agentic-dedup src/<module>/`), or (b) note the truncation in the report's Review
 Metadata so a reader knows the scan was sample-bounded. Do not silently
 proceed pretending the recon was complete.
 
@@ -607,6 +607,7 @@ when it is present-but-unfamiliar.
 ```markdown
 # Semantic Duplicate Code Hunt Index
 
+This index lists every `/agentic-dedup` run in reverse
 chronological order. Use it on a fresh-session re-run to skim what
 was previously found or rejected before paying full context budget
 to rediscover candidates.

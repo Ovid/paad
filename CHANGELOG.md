@@ -10,6 +10,23 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Changed
+- **`/paad:help` is now `/paad-help`** — renamed so it no longer collides with
+  Claude Code's built-in `/help`. Update any alias or note that used the old form.
+- **Skills now cross-reference each other by bare slash command** (`/pushback`,
+  not `/paad:pushback`), so those pointers work on assistants other than Claude
+  Code. The `paad:` prefix still works everywhere, for disambiguation.
+
+### Added
+- **Install on almost any agent with `npx skills@latest add Ovid/paad`** — one
+  command, 70+ assistants including Cursor, Codex, GitHub Copilot, Gemini CLI,
+  Cline, and Zed. Claude Code users keep `/plugin install paad@paad`. See README.
+
+### Deprecated
+- **Copying out of `kiro_and_antigravity/` is deprecated** in favor of the npx
+  installer. It still works and still writes reports to `.reviews/`; if you
+  switch, move your existing `.reviews/` folders — README has the mapping.
+
 ## [1.30.2] — 2026-08-21
 
 ### Fixed

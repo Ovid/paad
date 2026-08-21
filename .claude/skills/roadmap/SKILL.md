@@ -1,6 +1,8 @@
 ---
 name: roadmap
 description: Read the feature roadmap, find the next unplanned phase, brainstorm it, and update the roadmap with the resulting document name
+metadata:
+  internal: true
 ---
 
 ## Start

@@ -266,15 +266,15 @@ Usually not actionable:
 
 ## Arguments
 
-`/paad:agentic-owasp` accepts optional `$ARGUMENTS`:
+`/agentic-owasp` accepts optional `$ARGUMENTS`:
 
-* `/paad:agentic-owasp` — review the current repository.
-* `/paad:agentic-owasp src/api/` — review only a path or module.
-* `/paad:agentic-owasp --changed main` — focus on weaknesses introduced or
+* `/agentic-owasp` — review the current repository.
+* `/agentic-owasp src/api/` — review only a path or module.
+* `/agentic-owasp --changed main` — focus on weaknesses introduced or
   touched by the current branch against `main`.
-* `/paad:agentic-owasp --category A01` — review a single OWASP category. Accepts
+* `/agentic-owasp --category A01` — review a single OWASP category. Accepts
   `A01` through `A10`, or a comma-separated list (`A01,A05,A07`).
-* `/paad:agentic-owasp --deps` — supply chain only: dependencies, manifests,
+* `/agentic-owasp --deps` — supply chain only: dependencies, manifests,
   lockfiles, CI/CD workflows, build and release configuration.
 
 When a path is supplied, constrain reconnaissance and reporting to that path
@@ -325,7 +325,7 @@ The **Pre-flight** digraph above is the authoritative order for this section.
 
 1. **Context window.** Treat the conversation as having substantive history if
    any of these are true: the conversation already includes tool calls beyond
-   invoking this skill; another `/paad:agentic-owasp` pass has already been run
+   invoking this skill; another `/agentic-owasp` pass has already been run
    in this session; the user has discussed an unrelated topic earlier in the
    conversation; or transcript length exceeds roughly 20 turns. If any apply,
    tell the user: "This security review consumes significant context. Start a

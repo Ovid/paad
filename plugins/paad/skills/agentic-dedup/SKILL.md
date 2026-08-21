@@ -117,13 +117,13 @@ Usually not actionable:
 
 ## Arguments
 
-`/paad:agentic-dedup` accepts optional `$ARGUMENTS`:
+`/agentic-dedup` accepts optional `$ARGUMENTS`:
 
-* `/paad:agentic-dedup` — scan the current repository.
-* `/paad:agentic-dedup src/auth/` — scan only a path or module.
-* `/paad:agentic-dedup --changed main` — focus on duplicated logic introduced or touched by the current branch against `main`.
-* `/paad:agentic-dedup --type-constraints` — focus on duplicated schemas, type aliases, interfaces, branded types, validation constraints, and model definitions.
-* `/paad:agentic-dedup --domain "payments"` — focus on files, names, and rules related to the supplied domain term.
+* `/agentic-dedup` — scan the current repository.
+* `/agentic-dedup src/auth/` — scan only a path or module.
+* `/agentic-dedup --changed main` — focus on duplicated logic introduced or touched by the current branch against `main`.
+* `/agentic-dedup --type-constraints` — focus on duplicated schemas, type aliases, interfaces, branded types, validation constraints, and model definitions.
+* `/agentic-dedup --domain "payments"` — focus on files, names, and rules related to the supplied domain term.
 
 When a path is supplied, constrain reconnaissance and reporting to that path except for callers/callees and canonical utilities outside the path.
 
@@ -152,12 +152,12 @@ The **Pre-flight** digraph above is the authoritative order for this section.
 
 1. **Context window.** Treat the conversation as having substantive
    history if any of these are true: the conversation already includes
-   tool calls beyond invoking this skill; another `/paad:agentic-dedup`
+   tool calls beyond invoking this skill; another `/agentic-dedup`
    pass has already been run in this session; the user has discussed an
    unrelated topic earlier in the conversation; or transcript length
    exceeds roughly 20 turns. If any apply, tell the user: "This semantic
    duplicate hunt consumes significant context. Start a fresh session
-   with `/paad:agentic-dedup` to avoid context rot." Stop and wait.
+   with `/agentic-dedup` to avoid context rot." Stop and wait.
 2. **Repository.** Run `git rev-parse --show-toplevel 2>/dev/null`. If
    that exits non-zero (no `.git` upward), check for a recognizable
    project root by running `ls package.json pyproject.toml go.mod
@@ -247,7 +247,7 @@ list and confuse downstream prompts.
 repositories. After running the recon, count the captured paths; if the
 count is exactly 500, the recon **is** truncated. In that case either
 (a) recommend the user re-run with a path scope
-(`/paad:agentic-dedup src/<module>/`), or (b) note the truncation in the report's Review
+(`/agentic-dedup src/<module>/`), or (b) note the truncation in the report's Review
 Metadata so a reader knows the scan was sample-bounded. Do not silently
 proceed pretending the recon was complete.
 
@@ -672,7 +672,7 @@ when it is present-but-unfamiliar.
 ```markdown
 # Semantic Duplicate Code Hunt Index
 
-This index lists every `/paad:agentic-dedup` run in reverse
+This index lists every `/agentic-dedup` run in reverse
 chronological order. Use it on a fresh-session re-run to skim what
 was previously found or rejected before paying full context budget
 to rediscover candidates.

@@ -1,6 +1,8 @@
 ---
 name: release
 description: Cut a paad release — pick the semver bump from what is in [Unreleased], run make release, merge, tag, and verify the published plugin
+metadata:
+  internal: true
 ---
 
 ## Start

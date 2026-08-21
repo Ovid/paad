@@ -1,11 +1,13 @@
 ---
 name: fix-architecture
-description: Use when working through architectural flaws documented in a .reviews/architecture/ report — selecting which flaws to fix, resuming a partial fix session across multiple sittings, or applying structural changes that need to be tracked back to a report. Not for producing that report — run the agentic-architecture skill first if there isn't one.
+description: Use when working through architectural flaws documented in a .reviews/architecture/ report — selecting which flaws to fix, resuming a partial fix session across multiple sittings, or applying structural changes that need to be tracked back to a report. Not for producing that report — run /agentic-architecture first if there isn't one.
 ---
 
 **On invocation:** announce "Running paad:fix-architecture v1.30.2" before anything else.
 
 # Fix Architecture
+
+Guided, iterative fixing of architectural flaws identified by `/agentic-architecture`. Loads an existing architecture report, walks the developer through selecting and prioritizing flaws, then fixes them one at a time with a test-first workflow. Updates the report with status tracking so the skill can be re-run across multiple sessions.
 
 **This is a technique skill.** Follow the phases (Setup → Safety Net → Fix Loop → Wrap-Up) in order. Do not skip validation or testing steps.
 
@@ -185,6 +187,8 @@ A setup conversation before any code is touched. **One question per message. Ask
 
 ### When the developer pre-answers or refuses the questions
 
+An invocation like `/fix-architecture report.md — fix F-02 and F-11, don't ask me a bunch of questions, just go` answers some of the steps below and declines the rest. Honour that, within limits.
+
 **You may skip** any question the developer has already answered. Re-asking it is the same friction the one-question-per-message rule exists to prevent.
 
 **You may not skip Step 3's dependency scan and complexity assessment, or Step 4.** Those are not questions — they are work that produces information the developer does not have: naming two flaws is not the same as knowing that fixing one resolves the other.
@@ -237,6 +241,8 @@ Then ask (adapting the options to reflect the actual impact and complexity of th
 **Do not describe fix approaches or verification steps in the triage — that's the Fix Loop.** The triage assesses scope (how many files, how localized) and complexity to help the developer choose, not how the fix will work.
 
 Based on the developer's answer and team context, recommend a batch size and let them select specific flaws.
+
+If no unfixed flaws remain (all are marked Fixed or Won't Fix), congratulate the developer and suggest re-running `/agentic-architecture` for a fresh analysis to find any new issues. Stop.
 
 ### Step 4: Plan Confirmation
 
@@ -449,6 +455,7 @@ After the developer stops or the batch is complete:
        updated  .reviews/architecture/architecture-2026-07-14-09-10-05.md
        12 source files changed across 3 modules (see git diff)
      ```
+2. Suggest: "Run `/fix-architecture` again in a fresh session to continue fixing remaining flaws."
 
 ## Status Values
 

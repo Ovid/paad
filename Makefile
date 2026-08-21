@@ -126,38 +126,38 @@ tag: ## Tag the released version on main and push it (run after merging the rele
 	git push origin "$$tag"; \
 	echo "Tagged $$tag on $$(git rev-parse --short HEAD) and pushed."
 
-check-digraphs: ## Check every skill (except help) has a digraph
+check-digraphs: ## Check every skill (except paad-help) has a digraph
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
-		if [ "$$name" = "help" ]; then continue; fi; \
+		if [ "$$name" = "paad-help" ]; then continue; fi; \
 		if ! grep -q '```dot' "$$dir/SKILL.md" 2>/dev/null; then \
 			echo "FAIL: $$name has no digraph"; \
 			fail=1; \
 		fi; \
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
-	echo "All skills have digraphs (help excluded)."
+	echo "All skills have digraphs (paad-help excluded)."
 	@python3 scripts/lint_digraphs.py
 
-check-help: ## Check every skill is documented in paad:help
+check-help: ## Check every skill is documented in paad-help
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
-		if [ "$$name" = "help" ]; then continue; fi; \
-		if ! grep -q "/paad:$$name" "$(SKILLS_DIR)/help/SKILL.md" 2>/dev/null; then \
-			echo "FAIL: $$name not found in paad:help"; \
+		if [ "$$name" = "paad-help" ]; then continue; fi; \
+		if ! grep -q "/$$name" "$(SKILLS_DIR)/paad-help/SKILL.md" 2>/dev/null; then \
+			echo "FAIL: $$name not found in paad-help"; \
 			fail=1; \
 		fi; \
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
-	echo "All skills documented in paad:help."
+	echo "All skills documented in paad-help."
 
 check-readme: ## Check every skill is documented in README.md
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
-		if [ "$$name" = "help" ]; then continue; fi; \
+		if [ "$$name" = "paad-help" ]; then continue; fi; \
 		if ! grep -q "/$$name" README.md 2>/dev/null; then \
 			echo "FAIL: $$name not found in README.md"; \
 			fail=1; \
@@ -233,16 +233,16 @@ check-announce: ## Check every skill that writes files announces what it wrote
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
-		if [ "$$name" = "help" ] || [ "$$name" = "rethink" ]; then continue; fi; \
+		if [ "$$name" = "paad-help" ] || [ "$$name" = "rethink" ]; then continue; fi; \
 		if ! grep -rqF 'Files written or updated' "$$dir" 2>/dev/null; then \
 			echo "FAIL: $$name has no 'Files written or updated:' block. Any skill that writes or updates"; \
-			echo "      a file must end its run by listing every path it touched. Only 'help' and 'rethink'"; \
+			echo "      a file must end its run by listing every path it touched. Only 'paad-help' and 'rethink'"; \
 			echo "      are exempt, because they write nothing — if this skill also writes nothing, exempt it here."; \
 			fail=1; \
 		fi; \
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
-	echo "All skills announce the files they write (help, rethink excluded)."
+	echo "All skills announce the files they write (paad-help, rethink excluded)."
 
 check-export-frontmatter: ## Check every exported SKILL.md kept a usable name and description
 	@fail=0; \

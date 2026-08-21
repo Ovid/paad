@@ -123,11 +123,11 @@ digraph analysis_and_resolution {
 
 ## Arguments
 
-`/paad:alignment` accepts optional `$ARGUMENTS`:
+`/alignment` accepts optional `$ARGUMENTS`:
 
-- `/paad:alignment` — auto-detect documents from conversation history or common file locations
-- `/paad:alignment requirements.md plan.md` — check alignment between specific files
-- `/paad:alignment docs/specs/ docs/plans/` — check alignment across directories
+- `/alignment` — auto-detect documents from conversation history or common file locations
+- `/alignment requirements.md plan.md` — check alignment between specific files
+- `/alignment docs/specs/ docs/plans/` — check alignment across directories
 
 When file paths are provided, the skill classifies each as intent or action and proceeds. When multiple files are provided, the skill determines their relationships automatically.
 

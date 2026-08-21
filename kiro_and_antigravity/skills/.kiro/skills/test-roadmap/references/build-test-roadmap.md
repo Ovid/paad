@@ -186,7 +186,7 @@ menus fire *before* any plan exists, so during them there is no phase total to
 show — the first instant it is knowable is right here, once Stage 5 has written
 every phase. State it at the handoff, and make the loop explicit — **this run
 planned the work, it did not do any of it**, and one phase lands per run from
-
+here: *"Planned 14 phases — no tests written yet. Run `/test-roadmap` again
 to write Phase 1 of 14, and keep running it: one phase per run, 14 runs to
 finish."* This is the developer's first sight of the end of the tunnel, and from
 here on every phase the skill names carries its `Phase X of Y` per

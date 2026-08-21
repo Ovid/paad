@@ -53,7 +53,7 @@ Eight steps, in order:
    instructions*, below.
 8. **Hand off to the next run — or say the roadmap is finished.** One phase
    lands per run, so the run always ends by telling the developer whether to
-
+   invoke `/test-roadmap` again and why. See *Ending the run*, below. This
    step is not optional and is not merged into step 7: a developer who is not
    told to run it again assumes one invocation was the whole skill, and stops
    with a roadmap and one phase of tests.
@@ -91,7 +91,7 @@ of two ways:
   invocation is what runs it:
 
   ```
-
+  Run /test-roadmap again to do the next one — one phase per run, so it
   takes another 6 runs to finish the roadmap.
 
   Next is Phase 8 of 14 — 7 done, 6 to go after this: Logger level filtering

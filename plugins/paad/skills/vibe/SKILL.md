@@ -88,11 +88,11 @@ digraph vibe {
 
 ## Arguments
 
-`/paad:vibe` accepts optional `$ARGUMENTS`:
+`/vibe` accepts optional `$ARGUMENTS`:
 
-- `/paad:vibe` — ask the user what needs fixing
-- `/paad:vibe fix the login timeout bug` — start working on the described task immediately
-- `/paad:vibe src/components/Modal.tsx add close on escape key` — task with a file hint
+- `/vibe` — ask the user what needs fixing
+- `/vibe fix the login timeout bug` — start working on the described task immediately
+- `/vibe src/components/Modal.tsx add close on escape key` — task with a file hint
 
 When arguments are provided, treat them as the task description. Still ask clarifying questions if the task is unclear.
 
@@ -233,9 +233,9 @@ Then a brief summary:
 
 Suggest paad skills when the change warrants it. Don't suggest follow-ups for trivial fixes.
 
-- If the change touched security-sensitive code (auth, permissions, input handling, secrets) → "Consider `/paad:agentic-review` before merging — this touched security-sensitive code."
-- If the change touched UI components → "Consider `/paad:agentic-a11y src/path/to/changed/files` to check accessibility."
-- If the change felt significantly harder than expected → "This was harder than it should have been. Consider `/paad:agentic-architecture` to investigate whether there are deeper structural issues."
+- If the change touched security-sensitive code (auth, permissions, input handling, secrets) → "Consider `/agentic-review` before merging — this touched security-sensitive code."
+- If the change touched UI components → "Consider `/agentic-a11y src/path/to/changed/files` to check accessibility."
+- If the change felt significantly harder than expected → "This was harder than it should have been. Consider `/agentic-architecture` to investigate whether there are deeper structural issues."
 
 ## Common Mistakes
 
