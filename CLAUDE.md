@@ -56,7 +56,7 @@ Edit the SKILL.md, then run `make export && make test`. If the change alters beh
 
 ## Releasing
 
-There is no build and no artifact upload. Users install from this repo via `/plugin marketplace add Ovid/paad`. Claude Code disables auto-update for third-party marketplaces by default, so most users pull a release by hand from the `/plugin` panel — **Installed** → **paad** → **Update now** — or with `claude plugin update paad@paad` from a shell; the ones who opted into auto-update get it in the background shortly after a session starts. The panel action refreshes the marketplace catalog itself before checking.
+There is no build and no artifact upload. Claude Code users install from this repo via `/plugin marketplace add Ovid/paad`; everyone else runs `npx skills@latest add Ovid/paad`, which clones the repo at `main` and has no version key at all — **for that route, merging to `main` *is* shipping**, and the rest of this section does not apply to it. The bump-is-the-release rule below is about Claude Code. Claude Code disables auto-update for third-party marketplaces by default, so most users pull a release by hand from the `/plugin` panel — **Installed** → **paad** → **Update now** — or with `claude plugin update paad@paad` from a shell; the ones who opted into auto-update get it in the background shortly after a session starts. The panel action refreshes the marketplace catalog itself before checking.
 
 **The version bump is the release, not the merge.** Claude Code resolves a plugin's version from `plugin.json` first and uses it as the cache key for update detection: if the resolved version matches what a user already has, both a manual update and auto-update skip the plugin. Because `plugin.json` sets `version` explicitly, commits merged to `main` without a bump never reach an existing install. Merging is safe; shipping is the bump.
 
@@ -92,10 +92,19 @@ When modifying a skill's flow, check that the digraph still matches. When review
 
 The repo also hosts **project-local** skills at `.claude/skills/<name>/SKILL.md` (`roadmap`, `release`). These are **not** part of the `paad` plugin and follow a different lifecycle:
 
-- **Not distributed** — they live in this repo only and are picked up automatically by Claude Code when it runs in this working directory. There is no marketplace, no `claude plugin validate` step, no `plugin.json`, no version field.
+- **Not distributed, but only because they say so** — they are picked up automatically by Claude Code when it runs in this working directory, and there is no marketplace, no `claude plugin validate` step, no `plugin.json`, no version field. What actually keeps them out of an npx install is `metadata: internal: true` in the frontmatter; `npx skills add Ovid/paad` walks the whole repo and would otherwise offer repo-only tooling to people who have no repo. **Every new project-local skill needs that flag** — `make check-frontmatter` fails without it:
+
+  ```yaml
+  ---
+  name: roadmap
+  description: …
+  metadata:
+    internal: true
+  ---
+  ```
 - **No `make bump-version` impact** — `make bump-version` rewrites `package.json`, `plugin.json`, `marketplace.json`, and every `plugins/paad/skills/*/SKILL.md` announce line. Project-local SKILL.md files are skipped on purpose. They have no announce-line version, no `paad:<name>` namespace.
-- **No `make test` checks** — the Makefile's check-frontmatter / check-digraphs / check-help / check-readme / check-skill-versions targets all walk `plugins/paad/skills/`. They do not enforce anything against `.claude/skills/`.
-- **Edit-and-commit only** — change the SKILL.md, commit, you're done. No version bump, no help table edit, no README entry, no `paad:paad-help` cross-reference.
+- **Almost no `make test` checks** — check-digraphs / check-help / check-readme / check-skill-versions all walk `plugins/paad/skills/` and enforce nothing here. The one exception is `check-frontmatter`, which asserts the `internal: true` flag above.
+- **Edit-and-commit, plus the flag** — change the SKILL.md, commit, you're done. No version bump, no help table edit, no README entry, no `paad:paad-help` cross-reference. The `internal: true` flag is the only thing you must not forget.
 - **Naming** — invoke as `/<name>` (no `paad:` prefix), because they're not in a plugin. `/roadmap`, not `/paad:roadmap`.
 
 When reviewing or modifying a `.claude/skills/<name>/SKILL.md`, do not chase the paad-plugin conventions (announce lines, version literals, help / README cross-references). They don't apply here.
