@@ -11,10 +11,9 @@ what a plugin user sees.
 ## [Unreleased]
 
 ### Fixed
-- **Kiro and Antigravity copies of `fix-architecture`, `pushback`, `rethink`,
-  and `test-roadmap` had a blank or truncated `description`,** so those
-  assistants had nothing to match a request against. Recopy from
-  `kiro_and_antigravity/`. Claude Code and Pi were never affected.
+- **Kiro and Antigravity copies of `fix-architecture`, `pushback`, `rethink`, and
+  `test-roadmap` shipped with a blank `description`** — those assistants had
+  nothing to match a request against. Recopy from `kiro_and_antigravity/`.
 
 ## [1.30.1] — 2026-08-21
 
