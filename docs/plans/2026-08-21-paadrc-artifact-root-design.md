@@ -4,19 +4,33 @@
 **Status:** SUPERSEDED — not implemented, and will not be
 
 `.paadrc` was dropped. Open question 1 was settled by verification instead:
-`npx skills@latest add Ovid/paad` works against this repository today. It
-discovers skills through `.claude-plugin/marketplace.json` → `plugins/paad`,
-copies whole skill directories verbatim (exec bits preserved), and installs to
-70+ agents. So every install route except the hand-copy tree already agrees on
-`paad/`, and the split this design existed to close is frozen rather than
-growing. `kiro_and_antigravity/` keeps its `.reviews/` rewrites and is
-deprecated in the README, with a migration table for anyone switching routes.
+`npx skills@latest add Ovid/paad` works against this repository today, copying
+whole skill directories verbatim (exec bits preserved) to 70+ agents. So every
+install route except the hand-copy tree already agrees on `paad/`, and the split
+this design existed to close is frozen rather than growing.
+`kiro_and_antigravity/` keeps its `.reviews/` rewrites and is deprecated in the
+README.
+
+**Correction, 2026-08-22.** The paragraph above originally said the installer
+"discovers skills through `.claude-plugin/marketplace.json` → `plugins/paad`",
+and presented that as the verified answer. It is wrong, and it was wrong when
+written. The installer resolves plugin skills that way *and* always searches a
+fixed list of per-agent project directories, `.claude/skills/` among them —
+`AGENT_PROJECT_SKILL_DIRS` in `dist/cli.mjs` of the `skills` package. Running
+the installer against this repository at `main` offers 16 skills, including the
+project-local `roadmap` and `release`. The whole-repo walk people assume
+instead is real but is a fallback, reached only when the targeted search finds
+nothing. What keeps repo-only tooling out of a stranger's install is
+`metadata.internal: true`, which the installer tests as
+`metadata?.internal === true`.
 
 **Everything below this line is the design as it stood when it was dropped, not
-instruction.** Read "Delete the five path rewrites", "the next run writes to
-`paad/`", and Open question 1's "Unverified" as what the author intended at the
-time — none of it is to be acted on, and the line citations it carries are only
-still accurate by accident. Two of its claims are also wrong and left standing
+instruction.** None of it is to be acted on — not "Delete the five path
+rewrites", not "the next run writes to `paad/`", not Open question 1's
+"Unverified", and not the passage recommending a check be dropped that
+`make test` still enforces. **Its line citations are stale**; they refer to
+`scripts/convert_skills.py` and `Makefile` as they stood on 2026-08-21 and have
+not been maintained since. Two of its claims are also wrong and left standing
 for the record: nothing ever wrote `.reports/`, and `make check-export-current`
 diffs only `kiro_and_antigravity/` and `pi/`, so it would not have caught drift
 in a script copied into `plugins/paad/skills/*/scripts/`.
