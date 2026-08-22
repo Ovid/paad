@@ -214,7 +214,7 @@ Best used in a fresh session — consumes significant context.
 
 Multi-agent bug-hunting code review of the current branch.
 
-Output:   paad/code-reviews/<branch>-<timestamp>.md (per-review)
+Output:   paad/code-reviews/<branch>-<timestamp>-<short-sha>.md (per-review)
           paad/code-reviews/backlog.md (project-wide, persistent)
 
 Arguments:

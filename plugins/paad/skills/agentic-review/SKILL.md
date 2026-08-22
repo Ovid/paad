@@ -281,7 +281,7 @@ After writing the report:
 
    ```
    Files written or updated:
-     new      paad/code-reviews/review-2026-08-01-10-42-13.md
+     new      paad/code-reviews/my-branch-2026-08-01-10-42-13-a1b2c3d.md
      updated  paad/code-reviews/backlog.md
    ```
 

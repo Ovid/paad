@@ -271,7 +271,7 @@ After writing the report:
 
    ```
    Files written or updated:
-     new      .reviews/code/review-2026-08-01-10-42-13.md
+     new      .reviews/code/my-branch-2026-08-01-10-42-13-a1b2c3d.md
      updated  .reviews/code/backlog.md
    ```
 
