@@ -367,15 +367,21 @@ Three things worth knowing before you run it.
 by name instead: "run the pushback skill". The name is always the same; only
 the way you invoke it differs.
 
-**The multi-agent skills lose their read-only guarantee here.**
-`agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`, and
-`agentic-owasp` dispatch their specialists to `paad:paad-analyst`, a read-only
-agent that lives outside `skills/` and is Claude Code plugin syntax no other
-host can bind. Those skills still run — the orchestrator does every lens
-itself, in one context, holding the full toolset. You get no parallelism, no
-context isolation, and **no read-only guarantee on code the skill is only
-supposed to read**. Nothing errors and nothing warns you. This matters most for
-`agentic-owasp` and `agentic-dedup`, which are read-only by contract.
+**These skills work by splitting one job across several helper agents.**
+`agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`,
+`agentic-owasp` and `rethink` all work this way. If your assistant supports
+helper agents, each helper gets its own separate conversation and examines your
+code from one angle — security, error handling, and so on — and they all work
+at the same time. If your assistant does not support them, a single agent does
+every one of those passes itself, one after another, in one conversation. The
+work still gets done. It is slower, and one conversation has to hold everything
+it reads. Nothing errors and nothing warns you.
+
+**These skills are meant to read your code, not change it — but that is an
+instruction, not a locked door.** The helper agent is not given file-editing
+tools. It is given a shell, and a shell can write files. So the rule holds
+because the agent was told to follow it. That is true on every assistant.
+Commit your work before a run you care about.
 
 **Updates track `main`, and there is no pinned form.** Re-run the same command
 to pull the latest; there is no version argument, so the version a skill
@@ -408,31 +414,33 @@ Invoke a skill with `/skill:<name>` or by name.
 
 #### The multi-agent skills need two more pieces
 
-`agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`, and
-`agentic-owasp` fan out to subagents. Pi has no subagent support of its own, and Pi's package
-manifest has no way to declare agents, so neither piece can ship inside the
-package. Without both of them installed, those four skills still *run* — the
-orchestrator simply does every lens itself, in one context, holding the full
-toolset. You get no parallelism, no context isolation, and **no read-only
-guarantee on code the skill is only supposed to read**. Nothing errors and
-nothing warns you. `agentic-owasp` is the one to weigh hardest: its specialists
-are forbidden from starting the app, sending requests, or writing exploit code,
-and that prohibition is prose, not a toolset.
+`agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`,
+`agentic-owasp` and `rethink` split their work across helper agents. Pi does not
+support helper agents on its own, and a Pi package cannot declare them, so
+neither piece ships inside the package. Without both pieces installed those
+skills still run — a single agent does every pass itself, one after another, in
+one conversation. You get no parallel work and no separation between passes.
+Nothing errors and nothing warns you. `agentic-owasp` is the one to weigh
+hardest: its helpers are forbidden from starting the app, sending requests, or
+writing exploit code, and that ban is written instruction, not a limit on their
+tools.
 
 **1. A subagent extension.** Pi ships one as an
 [example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent),
 not as an installable package — it is a clone-and-symlink into `~/.pi/agent/`,
 not `pi install`. Follow that example's own README.
 
-**2. The read-only analyst.** This repo generates a Pi copy of the analyst
-agent the Claude Code plugin dispatches. Copy it in:
+**2. The analyst agent.** This repo generates a Pi copy of the analyst agent
+the skills ask for. Copy it in:
 
 ```bash
 cp pi/agents/paad-analyst.md ~/.pi/agent/agents/
 ```
 
-It restricts the agent to `read, grep, find, ls, bash`, which is what keeps an
-analysis subagent from editing your code to test whether a finding was real.
+It gives the agent `read, grep, find, ls, bash` — no `edit`, no `write`. A
+shell can write files anyway, so what keeps a helper from editing your code to
+test whether a finding was real is the instruction inside the agent file, not
+the list of tools.
 
 **`rethink` is degraded on Pi.** The Claude Code analyst also holds `WebSearch`
 and `WebFetch`, and Pi has no web tool to map those onto — its built-ins are

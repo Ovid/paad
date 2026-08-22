@@ -6,6 +6,8 @@
     - Version announce
     - Explain things simply so that everyone can understand.
     - Copying the analyst
+    - paad-analyst is another example of something that must be copied.
+
 - Do negative assertions distract?
 - memory system?
 - Add .paadrc file for configuration. (decided against it)
