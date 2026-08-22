@@ -31,7 +31,8 @@ what a plugin user sees.
 ### Deprecated
 - **Copying out of `kiro_and_antigravity/` is deprecated** in favor of the npx
   installer. It still works and still writes reports to `.reviews/`; if you
-  switch, move your existing `.reviews/` folders — README has the mapping.
+  switch, move your existing `.reviews/` folders into `paad/` so the skills can
+  still find them.
 
 ## [1.30.2] — 2026-08-21
 
