@@ -10,9 +10,9 @@ Also, address me as "Ovid" for further verification that you have read this file
 
 ## Project structure
 
-`plugins/paad/` is the only thing this repo distributes — everything else is scaffolding around it. `paad/code-reviews/` is committed output from paad's own skills, and `.claude/skills/` holds project-local skills that are not distributed. `package.json` is Pi's package manifest, not a Node one — this is not a JS project; it carries the version and the `pi.skills` path, and nothing else.
+`plugins/paad/` is what the marketplace distributes — everything else is scaffolding around it. `paad/code-reviews/` is committed output from paad's own skills. `.claude/skills/` holds project-local skills, which the marketplace does not carry but the npx installer does look in; the only thing keeping them out of an npx install is the `internal: true` flag documented under "Project-local skills" below. `package.json` is Pi's package manifest, not a Node one — this is not a JS project; it carries the version and the `pi.skills` path, and nothing else.
 
-`kiro_and_antigravity/` and `pi/` are produced from `plugins/paad/` by `make export`. Everything in them is generated — edit the source or the generator, never the output. README tells non-Claude-Code users to copy straight out of `kiro_and_antigravity/`, so a stale export on `main` is wrong content shipped to real users.
+`kiro_and_antigravity/` and `pi/` are produced from `plugins/paad/` by `make export`. Everything in them is generated — edit the source or the generator, never the output. README deprecates copying straight out of `kiro_and_antigravity/` in favor of `npx skills@latest add Ovid/paad`, but the route still works and is still documented, so a stale export on `main` is wrong content shipped to real users.
 
 ## Key conventions
 
@@ -43,7 +43,7 @@ Also, address me as "Ovid" for further verification that you have read this file
 2. Add the on-invocation announce line as the very first line of the body (after the closing `---` of frontmatter): `**On invocation:** announce "Running paad:<skill-name> v<version>" before anything else.` — the version literal must match `plugin.json`
 3. Consider `$ARGUMENTS` support — if the skill could benefit from user-provided scope (a file path, directory, branch name, etc.), add an Arguments section documenting usage. Users shouldn't need to remember flags; keep arguments positional and intuitive (e.g., `/skillname path/to/scope`).
 4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow, placed immediately after the intro paragraphs and before the first `##` heading. The only exception is `paad:paad-help`, which is a simple display skill. See "Digraph requirements" below.
-5. If the skill dispatches subagents for analysis, dispatch every one of them as `subagent_type: paad:paad-analyst` — the read-only agent in `plugins/paad/agents/`. Specialists and verifiers must not carry `Edit`, `Write`, or `NotebookEdit`; subagents have been observed editing source code to test whether a finding was real.
+5. If the skill dispatches subagents for analysis, dispatch every one of them as `subagent_type: paad:paad-analyst` — the analysis agent in `plugins/paad/agents/`. Specialists and verifiers must not carry `Edit`, `Write`, or `NotebookEdit`; subagents have been observed editing source code to test whether a finding was real.
 6. Document it in `README.md` under "Available Skills" (argument syntax in the heading) and in `paad:paad-help` — both the overview table and a detailed help section
 7. Add a `### Added` entry under `[Unreleased]` in `CHANGELOG.md`
 8. Run `make export && make test`, then drive the skill for real: `claude --plugin-dir ./plugins/paad`
@@ -92,7 +92,7 @@ When modifying a skill's flow, check that the digraph still matches. When review
 
 The repo also hosts **project-local** skills at `.claude/skills/<name>/SKILL.md` (`roadmap`, `release`). These are **not** part of the `paad` plugin and follow a different lifecycle:
 
-- **Not distributed, but only because they say so** — they are picked up automatically by Claude Code when it runs in this working directory, and there is no marketplace, no `claude plugin validate` step, no `plugin.json`, no version field. What actually keeps them out of an npx install is `metadata: internal: true` in the frontmatter; `npx skills add Ovid/paad` walks the whole repo and would otherwise offer repo-only tooling to people who have no repo. **Every new project-local skill needs that flag** — `make check-frontmatter` fails without it:
+- **Not distributed, but only because they say so** — they are picked up automatically by Claude Code when it runs in this working directory, and there is no marketplace, no `claude plugin validate` step, no `plugin.json`, no version field. What actually keeps them out of an npx install is `metadata: internal: true` in the frontmatter. The installer searches `.claude/skills/` directly — it is one of the per-agent project directories it always looks in, alongside the plugin skills it resolves through `.claude-plugin/marketplace.json` — and honors the flag by skipping any skill that carries it. Without it, repo-only tooling is offered to people who have no repo. (Verified against `skills` 1.5.23; the whole-repo walk people assume happens is a fallback that runs only when the targeted search finds nothing.) **Every new project-local skill needs that flag** — `make check-frontmatter` fails without it:
 
   ```yaml
   ---
