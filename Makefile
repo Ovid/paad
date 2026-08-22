@@ -204,7 +204,7 @@ check-skill-names: ## Check every skill folder name follows the Agent Skills nam
 	fi; \
 	echo "$$count skill folder name(s) follow the naming rules."
 
-check-frontmatter: check-skill-names ## Check every SKILL.md has name/description and name matches folder
+check-frontmatter: check-skill-names ## Check SKILL.md frontmatter, and the internal flag on project-local skills
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		folder_name=$$(basename "$$dir"); \
