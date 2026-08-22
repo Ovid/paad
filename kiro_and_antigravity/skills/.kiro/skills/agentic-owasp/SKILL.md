@@ -264,6 +264,33 @@ Usually not actionable:
   reject as a documented risk acceptance. Report the acceptance as a finding
   only if the reasoning no longer holds.
 
+## Arguments
+
+`agentic-owasp` accepts optional `$ARGUMENTS`:
+
+* `agentic-owasp` — review the current repository.
+* `agentic-owasp src/api/` — review only a path or module.
+* `agentic-owasp --changed main` — focus on weaknesses introduced or
+  touched by the current branch against `main`.
+* `agentic-owasp --category A01` — review a single OWASP category. Accepts
+  `A01` through `A10`, or a comma-separated list (`A01,A05,A07`).
+* `agentic-owasp --deps` — supply chain only: dependencies, manifests,
+  lockfiles, CI/CD workflows, build and release configuration.
+
+When a path is supplied, constrain reconnaissance and reporting to that path
+except for callers, middleware, and framework configuration outside the path
+that determine whether code inside it is reachable or already protected.
+
+When `--changed <base>` is supplied, treat the diff against `<base>` as the
+seed set, but read the surrounding code needed to decide reachability — a diff
+that removes an authorization check is invisible without the caller.
+
+When `--category` is supplied, dispatch only the specialists that own the named
+categories, and say so in the report's coverage table. Every unnamed category
+is recorded as `not assessed`, never as clean. The Mechanism & Round-Trip
+specialist owns no category and is dispatched on every run regardless; filter
+its findings to the named categories rather than dropping the agent.
+
 ### Shell-arg hygiene for `$ARGUMENTS`
 
 `$ARGUMENTS`-derived values flow into `git`, `find`, and `rg` commands. Treat

@@ -97,6 +97,16 @@ digraph audit_flow {
 
 - **The user needs a legal conformance statement (VPAT, EN 301 549 attestation)** — this produces an engineering audit, not a certified accessibility conformance report. Say so rather than letting a report be mistaken for one.
 
+## Arguments
+
+`agentic-a11y` accepts optional `$ARGUMENTS`:
+
+- `agentic-a11y` — audit all user-facing code in the repository
+- `agentic-a11y src/components/` — scope the audit to a specific directory
+- `agentic-a11y src/components/Modal.tsx` — audit a specific file
+
+When a path is provided, only audit files within that scope. Still detect platform and run all specialists, but limit the file manifest accordingly.
+
 ## Phase 1: Reconnaissance
 
 Run these steps and collect results:

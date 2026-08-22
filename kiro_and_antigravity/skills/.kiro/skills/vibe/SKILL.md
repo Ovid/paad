@@ -86,6 +86,16 @@ digraph vibe {
 }
 ```
 
+## Arguments
+
+`vibe` accepts optional `$ARGUMENTS`:
+
+- `vibe` — ask the user what needs fixing
+- `vibe fix the login timeout bug` — start working on the described task immediately
+- `vibe src/components/Modal.tsx add close on escape key` — task with a file hint
+
+When arguments are provided, treat them as the task description. Still ask clarifying questions if the task is unclear.
+
 ## Step 1: Understand the Task
 
 If no `$ARGUMENTS` provided, ask: "What needs fixing or changing?"
@@ -95,6 +105,10 @@ Once you have a task description:
 - If the task is unclear, ask **one clarifying question at a time**
 - Focus on: what should change, what should stay the same, edge cases
 - Don't over-question simple tasks. "Fix the typo in the header" doesn't need a requirements session.
+
+## Step 2: Pre-flight Checks
+
+Before writing any code, check these. If any raise concerns, discuss with the user before proceeding.
 
 ### Test infrastructure
 

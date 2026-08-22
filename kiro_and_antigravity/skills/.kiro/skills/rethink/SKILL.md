@@ -93,6 +93,13 @@ digraph rethink {
 - **The user wants alternatives generated.** That is a design conversation, not a verification pass. Say so and have it.
 - **The premises are matters of taste.** "Should this be called `fetch` or `load`" has no primary source. Say the question is not verifiable and stop.
 
+## Arguments
+
+- `rethink` — re-examine the most recent set of options in the conversation
+- `rethink the caching approach` — name which decision, when several are live
+
+If `$ARGUMENTS` is empty and more than one option set is in play, ask which. If none is in play, ask what to re-examine.
+
 ## Phase 1: Extract the Premises
 
 Read back through the options and write down, explicitly, **what has to be true for the recommendation to be right.** Include the premises nobody stated — those are usually the load-bearing ones.

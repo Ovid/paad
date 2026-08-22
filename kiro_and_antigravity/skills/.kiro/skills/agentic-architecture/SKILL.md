@@ -89,6 +89,16 @@ digraph analysis_flow {
 - **You already have a recent report** — re-running burns a session to regenerate what you have. Read the existing report in `.reviews/architecture/` and use `fix-architecture`, which handles staleness itself.
 - **The scope is a handful of files** — architecture is about boundaries and relationships between components. Below that scale there's no structure to assess, and the report will pad.
 
+## Arguments
+
+`agentic-architecture` accepts optional `$ARGUMENTS`:
+
+- `agentic-architecture` — analyze the entire repository
+- `agentic-architecture src/` — scope the analysis to a specific directory (useful for monorepos or analyzing one service)
+- `agentic-architecture packages/api/ packages/shared/` — analyze multiple directories together
+
+When a path is provided, focus the analysis on that scope but still note dependencies on code outside the scope.
+
 ## Phase 1: Reconnaissance
 
 Run these steps and collect results:

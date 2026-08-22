@@ -23,6 +23,10 @@ what a plugin user sees.
   Cline, and Zed. Claude Code users keep `/plugin install paad@paad`. See README.
 
 ### Fixed
+- **Kiro, Antigravity and Cursor copies can now be given a path to work on** —
+  the exporter was deleting every skill's `## Arguments` section, so skills that
+  told you to pass a path pointed at instructions that were not there. It also
+  took `vibe`'s Step 2 with it. Recopy from `kiro_and_antigravity/`.
 - **Kiro and Antigravity copies no longer tell you to run a slash command they
   do not have**, and they picked up cross-references, stop conditions, and
   reference-file preambles the exporter had been silently discarding. Recopy

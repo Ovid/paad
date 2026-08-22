@@ -212,7 +212,13 @@ def convert_skills():
         root.mkdir(parents=True, exist_ok=True)
     
     skip_names = ["makefile", "paad-help"]
-    unwanted_headers = ["Arguments", "Input Resolution", "Pre-flight Checks", "Document classification"]
+    # Matched exactly against the heading text, never as a substring: vibe's
+    # "## Step 2: Pre-flight Checks" is a workflow step, not the section of the
+    # same name, and a substring test deleted it — leaving the export to jump
+    # from Step 1 to Step 3. "Arguments" is deliberately absent: those sections
+    # are portable prose once neutralize() rewrites the example invocations, and
+    # deleting them stranded cross-references that tell the reader to pass a path.
+    unwanted_headers = ["Input Resolution", "Pre-flight Checks", "Document classification"]
 
     for skill_path in Path(SOURCE_DIR).iterdir():
         if not skill_path.is_dir() or skill_path.name in skip_names:
@@ -256,7 +262,7 @@ def convert_skills():
             header_text = re.sub(r'^##+\s*', '', header_line).strip()
 
             # Skip unwanted sections
-            if any(uh in header_text for uh in unwanted_headers):
+            if header_text in unwanted_headers:
                 continue
 
             body = neutralize(body)

@@ -181,6 +181,13 @@ digraph fix_session {
 }
 ```
 
+## Arguments
+
+`fix-architecture` accepts optional `$ARGUMENTS`:
+
+- `fix-architecture` — finds the most recent report in `.reviews/architecture/` by date prefix
+- `fix-architecture path/to/report.md` — uses a specific report
+
 ## Setup: Developer Conversation
 
 A setup conversation before any code is touched. **One question per message. Ask, wait for the answer, then ask the next.** Do not combine multiple questions into one message — it is frustrating and overwhelming.

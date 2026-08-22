@@ -115,6 +115,20 @@ Usually not actionable:
 * Similar null checks, logging, tracing, telemetry, or error wrapping unless they encode duplicated policy.
 * Coincidental structural similarity without shared domain meaning.
 
+## Arguments
+
+`agentic-dedup` accepts optional `$ARGUMENTS`:
+
+* `agentic-dedup` — scan the current repository.
+* `agentic-dedup src/auth/` — scan only a path or module.
+* `agentic-dedup --changed main` — focus on duplicated logic introduced or touched by the current branch against `main`.
+* `agentic-dedup --type-constraints` — focus on duplicated schemas, type aliases, interfaces, branded types, validation constraints, and model definitions.
+* `agentic-dedup --domain "payments"` — focus on files, names, and rules related to the supplied domain term.
+
+When a path is supplied, constrain reconnaissance and reporting to that path except for callers/callees and canonical utilities outside the path.
+
+When `--changed <base>` is supplied, treat the diff against `<base>` as the initial seed set, but search the surrounding codebase for pre-existing equivalent logic.
+
 ### Shell-arg hygiene for `$ARGUMENTS`
 
 `$ARGUMENTS`-derived values flow into `git`, `find`, and `rg` commands. Treat them as untrusted input and **validate before interpolating**:
