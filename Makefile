@@ -228,15 +228,7 @@ check-frontmatter: check-skill-names ## Check every SKILL.md has name/descriptio
 			fail=1; \
 		fi; \
 	done; \
-	for file in .claude/skills/*/SKILL.md; do \
-		[ -f "$$file" ] || continue; \
-		if ! awk '/^---$$/{n++; next} n==1' "$$file" | grep -q '^  internal: true$$'; then \
-			echo "FAIL: $$file has no 'metadata: internal: true'. Project-local skills are not part of"; \
-			echo "      the plugin, but npx skills copies the whole repo — without the flag this ships"; \
-			echo "      repo-only tooling to people who have no repo."; \
-			fail=1; \
-		fi; \
-	done; \
+	python3 scripts/check_internal_flag.py || fail=1; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All SKILL.md files have valid frontmatter."
 

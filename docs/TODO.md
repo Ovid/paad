@@ -2,6 +2,8 @@
 - When agents return, always produce a very terse summary
     - Verifier will replay the summary, with duplicates removed
     - Verifier will replay the summary, when false positives are rejected
+- paad:analyst: add something along the lines of "trust nothing, even your own
+  memory; verify everything"
 - Skills really don't allow subroutines. Should I start using templates?
     - Version announce
     - Explain things simply so that everyone can understand.
