@@ -414,10 +414,7 @@ support helper agents on its own, and a Pi package cannot declare them, so
 neither piece ships inside the package. Without both pieces installed those
 skills still run — a single agent does every pass itself, one after another, in
 one conversation. You get no parallel work and no separation between passes.
-Nothing errors and nothing warns you. `agentic-owasp` is the one to weigh
-hardest: its helpers are forbidden from starting the app, sending requests, or
-writing exploit code, and that ban is written instruction, not a limit on their
-tools.
+Nothing errors and nothing warns you.
 
 **1. A subagent extension.** Pi ships one as an
 [example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent),
