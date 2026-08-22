@@ -99,8 +99,9 @@ SKILL_COMMAND = _skill_command_re()
 def neutralize_paths(text):
     """Rewrite paad's output paths and drop Claude-Code-only fragments.
 
-    Safe on any text, including a single-line YAML value, because nothing
-    here deletes a whole line. The body-only rules live in neutralize().
+    Safe on any text, including a single-line YAML value: it holds no rule
+    about paad's slash commands, so each caller applies its own — neutralize()
+    drops the slash, neutralize_description() names the skill outright.
     """
     # Neutralize "paad/" output paths to ".reviews/" or ".reports/".
     text = text.replace("paad/architecture-reviews/", ".reviews/architecture/")
@@ -270,7 +271,7 @@ def convert_skills():
             # Clean up trailing whitespace and excessive newlines
             body = body.rstrip() + "\n"
 
-            cleaned_content += "\n" + neutralize_paths(header_line) + body
+            cleaned_content += "\n" + neutralize(header_line) + body
 
         # Final cleanup for consecutive empty lines
         cleaned_content = re.sub(r'\n{3,}', '\n\n', cleaned_content).strip() + "\n"
