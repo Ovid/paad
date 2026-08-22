@@ -1143,6 +1143,7 @@ make check-versions     # package.json ↔ marketplace.json ↔ plugin.json vers
 make check-digraphs     # every skill (except paad-help) has a digraph
 make check-help         # every skill is documented in paad-help
 make check-readme       # every skill is documented in README.md
+make check-skill-names  # skill folder names follow the Agent Skills naming rules
 make check-frontmatter  # SKILL.md frontmatter is valid, folder name matches
 make check-references   # references/ dispatches resolve; no orphaned reference files
 make validate           # claude plugin validate on marketplace + plugins

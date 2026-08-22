@@ -2,12 +2,12 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current bump-version export release tag
+.PHONY: help test validate check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current bump-version export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current ## Run all checks
+test: check-skill-names validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current ## Run all checks
 	@echo "All checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -165,6 +165,39 @@ check-readme: ## Check every skill is documented in README.md
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All skills documented in README.md."
+
+check-skill-names: ## Check every skill folder name follows the Agent Skills naming rules
+	@LC_ALL=C; export LC_ALL; fail=0; count=0; \
+	for dir in $(SKILLS_DIR)/*/; do \
+		[ -d "$$dir" ] || continue; \
+		count=$$((count + 1)); \
+		name=$${dir%/}; name=$${name##*/}; \
+		bad=""; \
+		if [ $${#name} -gt 64 ]; then \
+			bad="is longer than 64 characters"; \
+		else \
+			case "$$name" in \
+				*[!a-z0-9-]*) bad="may only contain lowercase letters, digits and hyphens";; \
+				-*|*-) bad="must not start or end with a hyphen";; \
+				*--*) bad="must not contain two hyphens in a row";; \
+			esac; \
+		fi; \
+		if [ -n "$$bad" ]; then \
+			echo "FAIL: skill folder '$$name' $$bad."; \
+			fail=1; \
+		fi; \
+	done; \
+	if [ "$$count" -eq 0 ]; then \
+		echo "FAIL: no skill folders found under $(SKILLS_DIR) — this check cannot run."; \
+		exit 1; \
+	fi; \
+	if [ "$$fail" -eq 1 ]; then \
+		echo "      Folder names reach shell commands and search patterns elsewhere in this"; \
+		echo "      Makefile, so an unusual character there breaks a later check silently."; \
+		echo "      Rules: https://agentskills.io/specification"; \
+		exit 1; \
+	fi; \
+	echo "$$count skill folder name(s) follow the naming rules."
 
 check-frontmatter: ## Check every SKILL.md has name/description and name matches folder
 	@fail=0; \
