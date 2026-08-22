@@ -2,7 +2,7 @@ SKILLS_DIR := plugins/paad/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current bump-version export release tag
+.PHONY: help test validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current bump-version export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -27,7 +27,7 @@ check-versions: ## Check package and plugin versions match
 	fi; \
 	echo "Versions match: $$package_ver"
 
-check-skill-versions: ## Check every SKILL.md announces the correct version
+check-skill-versions: check-skill-names ## Check every SKILL.md announces the correct version
 	@plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
 	fail=0; \
 	for dir in $(SKILL_DIRS); do \
@@ -126,7 +126,7 @@ tag: ## Tag the released version on main and push it (run after merging the rele
 	git push origin "$$tag"; \
 	echo "Tagged $$tag on $$(git rev-parse --short HEAD) and pushed."
 
-check-digraphs: ## Check every skill (except paad-help) has a digraph
+check-digraphs: check-skill-names ## Check every skill (except paad-help) has a digraph
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
@@ -140,7 +140,7 @@ check-digraphs: ## Check every skill (except paad-help) has a digraph
 	echo "All skills have digraphs (paad-help excluded)."
 	@python3 scripts/lint_digraphs.py
 
-check-help: ## Check every skill is documented in paad-help
+check-help: check-skill-names ## Check every skill is documented in paad-help
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
@@ -153,7 +153,7 @@ check-help: ## Check every skill is documented in paad-help
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All skills documented in paad-help."
 
-check-readme: ## Check every skill is documented in README.md
+check-readme: check-skill-names ## Check every skill is documented in README.md
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
@@ -168,6 +168,11 @@ check-readme: ## Check every skill is documented in README.md
 
 check-skill-names: ## Check every skill folder name follows the Agent Skills naming rules
 	@LC_ALL=C; export LC_ALL; fail=0; count=0; \
+	set -- $(SKILLS_DIR)/*/; \
+	if [ ! -d "$$1" ]; then \
+		echo "FAIL: no skills found under $(SKILLS_DIR) — checks that read them cannot run."; \
+		exit 1; \
+	fi; \
 	for dir in $(SKILLS_DIR)/*/; do \
 		[ -d "$$dir" ] || continue; \
 		count=$$((count + 1)); \
@@ -199,7 +204,7 @@ check-skill-names: ## Check every skill folder name follows the Agent Skills nam
 	fi; \
 	echo "$$count skill folder name(s) follow the naming rules."
 
-check-frontmatter: ## Check every SKILL.md has name/description and name matches folder
+check-frontmatter: check-skill-names ## Check every SKILL.md has name/description and name matches folder
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		folder_name=$$(basename "$$dir"); \
@@ -235,10 +240,16 @@ check-frontmatter: ## Check every SKILL.md has name/description and name matches
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All SKILL.md files have valid frontmatter."
 
-check-references: ## Check every references/ dispatch resolves and every reference file is named
+check-references: check-skill-names ## Check every references/ dispatch resolves and every reference file is named
 	@python3 scripts/check_references.py
 
-check-dispatch-sites: ## Check every subagent dispatch site names the read-only analyst
+require-export:
+	@[ -d kiro_and_antigravity/skills ] || { \
+		echo "FAIL: no export tree at kiro_and_antigravity/skills — run 'make export' first."; \
+		exit 1; \
+	}
+
+check-dispatch-sites: check-skill-names require-export ## Check every subagent dispatch site names the read-only analyst
 # Inverted on purpose: flag any dispatch site that is NOT paad:paad-analyst, rather
 # than counting the ones that are. Counting known-good sites passes a new skill that
 # dispatches a write-capable subagent, which is the failure this exists to catch.
@@ -263,7 +274,11 @@ check-dispatch-sites: ## Check every subagent dispatch site names the read-only 
 			fail=1; \
 		fi; \
 	done; \
-	if grep -rqF 'subagent_type' kiro_and_antigravity/skills 2>/dev/null; then \
+	grep -rqF 'subagent_type' kiro_and_antigravity/skills 2>/dev/null; st=$$?; \
+	if [ "$$st" -gt 1 ]; then \
+		echo "FAIL: could not scan the export for 'subagent_type' (grep exit $$st)."; \
+		fail=1; \
+	elif [ "$$st" -eq 0 ]; then \
 		echo "FAIL: 'subagent_type' survived into the export — neutralize() in scripts/convert_skills.py did not match this dispatch site's wording. Occurrences:"; \
 		grep -rnF 'subagent_type' kiro_and_antigravity/skills | sed 's/^/  /'; \
 		fail=1; \
@@ -271,7 +286,7 @@ check-dispatch-sites: ## Check every subagent dispatch site names the read-only 
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "Every dispatch site names paad:paad-analyst; none leaked into the export."
 
-check-announce: ## Check every skill that writes files announces what it wrote
+check-announce: check-skill-names ## Check every skill that writes files announces what it wrote
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
@@ -286,9 +301,14 @@ check-announce: ## Check every skill that writes files announces what it wrote
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All skills announce the files they write (paad-help, rethink excluded)."
 
-check-export-frontmatter: ## Check every exported SKILL.md kept a usable name and description
+check-export-frontmatter: require-export ## Check every exported SKILL.md kept a usable name and description
 	@fail=0; \
-	for file in $$(find kiro_and_antigravity/skills -name SKILL.md | sort); do \
+	files=$$(find kiro_and_antigravity/skills -name SKILL.md | sort); \
+	if [ -z "$$files" ]; then \
+		echo "FAIL: no SKILL.md found under kiro_and_antigravity/skills — run 'make export' first."; \
+		exit 1; \
+	fi; \
+	for file in $$files; do \
 		name=$$(awk '/^---$$/{n++; next} n==1 && /^name:/{sub(/^name:[ \t]*/,""); print; exit}' "$$file"); \
 		desc=$$(awk '/^---$$/{n++; next} n==1 && /^description:/{sub(/^description:[ \t]*/,""); print; exit}' "$$file"); \
 		if [ -z "$$name" ]; then \
@@ -310,9 +330,13 @@ check-export-frontmatter: ## Check every exported SKILL.md kept a usable name an
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "Exported SKILL.md frontmatter is intact."
 
-check-export-commands: ## Check no Claude Code slash command survived into the export
+check-export-commands: check-skill-names require-export ## Check no Claude Code slash command survived into the export
 	@names=$$(echo "$(SKILL_NAMES)" | tr ' ' '|'); \
-	bad=$$(grep -rnE "(^|[^A-Za-z0-9._/-])/(paad:)?($$names)([^A-Za-z0-9/-]|$$)" kiro_and_antigravity/skills || true); \
+	bad=$$(grep -rnE "(^|[^A-Za-z0-9._/-])/(paad:)?($$names)([^A-Za-z0-9/-]|$$)" kiro_and_antigravity/skills); st=$$?; \
+	if [ "$$st" -gt 1 ]; then \
+		echo "FAIL: could not scan the export for slash commands (grep exit $$st)."; \
+		exit 1; \
+	fi; \
 	if [ -n "$$bad" ]; then \
 		echo "FAIL: Claude Code slash command(s) survived into the export. Kiro, Antigravity and Cursor"; \
 		echo "      have no such command, so this instructs the agent to type something it cannot run."; \
@@ -322,7 +346,7 @@ check-export-commands: ## Check no Claude Code slash command survived into the e
 	fi; \
 	echo "No Claude Code slash commands survived into the export."
 
-check-export-current: ## Check kiro_and_antigravity/ and pi/ match a fresh export
+check-export-current: check-skill-names require-export ## Check kiro_and_antigravity/ and pi/ match a fresh export
 	@tmp=$$(mktemp -d); \
 	trap 'rm -rf "$$tmp"' EXIT INT TERM; \
 	mkdir -p "$$tmp/plugins" "$$tmp/scripts"; \
