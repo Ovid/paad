@@ -23,6 +23,11 @@ what a plugin user sees.
   Cline, and Zed. Claude Code users keep `/plugin install paad@paad`. See README.
 
 ### Fixed
+- **`agentic-review` no longer misreads a branch name as a directory** — an
+  argument like `origin/main` or `feature/login` was treated as a path filter,
+  scoping the review to a folder that does not exist and reporting it clean. It
+  now resolves the argument before deciding, and stops on a base branch it
+  cannot find instead of saying there is nothing to review.
 - **Kiro, Antigravity and Cursor copies can now be given a path to work on** —
   the exporter was deleting every skill's `## Arguments` section, so skills that
   told you to pass a path pointed at instructions that were not there. It also

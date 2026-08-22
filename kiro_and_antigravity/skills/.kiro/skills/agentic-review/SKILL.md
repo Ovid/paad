@@ -50,11 +50,18 @@ digraph preflight {
   "Conversation has history?" [shape=diamond];
   "On main/master?" [shape=diamond];
   "Uncommitted changes?" [shape=diamond];
-  "Diff against base is empty?" [shape=diamond];
+  "Argument resolves as a ref?" [shape=diamond];
+  "Argument is an existing path?" [shape=diamond];
+  "Base ref resolves?" [shape=diamond];
+  "Filtered diff against base is empty?" [shape=diamond];
+  "Treat as base branch" [shape=box];
+  "Treat as path filter against main" [shape=box];
   "Proceed to Phase 1" [shape=box];
   "STOP: recommend new session" [shape=box, style=bold];
   "STOP: nothing to review" [shape=box, style=bold];
   "STOP: no changes to review" [shape=box, style=bold];
+  "STOP: argument is neither a ref nor a path" [shape=box, style=bold];
+  "STOP: base ref does not resolve" [shape=box, style=bold];
   "STOP: user wants to commit first" [shape=box, style=bold];
   "ASK and WAIT: review committed state only, or wait to commit?" [shape=box];
 
@@ -63,11 +70,19 @@ digraph preflight {
   "On main/master?" -> "STOP: nothing to review" [label="yes"];
   "On main/master?" -> "Uncommitted changes?" [label="no"];
   "Uncommitted changes?" -> "ASK and WAIT: review committed state only, or wait to commit?" [label="yes"];
-  "Uncommitted changes?" -> "Diff against base is empty?" [label="no"];
-  "ASK and WAIT: review committed state only, or wait to commit?" -> "Diff against base is empty?" [label="review committed state only"];
+  "Uncommitted changes?" -> "Argument resolves as a ref?" [label="no"];
+  "ASK and WAIT: review committed state only, or wait to commit?" -> "Argument resolves as a ref?" [label="review committed state only"];
   "ASK and WAIT: review committed state only, or wait to commit?" -> "STOP: user wants to commit first" [label="wait to commit"];
-  "Diff against base is empty?" -> "STOP: no changes to review" [label="yes"];
-  "Diff against base is empty?" -> "Proceed to Phase 1" [label="no"];
+  "Argument resolves as a ref?" -> "Treat as base branch" [label="yes"];
+  "Argument resolves as a ref?" -> "Argument is an existing path?" [label="no"];
+  "Argument is an existing path?" -> "Treat as path filter against main" [label="yes"];
+  "Argument is an existing path?" -> "STOP: argument is neither a ref nor a path" [label="no"];
+  "Treat as base branch" -> "Base ref resolves?";
+  "Treat as path filter against main" -> "Base ref resolves?";
+  "Base ref resolves?" -> "STOP: base ref does not resolve" [label="no"];
+  "Base ref resolves?" -> "Filtered diff against base is empty?" [label="yes"];
+  "Filtered diff against base is empty?" -> "STOP: no changes to review" [label="yes"];
+  "Filtered diff against base is empty?" -> "Proceed to Phase 1" [label="no"];
 }
 ```
 
@@ -107,7 +122,17 @@ Backlog **lifecycle is explicit-removal only** — agentic-review never auto-res
 
 When a base branch is provided, use it instead of `main` in all `git diff` commands. When a path is provided, filter the diff and manifest to only include files within that scope.
 
-**Single-argument disambiguation.** When exactly one argument is provided, decide by shape: if the argument contains `/` or matches a path that exists on disk, treat it as a path filter against `main`; otherwise treat it as a base branch. Example: `agentic-review src/auth/` → path filter; `agentic-review develop` → base branch.
+**Validate every argument before it reaches a shell.** Refs and path scopes must match `^[A-Za-z0-9._/-]+$` and must not start with `-`, which git would read as a flag. On mismatch, stop and show the user the offending value. Always single-quote the value when interpolating: `git rev-parse --verify '<arg>'^{commit}`, `git diff '<base>'...HEAD`.
+
+**Single-argument disambiguation.** When exactly one argument is provided, let it be decided by what the value *resolves to*, never by its shape. Branch names contain `/` routinely — `origin/main`, `feature/login`, `release/2.0` — and a shape test reads every one of them as a directory. In order:
+
+1. `git rev-parse --verify '<arg>'^{commit}` succeeds → treat as the **base branch**.
+2. Otherwise `test -e '<arg>'` succeeds → treat as a **path filter** against `main`.
+3. Neither → **stop**, naming the value: "`<arg>` is neither a ref this repository can resolve nor a path that exists."
+
+Example: `agentic-review origin/main` → base branch; `agentic-review src/auth/` → path filter.
+
+**Two arguments** (`agentic-review main src/auth/`) are base then path. Verify the base resolves and the path exists, by the same two commands, and stop on either failure rather than reviewing something other than what was asked for.
 
 ## Phase 1: Reconnaissance
 
