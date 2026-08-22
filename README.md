@@ -377,12 +377,6 @@ every one of those passes itself, one after another, in one conversation. The
 work still gets done. It is slower, and one conversation has to hold everything
 it reads. Nothing errors and nothing warns you.
 
-**These skills are meant to read your code, not change it — but that is an
-instruction, not a locked door.** The helper agent is not given file-editing
-tools. It is given a shell, and a shell can write files. So the rule holds
-because the agent was told to follow it. That is true on every assistant.
-Commit your work before a run you care about.
-
 **Updates track `main`, and there is no pinned form.** Re-run the same command
 to pull the latest; there is no version argument, so the version a skill
 announces on invocation is *not* a reliable way to tell two npx installs apart.
@@ -436,11 +430,6 @@ the skills ask for. Copy it in:
 ```bash
 cp pi/agents/paad-analyst.md ~/.pi/agent/agents/
 ```
-
-It gives the agent `read, grep, find, ls, bash` — no `edit`, no `write`. A
-shell can write files anyway, so what keeps a helper from editing your code to
-test whether a finding was real is the instruction inside the agent file, not
-the list of tools.
 
 **`rethink` is degraded on Pi.** The Claude Code analyst also holds `WebSearch`
 and `WebFetch`, and Pi has no web tool to map those onto — its built-ins are
