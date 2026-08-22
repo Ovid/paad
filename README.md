@@ -350,8 +350,8 @@ npx skills@latest add Ovid/paad
 It opens a picker. Everything under **Universal (`.agents/skills`)** — Amp,
 Antigravity, Cline, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Warp,
 Zed and others — is always included. The list below that is opt-in and holds
-another fifty-odd, Claude Code among them. **Kiro** is not on either list at
-the time of writing; copy out of `kiro_and_antigravity/` for that one.
+another fifty-odd; **Kiro CLI** (`.kiro/skills`) and Claude Code are both in
+there, so search for yours and select it.
 
 ```bash
 npx skills@latest add Ovid/paad --list                 # list the skills, install nothing
