@@ -3,6 +3,7 @@
 import os
 import re
 import shutil
+import sys
 from pathlib import Path
 
 # Paths relative to repository root
@@ -94,6 +95,39 @@ def _skill_command_re():
 
 
 SKILL_COMMAND = _skill_command_re()
+
+
+SKIP_NAMES = ["makefile", "paad-help"]
+
+
+def _skipped_command_re():
+    """Match an invocation of a skill this exporter does not ship.
+
+    neutralize() drops the leading slash from every paad command, which is
+    right for a skill the reader has and wrong for one they do not: a
+    reference to `/paad-help` exports as a bare `paad-help`, naming a skill
+    that is not in that install. check-export-commands cannot catch it,
+    because the slash it keys on is what the rewrite removed. So it is caught
+    here, at the source, before the rewrite erases the evidence.
+    """
+    alternation = "|".join(
+        re.escape(name) for name in sorted(SKIP_NAMES, key=len, reverse=True)
+    )
+    return re.compile(
+        r"(?<![A-Za-z0-9._-])/(?:paad:)?(" + alternation + r")(?![A-Za-z0-9/-])"
+    )
+
+
+SKIPPED_COMMAND = _skipped_command_re()
+
+
+def stranded_refs(path, text):
+    """Report every reference in `text` to a skill that will not be exported."""
+    hits = []
+    for match in SKIPPED_COMMAND.finditer(text):
+        line = text.count("\n", 0, match.start()) + 1
+        hits.append(f"{path}:{line}: {match.group(0)}")
+    return hits
 
 
 def neutralize_paths(text):
@@ -212,7 +246,16 @@ def convert_skills():
         shutil.rmtree(root, ignore_errors=True)
         root.mkdir(parents=True, exist_ok=True)
     
-    skip_names = ["makefile", "paad-help"]
+    skip_names = SKIP_NAMES
+    missing = [n for n in skip_names if not (Path(SOURCE_DIR) / n).is_dir()]
+    if missing:
+        print(
+            f"FAIL: SKIP_NAMES lists {', '.join(missing)}, which is not a directory under "
+            f"{SOURCE_DIR}. A typo here silently exports a skill meant to be withheld.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    stranded = []
     # Matched exactly against the heading text, never as a substring: vibe's
     # "## Step 2: Pre-flight Checks" is a workflow step, not the section of the
     # same name, and a substring test deleted it — leaving the export to jump
@@ -233,6 +276,8 @@ def convert_skills():
         
         with open(skill_file, "r", encoding="utf-8") as f:
             content = f.read()
+
+        stranded += stranded_refs(skill_file, content)
 
         # Frontmatter is parsed and rewritten on its own terms and never
         # reaches neutralize() — see neutralize_description().
@@ -309,7 +354,9 @@ def convert_skills():
                 if ref_file.is_dir():
                     target.mkdir(exist_ok=True)
                 elif ref_file.suffix == ".md":
-                    text = neutralize(ref_file.read_text(encoding="utf-8"))
+                    text = ref_file.read_text(encoding="utf-8")
+                    stranded += stranded_refs(ref_file, text)
+                    text = neutralize(text)
                     text = re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
                     target.write_text(text, encoding="utf-8")
                 else:
@@ -338,6 +385,17 @@ Please refer to that file for the full criteria.
 """
         with open(agent_skill_dir / "SKILL.md", "w", encoding="utf-8") as f:
             f.write(wrapper)
+
+    if stranded:
+        print(
+            "FAIL: exported skill(s) name a skill this export does not ship. The leading slash "
+            "is dropped on export, so these would read as an instruction to run something the "
+            "reader does not have:",
+            file=sys.stderr,
+        )
+        for hit in stranded:
+            print(f"  {hit}", file=sys.stderr)
+        sys.exit(1)
 
     print("Conversion complete.")
 
