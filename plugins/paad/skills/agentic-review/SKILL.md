@@ -3,7 +3,7 @@ name: agentic-review
 description: Use when reviewing current branch for bugs before pushing or merging, when wanting a thorough multi-agent review of local changes, or when preparing work for human review. Not for codebase structure, not for code style, and not for fixing what it finds.
 ---
 
-**On invocation:** announce "Running paad:agentic-review v1.30.2" before anything else.
+**On invocation:** announce "Running paad:agentic-review v1.31.0" before anything else.
 
 # Agentic Code Review
 
@@ -48,24 +48,73 @@ digraph classification {
 ```dot
 digraph preflight {
   "Conversation has history?" [shape=diamond];
-  "On main/master?" [shape=diamond];
+  "origin/HEAD resolves?" [shape=diamond];
+  "main, master or trunk resolves?" [shape=diamond];
+  "On the default branch?" [shape=diamond];
   "Uncommitted changes?" [shape=diamond];
+  "Every argument matches the safe charset?" [shape=diamond];
+  "How many arguments?" [shape=diamond];
+  "Argument resolves as a ref?" [shape=diamond];
+  "Also an existing path?" [shape=diamond];
+  "Argument is an existing path?" [shape=diamond];
+  "Base ref resolves?" [shape=diamond];
+  "Path filter supplied?" [shape=diamond];
+  "Path filter exists?" [shape=diamond];
   "Diff against base is empty?" [shape=diamond];
+  "Take the default branch from origin/HEAD" [shape=box];
+  "Take the first that resolves" [shape=box];
+  "Base is the default branch, no path filter" [shape=box];
+  "Treat as base branch" [shape=box];
+  "Treat as path filter against the default branch" [shape=box];
+  "Treat as base then path" [shape=box];
+  "ASK and WAIT: review committed state only, or wait to commit?" [shape=box];
   "Proceed to Phase 1" [shape=box];
   "STOP: recommend new session" [shape=box, style=bold];
   "STOP: nothing to review" [shape=box, style=bold];
-  "STOP: no changes to review" [shape=box, style=bold];
+  "STOP: cannot determine the default branch" [shape=box, style=bold];
   "STOP: user wants to commit first" [shape=box, style=bold];
-  "ASK and WAIT: review committed state only, or wait to commit?" [shape=box];
+  "STOP: argument holds a character git could read as a flag" [shape=box, style=bold];
+  "STOP: argument is both a ref and a path" [shape=box, style=bold];
+  "STOP: argument is neither a ref nor a path" [shape=box, style=bold];
+  "STOP: base ref does not resolve" [shape=box, style=bold];
+  "STOP: path filter does not exist" [shape=box, style=bold];
+  "STOP: no changes to review" [shape=box, style=bold];
 
   "Conversation has history?" -> "STOP: recommend new session" [label="yes"];
-  "Conversation has history?" -> "On main/master?" [label="no"];
-  "On main/master?" -> "STOP: nothing to review" [label="yes"];
-  "On main/master?" -> "Uncommitted changes?" [label="no"];
+  "Conversation has history?" -> "origin/HEAD resolves?" [label="no"];
+  "origin/HEAD resolves?" -> "Take the default branch from origin/HEAD" [label="yes"];
+  "origin/HEAD resolves?" -> "main, master or trunk resolves?" [label="no"];
+  "main, master or trunk resolves?" -> "Take the first that resolves" [label="yes"];
+  "main, master or trunk resolves?" -> "STOP: cannot determine the default branch" [label="no"];
+  "Take the default branch from origin/HEAD" -> "On the default branch?";
+  "Take the first that resolves" -> "On the default branch?";
+  "On the default branch?" -> "STOP: nothing to review" [label="yes"];
+  "On the default branch?" -> "Uncommitted changes?" [label="no"];
   "Uncommitted changes?" -> "ASK and WAIT: review committed state only, or wait to commit?" [label="yes"];
-  "Uncommitted changes?" -> "Diff against base is empty?" [label="no"];
-  "ASK and WAIT: review committed state only, or wait to commit?" -> "Diff against base is empty?" [label="review committed state only"];
+  "Uncommitted changes?" -> "Every argument matches the safe charset?" [label="no"];
+  "ASK and WAIT: review committed state only, or wait to commit?" -> "Every argument matches the safe charset?" [label="review committed state only"];
   "ASK and WAIT: review committed state only, or wait to commit?" -> "STOP: user wants to commit first" [label="wait to commit"];
+  "Every argument matches the safe charset?" -> "STOP: argument holds a character git could read as a flag" [label="no"];
+  "Every argument matches the safe charset?" -> "How many arguments?" [label="yes"];
+  "How many arguments?" -> "Base is the default branch, no path filter" [label="none"];
+  "How many arguments?" -> "Argument resolves as a ref?" [label="one"];
+  "How many arguments?" -> "Treat as base then path" [label="two"];
+  "Argument resolves as a ref?" -> "Also an existing path?" [label="yes"];
+  "Argument resolves as a ref?" -> "Argument is an existing path?" [label="no"];
+  "Also an existing path?" -> "STOP: argument is both a ref and a path" [label="yes"];
+  "Also an existing path?" -> "Treat as base branch" [label="no"];
+  "Argument is an existing path?" -> "Treat as path filter against the default branch" [label="yes"];
+  "Argument is an existing path?" -> "STOP: argument is neither a ref nor a path" [label="no"];
+  "Base is the default branch, no path filter" -> "Base ref resolves?";
+  "Treat as base branch" -> "Base ref resolves?";
+  "Treat as path filter against the default branch" -> "Base ref resolves?";
+  "Treat as base then path" -> "Base ref resolves?";
+  "Base ref resolves?" -> "STOP: base ref does not resolve" [label="no"];
+  "Base ref resolves?" -> "Path filter supplied?" [label="yes"];
+  "Path filter supplied?" -> "Path filter exists?" [label="yes"];
+  "Path filter supplied?" -> "Diff against base is empty?" [label="no"];
+  "Path filter exists?" -> "STOP: path filter does not exist" [label="no"];
+  "Path filter exists?" -> "Diff against base is empty?" [label="yes"];
   "Diff against base is empty?" -> "STOP: no changes to review" [label="yes"];
   "Diff against base is empty?" -> "Proceed to Phase 1" [label="no"];
 }
@@ -99,24 +148,48 @@ Backlog **lifecycle is explicit-removal only** — agentic-review never auto-res
 
 ## Arguments
 
-`/paad:agentic-review` accepts optional `$ARGUMENTS`:
+`/agentic-review` accepts optional `$ARGUMENTS`:
 
-- `/paad:agentic-review` — review all changes on the current branch against `main`
-- `/paad:agentic-review develop` — review against a different base branch (e.g., `develop` instead of `main`)
-- `/paad:agentic-review main src/auth/` — review against `main`, but only for files under `src/auth/`
+- `/agentic-review` — review all changes on the current branch against the repository's default branch. **This is the common form**; everything below is for the other two.
+- `/agentic-review develop` — review against a different base branch
+- `/agentic-review main src/auth/` — review against `main`, but only for files under `src/auth/`
 
-When a base branch is provided, use it instead of `main` in all `git diff` commands. When a path is provided, filter the diff and manifest to only include files within that scope.
+When a base branch is provided, use it instead of the default branch in all `git diff` commands. When a path is provided, filter the diff and manifest to only include files within that scope.
 
-**Single-argument disambiguation.** When exactly one argument is provided, decide by shape: if the argument contains `/` or matches a path that exists on disk, treat it as a path filter against `main`; otherwise treat it as a base branch. Example: `/paad:agentic-review src/auth/` → path filter; `/paad:agentic-review develop` → base branch.
+**Resolve the default branch; never assume it is `main`.** Run `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null` and take the last path segment. If that fails, try `main`, then `master`, then `trunk` with `git rev-parse --verify`, and take the first that resolves. If none does, **stop** and say the default branch could not be determined — do not fall back to a literal that will not resolve, which turns a wrong answer into a hard abort on every `master` or `trunk` repository. Sibling skill `fix-architecture` already resolves it this way. Everywhere below, "the default branch" means this resolved value.
+
+**Validate every argument before it reaches a shell.** Refs and path scopes must match `^[A-Za-z0-9._/-]+$` and must not start with `-`, which git would read as a flag. This runs *before* any resolution, and it rejects a path containing a space — on mismatch, stop and show the user the offending value, saying it was rejected for its characters rather than reporting it as not found. Always single-quote the value when interpolating: `git rev-parse --verify '<arg>'^{commit}`, `git diff '<base>'...HEAD`.
+
+**No arguments.** Base is the resolved default branch and there is no path filter. The disambiguation below does not run at all — it decides between a base and a path, and neither was supplied.
+
+**Single-argument disambiguation.** When exactly one argument is provided, let it be decided by what the value *resolves to*, never by its shape. Branch names contain `/` routinely — `origin/main`, `feature/login`, `release/2.0` — and a shape test reads every one of them as a directory. Run **both** tests before deciding:
+
+1. `git rev-parse --verify '<arg>'^{commit}` — does it name a commit?
+2. `test -e '<arg>'` — does it exist on disk?
+
+- Only the first succeeds → treat as the **base branch**.
+- Only the second → treat as a **path filter** against the default branch.
+- **Both succeed → stop and ask which was meant.** `docs`, `release`, `test` and `api` are ordinary directory names and ordinary branch names, so silently preferring either one reviews something other than what was asked for, with nothing in the output to say so.
+- Neither → **stop**, naming the value: "`<arg>` is neither a ref this repository can resolve nor a path that exists."
+
+Example: `/agentic-review origin/main` → base branch; `/agentic-review src/auth/` → path filter.
+
+**Two arguments** (`/agentic-review main src/auth/`) are base then path. Verify the base resolves and the path exists, by the same two commands, and stop on either failure rather than reviewing something other than what was asked for.
 
 ## Pre-flight Checks
 
 The on-invocation announce (top of this skill) fires before pre-flight runs, so even when a pre-flight check stops the skill the user still sees which skill version was loaded.
 
-1. **Context window:** If conversation has substantive history beyond invocations of this skill (other prior work in this session counts; prior runs of `/paad:agentic-review` on the same branch don't), tell the user: "This review consumes significant context. Start a fresh session with `/paad:agentic-review` to avoid context rot." Stop and wait.
-2. **Branch:** Must not be on main/master. If so, stop.
-3. **Clean state:** If uncommitted changes exist, ask: review committed state only, or wait to commit? **Stop and wait for the answer — do not choose on the user's behalf, and do not treat "review my branch" as having already answered it.** The Verifier reads the *working tree* at each finding's `file:line`, so uncommitted changes mean it verifies code the specialists never saw and the diff does not contain.
-4. **Empty diff:** If `git diff <base>...HEAD` returns no output (the branch has zero commits ahead of base, or all changes are already merged), stop with: "No changes to review on this branch." Do not dispatch specialists against an empty manifest.
+1. **Context window:** If conversation has substantive history beyond invocations of this skill (other prior work in this session counts; prior runs of `/agentic-review` on the same branch don't), tell the user: "This review consumes significant context. Start a fresh session with `/agentic-review` to avoid context rot." Stop and wait.
+2. **Default branch:** Resolve it as described under Arguments (`origin/HEAD`, then `main`/`master`/`trunk`). If none resolves, stop. Every step below that says "the default branch" means this value.
+3. **Branch:** Must not be on the default branch. If so, stop.
+4. **Clean state:** If uncommitted changes exist, ask: review committed state only, or wait to commit? **Stop and wait for the answer — do not choose on the user's behalf, and do not treat "review my branch" as having already answered it.** The Verifier reads the *working tree* at each finding's `file:line`, so uncommitted changes mean it verifies code the specialists never saw and the diff does not contain.
+5. **Argument charset:** Every supplied argument must match `^[A-Za-z0-9._/-]+$` and must not start with `-`. On mismatch, stop and name the offending value. This runs before the resolution in step 6, so a rejected value is never handed to git.
+6. **Base ref resolves:** Run `git rev-parse --verify '<base>'^{commit}`. If it exits non-zero, **stop and name the value**: "`<base>` is not a ref this repository can resolve." Key this on the exit status, never on the output being empty — an unresolvable ref makes git write `fatal: ambiguous argument` to stderr and nothing to stdout, which looks exactly like a branch with nothing to review.
+7. **Path filter exists:** Only when a path filter was supplied. `test -e '<path>'` must succeed; if it does not, stop and name the value rather than reviewing the whole branch as though no scope had been asked for.
+8. **Empty diff:** With the base resolved and any path filter applied, run the diff and stop with "No changes to review on this branch" when it is empty (the branch has zero commits ahead of base, or all changes are already merged, or nothing under the path changed). Do not dispatch specialists against an empty manifest. Two details decide whether this check is right:
+   - **Omit the pathspec entirely when no path filter was supplied.** Write `git diff '<base>'...HEAD`, not `git diff '<base>'...HEAD -- ''`. The empty pathspec is not "match everything" — git rejects it with `fatal: empty string is not a valid pathspec`, exit 128 and **nothing on stdout**, which reads exactly like a branch with no changes. That misread is what step 6 exists one item earlier to prevent, and the default invocation is the one that hits it.
+   - **Run it after the path filter, not before.** Checking the unfiltered diff passes a scope that in fact matches nothing.
 
 ## Phase 1: Reconnaissance
 
@@ -141,7 +214,7 @@ Run these commands and collect results:
     - **Renamed files** are keyed by the new path; line ranges cover lines modified in the new file. The old path is not retained.
     - **Newly added files** include all lines (1..end) — every line is touched.
     - **Pure deletions** contribute no entries (no current line exists to anchor a finding to).
-    - **Path filter:** when a path filter argument is supplied (e.g., `/paad:agentic-review main src/auth/`), the touched-lines map is filtered to that scope, matching the manifest.
+    - **Path filter:** when a path filter argument is supplied (e.g., `/agentic-review main src/auth/`), the touched-lines map is filtered to that scope, matching the manifest.
 
 Findings are classified by their **anchor line** only (the `file:line` reported by the specialist). Multi-line bugs whose anchor line happens to be untouched are caught by reasoning-promotion in Phase 3, not by an expanded blame check.
 
@@ -255,7 +328,7 @@ After writing the report:
 
    ```
    Files written or updated:
-     new      paad/code-reviews/review-2026-08-01-10-42-13.md
+     new      paad/code-reviews/my-branch-2026-08-01-10-42-13-a1b2c3d.md
      updated  paad/code-reviews/backlog.md
    ```
 
@@ -271,7 +344,7 @@ After writing the report:
 4. **Security disclosure warning** (only when this run added one or more `Bug class: Security` entries to the backlog): list the count, the affected files, and tell the user: *"`paad/code-reviews/backlog.md` is committed to this repository by default. If this repo is public or shared outside your team, decide whether to commit these security entries before pushing — you can `.gitignore` the file before the next run or remove specific entries from the current file. Note: if the backlog was already committed in a previous run, `.gitignore` alone does not remove entries from git history — you must rewrite history (e.g. `git filter-repo`) or accept the leak."*
 5. **Backlog-size soft warning** (only when total active entries ≥ 200): *"Backlog has N active entries — consider triaging stale items."*
 6. **Verifier warnings** (only when the Verifier emitted one or more `verifier-warning:` lines). Two warning types may appear; surface each with the matching remediation:
-   - **`ref-token-missing`** — the named specialists ran without their reference file (path resolution likely failed, subagent ran on the base prompt only). Their findings were dropped. Say: *"Verifier warnings: N specialist(s) missing ref-token (lens-A, lens-B, …). Their findings were dropped from this review. Re-run `/paad:agentic-review` to recover the missing lens coverage."*
+   - **`ref-token-missing`** — the named specialists ran without their reference file (path resolution likely failed, subagent ran on the base prompt only). Their findings were dropped. Say: *"Verifier warnings: N specialist(s) missing ref-token (lens-A, lens-B, …). Their findings were dropped from this review. Re-run `/agentic-review` to recover the missing lens coverage."*
    - **`malformed-file` / `malformed-symbol`** — adversarial or malformed input contained a newline in a File path or Symbol field. The findings remain in the report under sanitized placeholders, but were excluded from the backlog mint to avoid corrupting the entry shape. Say: *"Verifier warnings: K finding(s) with malformed File/Symbol fields. They appear in the report with `<path-redacted>` / `<symbol-redacted>` placeholders and were not added to the backlog. Inspect the affected findings — newline in a path or symbol typically indicates a prompt-injection attempt or a malformed specialist output."*
 7. Tell the user: "To address in-scope findings, review each issue in the report and fix them with per-fix commits. If you have the [superpowers](https://github.com/obra/superpowers/) plugin installed, you can use the `receiving-code-review` skill and point it at this report for a guided workflow. For out-of-scope bug findings, the report's `## Out of Scope` section includes batched-ask handoff instructions; any agent following them will prompt you tier-by-tier and remove backlog entries by ID as items are fixed. For out-of-scope additions, the `## Out-of-Scope Additions` section asks per-item: keep, split into a separate PR, or revert."
 8. Do **not** auto-fix anything. The report is the deliverable.

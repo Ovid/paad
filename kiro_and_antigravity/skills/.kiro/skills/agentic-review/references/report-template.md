@@ -1,5 +1,7 @@
 # Report Template — additional instructions
 
+> **Read this file before writing the per-review report or updating the project backlog.** This is parent-side material for `agentic-review` Phase 4. The orchestrator (the agent that activated this skill) reads these instructions when entering the report-writing phase — there is no subagent dispatch for this phase. The empty-section rules, failure handling, report template, and backlog file shape below are binding for the Phase 4 deliverable.
+
 **Empty-section rules:**
 
 - If there are zero out-of-scope bug findings of any tier, omit the entire `## Out of Scope` section *and* its handoff block. Review Metadata still records `Out-of-scope findings: 0`.
@@ -119,6 +121,7 @@ One-line entries only. If empty, follow the Empty-section rules above.
 ```markdown
 # Out-of-Scope Findings Backlog
 
+> **These items were flagged by `agentic-review` as out of scope for the branch
 > on which they were found.** They may be stale, may already have been fixed by other
 > means, may no longer apply after refactors, or may simply have been judged not worth
 > addressing. Verify each entry against the current code before acting on it. Entries

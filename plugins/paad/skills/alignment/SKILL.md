@@ -3,7 +3,7 @@ name: alignment
 description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents. Needs both documents; not for checking code against a spec.
 ---
 
-**On invocation:** announce "Running paad:alignment v1.30.2" before anything else.
+**On invocation:** announce "Running paad:alignment v1.31.0" before anything else.
 
 # Alignment Check
 
@@ -123,11 +123,11 @@ digraph analysis_and_resolution {
 
 ## Arguments
 
-`/paad:alignment` accepts optional `$ARGUMENTS`:
+`/alignment` accepts optional `$ARGUMENTS`:
 
-- `/paad:alignment` — auto-detect documents from conversation history or common file locations
-- `/paad:alignment requirements.md plan.md` — check alignment between specific files
-- `/paad:alignment docs/specs/ docs/plans/` — check alignment across directories
+- `/alignment` — auto-detect documents from conversation history or common file locations
+- `/alignment requirements.md plan.md` — check alignment between specific files
+- `/alignment docs/specs/ docs/plans/` — check alignment across directories
 
 When file paths are provided, the skill classifies each as intent or action and proceeds. When multiple files are provided, the skill determines their relationships automatically.
 

@@ -1,7 +1,40 @@
 # Design: `.paadrc` and a single artifact root
 
 **Date:** 2026-08-21
-**Status:** designed, not implemented
+**Status:** SUPERSEDED — not implemented, and will not be
+
+`.paadrc` was dropped. Open question 1 was settled by verification instead:
+`npx skills@latest add Ovid/paad` works against this repository today, copying
+whole skill directories verbatim (exec bits preserved) to 70+ agents. So every
+install route except the hand-copy tree already agrees on `paad/`, and the split
+this design existed to close is frozen rather than growing.
+`kiro_and_antigravity/` keeps its `.reviews/` rewrites and is deprecated in the
+README.
+
+**Correction, 2026-08-22.** The paragraph above originally said the installer
+"discovers skills through `.claude-plugin/marketplace.json` → `plugins/paad`",
+and presented that as the verified answer. It is wrong, and it was wrong when
+written. The installer resolves plugin skills that way *and* always searches a
+fixed list of per-agent project directories, `.claude/skills/` among them —
+`AGENT_PROJECT_SKILL_DIRS` in `dist/cli.mjs` of the `skills` package. Running
+the installer against this repository at `main` offers 16 skills, including the
+project-local `roadmap` and `release`. The whole-repo walk people assume
+instead is real but is a fallback, reached only when the targeted search finds
+nothing. What keeps repo-only tooling out of a stranger's install is
+`metadata.internal: true`, which the installer tests as
+`metadata?.internal === true`.
+
+**Everything below this line is the design as it stood when it was dropped, not
+instruction.** None of it is to be acted on — not "Delete the five path
+rewrites", not "the next run writes to `paad/`", not Open question 1's
+"Unverified", and not the passage recommending a check be dropped that
+`make test` still enforces. **Its line citations are stale**; they refer to
+`scripts/convert_skills.py` and `Makefile` as they stood on 2026-08-21 and have
+not been maintained since. Two of its claims are also wrong and left standing
+for the record: nothing ever wrote `.reports/`, and `make check-export-current`
+diffs only `kiro_and_antigravity/` and `pi/`, so it would not have caught drift
+in a script copied into `plugins/paad/skills/*/scripts/`.
+
 **Touches:** every artifact-writing skill, `scripts/convert_skills.py`, `Makefile`, `README.md`, `CHANGELOG.md`
 
 ## Why
@@ -137,8 +170,10 @@ silently, which is the failure this design is trying to avoid.
 
 ## Export changes
 
-Delete the five path rewrites in `neutralize()`
-(`scripts/convert_skills.py:42-49`):
+Delete the five path rewrites in `neutralize_paths()` (in
+`scripts/convert_skills.py` — no line number: this document says above that its
+citations are unmaintained, and the last attempt to refresh this one landed
+inside a different function's docstring):
 
 ```python
 text = text.replace("paad/architecture-reviews/", ".reviews/architecture/")
@@ -148,12 +183,21 @@ text = text.replace("paad/alignment-reviews/", ".reviews/alignment/")
 text = re.sub(r"(?<!Ovid/)paad/", ".reviews/", text)
 ```
 
-That is the whole of the `.reviews/` problem. Everything else `neutralize()`
-does — stripping `subagent_type:` fragments and `/paad:` command references —
+That is the whole of the `.reviews/` problem. Everything else those functions
+do — stripping `subagent_type:` fragments and `/paad:` command references —
 stays, because those genuinely have no meaning outside Claude Code.
 
 The catch-all regex also carried a `(?<!Ovid/)` guard so that
 `github.com/Ovid/paad` survived. With the rewrites gone the guard goes too.
+
+One check blocks the deletion and has to go with it. `check-export-frontmatter`
+(`Makefile:247`) fails any exported `description:` containing `paad/`, and
+`fix-architecture`'s description names `paad/architecture-reviews/` in its first
+sentence. It passes today only because `neutralize_description()` also calls
+`neutralize_paths()`. Under this design a `paad/` path in an exported
+description is the correct output, not a leak, so drop that `case` from the
+check. The other three rules it enforces — non-empty name, non-empty
+description, no `/paad:` command — are unaffected.
 
 ## Split out: the export frontmatter bug
 
@@ -163,7 +207,10 @@ it affects four skills by two distinct causes, plus an inverse leak in the
 Antigravity wrappers, and it shares no line of `convert_skills.py` with the
 changes above.
 
-It now has its own spec: `2026-08-21-export-frontmatter-fix.md`.
+It got its own spec, `2026-08-21-export-frontmatter-fix.md`, and shipped in
+paad 1.30.2 — before this design was implemented. That fix is why the rewrites
+above now live in `neutralize_paths()` rather than `neutralize()`, and why
+`check-export-frontmatter` exists to be amended.
 
 ## Verification
 

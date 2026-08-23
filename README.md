@@ -19,11 +19,17 @@ In Claude Code:
 ```
 
 Pick a scope when the details panel opens, then `/reload-plugins`. Run
-`/paad:help` to see everything.
+`/paad-help` to see everything.
 
-Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
-**Antigravity**, and ships an experimental **Pi** package — see
-[Installation](#installation).
+Not using Claude Code? One command installs PAAD into 70+ other agents —
+Cursor, Codex, GitHub Copilot, Gemini CLI, Cline, Zed, Warp, Amp, OpenCode:
+
+```bash
+npx skills@latest add Ovid/paad
+```
+
+See [Installation](#installation) for the details, including the experimental
+**Pi** package.
 
 ### The skills
 
@@ -37,7 +43,7 @@ Not using Claude Code? PAAD also supports **Cursor**, **Kiro**, and
 | `/agentic-a11y [path]` | Accessibility audit against WCAG 2.2 AA, by disability category |
 | `/vibe [task]` | Small fixes, TDD guardrails still on |
 | `/makefile` | Creates or updates a project `Makefile` |
-| `/paad:help [skill-name]` | Lists the skills, or explains one |
+| `/paad-help [skill-name]` | Lists the skills, or explains one |
 
 ### Experimental skills
 
@@ -98,8 +104,10 @@ It doesn't replace your current AI-assisted development tools; it complements
 them. You like [Superpowers](https://github.com/obra/superpowers/)? Use it
 with PAAD.
 
-PAAD supports **Claude Code** natively and ships as an experimental **Pi**
-package. It also supports **Cursor**, **Kiro**, and **Antigravity**.
+PAAD supports **Claude Code** natively, installs into 70+ other agents with one
+`npx` command, and ships as an experimental **Pi** package. Hand-copying the
+pre-converted **Kiro**/**Antigravity**/**Cursor** tree still works and is now
+deprecated.
 
 ## Who's driving
 
@@ -256,7 +264,7 @@ There's a lot to take in with PAAD, [so I've written an article to explain how
 to write production-quality code with
 it](https://curtispoe.org/articles/watching-claude-sonnet-outperform-opus).
 
-If you are new to PAAD, start with `/paad:help` to see the available skills and when to use them.
+If you are new to PAAD, start with `/paad-help` to see the available skills and when to use them.
 
 A typical workflow looks like this:
 
@@ -322,11 +330,83 @@ That single action already refreshes the marketplace catalog from GitHub before
 it looks for a new version.
 
 To confirm which version you're on, run any skill — every skill announces its
-own name and version on invocation (`Running paad:vibe v<version>`). Compare
-that against the version in
+own name and version on invocation (`Running paad:vibe v<version>`). This works
+because Claude Code resolves the version from `plugin.json` and uses it as the
+update-detection key; on the npx route there is no such key, the install tracks
+`main`, and the announced version only tells you which release the sources were
+last bumped to. Compare that against the version in
 [`plugins/paad/.claude-plugin/plugin.json`](plugins/paad/.claude-plugin/plugin.json).
 If a skill documented here is missing entirely, you're on an older version —
 run through the update steps above.
+
+### Every other agent — `npx skills`
+
+One command, and it covers 70+ agents:
+
+```bash
+npx skills@latest add Ovid/paad
+```
+
+It opens a picker. Everything under **Universal (`.agents/skills`)** — Amp,
+Antigravity, Cline, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Warp,
+Zed and others — is always included. The list below that is opt-in and holds
+another fifty-odd; **Kiro CLI** (`.kiro/skills`) and Claude Code are both in
+there, so search for yours and select it.
+
+```bash
+npx skills@latest add Ovid/paad --list                 # list the skills, install nothing
+npx skills@latest add Ovid/paad --skill pushback       # install one skill
+npx skills@latest add Ovid/paad -a cursor -a codex -y  # skip the pickers
+npx skills@latest add Ovid/paad --copy                 # real copies instead of symlinks
+```
+
+Three things worth knowing before you run it.
+
+**Skills refer to each other by slash command** — `/agentic-architecture`,
+`/pushback`. If your assistant does not take slash commands, ask for the skill
+by name instead: "run the pushback skill". The name is always the same; only
+the way you invoke it differs.
+
+**These skills work by splitting one job across several helper agents.**
+`agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`,
+`agentic-owasp`, `test-roadmap` and `rethink` all work this way. If your
+assistant supports helper agents, each helper gets its own separate conversation
+and examines your code from one angle — security, error handling, and so on —
+and they all work at the same time. If your assistant does not support them, a
+single agent does every one of those passes itself, one after another, in one
+conversation. The work still gets done. It is slower, and one conversation has
+to hold everything it reads. Nothing errors and nothing warns you.
+
+Two consequences are worth stating outright, because nothing surfaces them at
+runtime:
+
+* **Nothing constrains what the helper agents can do to your files.** In Claude
+  Code, PAAD's analysis helpers are dispatched through an agent definition that
+  grants read, grep, find, ls and bash and withholds the editing tools — bash
+  means it is not a read-only sandbox, but the editing tools are genuinely
+  absent. That agent definition lives outside the skills directory, so this
+  install route does not carry it, and neither does Pi's. What is left is the
+  instruction in the prose, and this repository's own steering file records that
+  control failing in practice: subagents have been observed editing source code
+  to test whether a finding was real. Treat an analysis run as capable of
+  writing, and run it on a clean branch you can throw away.
+* **`test-roadmap` loses a real check.** One of its gates works by asking a
+  helper that has not seen the test to try to break it. A single agent holding
+  both cannot be blinded, so that gate reports success while verifying nothing.
+
+**Updates track `main`, and there is no pinned form.** Re-run the same command
+to pull the latest; there is no version argument, so the version a skill
+announces on invocation is *not* a reliable way to tell two npx installs apart.
+Renamed or deleted skills are not pruned. This release renamed `help` to
+`paad-help`, so an install made before it leaves a stale `help` directory
+behind.
+
+**Check what you are deleting before you delete it.** That skills root is
+shared across every assistant the installer supports, `help` is about the most
+collision-prone name a skill can have, and `--copy` mode leaves PAAD's copy
+indistinguishable from one you wrote yourself. Confirm the directory is PAAD's
+— its `SKILL.md` announces `paad:help` — and only then remove it. If it is not
+PAAD's, leave it alone; a stale copy is harmless next to the renamed one.
 
 ### Pi — experimental
 
@@ -352,29 +432,34 @@ Invoke a skill with `/skill:<name>` or by name.
 
 #### The multi-agent skills need two more pieces
 
-`agentic-review`, `agentic-architecture`, `agentic-a11y`, and `agentic-dedup`
-fan out to subagents. Pi has no subagent support of its own, and Pi's package
-manifest has no way to declare agents, so neither piece can ship inside the
-package. Without both of them installed, those four skills still *run* — the
-orchestrator simply does every lens itself, in one context, holding the full
-toolset. You get no parallelism, no context isolation, and **no read-only
-guarantee on code the skill is only supposed to read**. Nothing errors and
-nothing warns you.
+`agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`,
+`agentic-owasp` and `rethink` split their work across helper agents. Pi does not
+support helper agents on its own, and a Pi package cannot declare them, so
+neither piece ships inside the package. Without both pieces installed those
+skills still run — a single agent does every pass itself, one after another, in
+one conversation. You get no parallel work and no separation between passes.
+Nothing errors and nothing warns you.
 
 **1. A subagent extension.** Pi ships one as an
 [example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent),
 not as an installable package — it is a clone-and-symlink into `~/.pi/agent/`,
 not `pi install`. Follow that example's own README.
 
-**2. The read-only analyst.** This repo generates a Pi copy of the analyst
-agent the Claude Code plugin dispatches. Copy it in:
+**2. The analyst agent.** This repo generates a Pi copy of the analyst agent
+the skills ask for. Copy it in:
 
 ```bash
 cp pi/agents/paad-analyst.md ~/.pi/agent/agents/
 ```
 
-It restricts the agent to `read, grep, find, ls, bash`, which is what keeps an
-analysis subagent from editing your code to test whether a finding was real.
+This file is what withholds the editing tools from an analysis helper: it grants
+`read`, `grep`, `find`, `ls` and `bash` and nothing that writes. `bash` means it
+is not a read-only sandbox, but `edit` and `write` are genuinely absent. Skip
+this step and any helper runs with whatever your setup gives it by default,
+with only the prose asking it not to write — and this repository's steering file
+records that asking failing in practice, with subagents editing source code to
+test whether a finding was real. The npx install route has no equivalent step at
+all: it resolves the skills directory and never sees `pi/agents/`.
 
 **`rethink` is degraded on Pi.** The Claude Code analyst also holds `WebSearch`
 and `WebFetch`, and Pi has no web tool to map those onto — its built-ins are
@@ -393,7 +478,24 @@ at 8 tasks, while `agentic-review` asks for 12 dispatches on diffs over 500
 lines; the skill has a documented two-pass fallback for exactly this case, so
 say yes to it rather than accepting a half-coverage review.
 
-### Cursor
+### Copying from `kiro_and_antigravity/` — deprecated
+
+**Prefer `npx skills@latest add Ovid/paad`.** The instructions below still work
+and are not being removed this release, but they are no longer the recommended
+route.
+
+They stay for one reason: this tree has the Claude-Code-only sections stripped
+and the `subagent_type:` fragments removed, which `npx skills` does not do. If
+that matters more to you than a one-line install, keep copying.
+
+**These copies write reports to `.reviews/`, not `paad/`.** That is deliberate
+and unchanged — every other install route uses `paad/`. Your existing reports
+do not follow you across: if you switch, move the contents of each `.reviews/`
+folder into the matching `paad/` one, or `fix-architecture`, `test-roadmap` and
+the `agentic-review` backlog all start over. Switching also means removing the
+copies you made here, so you are not loading two versions of the same skill.
+
+#### Cursor
 
 PAAD skills use the same `SKILL.md` format that [Cursor
 skills](https://cursor.com/docs/skills) expect.
@@ -416,7 +518,7 @@ One skill (for example, `pushback`):
 cp -r kiro_and_antigravity/skills/.kiro/skills/pushback .cursor/skills/
 ```
 
-### Kiro
+#### Kiro
 
 All skills (bash/zsh):
 
@@ -436,7 +538,7 @@ One skill (for example, `pushback`):
 cp -r kiro_and_antigravity/skills/.kiro/skills/pushback .kiro/skills/
 ```
 
-### Antigravity
+#### Antigravity
 
 Antigravity skills function as wrappers that reference Kiro skill files, so
 you need both:
@@ -464,8 +566,8 @@ cp -r kiro_and_antigravity/skills/.agent/skills/pushback .agent/skills/
 
 ### Using skills outside Claude Code
 
-As with Claude Code, with Pi, Cursor, Kiro, and Antigravity, skills are
-automatically recognized by your assistant. You can simply ask the assistant to
+However you installed them, skills are recognized automatically by your
+assistant. You can simply ask the assistant to
 perform the task, such as:
 
 * “Run a pushback review on this spec”
@@ -694,11 +796,11 @@ while keeping TDD guardrails in place.
   for security-sensitive changes, `agentic-a11y` for UI changes, or
   architecture review if the fix was harder than expected
 
-#### `/paad:help [skill-name]`
+#### `/paad-help [skill-name]`
 
 Shows help for all PAAD skills or detailed help for one skill.
 
-* **Arguments:** `/paad:help` (overview of all skills) or `/paad:help vibe`
+* **Arguments:** `/paad-help` (overview of all skills) or `/paad-help vibe`
   (detailed help for one skill)
 
 ---
@@ -709,7 +811,8 @@ These skills are shipped so they get real use, but they are **not settled**.
 Their arguments, output paths, and behavior may change — or the skill may be
 withdrawn — in **any** release, including a patch release. The semver promise
 the other skills carry does not apply to them. If you build a workflow on one,
-pin your plugin version, and please [file what
+pin your plugin version — on Claude Code and Pi you can; the npx route tracks
+`main` and has no pinned form, so budget for the churn instead. Please [file what
 breaks](https://github.com/Ovid/paad/issues).
 
 #### `/agentic-dedup [scope]` — experimental
@@ -752,7 +855,8 @@ It never refactors anything. The report is the deliverable.
 #### `/agentic-owasp [scope]` — experimental
 
 > **Note**: this skill is experimental and may change in any release, including
-> a patch release. If you build a workflow on it, pin your plugin version.
+> a patch release. If you build a workflow on it, pin your plugin version (not
+> available on the npx route, which tracks `main`).
 > Further, **it is not a replacement for static security tools or human review.** It
 > is a deeper automated backstop that can catch issues those tools miss, but it
 > is not a guarantee of security. 
@@ -1034,20 +1138,28 @@ right one. When you'd rather be explicit, the bare slash command does it:
 
 The fully-qualified `/paad:pushback` form exists for one job — disambiguation.
 When a name is already taken, the `paad:` prefix says which one you mean.
-`/paad:help` is the live example: bare `/help` is Claude Code's own built-in, so
-that one always needs the prefix. Nothing else in PAAD currently collides, so
-until you install a plugin that shares a name, you can ignore it.
+Nothing in PAAD currently collides, so until you install a plugin that shares a
+name, you can ignore it. The help skill is called `paad-help` rather than `help`
+for exactly this reason: `/help` is Claude Code's own built-in.
 
 ## Local Development
 
-Test the plugin locally without installing it:
+The repository carries two copies of the plugin. **`preview/paad/` is where all
+new work goes.** `plugins/paad/` is the last released tree — it is what everyone
+installs, and it is written only by `make promote`, never by hand. An edit made
+there reaches `main` unpromoted and unbumped, ships immediately to anyone
+installing fresh, and is then erased without warning by the next release, whose
+first step copies preview straight over it.
+
+Drive your changes against preview:
 
 ```bash
-claude --plugin-dir ./plugins/paad
+claude --plugin-dir ./preview/paad
 ```
 
-Then invoke skills with `/paad:help` to see available commands, or try
-`/vibe`, `/pushback`, and the rest directly.
+Then invoke skills with `/paad-help` to see available commands, or try
+`/vibe`, `/pushback`, and the rest directly. Preview announces itself as
+`v<version>-preview`, so a transcript always says which tree ran.
 
 After making changes, run `/reload-plugins` inside Claude Code to pick up
 updates without restarting.
@@ -1069,10 +1181,11 @@ Individual checks can also be run separately:
 
 ```bash
 make check-versions     # package.json ↔ marketplace.json ↔ plugin.json version sync
-make check-digraphs     # every skill (except help) has a digraph
-make check-help         # every skill is documented in paad:help
+make check-digraphs     # every skill (except paad-help) has a digraph
+make check-help         # every skill is documented in paad-help
 make check-readme       # every skill is documented in README.md
-make check-frontmatter  # SKILL.md frontmatter is valid, folder name matches
+make check-skill-names  # skill folder names follow the Agent Skills naming rules
+make check-frontmatter  # SKILL.md frontmatter, plus the internal flag across all three skill trees
 make check-references   # references/ dispatches resolve; no orphaned reference files
 make validate           # claude plugin validate on marketplace + plugins
 ```
@@ -1086,12 +1199,15 @@ make validate           # claude plugin validate on marketplace + plugins
 
 Key rules from `CLAUDE.md`:
 
-* Every skill except `help` must include a Graphviz digraph covering its
+* Every skill except `paad-help` must include a Graphviz digraph covering its
   decision points
 * Skill folder names must match the `name` field in `SKILL.md` frontmatter
 * Use `make bump-version VERSION=X.Y.Z` to keep all versioned files in sync
-* Update `README.md`, `paad:help`, and `CLAUDE.md` when adding or changing
-  skills
+* Put new and changed skills in `preview/paad/skills/`, never in
+  `plugins/paad/skills/`
+* Update `paad-help` and `CLAUDE.md` when adding or changing skills. The
+  `README.md` entry lands on the release branch instead — README describes what
+  can actually be installed, and a preview-only skill cannot be yet
 
 ## Star History
 

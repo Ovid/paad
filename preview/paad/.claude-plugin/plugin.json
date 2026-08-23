@@ -1,0 +1,11 @@
+{
+  "name": "paad",
+  "description": "Architecture analysis, code quality, and development workflow skills by Ovid",
+  "version": "1.31.0-preview",
+  "author": {
+    "name": "Curtis \"Ovid\" Poe"
+  },
+  "homepage": "https://github.com/Ovid/paad",
+  "repository": "https://github.com/Ovid/paad",
+  "license": "MIT"
+}

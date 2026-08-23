@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lint the graphviz digraphs embedded in plugins/paad/skills/*/SKILL.md.
+"""Lint the graphviz digraphs embedded in a skills tree's */SKILL.md.
 
 check-digraphs only proves a ```dot fence exists. These rules catch the
 defects that fence check cannot see:
@@ -27,7 +27,7 @@ import subprocess
 import sys
 import tempfile
 
-SKILLS = pathlib.Path(__file__).resolve().parent.parent / "plugins/paad/skills"
+DEFAULT_SKILLS = pathlib.Path(__file__).resolve().parent.parent / "plugins/paad/skills"
 BLOCK = re.compile(r"```dot\n(.*?)```", re.S)
 DECL = re.compile(r'^\s*"([^"]+)"\s*\[', re.M)
 # Matched as two halves so chained edges ("a" -> "b" -> "c") count b as both.
@@ -130,11 +130,17 @@ def main():
     if "--self-test" in sys.argv:
         return self_test()
 
+    paths = [a for a in sys.argv[1:] if not a.startswith("-")]
+    skills = pathlib.Path(paths[0]) if paths else DEFAULT_SKILLS
+    if not skills.is_dir():
+        print(f"FAIL: no skills directory at {skills} — this check cannot run.")
+        return 1
+
     have_dot = shutil.which("dot") is not None
     failures = 0
     blocks = 0
 
-    for skill in sorted(SKILLS.glob("*/SKILL.md")):
+    for skill in sorted(skills.glob("*/SKILL.md")):
         text = skill.read_text()
 
         late = misplaced(text)
@@ -161,11 +167,11 @@ def main():
         return 1
 
     if not blocks:
-        print(f"FAIL: no digraphs found under {SKILLS} — the check is a no-op.")
+        print(f"FAIL: no digraphs found under {skills} — the check is a no-op.")
         return 1
 
     skipped = "" if have_dot else " (graphviz not installed — parse check skipped)"
-    print(f"{blocks} digraphs lint clean{skipped}.")
+    print(f"{blocks} digraphs lint clean in {skills}{skipped}.")
     return 0
 
 

@@ -3,7 +3,7 @@ name: handoff
 description: EXPERIMENTAL. Use when a session is running out of context and the work needs to continue in a fresh one, or when starting a session meant to pick up where an earlier one stopped. Not for compacting in place — that is /compact — and not for specifying work that has not started, which is a plan.
 ---
 
-**On invocation:** announce "Running paad:handoff v1.30.2" before anything else.
+**On invocation:** announce "Running paad:handoff v1.31.0" before anything else.
 
 # Handoff
 
@@ -89,9 +89,9 @@ digraph handoff_resume {
 
 ## Arguments
 
-- `/paad:handoff` — infer the mode. Conversation above this invocation means you are saving; an empty session means you are resuming. Say which way it went, in one line, before acting.
-- `/paad:handoff save` — write a handoff regardless
-- `/paad:handoff resume` — read the existing handoff regardless
+- `/handoff` — infer the mode. Conversation above this invocation means you are saving; an empty session means you are resuming. Say which way it went, in one line, before acting.
+- `/handoff save` — write a handoff regardless
+- `/handoff resume` — read the existing handoff regardless
 
 The inference is a convenience, not a guess worth defending. If it picks wrong, the user says `save` or `resume` and you obey without arguing.
 

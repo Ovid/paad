@@ -19,7 +19,7 @@ import pathlib
 import re
 import sys
 
-SKILLS = pathlib.Path(__file__).resolve().parent.parent / "plugins/paad/skills"
+DEFAULT_SKILLS = pathlib.Path(__file__).resolve().parent.parent / "plugins/paad/skills"
 MENTION = re.compile(r"references/([A-Za-z0-9._-]+\.md)")
 
 
@@ -43,9 +43,13 @@ def check(skill_dir):
 
 
 def main():
+    skills = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_SKILLS
+    if not skills.is_dir():
+        print(f"FAIL: no skills directory at {skills} — this check cannot run.")
+        return 1
     failed = False
     counted = 0
-    for skill_dir in sorted(SKILLS.iterdir()):
+    for skill_dir in sorted(skills.iterdir()):
         if not skill_dir.is_dir():
             continue
         problems = check(skill_dir)
@@ -55,7 +59,7 @@ def main():
             failed = True
     if failed:
         return 1
-    print(f"{counted} skill reference file(s) resolve cleanly.")
+    print(f"{counted} skill reference file(s) resolve cleanly in {skills}.")
     return 0
 
 

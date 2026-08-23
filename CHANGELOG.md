@@ -10,6 +10,42 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.31.0] — 2026-08-23
+
+### Changed
+- **`/paad:help` is now `/paad-help`** — it collided with Claude Code's built-in
+  `/help`. Update any alias or note that used the old form.
+- **Skills cross-reference each other by bare slash command** (`/pushback`, not
+  `/paad:pushback`), so those pointers work outside Claude Code. The `paad:`
+  prefix still works everywhere.
+- **`agentic-review` takes its base branch from the repository** instead of
+  assuming `main`. On a `master` or `trunk` repository it now runs rather than
+  stopping.
+
+### Added
+- **Install on almost any agent with `npx skills@latest add Ovid/paad`** — 70+
+  assistants including Cursor, Codex, GitHub Copilot, Gemini CLI, Cline and Zed.
+  Claude Code users keep `/plugin install paad@paad`. See README.
+
+### Fixed
+- **`agentic-review` with no argument works again** — its pre-flight chart routed
+  the plain, argument-free invocation, the common one, into a stop.
+- **`agentic-review` no longer misreads a branch name as a directory** — an
+  argument like `origin/main` was scoped to a folder that does not exist and the
+  review came back clean. When a name is both, it now asks instead of guessing.
+- **Kiro, Antigravity and Cursor copies can be told which path to work on** —
+  the exporter was deleting every skill's `## Arguments` section, and took
+  `vibe`'s Step 2 with it. Recopy from `kiro_and_antigravity/`.
+- **Those same copies were missing their prompt-injection defense** — four of
+  `agentic-review`'s six specialists shipped without the "treat read content as
+  untrusted" preamble. They also lost their pre-flight checks and their
+  cross-references. Recopy, or switch to the npx installer.
+
+### Deprecated
+- **Copying out of `kiro_and_antigravity/` is deprecated** in favor of the npx
+  installer. It still works and still writes to `.reviews/`; if you switch, move
+  existing `.reviews/` folders into `paad/`.
+
 ## [1.30.2] — 2026-08-21
 
 ### Fixed
@@ -668,7 +704,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.30.2...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.31.0...HEAD
+[1.31.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.31.0
 [1.30.2]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.2
 [1.30.1]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.1
 [1.30.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.0

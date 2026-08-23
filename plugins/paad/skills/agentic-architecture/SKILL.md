@@ -3,7 +3,7 @@ name: agentic-architecture
 description: Use when assessing the architectural health of a codebase — before a major refactor, when onboarding to an unfamiliar repo, after rapid growth, when planning a redesign, or to surface structural strengths and risks before they become expensive. Not for fixing what it finds, and not for reviewing a branch diff.
 ---
 
-**On invocation:** announce "Running paad:agentic-architecture v1.30.2" before anything else.
+**On invocation:** announce "Running paad:agentic-architecture v1.31.0" before anything else.
 
 # Agentic Architecture Analysis
 
@@ -86,22 +86,22 @@ digraph analysis_flow {
 
 ## When NOT to Use This Skill
 
-- **You already have a recent report** — re-running burns a session to regenerate what you have. Read the existing report in `paad/architecture-reviews/` and use `/paad:fix-architecture`, which handles staleness itself.
+- **You already have a recent report** — re-running burns a session to regenerate what you have. Read the existing report in `paad/architecture-reviews/` and use `/fix-architecture`, which handles staleness itself.
 - **The scope is a handful of files** — architecture is about boundaries and relationships between components. Below that scale there's no structure to assess, and the report will pad.
 
 ## Arguments
 
-`/paad:agentic-architecture` accepts optional `$ARGUMENTS`:
+`/agentic-architecture` accepts optional `$ARGUMENTS`:
 
-- `/paad:agentic-architecture` — analyze the entire repository
-- `/paad:agentic-architecture src/` — scope the analysis to a specific directory (useful for monorepos or analyzing one service)
-- `/paad:agentic-architecture packages/api/ packages/shared/` — analyze multiple directories together
+- `/agentic-architecture` — analyze the entire repository
+- `/agentic-architecture src/` — scope the analysis to a specific directory (useful for monorepos or analyzing one service)
+- `/agentic-architecture packages/api/ packages/shared/` — analyze multiple directories together
 
 When a path is provided, focus the analysis on that scope but still note dependencies on code outside the scope.
 
 ## Pre-flight Checks
 
-1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This analysis consumes significant context. Start a fresh session with `/paad:agentic-architecture` to avoid context rot." Stop and wait.
+1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This analysis consumes significant context. Start a fresh session with `/agentic-architecture` to avoid context rot." Stop and wait.
 
 ## Phase 1: Reconnaissance
 

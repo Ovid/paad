@@ -3,7 +3,7 @@ name: agentic-a11y
 description: Use when auditing a user-facing app — web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, or games — for accessibility barriers or WCAG 2.2 conformance, before shipping UI changes, or in response to concerns about screen-reader, keyboard, low-vision, motor, cognitive, or photosensitive users. Not for general bug hunting or code correctness.
 ---
 
-**On invocation:** announce "Running paad:agentic-a11y v1.30.2" before anything else.
+**On invocation:** announce "Running paad:agentic-a11y v1.31.0" before anything else.
 
 # Accessibility Audit
 
@@ -99,17 +99,17 @@ digraph audit_flow {
 
 ## Arguments
 
-`/paad:agentic-a11y` accepts optional `$ARGUMENTS`:
+`/agentic-a11y` accepts optional `$ARGUMENTS`:
 
-- `/paad:agentic-a11y` — audit all user-facing code in the repository
-- `/paad:agentic-a11y src/components/` — scope the audit to a specific directory
-- `/paad:agentic-a11y src/components/Modal.tsx` — audit a specific file
+- `/agentic-a11y` — audit all user-facing code in the repository
+- `/agentic-a11y src/components/` — scope the audit to a specific directory
+- `/agentic-a11y src/components/Modal.tsx` — audit a specific file
 
 When a path is provided, only audit files within that scope. Still detect platform and run all specialists, but limit the file manifest accordingly.
 
 ## Pre-flight Checks
 
-1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This audit consumes significant context. Start a fresh session with `/paad:agentic-a11y` to avoid context rot." Stop and wait.
+1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This audit consumes significant context. Start a fresh session with `/agentic-a11y` to avoid context rot." Stop and wait.
 2. **User-facing code:** Scan for any of the following. If none found, tell the user: "No user-facing code detected in this repository." Stop.
 
 | Platform | File indicators |

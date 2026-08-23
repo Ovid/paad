@@ -3,7 +3,7 @@ name: rethink
 description: EXPERIMENTAL. Use when options, a recommendation, or an already-chosen approach are on the table and the reasoning under them has not been independently checked — especially when the case rests on cited documentation, remembered behavior, or premises nobody verified. Not for generating alternatives, and not for critiquing a spec, which is the pushback skill.
 ---
 
-**On invocation:** announce "Running paad:rethink v1.30.2" before anything else.
+**On invocation:** announce "Running paad:rethink v1.31.0" before anything else.
 
 # Rethink
 
@@ -89,8 +89,16 @@ digraph rethink {
 
 ## When NOT to Use This Skill
 
+- **No options are in play.** If nobody has proposed anything, there is no reasoning to check. Use `pushback` on the spec instead.
 - **The user wants alternatives generated.** That is a design conversation, not a verification pass. Say so and have it.
 - **The premises are matters of taste.** "Should this be called `fetch` or `load`" has no primary source. Say the question is not verifiable and stop.
+
+## Arguments
+
+- `rethink` — re-examine the most recent set of options in the conversation
+- `rethink the caching approach` — name which decision, when several are live
+
+If `$ARGUMENTS` is empty and more than one option set is in play, ask which. If none is in play, ask what to re-examine.
 
 ## Phase 1: Extract the Premises
 
