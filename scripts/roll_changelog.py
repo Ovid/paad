@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Roll CHANGELOG.md's [Unreleased] section into a dated release section.
 
-Usage: python3 scripts/roll_changelog.py X.Y.Z
+Usage: python3 scripts/roll_changelog.py [--check] X.Y.Z
 
 Renames `## [Unreleased]` to `## [X.Y.Z] — <today>`, opens a fresh empty
 `## [Unreleased]` above it, and updates the link refs at the bottom. Refuses
 to run when there is nothing to release or when the version already has a
-section, so `make release` fails before it rewrites any manifest.
+section. `--check` runs those refusals and writes nothing, so `make release`
+can put them ahead of the promotion rsync — the largest destructive step in the
+build, and the one that used to run first.
 
 The date comes from the system clock rather than an argument on purpose: the
 release checklist used to say "use today's real date (check it; don't guess)",
@@ -31,9 +33,11 @@ def fail(message):
 
 
 def main():
-    if len(sys.argv) != 2:
-        sys.exit(f"Usage: {sys.argv[0]} X.Y.Z")
-    version = sys.argv[1]
+    args = [a for a in sys.argv[1:] if a != "--check"]
+    check_only = "--check" in sys.argv
+    if len(args) != 1:
+        sys.exit(f"Usage: {sys.argv[0]} [--check] X.Y.Z")
+    version = args[0]
     if not re.fullmatch(r"\d+\.\d+\.\d+", version):
         fail(f"VERSION must be in X.Y.Z form (got {version})")
 
@@ -55,6 +59,10 @@ def main():
             "[Unreleased] is empty — there is nothing to release. Land the change "
             "under [Unreleased] first, or stop and ask whether a release is wanted."
         )
+
+    if check_only:
+        print(f"Changelog is ready to roll into {version}.")
+        return
 
     today = date.today().isoformat()
     text = (

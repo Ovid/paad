@@ -2,13 +2,20 @@
 """Strip the preview markers from the shipped tree after `make promote` rsyncs it.
 
 `make promote` copies `preview/paad/` wholesale over `plugins/paad/`, so the
-shipped tree arrives wearing all three preview markers. Two of them are versions
-and `make bump-version` rewrites those on its own — it reads each tree's current
-version out of its own `plugin.json`, so `1.30.2-preview` is just the string it
-substitutes from. The third is `metadata: internal: true`, which no version pass
-would ever touch, and which must not survive: the installer tests
-`metadata?.internal === true` and silently skips a flagged skill, so a shipped
-skill still carrying it is invisible to every install.
+shipped tree arrives wearing all three preview markers, and this strips all
+three — the model CLAUDE.md documents.
+
+Two are the `-preview` version suffix, in `plugin.json` and in every announce
+line. `make bump-version` would rewrite them later in a release, but leaving
+them to it made `make promote` a documented public target that hands back a repo
+failing its own `check-versions`, with its dirty guard blocking the obvious
+recovery. Promotion now leaves a consistent tree whether or not a release
+follows.
+
+The third is `metadata: internal: true`, which no version pass would ever touch,
+and which must not survive: the installer tests `metadata?.internal === true`
+and silently skips a flagged skill, so a shipped skill still carrying it is
+invisible to every install.
 
 Removing the key can empty the `metadata:` mapping it sat under. A bare
 `metadata:` with nothing nested is a null value, not an empty map, so the whole
@@ -21,6 +28,7 @@ release, where `check_internal_flag.py` would catch it — but not until the rsy
 the changelog roll and both trees' version strings were already written.
 """
 
+import json
 import pathlib
 import re
 import sys
@@ -32,6 +40,8 @@ from check_internal_flag import internal_value, metadata_block
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SHIPPED = ROOT / "plugins/paad/skills"
+MANIFEST = ROOT / "plugins/paad/.claude-plugin/plugin.json"
+SUFFIX = "-preview"
 FRONTMATTER = re.compile(r"\A---\n(.*?)\n---", re.S)
 
 
@@ -152,15 +162,28 @@ def main():
         print(f"FAIL: no SKILL.md found under {SHIPPED} — the rsync did not land.")
         return 1
 
+    manifest = MANIFEST.read_text(encoding="utf-8")
+    version = json.loads(manifest)["version"]
+    shipped_version = version[: -len(SUFFIX)] if version.endswith(SUFFIX) else version
+    if shipped_version != version:
+        MANIFEST.write_text(
+            manifest.replace(f'"{version}"', f'"{shipped_version}"', 1), encoding="utf-8"
+        )
+
     stripped = 0
     for path in files:
         text = path.read_text(encoding="utf-8")
-        promoted = strip_internal(text)
+        promoted = strip_internal(text).replace(
+            f'v{version}"', f'v{shipped_version}"'
+        )
         if promoted != text:
             path.write_text(promoted, encoding="utf-8")
             stripped += 1
 
-    print(f"Promoted {len(files)} skill(s); stripped the internal flag from {stripped}.")
+    print(
+        f"Promoted {len(files)} skill(s) at v{shipped_version}; "
+        f"rewrote {stripped} to drop the preview markers."
+    )
     return 0
 
 

@@ -74,10 +74,10 @@ bump-version: ## Bump version across package and plugin manifests and all SKILL.
 		echo "Usage: make bump-version VERSION=X.Y.Z"; \
 		exit 1; \
 	fi
-	@case "$(VERSION)" in \
-		[0-9]*.[0-9]*.[0-9]*) ;; \
-		*) echo "FAIL: VERSION must be in X.Y.Z form (got $(VERSION))"; exit 1 ;; \
-	esac
+# A shell glob is not a version test: [0-9]*.[0-9]*.[0-9]* also admits 1.2.3.4,
+# 1.31.0-rc1 and 1x.2y.3z, and this target rewrites every manifest in the repo.
+	@echo "$(VERSION)" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { \
+		echo "FAIL: VERSION must be in X.Y.Z form (got $(VERSION))"; exit 1; }
 	@sed -i.bak 's|^  "version": "[^"]*"|  "version": "$(VERSION)"|' package.json && rm -f package.json.bak
 	@sed -i.bak 's|^      "version": "[^"]*"|      "version": "$(VERSION)"|' .claude-plugin/marketplace.json && rm -f .claude-plugin/marketplace.json.bak
 	@$(MAKE) --no-print-directory bump-tree TREE=plugins/paad
@@ -85,8 +85,8 @@ bump-version: ## Bump version across package and plugin manifests and all SKILL.
 	@echo "Bumped to $(VERSION)."
 
 # Reads the old version out of the tree's own plugin.json rather than being told it,
-# which is what lets one recipe serve both trees: after promotion plugins/ transiently
-# announces v1.30.2-preview, and that string is simply what gets substituted from.
+# which is what lets one recipe serve both trees: each carries its own current string
+# and that is simply what gets substituted from.
 bump-tree: ## Rewrite one tree's plugin.json and announce lines (usage: make bump-tree TREE=... SUFFIX=... VERSION=X.Y.Z)
 	@old_ver=$$(python3 -c "import json; print(json.load(open('$(TREE)/.claude-plugin/plugin.json'))['version'])"); \
 	new_ver="$(VERSION)$(SUFFIX)"; \
@@ -108,6 +108,28 @@ promote: ## Copy preview/paad over plugins/paad and strip the preview markers
 # preview straight over it, the tree is committed so the dirty guard passes, and the
 # result is self-consistent so every check passes. The changelog announces a fix the
 # release does not contain.
+#
+# Everything that can refuse runs BEFORE the rsync. That ordering is the whole
+# safety property: the rsync is the largest destructive act in the build, and it
+# is not undoable from git alone — a preview-only skill arrives untracked, which
+# `git checkout -- .` does not touch.
+	@$(MAKE) --no-print-directory tree-checks TREE=preview/paad
+	@$(MAKE) --no-print-directory check-readme TREE=preview/paad
+	@count=$$(ls -1 preview/paad/skills/*/SKILL.md 2>/dev/null | wc -l | tr -d ' '); \
+	shipped=$$(ls -1 plugins/paad/skills/*/SKILL.md 2>/dev/null | wc -l | tr -d ' '); \
+	if [ "$$count" -eq 0 ]; then \
+		echo "FAIL: preview/paad/skills holds no SKILL.md. 'rsync --delete' from an empty"; \
+		echo "      source empties the shipped tree and exits 0 — nothing downstream notices."; \
+		exit 1; \
+	fi; \
+	if [ "$$count" -lt "$$shipped" ] && [ -z "$(SHRINK)" ]; then \
+		echo "FAIL: preview/paad has $$count skill(s), plugins/paad has $$shipped."; \
+		echo "      Promotion would delete $$((shipped - count)). No check catches a missing"; \
+		echo "      skill: check-readme and check-help walk skills -> docs, and validate,"; \
+		echo "      check-versions and check-export-current all pass on a smaller tree that"; \
+		echo "      is merely self-consistent. Re-run with SHRINK=1 if the removal is meant."; \
+		exit 1; \
+	fi
 	@if [ -n "$$(git status --porcelain)" ]; then \
 		echo "FAIL: working tree is dirty — promotion overwrites plugins/ wholesale, and"; \
 		echo "      'git diff plugins/' is the only review of what is about to ship."; \
@@ -134,6 +156,25 @@ release: ## Roll the changelog, bump, regenerate exports, test (usage: make rele
 	@if [ -n "$$(git status --porcelain)" ]; then \
 		echo "FAIL: working tree is dirty — commit or stash before cutting a release."; \
 		git status --short | sed 's/^/  /'; \
+		exit 1; \
+	fi
+# Both refusals below used to sit downstream of `promote`, so a typo'd VERSION or an
+# empty [Unreleased] aborted with plugins/ already overwritten, both dirty guards
+# blocking the retry, and check-versions failing. --check writes nothing.
+	@python3 scripts/roll_changelog.py --check $(VERSION)
+# `promote` rsyncs THIS working tree's preview/, so a release cut from a branch that
+# is behind main silently omits everything merged since — and every check passes,
+# because the omitted work simply is not there to fail on.
+	@if git rev-parse --verify -q origin/main >/dev/null; then \
+		if ! git merge-base --is-ancestor origin/main HEAD; then \
+			echo "FAIL: origin/main is not an ancestor of HEAD — this branch is behind main."; \
+			echo "      Promotion ships this tree's preview/, so anything merged to main since"; \
+			echo "      you branched would be dropped from the release without a single check"; \
+			echo "      failing. Merge or rebase main into this branch, then re-run."; \
+			exit 1; \
+		fi; \
+	else \
+		echo "FAIL: no origin/main to compare against — run 'git fetch origin' first."; \
 		exit 1; \
 	fi
 	@$(MAKE) --no-print-directory promote
