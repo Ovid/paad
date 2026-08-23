@@ -7,7 +7,7 @@ SKILLS_DIR := $(TREE)/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test tree-checks validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current bump-version bump-tree promote export release tag
+.PHONY: help test tree-checks validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current check-export-dryrun bump-version bump-tree promote export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -28,7 +28,7 @@ test: self-tests check-versions validate check-readme check-export-frontmatter c
 
 # The per-skill checks, run once per tree. README documents the shipped set only,
 # so check-readme stays out: a preview-only skill is tolerated there, not required.
-tree-checks: check-skill-names check-skill-versions check-digraphs check-help check-frontmatter check-references check-dispatch-sites check-announce ## Run the per-tree checks (usage: make tree-checks TREE=preview/paad)
+tree-checks: check-skill-names check-skill-versions check-digraphs check-help check-frontmatter check-references check-dispatch-sites check-announce check-export-dryrun ## Run the per-tree checks (usage: make tree-checks TREE=preview/paad)
 	@echo "$(TREE): tree checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -454,6 +454,29 @@ check-export-commands: check-skill-names require-export ## Check no Claude Code 
 		exit 1; \
 	fi; \
 	echo "No Claude Code slash commands survived into the export."
+
+check-export-dryrun: check-skill-names ## Run the exporter against one tree, keeping only its verdict (usage: make check-export-dryrun TREE=preview/paad)
+# The exporter reads plugins/paad/skills and nothing else, so preview content
+# never reached it until promotion — and the three check-export-* targets read
+# the committed export, so they sit outside tree-checks by necessity. A
+# preview-only edit the exporter rejects therefore passed `make test` on main and
+# failed inside `make release`, after promote, roll_changelog and bump-version had
+# all written. The cheapest such edit is a /paad-help pointer, which the changelog
+# convention encourages and SKIPPED_COMMAND turns into a hard exit.
+#
+# Same machinery as check-export-current, pointed at $(TREE) and throwing the
+# output away: only the exit status matters here.
+	@tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT INT TERM; \
+	mkdir -p "$$tmp/plugins" "$$tmp/scripts"; \
+	cp -R $(TREE) "$$tmp/plugins/paad"; \
+	cp scripts/convert_skills.py "$$tmp/scripts/"; \
+	if ! (cd "$$tmp" && python3 scripts/convert_skills.py) >/dev/null 2>"$$tmp/err"; then \
+		echo "FAIL: the exporter rejects $(TREE) —"; \
+		sed 's|plugins/paad|$(TREE)|g; s/^/  /' "$$tmp/err"; \
+		exit 1; \
+	fi; \
+	echo "$(TREE): the exporter accepts this tree."
 
 check-export-current: check-skill-names require-export ## Check kiro_and_antigravity/ and pi/ match a fresh export
 	@tmp=$$(mktemp -d); \
