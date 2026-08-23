@@ -95,6 +95,7 @@ def _skill_command_re():
 
 
 SKILL_COMMAND = _skill_command_re()
+SOURCE_SKILL_NAMES = frozenset(p.name for p in Path(SOURCE_DIR).iterdir() if p.is_dir())
 
 
 SKIP_NAMES = ["makefile", "paad-help"]
@@ -121,13 +122,107 @@ def _skipped_command_re():
 SKIPPED_COMMAND = _skipped_command_re()
 
 
-def stranded_refs(path, text):
-    """Report every reference in `text` to a skill that will not be exported."""
+UNKNOWN_COMMAND = re.compile(
+    r"(?<![A-Za-z0-9._-])/paad:([A-Za-z0-9-]+)(?![A-Za-z0-9/-])"
+)
+
+
+def stranded_refs(path, text, base_line=0):
+    """Report references in `text` that must not reach the export.
+
+    Two classes, and nothing downstream can see either one:
+
+    - A skill this exporter withholds (SKIP_NAMES). neutralize() drops the
+      leading slash from every paad command, so `/paad-help` exports as a bare
+      `paad-help` naming a skill that is not in that install, and
+      check-export-commands cannot catch it because the slash it keys on is
+      what the rewrite removed.
+    - A `/paad:` command naming no skill under SOURCE_DIR at all. Nothing
+      rewrites it, so it ships verbatim as a live Claude Code command. Both the
+      rewriter's alternation and check-export-commands' are built from that
+      same directory listing, so a name the listing lacks is invisible to both
+      — and promotion produces exactly that, when a skill leaves preview/ and
+      `rsync --delete` takes it out of plugins/ while a sibling still names it.
+
+    `base_line` is the line the fragment starts on, so a hit inside a section
+    is reported at its real position in the file rather than within the piece.
+    """
     hits = []
     for match in SKIPPED_COMMAND.finditer(text):
-        line = text.count("\n", 0, match.start()) + 1
-        hits.append(f"{path}:{line}: {match.group(0)}")
+        line = base_line + text.count("\n", 0, match.start()) + 1
+        hits.append(f"{path}:{line}: {match.group(0)} — withheld from this export")
+    for match in UNKNOWN_COMMAND.finditer(text):
+        if match.group(1) in SOURCE_SKILL_NAMES:
+            continue
+        line = base_line + text.count("\n", 0, match.start()) + 1
+        hits.append(f"{path}:{line}: {match.group(0)} — names no skill in {SOURCE_DIR}")
     return hits
+
+
+# Matched exactly against the heading text, never as a substring: vibe's
+# "## Step 2: Pre-flight Checks" is a workflow step, not the section of the
+# same name, and a substring test deleted it — leaving the export to jump
+# from Step 1 to Step 3. "Arguments" is deliberately absent: those sections
+# are portable prose once neutralize() rewrites the example invocations, and
+# deleting them stranded cross-references that tell the reader to pass a path.
+UNWANTED_HEADERS = ["Input Resolution", "Pre-flight Checks", "Document classification"]
+
+
+def sections(body_text):
+    """Split a SKILL.md body into (header line or None, section body, offset).
+
+    `offset` is the character position of the piece inside `body_text`, which
+    is what lets a reference be reported at its true line after the section
+    filter has removed everything around it.
+    """
+    parts = re.split(r"\n(##+ .*)", body_text)
+    pieces = [(None, parts[0], 0)]
+    pos = len(parts[0])
+    for i in range(1, len(parts), 2):
+        header_line, section_body = parts[i], parts[i + 1]
+        pos += 1  # the newline the split consumed
+        pieces.append((header_line, section_body, pos))
+        pos += len(header_line) + len(section_body)
+    return pieces
+
+
+def scan_sources():
+    """Collect stranded references from every fragment that survives the export.
+
+    Runs before anything is written or deleted. Scanning the raw file instead
+    aborted `make export` over text it was about to discard — unfixable without
+    editing source that has no effect on the output.
+    """
+    stranded = []
+    for skill_path in sorted(Path(SOURCE_DIR).iterdir()):
+        if not skill_path.is_dir() or skill_path.name in SKIP_NAMES:
+            continue
+        skill_file = skill_path / "SKILL.md"
+        if not skill_file.exists():
+            continue
+        content = skill_file.read_text(encoding="utf-8")
+        fm_match = FRONTMATTER.match(content)
+        body_start = fm_match.end() if fm_match else 0
+        body = content[body_start:]
+        base = content.count("\n", 0, body_start)
+        for header_line, section_body, offset in sections(body):
+            if header_line is None:
+                fragment = section_body
+            else:
+                header_text = re.sub(r"^##+\s*", "", header_line).strip()
+                if header_text in UNWANTED_HEADERS:
+                    continue
+                fragment = header_line + section_body
+            stranded += stranded_refs(
+                skill_file, fragment, base + body.count("\n", 0, offset)
+            )
+        src_refs = skill_path / "references"
+        if src_refs.is_dir():
+            for ref_file in sorted(src_refs.rglob("*.md")):
+                stranded += stranded_refs(
+                    ref_file, ref_file.read_text(encoding="utf-8")
+                )
+    return stranded
 
 
 def neutralize_paths(text):
@@ -240,12 +335,12 @@ def convert_skills():
     kiro_skills_root = Path(TARGET_DIR) / ".kiro" / "skills"
     agent_skills_root = Path(TARGET_DIR) / ".agent" / "skills"
 
-    # Wipe first: a renamed, deleted, or newly skipped skill would otherwise
-    # leave its old copy behind forever, since nothing else prunes the export.
-    for root in (kiro_skills_root, agent_skills_root):
-        shutil.rmtree(root, ignore_errors=True)
-        root.mkdir(parents=True, exist_ok=True)
-    
+    # Everything that can refuse runs before the first destructive act. Both of
+    # these used to sit after it: `make export` would empty both export roots and
+    # only then abort, and the downstream message is "run 'make export' first" —
+    # when `make export` is what emptied it. A failed run also left
+    # kiro_and_antigravity/ fully regenerated and pi/ untouched: two trees built
+    # from different source states.
     skip_names = SKIP_NAMES
     missing = [n for n in skip_names if not (Path(SOURCE_DIR) / n).is_dir()]
     if missing:
@@ -255,14 +350,26 @@ def convert_skills():
             file=sys.stderr,
         )
         sys.exit(1)
-    stranded = []
-    # Matched exactly against the heading text, never as a substring: vibe's
-    # "## Step 2: Pre-flight Checks" is a workflow step, not the section of the
-    # same name, and a substring test deleted it — leaving the export to jump
-    # from Step 1 to Step 3. "Arguments" is deliberately absent: those sections
-    # are portable prose once neutralize() rewrites the example invocations, and
-    # deleting them stranded cross-references that tell the reader to pass a path.
-    unwanted_headers = ["Input Resolution", "Pre-flight Checks", "Document classification"]
+
+    stranded = scan_sources()
+    if stranded:
+        print(
+            "FAIL: exported skill(s) name a skill this export does not ship. The leading slash "
+            "is dropped on export, so these would read as an instruction to run something the "
+            "reader does not have:",
+            file=sys.stderr,
+        )
+        for hit in stranded:
+            print(f"  {hit}", file=sys.stderr)
+        sys.exit(1)
+
+    # Wipe: a renamed, deleted, or newly skipped skill would otherwise leave its
+    # old copy behind forever, since nothing else prunes the export.
+    for root in (kiro_skills_root, agent_skills_root):
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir(parents=True, exist_ok=True)
+
+    unwanted_headers = UNWANTED_HEADERS
 
     for skill_path in Path(SOURCE_DIR).iterdir():
         if not skill_path.is_dir() or skill_path.name in skip_names:
@@ -277,8 +384,6 @@ def convert_skills():
         with open(skill_file, "r", encoding="utf-8") as f:
             content = f.read()
 
-        stranded += stranded_refs(skill_file, content)
-
         # Frontmatter is parsed and rewritten on its own terms and never
         # reaches neutralize() — see neutralize_description().
         fm_match = FRONTMATTER.match(content)
@@ -288,35 +393,30 @@ def convert_skills():
         skill_name = fm_value(frontmatter, "name") or skill_path.name
         description = neutralize_description(fm_value(frontmatter, "description"))
 
-        # Split into sections by headers (##)
-        # We use a non-capturing group for the split but keep the header as part of the next chunk
-        # Actually splitting by \n## works better if we prepend \n to content
-        parts = re.split(r'\n(##+ .*)', body)
+        # The same split scan_sources() used, so what is checked and what is
+        # written can never disagree about which sections survive.
+        pieces = sections(body)
 
-        # parts[0] is everything before the first ## — the intro, the
+        # pieces[0] is everything before the first ## — the intro, the
         # announce line, and (by paad convention) every digraph. Those
-        # digraphs name output paths, so parts[0] gets neutralized on the
+        # digraphs name output paths, so it gets neutralized on the
         # same terms as the section bodies or the two disagree. The
         # frontmatter is no longer in here; it is spliced back on below.
-        cleaned_content = neutralize(parts[0])
+        cleaned_content = neutralize(pieces[0][1])
 
-        # Process header/body pairs
-        for i in range(1, len(parts), 2):
-            header_line = parts[i]
-            body = parts[i+1]
-
+        for header_line, section_body, _ in pieces[1:]:
             header_text = re.sub(r'^##+\s*', '', header_line).strip()
 
             # Skip unwanted sections
             if header_text in unwanted_headers:
                 continue
 
-            body = neutralize(body)
+            section_body = neutralize(section_body)
 
             # Clean up trailing whitespace and excessive newlines
-            body = body.rstrip() + "\n"
+            section_body = section_body.rstrip() + "\n"
 
-            cleaned_content += "\n" + neutralize(header_line) + body
+            cleaned_content += "\n" + neutralize(header_line) + section_body
 
         # Final cleanup for consecutive empty lines
         cleaned_content = re.sub(r'\n{3,}', '\n\n', cleaned_content).strip() + "\n"
@@ -355,7 +455,6 @@ def convert_skills():
                     target.mkdir(exist_ok=True)
                 elif ref_file.suffix == ".md":
                     text = ref_file.read_text(encoding="utf-8")
-                    stranded += stranded_refs(ref_file, text)
                     text = neutralize(text)
                     text = re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
                     target.write_text(text, encoding="utf-8")
@@ -385,17 +484,6 @@ Please refer to that file for the full criteria.
 """
         with open(agent_skill_dir / "SKILL.md", "w", encoding="utf-8") as f:
             f.write(wrapper)
-
-    if stranded:
-        print(
-            "FAIL: exported skill(s) name a skill this export does not ship. The leading slash "
-            "is dropped on export, so these would read as an instruction to run something the "
-            "reader does not have:",
-            file=sys.stderr,
-        )
-        for hit in stranded:
-            print(f"  {hit}", file=sys.stderr)
-        sys.exit(1)
 
     print("Conversion complete.")
 

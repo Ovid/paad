@@ -430,6 +430,20 @@ check-export-commands: check-skill-names require-export ## Check no Claude Code 
 		echo "$$bad" | sed 's/^/  /'; \
 		exit 1; \
 	fi; \
+	orphan=$$(grep -rnE "(^|[^A-Za-z0-9._/-])/paad:[A-Za-z0-9-]+" kiro_and_antigravity/skills); st=$$?; \
+	if [ "$$st" -gt 1 ]; then \
+		echo "FAIL: could not scan the export for qualified commands (grep exit $$st)."; \
+		exit 1; \
+	fi; \
+	if [ -n "$$orphan" ]; then \
+		echo "FAIL: a /paad: command naming no current skill survived into the export."; \
+		echo "      The rewriter's alternation and the check above are both built from the"; \
+		echo "      same skills listing, so neither can see a name that listing lacks — which"; \
+		echo "      is exactly what promotion leaves when a skill is deleted and a sibling"; \
+		echo "      still points at it:"; \
+		echo "$$orphan" | sed 's/^/  /'; \
+		exit 1; \
+	fi; \
 	echo "No Claude Code slash commands survived into the export."
 
 check-export-current: check-skill-names require-export ## Check kiro_and_antigravity/ and pi/ match a fresh export
