@@ -71,9 +71,22 @@ The bare token `true` is required. `internal: "true"` is a string and fails the
 strict comparison, so the skill would ship — the same trap
 `scripts/check_internal_flag.py` already documents for `.claude/skills/`.
 
-**Known unknown:** whether Claude Code ignores `metadata.internal` when loading
-`preview/paad` as a plugin. Verify when wiring up the local load route. If it
-chokes, strip the flag in that step rather than dropping it from the design.
+**Verified:** `claude plugin validate` accepts both markers. Run against a
+preview-shaped tree — `plugin.json` at `1.31.0-preview` and `metadata: internal:
+true` on all 14 SKILL.md files — it passes. The prerelease suffix is valid semver
+to it, and the frontmatter flag does not upset the manifest validator.
+
+**Also verified:** Claude Code's `--plugin-dir` loader ignores
+`metadata.internal`, so the local load route works with the flag in place.
+Measured against `claude 2.1.241` with a two-skill probe plugin — `zzflagged`
+carrying `metadata: internal: true`, `zzcontrol` carrying nothing. Both appear in
+the available-skills list, and `ptest:zzflagged` invokes and runs. The probe's
+`plugin.json` was at `1.30.2-preview`, so the prerelease suffix is accepted by the
+loader too, not only by the validator.
+
+That is the answer the design wants: the npx installer honors the flag (the
+safety gate), Claude Code does not (so preview stays drivable). No stripping step
+is needed in the local load route.
 
 ## Makefile
 
@@ -102,10 +115,28 @@ tree-checks: check-skill-names check-skill-versions check-digraphs \
 `$(TREE)/skills/paad-help/SKILL.md`, so preview's help validates against
 preview's skill list and travels with it at promotion.
 
+`TREE` reaches only the shell loops written in the Makefile. Two of the eight
+delegate to scripts that hardcode `plugins/paad/skills` and take no path
+argument — `scripts/check_references.py` and `scripts/lint_digraphs.py` — so left
+alone they check `plugins/` on both passes. `check-references` becomes a complete
+no-op for preview; `check-digraphs` catches only a skill with no digraph at all,
+never a malformed one. Both gain an optional path argument defaulting to
+`plugins/paad/skills`, and the Makefile passes `$(SKILLS_DIR)`. Note that
+`lint_digraphs.py`'s own "the check is a no-op" guard does not fire here — it
+sees input, just the wrong tree's.
+
 **Plugins only, run once** — `check-versions`, `validate`, `check-readme`, and
 the three `check-export-*`. README documents the shipped set; a preview-only
-skill is tolerated there, not required. Its README entry gets written in the
-promotion commit, which is where it stops being a lie to users.
+skill is tolerated there, not required.
+
+Its README entry gets written on the release branch **before `make release`
+runs**, as its own commit — not in the promotion commit. That commit is made
+after `make release` has finished, and `make release` ends in `make test`, which
+runs `check-readme` against the freshly promoted `plugins/`. A skill promoted
+without its README entry fails there, with the rsync, the changelog roll and both
+trees' version strings already written, and `make release` unable to re-run
+against the dirty tree it just created. Writing the entry first costs nothing and
+merges with the release, so README never advertises a skill nobody can install.
 
 **`check_internal_flag.py`** grows two rules beyond its `.claude/skills/` pass:
 require the flag on every `preview/paad/skills/*/SKILL.md`, and forbid it on
@@ -117,10 +148,10 @@ invisible to every installer.
 `plugin.json` and `v$(VERSION)-preview` to preview's announce lines.
 `check-versions` asserts the two forms agree.
 
-**`validate`** adds `claude plugin validate preview/paad`. A prerelease string
-is valid semver and should pass. If it rejects the suffix, that is the one
-finding that forces a fallback: a plain version in preview's `plugin.json`, and
-the suffix reintroduced as a Makefile variable.
+**`validate`** adds `claude plugin validate preview/paad`. Measured: it passes
+on a `1.31.0-preview` manifest, so the fallback once reserved for a rejected
+suffix — a plain version in preview's `plugin.json` with the suffix carried as a
+Makefile variable — is not needed.
 
 ## Promotion and release
 
@@ -158,10 +189,18 @@ payload and the last moment to catch something unintended.
 
 ### Accepted limitations
 
-**Hotfixes cannot skip preview's unreleased work.** Promoting drags everything
-along. The escape hatch is ordinary: branch from the release tag, edit
-`plugins/` directly there — the only place hand-editing is legitimate — release,
-then cherry-pick into preview. No new machinery; just never on `main`.
+**Hotfixes go through preview like everything else.** A hotfix branches from the
+release tag, and at a release tag `preview/` and `plugins/` are equal by
+construction — preview's queue lives on `main`, which that branch does not
+include. There is nothing to skip: edit `preview/`, run `make release` unchanged,
+cherry-pick forward onto `main` afterwards.
+
+Hand-editing `plugins/` stays forbidden with no exception, because an exception
+would be destroyed by its own release. `make release` begins with `make promote`,
+whose `rsync -a --delete preview/paad/ plugins/paad/` would copy the pre-fix
+preview straight over the hand edit. Nothing catches it: the tree is committed so
+the dirty guard passes, and the result is self-consistent so every check passes.
+The release ships, the changelog announces the fix, and the fix is not in it.
 
 **The generator has no preview stage.** A change to
 `scripts/convert_skills.py` alters `kiro_and_antigravity/` and `pi/` output the
@@ -177,26 +216,25 @@ to guard a file that changes rarely.
    `-preview` to all 14 announce lines, add `metadata: internal: true` to all 14
    SKILL.md files.
 
-2. **Revert the shipped tree.**
+2. **Leave the shipped tree alone, and release it.** `plugins/` already carries
+   `paad-help`, and this branch's Makefile is written for the post-rename world —
+   `check-help`, `check-digraphs`, `check-announce` and `check-readme` all
+   hardcode `paad-help` by name. Reverting `plugins/` to `main` puts `help/` back
+   underneath those checks and fails all four; measured, not predicted. So
+   `paad-help` ships in the release that lands this design.
 
-   ```
-   git checkout main -- plugins/
-   make export
-   ```
+   No deprecation stub is kept. `/help` was never reachable as a paad skill — it
+   is Claude Code's builtin, which is why the rename happened — so a stub would
+   serve only people who typed the fully qualified `/paad:help`, and the changelog
+   already tells them what it became. It would also cost three check exemptions
+   and a hand-written SKILL.md, since the rename deleted the directory rather than
+   leaving one to keep. README needs no change: it already documents `/paad-help`.
 
-   `plugins/` gets `help/` back; `preview/` keeps `paad-help/`. Both trees stay
-   self-consistent because `check-help` is per-tree.
-
-3. **README, by hand.** Keep the npx-installation rewrite — it is independent of
-   `plugins/` and a real improvement. Restore the two `/paad-help` mentions to
-   `/paad:help` so `check-readme` passes against the shipped `help` skill. They
-   flip back in the promotion commit that ships `paad-help`.
-
-4. **CLAUDE.md.** Its `paad-help` conventions become forward-looking statements
-   about preview. It gains a preview section: the two-tree model, the three
+3. **CLAUDE.md.** Its `paad-help` conventions stay as written — `paad-help` ships
+   in this release. It gains a preview section: the two-tree model, the three
    markers, "never hand-edit `plugins/`", and the per-tree vs plugins-only check
    split.
 
-Unchanged on the branch: `scripts/check_internal_flag.py`,
+Unchanged by these steps: `scripts/check_internal_flag.py`,
 `scripts/convert_skills.py`, `.claude/skills/`, `docs/`, `paad/code-reviews/`,
 and `CHANGELOG.md`'s `[Unreleased]` entries — still correctly unreleased.
