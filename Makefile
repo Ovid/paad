@@ -12,7 +12,16 @@ SKILL_NAMES := $(notdir $(SKILL_DIRS))
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: check-versions validate check-readme check-export-frontmatter check-export-commands check-export-current ## Run all checks
+self-tests: ## Run the hand-written parsers' own assertions
+# These are the only executable specification the frontmatter mutators have, and
+# they cost milliseconds. Left uncalled, they caught nothing: promote.py and
+# check_internal_flag.py drifted apart on where a metadata block ends, which is
+# exactly the class one added case would have caught.
+	@python3 scripts/check_internal_flag.py --self-test
+	@python3 scripts/promote.py --self-test
+	@python3 scripts/lint_digraphs.py --self-test
+
+test: self-tests check-versions validate check-readme check-export-frontmatter check-export-commands check-export-current ## Run all checks
 	@$(MAKE) --no-print-directory tree-checks TREE=plugins/paad
 	@$(MAKE) --no-print-directory tree-checks TREE=preview/paad
 	@echo "All checks passed."

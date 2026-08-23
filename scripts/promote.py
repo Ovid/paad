@@ -25,6 +25,11 @@ import pathlib
 import re
 import sys
 
+# One definition of where a `metadata:` block ends, shared with the check that
+# gates the tree this script rewrites. When the two disagreed, promotion emitted
+# invalid YAML and every check downstream read the corrupted result as clean.
+from check_internal_flag import internal_value, metadata_block
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SHIPPED = ROOT / "plugins/paad/skills"
 FRONTMATTER = re.compile(r"\A---\n(.*?)\n---", re.S)
@@ -45,23 +50,26 @@ def strip_internal(text):
         inline = re.match(r"^metadata:[ \t]*\{(.*)\}[ \t]*$", line)
         if inline:
             pairs = [p.strip() for p in inline.group(1).split(",") if p.strip()]
-            pairs = [p for p in pairs if not re.match(r"^internal[ \t]*:", p)]
+            pairs = [p for p in pairs if not re.match(r"^internal[ \t]*:", p)]  # exact key
             if pairs:
                 kept.append("metadata: {" + ", ".join(pairs) + "}")
             i += 1
             continue
 
         if re.match(r"^metadata:[ \t]*$", line):
-            block = []
-            j = i + 1
-            while j < len(lines) and lines[j].strip() and lines[j][:1].isspace():
-                block.append(lines[j])
-                j += 1
-            block = [b for b in block if not re.match(r"^\s+internal[ \t]*:", b)]
-            if block:
+            end, indent = metadata_block(lines, i)
+            block = lines[i + 1:end]
+            if indent:
+                # only a direct child named exactly `internal` — a deeper key belongs
+                # to a child mapping, and dropping it silently deleted that mapping
+                block = [
+                    b for b in block
+                    if not re.match(rf"^{re.escape(indent)}internal[ \t]*:", b)
+                ]
+            if any(b.strip() for b in block):
                 kept.append(line)
                 kept.extend(block)
-            i = j
+            i = end
             continue
 
         kept.append(line)
@@ -101,6 +109,35 @@ def self_test():
     # a body mentioning internal: true is not frontmatter and must not be edited
     prose = fm("name: vibe") + "\nSet `internal: true` to hide a skill.\n"
     assert strip_internal(prose) == prose
+
+    # a blank line is legal inside a YAML mapping; ending the block there left an
+    # orphaned indented scalar behind — invalid YAML that every check read as clean
+    assert strip_internal(fm("name: vibe\nmetadata:\n\n  internal: true")) == fm("name: vibe")
+
+    # a child mapping's own keys are not metadata.internal, and must survive intact
+    assert strip_internal(
+        fm("name: vibe\nmetadata:\n  extra:\n    internal: true")
+    ) == fm("name: vibe\nmetadata:\n  extra:\n    internal: true")
+
+    # a key that merely ends in "internal" is a different key
+    assert strip_internal(
+        fm("name: vibe\nmetadata:\n  x-internal: true")
+    ) == fm("name: vibe\nmetadata:\n  x-internal: true")
+    assert strip_internal(
+        fm("name: vibe\nmetadata: {x-internal: true}")
+    ) == fm("name: vibe\nmetadata: {x-internal: true}")
+
+    # the contract that matters: whatever this strips, the installer-facing reader
+    # must then see nothing. These two parsers disagreeing is what corrupts a file.
+    for body in (
+        "name: vibe\nmetadata:\n  internal: true",
+        "name: vibe\nmetadata:\n\n  internal: true",
+        "name: vibe\nmetadata: {internal: true}",
+        "name: vibe\nmetadata:\n  internal: true  # keeps it out of npx",
+        "name: vibe\nmetadata:\n  internal: true\n  owner: ovid",
+    ):
+        promoted = strip_internal(fm(body))
+        assert internal_value(FRONTMATTER.match(promoted).group(1)) is None, body
 
     print("self-test passed.")
     return 0

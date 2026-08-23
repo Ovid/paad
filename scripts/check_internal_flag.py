@@ -39,24 +39,91 @@ FORBID = [ROOT / "plugins/paad/skills"]
 FRONTMATTER = re.compile(r"\A---\n(.*?)\n---", re.S)
 
 
+def metadata_block(lines, i):
+    """Return (end, indent) for the mapping nested under the `metadata:` line at index i.
+
+    `end` is exclusive and stops after the last indented, non-blank line. A blank
+    line is legal inside a YAML mapping and does not close it — terminating on one
+    is what let this check and `promote.py` disagree about where the block ended,
+    so the boundary is defined here once and imported by both. When they disagree
+    the result is not a refusal but a corrupted file every check then reports clean.
+
+    `indent` is the block's own leading whitespace. A key nested deeper belongs to
+    a child mapping, and the installer's `metadata?.internal` does not reach it.
+    """
+    end = i + 1
+    indent = None
+    j = i + 1
+    while j < len(lines):
+        line = lines[j]
+        if line.strip():
+            if not line[:1].isspace():
+                break  # dedented back to a sibling key; the mapping ended
+            if indent is None:
+                indent = line[: len(line) - len(line.lstrip())]
+            end = j + 1
+        j += 1
+    return end, (indent if indent is not None else "")
+
+
+def scalar(raw):
+    """Strip a trailing YAML comment. `#` opens one only at the start or after space."""
+    return re.sub(r"(?:\A|(?<=\s))#.*\Z", "", raw).strip()
+
+
 def internal_value(frontmatter):
     """Return the raw text of metadata.internal, or None if it is not there."""
     inline = re.search(r"^metadata:[ \t]*\{(.*)\}[ \t]*$", frontmatter, re.M)
     if inline:
-        pair = re.search(r"\binternal[ \t]*:[ \t]*([^,}]+)", inline.group(1))
-        return pair.group(1).strip() if pair else None
+        # anchored: `x-internal:` is a different key, and the installer reads it as one
+        pair = re.search(r"(?:\A|,)[ \t]*internal[ \t]*:[ \t]*([^,}]*)", inline.group(1))
+        return scalar(pair.group(1)) if pair else None
 
     lines = frontmatter.splitlines()
     for i, line in enumerate(lines):
         if not re.match(r"^metadata:[ \t]*$", line):
             continue
-        for nested in lines[i + 1:]:
-            if nested.strip() and not nested[:1].isspace():
-                break  # dedented back to a sibling key; the mapping ended
-            pair = re.match(r"^\s+internal[ \t]*:[ \t]*(.*?)[ \t]*$", nested)
+        end, indent = metadata_block(lines, i)
+        if not indent:
+            continue
+        for nested in lines[i + 1:end]:
+            pair = re.match(rf"^{re.escape(indent)}internal[ \t]*:[ \t]*(.*)$", nested)
             if pair:
-                return pair.group(1)
+                return scalar(pair.group(1))
     return None
+
+
+def self_test():
+    """The boundary cases that decide whether this check and promote.py agree."""
+    # the ordinary nested and inline spellings
+    assert internal_value("name: v\nmetadata:\n  internal: true") == "true"
+    assert internal_value("name: v\nmetadata: {internal: true}") == "true"
+
+    # a blank line is legal inside a YAML mapping and does not end it
+    assert internal_value("name: v\nmetadata:\n\n  internal: true") == "true"
+
+    # a trailing comment is not part of the value; YAML reads this as boolean true
+    assert internal_value("metadata:\n  internal: true  # keeps it out of npx") == "true"
+
+    # a hash with no leading space is part of the scalar, not a comment
+    assert internal_value("metadata:\n  internal: a#b") == "a#b"
+
+    # only a direct child of metadata counts — the installer reads metadata?.internal
+    assert internal_value("metadata:\n  extra:\n    internal: true") is None
+
+    # ...and only the key named exactly internal, not one that merely ends in it
+    assert internal_value("metadata: {x-internal: true}") is None
+    assert internal_value("metadata:\n  x-internal: true") is None
+
+    # the off-spec quoted form must be reported, not silently accepted
+    assert internal_value('metadata:\n  internal: "true"') == '"true"'
+
+    # absent, and a sibling key that is not under metadata at all
+    assert internal_value("name: v\ndescription: d") is None
+    assert internal_value("internal: true\nmetadata:\n  owner: ovid") is None
+
+    print("self-test passed.")
+    return 0
 
 
 def scan(tree, problems):
@@ -74,6 +141,9 @@ def scan(tree, problems):
 
 
 def main():
+    if "--self-test" in sys.argv:
+        return self_test()
+
     problems = []
     flagged = 0
     for tree in REQUIRE:
