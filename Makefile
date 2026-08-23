@@ -87,7 +87,10 @@ bump-version: ## Bump version across package and plugin manifests and all SKILL.
 # Reads the old version out of the tree's own plugin.json rather than being told it,
 # which is what lets one recipe serve both trees: each carries its own current string
 # and that is simply what gets substituted from.
-bump-tree: ## Rewrite one tree's plugin.json and announce lines (usage: make bump-tree TREE=... SUFFIX=... VERSION=X.Y.Z)
+# check-skill-names is a prerequisite because $(SKILL_DIRS) is make-expanded straight
+# into the script handed to sh below: a backtick in a folder name is executed, and
+# `make release` reaches bump-tree two steps before it reaches `make test`.
+bump-tree: check-skill-names ## Rewrite one tree's plugin.json and announce lines (usage: make bump-tree TREE=... SUFFIX=... VERSION=X.Y.Z)
 	@old_ver=$$(python3 -c "import json; print(json.load(open('$(TREE)/.claude-plugin/plugin.json'))['version'])"); \
 	new_ver="$(VERSION)$(SUFFIX)"; \
 	if [ "$$old_ver" = "$$new_ver" ]; then \
@@ -298,7 +301,7 @@ check-skill-names: ## Check every skill folder name follows the Agent Skills nam
 	fi; \
 	echo "$$count skill folder name(s) follow the naming rules."
 
-check-frontmatter: check-skill-names ## Check SKILL.md frontmatter, and the internal flag on project-local skills
+check-frontmatter: check-skill-names ## Check SKILL.md frontmatter, and the internal flag across all three skill trees
 	@fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		folder_name=$$(basename "$$dir"); \
@@ -341,7 +344,13 @@ check-dispatch-sites: check-skill-names require-export ## Check every subagent d
 # dispatches a write-capable subagent, which is the failure this exists to catch.
 # Residual hole: a dispatch site written without a 'subagent_type' line is invisible here.
 	@fail=0; \
-	bad=$$(grep -rn 'subagent_type' "$(SKILLS_DIR)" | grep -vF 'subagent_type: paad:paad-analyst' || true); \
+	all=$$(grep -rn 'subagent_type' "$(SKILLS_DIR)"); st=$$?; \
+	if [ "$$st" -gt 1 ]; then \
+		echo "FAIL: could not scan $(SKILLS_DIR) for dispatch sites (grep exit $$st)."; \
+		echo "      A security check that reports success without having run is worse than none."; \
+		exit 1; \
+	fi; \
+	bad=$$(printf '%s\n' "$$all" | grep -vF 'subagent_type: paad:paad-analyst' || true); \
 	if [ -n "$$bad" ]; then \
 		echo "FAIL: dispatch site(s) not using the read-only analyst. Every analysis subagent must be"; \
 		echo "      dispatched as 'subagent_type: paad:paad-analyst' — specialists and verifiers must not"; \
