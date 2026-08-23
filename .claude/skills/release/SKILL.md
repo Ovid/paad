@@ -11,15 +11,23 @@ Announce: **"Preparing a paad release…"**
 
 Read @CLAUDE.md.
 
-`make release` and `make tag` own everything mechanical: the changelog roll, the
-version rewrite across four files and eleven announce lines, the export
-regeneration, the full check suite, and the annotated tag. This skill owns the
-parts a Makefile cannot decide — which number to bump to, whether a release is
-wanted at all, and whether the thing users install actually works afterwards.
+`make release` and `make tag` own everything mechanical: the promotion of
+`preview/paad` into `plugins/paad`, the changelog roll, the version rewrite across
+every manifest and announce line in both trees, the export regeneration, the full
+check suite, and the annotated tag. This skill owns the parts a Makefile cannot
+decide — which number to bump to, whether a release is wanted at all, and whether
+the thing users install actually works afterwards.
 
 **Never hand-edit `plugin.json`, `marketplace.json`, `package.json`, a SKILL.md
 announce line, or the changelog's version headings and link refs.** Those are
 generated. If the generated result is wrong, fix the generator.
+
+**Never hand-edit `plugins/paad` at all.** It is written only by promotion. A
+hand edit there does not survive: `make release` opens with `make promote`, whose
+`rsync -a --delete` copies the pre-fix `preview/paad` straight over it. Nothing
+catches that — the tree is committed so the dirty guard passes, and the result is
+self-consistent so every check passes. The release ships and the changelog
+announces a fix that is not in it. Fixes go in `preview/paad`, hotfixes included.
 
 ```dot
 digraph release {
@@ -30,11 +38,14 @@ digraph release {
     "STOP — trim first, as its own commit" [shape=box, style=bold];
     "Propose MAJOR/MINOR/PATCH with reasoning" [shape=box];
     "User confirms version?" [shape=diamond];
+    "Every preview skill in README?" [shape=diamond];
+    "STOP — add the README entry as its own commit" [shape=box, style=bold];
     "On a branch?" [shape=diamond];
     "Create release branch" [shape=box];
     "make release VERSION=X.Y.Z" [shape=box];
     "Passed?" [shape=diamond];
     "STOP — report the failure and the half-applied state" [shape=box, style=bold];
+    "Read git diff plugins/ — the payload" [shape=box];
     "Show the diff, get sign-off" [shape=box];
     "Commit, merge to main, push" [shape=box];
     "make tag" [shape=box];
@@ -47,13 +58,16 @@ digraph release {
     "Entries within the length rule?" -> "Propose MAJOR/MINOR/PATCH with reasoning" [label="yes"];
     "Propose MAJOR/MINOR/PATCH with reasoning" -> "User confirms version?";
     "User confirms version?" -> "Propose MAJOR/MINOR/PATCH with reasoning" [label="no"];
-    "User confirms version?" -> "On a branch?" [label="yes"];
+    "User confirms version?" -> "Every preview skill in README?" [label="yes"];
+    "Every preview skill in README?" -> "STOP — add the README entry as its own commit" [label="no"];
+    "Every preview skill in README?" -> "On a branch?" [label="yes"];
     "On a branch?" -> "Create release branch" [label="on main"];
     "On a branch?" -> "make release VERSION=X.Y.Z" [label="on a branch"];
     "Create release branch" -> "make release VERSION=X.Y.Z";
     "make release VERSION=X.Y.Z" -> "Passed?";
     "Passed?" -> "STOP — report the failure and the half-applied state" [label="no"];
-    "Passed?" -> "Show the diff, get sign-off" [label="yes"];
+    "Passed?" -> "Read git diff plugins/ — the payload" [label="yes"];
+    "Read git diff plugins/ — the payload" -> "Show the diff, get sign-off";
     "Show the diff, get sign-off" -> "Commit, merge to main, push";
     "Commit, merge to main, push" -> "make tag";
     "make tag" -> "Hand off in-app verification";
@@ -125,6 +139,26 @@ Note for the experimental skills (`agentic-dedup`, `test-roadmap`): their
 arguments and output may change in any release including a patch, so a breaking
 change to one of them does not force a major.
 
+## 2.5. Check README covers everything preview is about to ship
+
+`check-readme` runs against the *shipped* tree, and promotion is what puts a
+preview-only skill there. So a skill that has been sitting in `preview/` without a
+README entry passes every check until the release promotes it — and then fails
+`make test` at the very end of `make release`, with the rsync, the changelog roll
+and both trees' version strings already written, and `make release` unable to
+re-run against the dirty tree it just made.
+
+```bash
+for d in preview/paad/skills/*/; do n=$(basename "$d"); [ "$n" = paad-help ] && continue; \
+  grep -qE "(^|[^A-Za-z0-9._/-])/$n([^A-Za-z0-9/-]|$)" README.md || echo "MISSING FROM README: $n"; done
+```
+
+Anything listed, **stop.** Write the README entry as its own commit on this
+branch, then start again at step 1. It costs nothing there and merges with the
+release, so README never advertises a skill nobody can install. The same goes for
+a missing `paad-help` entry, though `check-help` runs per-tree and would already
+have caught that one.
+
 ## 3. Cut it
 
 Confirm you are on a branch, not `main` — `make release` refuses on `main`, but
@@ -141,9 +175,13 @@ number. If the work is already merged and there is no such branch, cut one off
 make release VERSION=X.Y.Z
 ```
 
-That single command rolls the changelog with today's real date, opens a fresh
-`[Unreleased]`, fixes both link refs, rewrites every version string, regenerates
-`kiro_and_antigravity/` and `pi/`, and runs `make test`.
+That single command promotes `preview/paad` over `plugins/paad` and strips the
+preview markers, rolls the changelog with today's real date, opens a fresh
+`[Unreleased]`, fixes both link refs, rewrites every version string in both trees,
+regenerates `kiro_and_antigravity/` and `pi/`, and runs `make test`.
+
+Promotion refuses on a dirty tree, so anything uncommitted stops the release
+before it mutates anything.
 
 **If it fails, stop and report the failure.** Do not hand-patch around it. A
 failing check at this point means either the release is not ready or a generator
@@ -159,9 +197,19 @@ section. Once Ovid has decided and the cause is fixed, the way forward is
 which discards the roll and the bump together. Neither is the hand-patching this
 step forbids — that means editing the generated output to make a check pass.
 
-## 4. Show the work before committing
+## 4. Read the payload, then show the work
 
-Show the diff — at minimum the changelog section boundary and the version
+```bash
+git diff plugins/
+```
+
+That diff is the release's actual payload — everything `preview/` accumulated
+since the last release, arriving in the shipped tree all at once — and this is the
+last moment to catch something unintended. Read it before anything else. Say what
+promotion did: which skills changed, which are new, and which `--delete` removed
+because they left `preview/`.
+
+Then show the diff — at minimum the changelog section boundary and the version
 strings. Get sign-off, then commit:
 
 ```bash

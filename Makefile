@@ -1,18 +1,30 @@
-SKILLS_DIR := plugins/paad/skills
+# Every per-skill check runs against a tree, and there are two: preview/paad holds
+# work that has merged but not shipped, plugins/paad is what ships. TREE picks one.
+# Preview's plugin.json carries the -preview suffix, so the checks that read a
+# version out of it need no literal — the suffix falls out of the tree they are on.
+TREE ?= plugins/paad
+SKILLS_DIR := $(TREE)/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current bump-version export release tag
+.PHONY: help test tree-checks validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current bump-version bump-tree promote export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
 
-test: check-skill-names validate check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current ## Run all checks
+test: check-versions validate check-readme check-export-frontmatter check-export-commands check-export-current ## Run all checks
+	@$(MAKE) --no-print-directory tree-checks TREE=plugins/paad
+	@$(MAKE) --no-print-directory tree-checks TREE=preview/paad
 	@echo "All checks passed."
+
+# The per-skill checks, run once per tree. README documents the shipped set only,
+# so check-readme stays out: a preview-only skill is tolerated there, not required.
+tree-checks: check-skill-names check-skill-versions check-digraphs check-help check-frontmatter check-references check-dispatch-sites check-announce ## Run the per-tree checks (usage: make tree-checks TREE=preview/paad)
+	@echo "$(TREE): tree checks passed."
 
 validate: ## Validate marketplace and all plugins
 	@claude plugin validate .
-	@for dir in plugins/*/; do \
+	@for dir in plugins/*/ preview/*/; do \
 		echo "Validating $$dir..."; \
 		claude plugin validate "$$dir" || exit 1; \
 	done
@@ -21,14 +33,21 @@ check-versions: ## Check package and plugin versions match
 	@package_ver=$$(python3 -c "import json; print(json.load(open('package.json'))['version'])"); \
 	marketplace_ver=$$(python3 -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version'])"); \
 	plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
+	preview_ver=$$(python3 -c "import json; print(json.load(open('preview/paad/.claude-plugin/plugin.json'))['version'])"); \
 	if [ "$$package_ver" != "$$marketplace_ver" ] || [ "$$package_ver" != "$$plugin_ver" ]; then \
 		echo "FAIL: Version mismatch — package.json ($$package_ver), marketplace.json ($$marketplace_ver), plugin.json ($$plugin_ver)"; \
 		exit 1; \
 	fi; \
-	echo "Versions match: $$package_ver"
+	if [ "$$preview_ver" != "$$plugin_ver-preview" ]; then \
+		echo "FAIL: preview/paad is at $$preview_ver, expected $$plugin_ver-preview."; \
+		echo "      The suffix is how a transcript says which tree just ran, and 'make bump-version'"; \
+		echo "      writes both. A bare version here means preview would announce as the shipped tree."; \
+		exit 1; \
+	fi; \
+	echo "Versions match: $$package_ver (preview: $$preview_ver)"
 
 check-skill-versions: check-skill-names ## Check every SKILL.md announces the correct version
-	@plugin_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
+	@plugin_ver=$$(python3 -c "import json; print(json.load(open('$(TREE)/.claude-plugin/plugin.json'))['version'])"); \
 	fail=0; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
@@ -39,7 +58,7 @@ check-skill-versions: check-skill-names ## Check every SKILL.md announces the co
 		fi; \
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
-	echo "All skills announce v$$plugin_ver."
+	echo "$(TREE): all skills announce v$$plugin_ver."
 
 bump-version: ## Bump version across package and plugin manifests and all SKILL.md (usage: make bump-version VERSION=X.Y.Z)
 	@if [ -z "$(VERSION)" ]; then \
@@ -50,21 +69,44 @@ bump-version: ## Bump version across package and plugin manifests and all SKILL.
 		[0-9]*.[0-9]*.[0-9]*) ;; \
 		*) echo "FAIL: VERSION must be in X.Y.Z form (got $(VERSION))"; exit 1 ;; \
 	esac
-	@old_ver=$$(python3 -c "import json; print(json.load(open('plugins/paad/.claude-plugin/plugin.json'))['version'])"); \
-	if [ "$$old_ver" = "$(VERSION)" ]; then \
-		echo "Already at $(VERSION). Nothing to do."; \
+	@sed -i.bak 's|^  "version": "[^"]*"|  "version": "$(VERSION)"|' package.json && rm -f package.json.bak
+	@sed -i.bak 's|^      "version": "[^"]*"|      "version": "$(VERSION)"|' .claude-plugin/marketplace.json && rm -f .claude-plugin/marketplace.json.bak
+	@$(MAKE) --no-print-directory bump-tree TREE=plugins/paad
+	@$(MAKE) --no-print-directory bump-tree TREE=preview/paad SUFFIX=-preview
+	@echo "Bumped to $(VERSION)."
+
+# Reads the old version out of the tree's own plugin.json rather than being told it,
+# which is what lets one recipe serve both trees: after promotion plugins/ transiently
+# announces v1.30.2-preview, and that string is simply what gets substituted from.
+bump-tree: ## Rewrite one tree's plugin.json and announce lines (usage: make bump-tree TREE=... SUFFIX=... VERSION=X.Y.Z)
+	@old_ver=$$(python3 -c "import json; print(json.load(open('$(TREE)/.claude-plugin/plugin.json'))['version'])"); \
+	new_ver="$(VERSION)$(SUFFIX)"; \
+	if [ "$$old_ver" = "$$new_ver" ]; then \
+		echo "$(TREE): already at $$new_ver."; \
 		exit 0; \
 	fi; \
-	echo "Bumping $$old_ver -> $(VERSION)..."; \
-	sed -i.bak 's|^  "version": "[^"]*"|  "version": "$(VERSION)"|' package.json && rm -f package.json.bak; \
-	sed -i.bak 's|"version": "[^"]*"|"version": "$(VERSION)"|' plugins/paad/.claude-plugin/plugin.json && rm -f plugins/paad/.claude-plugin/plugin.json.bak; \
-	sed -i.bak 's|^      "version": "[^"]*"|      "version": "$(VERSION)"|' .claude-plugin/marketplace.json && rm -f .claude-plugin/marketplace.json.bak; \
+	echo "$(TREE): $$old_ver -> $$new_ver"; \
+	sed -i.bak "s|\"version\": \"[^\"]*\"|\"version\": \"$$new_ver\"|" $(TREE)/.claude-plugin/plugin.json && rm -f $(TREE)/.claude-plugin/plugin.json.bak; \
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
 		file="$$dir/SKILL.md"; \
-		sed -i.bak "s|Running paad:$$name v$$old_ver\"|Running paad:$$name v$(VERSION)\"|g" "$$file" && rm -f "$$file.bak"; \
-	done; \
-	echo "Bumped to $(VERSION)."
+		sed -i.bak "s|Running paad:$$name v$$old_ver\"|Running paad:$$name v$$new_ver\"|g" "$$file" && rm -f "$$file.bak"; \
+	done
+
+promote: ## Copy preview/paad over plugins/paad and strip the preview markers
+# The only way plugins/ ever changes. Hand-editing it is forbidden with no exception,
+# because the next release would destroy the edit: this rsync copies the pre-fix
+# preview straight over it, the tree is committed so the dirty guard passes, and the
+# result is self-consistent so every check passes. The changelog announces a fix the
+# release does not contain.
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "FAIL: working tree is dirty — promotion overwrites plugins/ wholesale, and"; \
+		echo "      'git diff plugins/' is the only review of what is about to ship."; \
+		git status --short | sed 's/^/  /'; \
+		exit 1; \
+	fi
+	@rsync -a --delete preview/paad/ plugins/paad/
+	@python3 scripts/promote.py
 
 export: ## Regenerate kiro_and_antigravity/ and pi/ from the plugin sources
 	@python3 scripts/convert_skills.py
@@ -85,12 +127,14 @@ release: ## Roll the changelog, bump, regenerate exports, test (usage: make rele
 		git status --short | sed 's/^/  /'; \
 		exit 1; \
 	fi
+	@$(MAKE) --no-print-directory promote
 	@python3 scripts/roll_changelog.py $(VERSION)
 	@$(MAKE) --no-print-directory bump-version VERSION=$(VERSION)
 	@$(MAKE) --no-print-directory export
 	@$(MAKE) --no-print-directory test
 	@echo ""
-	@echo "Release $(VERSION) prepared. Review the diff, then:"
+	@echo "Release $(VERSION) prepared. Read 'git diff plugins/' first — that diff is the"
+	@echo "release's actual payload and the last moment to catch something unintended. Then:"
 	@echo "  git commit -a -m 'release: paad $(VERSION)'"
 	@echo "  <merge this branch into main and push>"
 	@echo "  make tag        # annotates the merge commit and pushes the tag"
@@ -138,7 +182,7 @@ check-digraphs: check-skill-names ## Check every skill (except paad-help) has a 
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All skills have digraphs (paad-help excluded)."
-	@python3 scripts/lint_digraphs.py
+	@python3 scripts/lint_digraphs.py $(SKILLS_DIR)
 
 check-help: check-skill-names ## Check every skill is documented in paad-help
 	@fail=0; \
@@ -233,7 +277,7 @@ check-frontmatter: check-skill-names ## Check SKILL.md frontmatter, and the inte
 	echo "All SKILL.md files have valid frontmatter."
 
 check-references: check-skill-names ## Check every references/ dispatch resolves and every reference file is named
-	@python3 scripts/check_references.py
+	@python3 scripts/check_references.py $(SKILLS_DIR)
 
 require-export:
 	@[ -d kiro_and_antigravity/skills ] || { \
