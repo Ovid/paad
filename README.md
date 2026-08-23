@@ -369,20 +369,44 @@ the way you invoke it differs.
 
 **These skills work by splitting one job across several helper agents.**
 `agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`,
-`agentic-owasp` and `rethink` all work this way. If your assistant supports
-helper agents, each helper gets its own separate conversation and examines your
-code from one angle — security, error handling, and so on — and they all work
-at the same time. If your assistant does not support them, a single agent does
-every one of those passes itself, one after another, in one conversation. The
-work still gets done. It is slower, and one conversation has to hold everything
-it reads. Nothing errors and nothing warns you.
+`agentic-owasp`, `test-roadmap` and `rethink` all work this way. If your
+assistant supports helper agents, each helper gets its own separate conversation
+and examines your code from one angle — security, error handling, and so on —
+and they all work at the same time. If your assistant does not support them, a
+single agent does every one of those passes itself, one after another, in one
+conversation. The work still gets done. It is slower, and one conversation has
+to hold everything it reads. Nothing errors and nothing warns you.
+
+Two consequences are worth stating outright, because nothing surfaces them at
+runtime:
+
+* **Nothing constrains what the helper agents can do to your files.** In Claude
+  Code, PAAD's analysis helpers are dispatched through an agent definition that
+  grants read, grep, find, ls and bash and withholds the editing tools — bash
+  means it is not a read-only sandbox, but the editing tools are genuinely
+  absent. That agent definition lives outside the skills directory, so this
+  install route does not carry it, and neither does Pi's. What is left is the
+  instruction in the prose, and this repository's own steering file records that
+  control failing in practice: subagents have been observed editing source code
+  to test whether a finding was real. Treat an analysis run as capable of
+  writing, and run it on a clean branch you can throw away.
+* **`test-roadmap` loses a real check.** One of its gates works by asking a
+  helper that has not seen the test to try to break it. A single agent holding
+  both cannot be blinded, so that gate reports success while verifying nothing.
 
 **Updates track `main`, and there is no pinned form.** Re-run the same command
 to pull the latest; there is no version argument, so the version a skill
 announces on invocation is *not* a reliable way to tell two npx installs apart.
-Renamed or deleted skills are not pruned — this release renamed `help` to
-`paad-help`, so delete the stale `help` directory by hand if you installed
-before it.
+Renamed or deleted skills are not pruned. This release renamed `help` to
+`paad-help`, so an install made before it leaves a stale `help` directory
+behind.
+
+**Check what you are deleting before you delete it.** That skills root is
+shared across every assistant the installer supports, `help` is about the most
+collision-prone name a skill can have, and `--copy` mode leaves PAAD's copy
+indistinguishable from one you wrote yourself. Confirm the directory is PAAD's
+— its `SKILL.md` announces `paad:help` — and only then remove it. If it is not
+PAAD's, leave it alone; a stale copy is harmless next to the renamed one.
 
 ### Pi — experimental
 
@@ -427,6 +451,15 @@ the skills ask for. Copy it in:
 ```bash
 cp pi/agents/paad-analyst.md ~/.pi/agent/agents/
 ```
+
+This file is what withholds the editing tools from an analysis helper: it grants
+`read`, `grep`, `find`, `ls` and `bash` and nothing that writes. `bash` means it
+is not a read-only sandbox, but `edit` and `write` are genuinely absent. Skip
+this step and any helper runs with whatever your setup gives it by default,
+with only the prose asking it not to write — and this repository's steering file
+records that asking failing in practice, with subagents editing source code to
+test whether a finding was real. The npx install route has no equivalent step at
+all: it resolves the skills directory and never sees `pi/agents/`.
 
 **`rethink` is degraded on Pi.** The Claude Code analyst also holds `WebSearch`
 and `WebFetch`, and Pi has no web tool to map those onto — its built-ins are
@@ -1111,14 +1144,22 @@ for exactly this reason: `/help` is Claude Code's own built-in.
 
 ## Local Development
 
-Test the plugin locally without installing it:
+The repository carries two copies of the plugin. **`preview/paad/` is where all
+new work goes.** `plugins/paad/` is the last released tree — it is what everyone
+installs, and it is written only by `make promote`, never by hand. An edit made
+there reaches `main` unpromoted and unbumped, ships immediately to anyone
+installing fresh, and is then erased without warning by the next release, whose
+first step copies preview straight over it.
+
+Drive your changes against preview:
 
 ```bash
-claude --plugin-dir ./plugins/paad
+claude --plugin-dir ./preview/paad
 ```
 
 Then invoke skills with `/paad-help` to see available commands, or try
-`/vibe`, `/pushback`, and the rest directly.
+`/vibe`, `/pushback`, and the rest directly. Preview announces itself as
+`v<version>-preview`, so a transcript always says which tree ran.
 
 After making changes, run `/reload-plugins` inside Claude Code to pick up
 updates without restarting.
@@ -1144,7 +1185,7 @@ make check-digraphs     # every skill (except paad-help) has a digraph
 make check-help         # every skill is documented in paad-help
 make check-readme       # every skill is documented in README.md
 make check-skill-names  # skill folder names follow the Agent Skills naming rules
-make check-frontmatter  # SKILL.md frontmatter, plus the internal flag on project-local skills
+make check-frontmatter  # SKILL.md frontmatter, plus the internal flag across all three skill trees
 make check-references   # references/ dispatches resolve; no orphaned reference files
 make validate           # claude plugin validate on marketplace + plugins
 ```
@@ -1162,8 +1203,11 @@ Key rules from `CLAUDE.md`:
   decision points
 * Skill folder names must match the `name` field in `SKILL.md` frontmatter
 * Use `make bump-version VERSION=X.Y.Z` to keep all versioned files in sync
-* Update `README.md`, `paad-help`, and `CLAUDE.md` when adding or changing
-  skills
+* Put new and changed skills in `preview/paad/skills/`, never in
+  `plugins/paad/skills/`
+* Update `paad-help` and `CLAUDE.md` when adding or changing skills. The
+  `README.md` entry lands on the release branch instead — README describes what
+  can actually be installed, and a preview-only skill cannot be yet
 
 ## Star History
 
