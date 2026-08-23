@@ -26,21 +26,29 @@ plugins/paad/                 what ships; written only by promotion, never hand-
 kiro_and_antigravity/, pi/    generated from plugins/ only
 ```
 
-The invariant runs one way: **`plugins/` is always a past state of `preview/`.** `make promote` copies preview over plugins wholesale and that is the only way `plugins/` changes. `preview/paad` is a byte-for-byte mirror including `.claude-plugin/plugin.json` at the same depth, so promotion is a directory swap with nothing special-cased.
+The invariant runs one way: **`plugins/` is always a past state of `preview/`.** `make promote` copies preview over plugins wholesale and that is the only way `plugins/`'s *content* changes. One target writes it without going through promotion: `make bump-version` rewrites both trees' `plugin.json` and announce lines, by design — see the Versioning bullet. Nothing else may.
+
+`make check-trees` enforces the containment half: every path under `plugins/paad` must exist under `preview/paad`. It is what catches preview falling *behind* — a revert touching only `preview/` used to leave the shipped tree ahead, with `make test` green and `make export` still regenerating the reverted behaviour out of `plugins/`. It cannot check that preview's *content* is a superset, because preview is legitimately ahead; that part still rests on reading `git diff plugins/` at release time, and both this file and the release skill describe that diff additively, which primes a reader to skim removals. `preview/paad` is a byte-for-byte mirror including `.claude-plugin/plugin.json` at the same depth, so promotion is a directory swap with nothing special-cased.
 
 Three markers separate the trees, and promotion strips all three:
 
 | | `preview/` | `plugins/` |
 |---|---|---|
-| announce line | `v1.31.0-preview` | `v1.31.0` |
+| announce line | `v<X.Y.Z>-preview` | `v<X.Y.Z>` |
 | frontmatter | `metadata: internal: true` | absent |
-| `plugin.json` version | `1.31.0-preview` | `1.31.0` |
+| `plugin.json` version | `<X.Y.Z>-preview` | `<X.Y.Z>` |
+
+`<X.Y.Z>` is whatever the tree's own `plugin.json` says — never a literal copied from here. Read the version out of the tree you are editing; a number written into this table would go stale the first time anything shipped, and an announce line built from it fails `make check-skill-versions`.
 
 The `-preview` suffix answers "which tree just ran?" in a transcript, which matters when both are loaded. The `internal` flag is the safety gate: a normal `npx` install never reaches `preview/` at all, but `--full-depth` sweeps the whole repo, and the `seenNames` dedup that catches preview's copies only protects a skill that has *already shipped* — precisely backwards from what preview is for. A preview-only skill has a name nothing has claimed, so without the flag it is offered and installed. The bare token `true` is required; `internal: "true"` is a string and fails the installer's `=== true`.
 
 Claude Code does **not** honor the flag, which is what keeps preview drivable: `claude --plugin-dir ./preview/paad` lists and runs flagged skills normally (measured against `claude 2.1.241`, and the `-preview` version suffix loads fine too). So the npx installer gates and Claude Code does not — exactly the split this needs.
 
-**Never hand-edit `plugins/`**, hotfixes included. The edit does not survive: `make release` opens with `make promote`, whose `rsync -a --delete` copies the pre-fix preview straight over it. Nothing catches that — the tree is committed so the dirty guard passes, and the result is self-consistent so every check passes. The release ships and the changelog announces a fix that is not in it. A hotfix branches from a release tag, where the two trees are equal by construction, so there is nothing to skip: edit `preview/`, run `make release` unchanged, cherry-pick forward onto `main`.
+**Never hand-edit `plugins/`**, hotfixes included. The edit does not survive: `make release` opens with `make promote`, whose `rsync -a --delete` copies the pre-fix preview straight over it. Nothing catches that — the tree is committed so the dirty guard passes, and the result is self-consistent so every check passes. The release ships and the changelog announces a fix that is not in it. A hotfix branches from a release tag, edits `preview/`, runs `make release` unchanged, and cherry-picks forward onto `main`.
+
+**This procedure applies to tags from the first release that carries `preview/` onward.** It does not work on any tag that predates this design — `paad--v1.24.0`, `1.24.1`, `1.30.0`, `1.30.1` and `1.30.2` all have no `preview/` entry at all, and `1.30.2` is what current users have installed. An agent branching from one of those finds no `preview/paad/` and reads the instruction as "create it": `make promote` would then rsync a one-skill tree over `plugins/` and `--delete` the rest. `make promote` now refuses to shrink the shipped tree without `SHRINK=1`, which is the backstop for that; `make test` alone never caught it, because every check passes on a smaller tree that is merely self-consistent.
+
+"Equal by construction" is also only true at the instant of the release commit. `make tag` requires `HEAD == origin/main`, so the tag lands on a commit on `main`, carrying whatever preview queue `main` had at that moment. A hotfix cut from a tag with queued work in `preview/` ships that work in a patch release.
 
 One thing preview does not cover: `scripts/convert_skills.py` has no preview stage, so a generator change alters `kiro_and_antigravity/` and `pi/` the moment it merges, with only `check-export-*` behind it. Preview guards skill content, not the export pipeline.
 
@@ -50,7 +58,9 @@ One thing preview does not cover: `scripts/convert_skills.py` has no preview sta
 
 **Per-tree** — `check-skill-names`, `check-skill-versions`, `check-digraphs`, `check-help`, `check-frontmatter`, `check-references`, `check-dispatch-sites`, `check-announce`. Each reads its version out of `$(TREE)/.claude-plugin/plugin.json`, so the `-preview` suffix falls out of the tree rather than appearing as a literal anywhere in the Makefile. `check-help` reads preview's own `paad-help`, so it validates against preview's skill list and travels with it at promotion.
 
-**Plugins only, once** — `check-versions`, `validate`, `check-readme`, and the three `check-export-*`. README documents the shipped set, so a preview-only skill is *tolerated* there, not required — its entry gets written on the release branch before `make release` runs, as its own commit. `check-versions` additionally asserts preview's version is the shipped one plus `-preview`.
+**Both trees, once** — `validate` iterates `plugins/*/ preview/*/`, so preview's manifest is validated too. `check-trees` compares them.
+
+**Plugins only, once** — `check-versions`, `check-readme`, and the three `check-export-*`. README documents the shipped set, so a preview-only skill is *tolerated* there, not required — its entry gets written on the release branch before `make release` runs, as its own commit. `check-versions` additionally asserts preview's version is the shipped one plus `-preview`.
 
 `make tree-checks TREE=preview/paad` runs one tree's block on its own.
 
@@ -100,7 +110,9 @@ There is no build and no artifact upload. Claude Code users install from this re
 
 **The version bump is the release, not the merge.** Claude Code resolves a plugin's version from `plugin.json` first and uses it as the cache key for update detection: if the resolved version matches what a user already has, both a manual update and auto-update skip the plugin. Because `plugin.json` sets `version` explicitly, commits merged to `main` without a bump never reach an existing install. Merging is safe; shipping is the bump.
 
-One leak used to sit under that: a *new* install clones the marketplace at `main`'s tip and gets whatever is there, version field notwithstanding, so unbumped user-facing work on `main` reached new users while existing ones stayed behind on the same version number. Preview closes it structurally rather than procedurally — `main`'s tip only ever carries the last promoted state of `plugins/`, however much unreleased work is queued in `preview/`. (Pinning the marketplace entry to a tag via a `git-subdir` source with `ref` would pin the Claude Code route too; the entry uses the relative-path form and does not.)
+One leak used to sit under that: a *new* install clones the marketplace at `main`'s tip and gets whatever is there, version field notwithstanding, so unbumped user-facing work on `main` reached new users while existing ones stayed behind on the same version number. Preview closes it structurally rather than procedurally — `main`'s tip only ever carries the last promoted state of `plugins/`, however much unreleased work is queued in `preview/`.
+
+**That invariant holds from the release that lands this design onward, not before it.** The branch that introduced `preview/` created it *from* an already-edited `plugins/`, so its own `plugins/` diff — the `help` → `paad-help` rename among it — never went through `make promote` and rides on an unchanged, already-released version number. Merging it therefore does exactly what the design exists to prevent, once: new installs pick the changes up from `main`'s tip while existing installs are told they are up to date. Nothing enforces the invariant retroactively and nothing should pretend it applied before it existed. Release promptly after that merge; from the next promotion on, the structural guarantee is real and `make check-trees` holds the containment half of it. (Pinning the marketplace entry to a tag via a `git-subdir` source with `ref` would pin the Claude Code route too; the entry uses the relative-path form and does not.)
 
 The changelog and tag are what make a release legible; the tag is a marker after the fact, not the delivery mechanism.
 

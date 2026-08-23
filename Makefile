@@ -7,7 +7,7 @@ SKILLS_DIR := $(TREE)/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test tree-checks validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current check-export-dryrun bump-version bump-tree promote export release tag
+.PHONY: help test tree-checks validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current check-export-dryrun check-trees bump-version bump-tree promote export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -21,7 +21,7 @@ self-tests: ## Run the hand-written parsers' own assertions
 	@python3 scripts/promote.py --self-test
 	@python3 scripts/lint_digraphs.py --self-test
 
-test: self-tests check-versions validate check-readme check-export-frontmatter check-export-commands check-export-current ## Run all checks
+test: self-tests check-versions check-trees validate check-readme check-export-frontmatter check-export-commands check-export-current ## Run all checks
 	@$(MAKE) --no-print-directory tree-checks TREE=plugins/paad
 	@$(MAKE) --no-print-directory tree-checks TREE=preview/paad
 	@echo "All checks passed."
@@ -454,6 +454,14 @@ check-export-commands: check-skill-names require-export ## Check no Claude Code 
 		exit 1; \
 	fi; \
 	echo "No Claude Code slash commands survived into the export."
+
+check-trees: ## Check plugins/paad is a subset of preview/paad, as the promotion model requires
+# The invariant runs one way: plugins/ is a past state of preview/, so preview may
+# hold paths plugins/ does not, never the reverse. Nothing else detects a breach.
+# check-versions relates the trees only by version string, and a revert touching
+# preview alone leaves it *behind* plugins/ with make test green and make export
+# still regenerating the reverted behaviour from plugins/.
+	@missing=$$(cd plugins/paad && find . -type f | while read -r f; do 		[ -e "../../preview/paad/$$f" ] || echo "$$f"; 	done); 	if [ -n "$$missing" ]; then 		echo "FAIL: plugins/paad holds path(s) preview/paad does not:"; 		echo "$$missing" | sed 's|^\./|  plugins/paad/|'; 		echo "      preview/ is always ahead of, or equal to, plugins/. A path here means"; 		echo "      preview lost something plugins still ships — the next promotion would"; 		echo "      delete it, and 'make export' regenerates it from plugins/ until then."; 		exit 1; 	fi; 	echo "plugins/paad is contained in preview/paad."
 
 check-export-dryrun: check-skill-names ## Run the exporter against one tree, keeping only its verdict (usage: make check-export-dryrun TREE=preview/paad)
 # The exporter reads plugins/paad/skills and nothing else, so preview content
