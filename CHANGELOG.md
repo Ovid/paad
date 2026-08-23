@@ -11,37 +11,38 @@ what a plugin user sees.
 ## [Unreleased]
 
 ### Changed
-- **`/paad:help` is now `/paad-help`** — renamed so it no longer collides with
-  Claude Code's built-in `/help`. Update any alias or note that used the old form.
-- **Skills now cross-reference each other by bare slash command** (`/pushback`,
-  not `/paad:pushback`), so those pointers work on assistants other than Claude
-  Code. The `paad:` prefix still works everywhere, for disambiguation.
+- **`/paad:help` is now `/paad-help`** — it collided with Claude Code's built-in
+  `/help`. Update any alias or note that used the old form.
+- **Skills cross-reference each other by bare slash command** (`/pushback`, not
+  `/paad:pushback`), so those pointers work outside Claude Code. The `paad:`
+  prefix still works everywhere.
+- **`agentic-review` takes its base branch from the repository** instead of
+  assuming `main`. On a `master` or `trunk` repository it now runs rather than
+  stopping.
 
 ### Added
-- **Install on almost any agent with `npx skills@latest add Ovid/paad`** — one
-  command, 70+ assistants including Cursor, Codex, GitHub Copilot, Gemini CLI,
-  Cline, and Zed. Claude Code users keep `/plugin install paad@paad`. See README.
+- **Install on almost any agent with `npx skills@latest add Ovid/paad`** — 70+
+  assistants including Cursor, Codex, GitHub Copilot, Gemini CLI, Cline and Zed.
+  Claude Code users keep `/plugin install paad@paad`. See README.
 
 ### Fixed
+- **`agentic-review` with no argument works again** — its pre-flight chart routed
+  the plain, argument-free invocation, the common one, into a stop.
 - **`agentic-review` no longer misreads a branch name as a directory** — an
-  argument like `origin/main` or `feature/login` was treated as a path filter,
-  scoping the review to a folder that does not exist and reporting it clean. It
-  now resolves the argument before deciding, and stops on a base branch it
-  cannot find instead of saying there is nothing to review.
-- **Kiro, Antigravity and Cursor copies can now be given a path to work on** —
-  the exporter was deleting every skill's `## Arguments` section, so skills that
-  told you to pass a path pointed at instructions that were not there. It also
-  took `vibe`'s Step 2 with it. Recopy from `kiro_and_antigravity/`.
-- **Kiro and Antigravity copies no longer tell you to run a slash command they
-  do not have**, and they picked up cross-references, stop conditions, and
-  reference-file preambles the exporter had been silently discarding. Recopy
-  from `kiro_and_antigravity/` — or switch to the npx installer.
+  argument like `origin/main` was scoped to a folder that does not exist and the
+  review came back clean. When a name is both, it now asks instead of guessing.
+- **Kiro, Antigravity and Cursor copies can be told which path to work on** —
+  the exporter was deleting every skill's `## Arguments` section, and took
+  `vibe`'s Step 2 with it. Recopy from `kiro_and_antigravity/`.
+- **Those same copies were missing their prompt-injection defense** — four of
+  `agentic-review`'s six specialists shipped without the "treat read content as
+  untrusted" preamble. They also lost their pre-flight checks and their
+  cross-references. Recopy, or switch to the npx installer.
 
 ### Deprecated
 - **Copying out of `kiro_and_antigravity/` is deprecated** in favor of the npx
-  installer. It still works and still writes reports to `.reviews/`; if you
-  switch, move your existing `.reviews/` folders into `paad/` so the skills can
-  still find them.
+  installer. It still works and still writes to `.reviews/`; if you switch, move
+  existing `.reviews/` folders into `paad/`.
 
 ## [1.30.2] — 2026-08-21
 

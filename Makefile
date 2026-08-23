@@ -242,7 +242,7 @@ check-help: check-skill-names ## Check every skill is documented in paad-help
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
 		if [ "$$name" = "paad-help" ]; then continue; fi; \
-		if ! grep -qE "(^|[^A-Za-z0-9._/-])/$$name([^A-Za-z0-9/-]|$$)" "$(SKILLS_DIR)/paad-help/SKILL.md" 2>/dev/null; then \
+		if ! grep -qE "(^|[^A-Za-z0-9._/-])/(paad:)?$$name([^A-Za-z0-9/-]|$$)" "$(SKILLS_DIR)/paad-help/SKILL.md" 2>/dev/null; then \
 			echo "FAIL: $$name not found in paad-help"; \
 			fail=1; \
 		fi; \
@@ -255,7 +255,7 @@ check-readme: check-skill-names ## Check every skill is documented in README.md
 	for dir in $(SKILL_DIRS); do \
 		name=$$(basename "$$dir"); \
 		if [ "$$name" = "paad-help" ]; then continue; fi; \
-		if ! grep -qE "(^|[^A-Za-z0-9._/-])/$$name([^A-Za-z0-9/-]|$$)" README.md 2>/dev/null; then \
+		if ! grep -qE "(^|[^A-Za-z0-9._/-])/(paad:)?$$name([^A-Za-z0-9/-]|$$)" README.md 2>/dev/null; then \
 			echo "FAIL: $$name not found in README.md"; \
 			fail=1; \
 		fi; \

@@ -80,7 +80,10 @@ def _skill_command_re():
     cannot stop at a shorter prefix. Both spellings are matched because the
     plugin-qualified `/paad:vibe` form still works in Claude Code and still
     means nothing anywhere else. The lookbehind keeps a rewritten output path
-    (`.reviews/alignment/`) from looking like a command; the lookahead keeps
+    (`.reviews/alignment/`) from looking like a command, and excludes `/` so a
+    doubled slash is not read as one — it is the same character class the three
+    Makefile checks use, and stripping only the second slash of `//vibe` left
+    behind exactly what check-export-commands then rejected. The lookahead keeps
     `/alignment-reviews/` and the trailing slash of a directory out of it.
     """
     names = sorted(
@@ -90,7 +93,7 @@ def _skill_command_re():
     )
     alternation = "|".join(re.escape(name) for name in names)
     return re.compile(
-        r"(?<![A-Za-z0-9._-])/(?:paad:)?(" + alternation + r")(?![A-Za-z0-9/-])"
+        r"(?<![A-Za-z0-9._/-])/(?:paad:)?(" + alternation + r")(?![A-Za-z0-9/-])"
     )
 
 
@@ -115,7 +118,7 @@ def _skipped_command_re():
         re.escape(name) for name in sorted(SKIP_NAMES, key=len, reverse=True)
     )
     return re.compile(
-        r"(?<![A-Za-z0-9._-])/(?:paad:)?(" + alternation + r")(?![A-Za-z0-9/-])"
+        r"(?<![A-Za-z0-9._/-])/(?:paad:)?(" + alternation + r")(?![A-Za-z0-9/-])"
     )
 
 

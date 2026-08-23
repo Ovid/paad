@@ -20,7 +20,7 @@
     - Version announce
     - Explain things SIMPLY so that everyone can understand.
     - paad-analyst is another example of something that must be copied.
-    - backlog item count (see docs/FIX-BACKLOGS.md)
+    - backlog item count (see docs/FIX-BACKLOG.md)
 - Do negative assertions distract?
 - Add /implement skill to go with roadmap. That skill should be live "vibe
   mode on steroids", running brainstorming, pushback, writing plans, and

@@ -170,8 +170,10 @@ silently, which is the failure this design is trying to avoid.
 
 ## Export changes
 
-Delete the five path rewrites in `neutralize_paths()`
-(`scripts/convert_skills.py:80-86`):
+Delete the five path rewrites in `neutralize_paths()` (in
+`scripts/convert_skills.py` — no line number: this document says above that its
+citations are unmaintained, and the last attempt to refresh this one landed
+inside a different function's docstring):
 
 ```python
 text = text.replace("paad/architecture-reviews/", ".reviews/architecture/")
