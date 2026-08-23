@@ -99,6 +99,10 @@ digraph analysis_flow {
 
 When a path is provided, focus the analysis on that scope but still note dependencies on code outside the scope.
 
+## Pre-flight Checks
+
+1. **Context window:** If conversation has substantive history beyond invoking this skill, tell the user: "This analysis consumes significant context. Start a fresh session with `agentic-architecture` to avoid context rot." Stop and wait.
+
 ## Phase 1: Reconnaissance
 
 Run these steps and collect results:

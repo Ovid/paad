@@ -159,13 +159,19 @@ def stranded_refs(path, text, base_line=0):
     return hits
 
 
-# Matched exactly against the heading text, never as a substring: vibe's
-# "## Step 2: Pre-flight Checks" is a workflow step, not the section of the
-# same name, and a substring test deleted it — leaving the export to jump
-# from Step 1 to Step 3. "Arguments" is deliberately absent: those sections
-# are portable prose once neutralize() rewrites the example invocations, and
-# deleting them stranded cross-references that tell the reader to pass a path.
-UNWANTED_HEADERS = ["Input Resolution", "Pre-flight Checks", "Document classification"]
+# Matched exactly against the heading text, never as a substring: a workflow
+# step named "## Step 2: Pre-flight Checks" is not the section of the same
+# name, and a substring test deleted it — leaving the export to jump from
+# Step 1 to Step 3.
+#
+# "Arguments" and "Pre-flight Checks" are both deliberately absent. They are
+# portable prose once neutralize() rewrites the example invocations, and
+# deleting them stranded what the rest of the file refers to. Pre-flight is the
+# sharper case: paad puts every digraph above the first heading, so the digraph
+# is always kept while the section it diagrams was being dropped — the export
+# shipped STOP nodes naming tests and messages that no surviving prose defined,
+# and for that population the digraph *is* the pre-flight.
+UNWANTED_HEADERS = ["Input Resolution", "Document classification"]
 
 
 def sections(body_text):
