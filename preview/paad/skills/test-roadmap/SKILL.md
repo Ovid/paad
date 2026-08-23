@@ -13,7 +13,7 @@ metadata:
   internal: true
 ---
 
-**On invocation:** announce "Running paad:test-roadmap v1.30.2-preview" before anything else.
+**On invocation:** announce "Running paad:test-roadmap v1.31.0-preview" before anything else.
 
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not

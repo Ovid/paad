@@ -3,7 +3,7 @@ name: agentic-owasp
 description: "EXPERIMENTAL. Use when code needs a security review against the OWASP Top 10:2025 — access control, misconfiguration, supply chain, cryptography, injection, insecure design, authentication, integrity, logging and alerting, and mishandled exceptional conditions. Not for penetration testing a running system, not for infrastructure-only scanning, and not for fixing what it finds."
 ---
 
-**On invocation:** announce "Running paad:agentic-owasp v1.30.2" before anything else.
+**On invocation:** announce "Running paad:agentic-owasp v1.31.0" before anything else.
 
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not

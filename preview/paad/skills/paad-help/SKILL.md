@@ -5,7 +5,7 @@ metadata:
   internal: true
 ---
 
-**On invocation:** announce "Running paad:paad-help v1.30.2-preview" before anything else.
+**On invocation:** announce "Running paad:paad-help v1.31.0-preview" before anything else.
 
 # paad Help
 

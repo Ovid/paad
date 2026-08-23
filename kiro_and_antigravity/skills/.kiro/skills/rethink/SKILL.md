@@ -3,7 +3,7 @@ name: rethink
 description: EXPERIMENTAL. Use when options, a recommendation, or an already-chosen approach are on the table and the reasoning under them has not been independently checked — especially when the case rests on cited documentation, remembered behavior, or premises nobody verified. Not for generating alternatives, and not for critiquing a spec, which is the pushback skill.
 ---
 
-**On invocation:** announce "Running paad:rethink v1.30.2" before anything else.
+**On invocation:** announce "Running paad:rethink v1.31.0" before anything else.
 
 # Rethink
 

@@ -3,7 +3,7 @@ name: paad-help
 description: Use when the user asks which paad skills exist, what a paad skill does, which one fits their situation, or how to invoke one — including "what can paad do", "list the paad skills", "is there a paad skill for X", or a request for the arguments of a named paad skill
 ---
 
-**On invocation:** announce "Running paad:paad-help v1.30.2" before anything else.
+**On invocation:** announce "Running paad:paad-help v1.31.0" before anything else.
 
 # paad Help
 
@@ -218,13 +218,27 @@ Output:   paad/code-reviews/<branch>-<timestamp>-<short-sha>.md (per-review)
           paad/code-reviews/backlog.md (project-wide, persistent)
 
 Arguments:
-  /agentic-review                    Diff against main
+  /agentic-review                    Diff against the default branch
   /agentic-review develop            Diff against a different branch
   /agentic-review main src/auth/     Scope to a directory
 
+  One argument is read as a base branch if git can resolve it, otherwise
+  as a path if it exists on disk. If it is both -- "docs", "release",
+  "test" and "api" are ordinary names for either -- the skill stops and
+  asks rather than guessing.
+
 Requirements:
-  - Must be on a feature branch (not main/master)
+  - Must be on a feature branch (not the repository's default branch,
+    resolved from origin/HEAD, falling back to main/master/trunk)
   - Uncommitted changes: asks whether to review the committed state or wait
+
+Stops before reviewing when:
+  - The base branch does not resolve
+  - A path filter was given and does not exist
+  - An argument is neither a ref nor a path, or is ambiguously both
+  - An argument holds a character git could read as a flag
+  - The default branch cannot be determined at all
+  - The filtered diff is empty
 
 What it does:
   1. Reconnaissance: diff stats, file manifest, callers/callees

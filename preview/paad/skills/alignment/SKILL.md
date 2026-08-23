@@ -5,7 +5,7 @@ metadata:
   internal: true
 ---
 
-**On invocation:** announce "Running paad:alignment v1.30.2-preview" before anything else.
+**On invocation:** announce "Running paad:alignment v1.31.0-preview" before anything else.
 
 # Alignment Check
 

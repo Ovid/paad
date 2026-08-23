@@ -1,3 +1,9 @@
+- Skills really don't allow subroutines. Should I start using **templates**?
+    - Version announce
+    - Explain things SIMPLY so that everyone can understand.
+    - paad-analyst is another example of something that must be copied.
+    - backlog item count (see docs/FIX-BACKLOG.md)
+    - promp injection guard
 - don't rewrite to red/green/refactor if already done.
 - Persistent, intermittent bug where we announce the version and then stop. We
   should change it to announcing the version and explicitly telling it to
@@ -16,11 +22,6 @@
   consider if we can modify skills to be more skeptical of the steering files
   and code patterns, and to challenge them if there is a CLEAR reason for
   doing so.
-- Skills really don't allow subroutines. Should I start using templates?
-    - Version announce
-    - Explain things SIMPLY so that everyone can understand.
-    - paad-analyst is another example of something that must be copied.
-    - backlog item count (see docs/FIX-BACKLOG.md)
 - Do negative assertions distract?
 - Add /implement skill to go with roadmap. That skill should be live "vibe
   mode on steroids", running brainstorming, pushback, writing plans, and

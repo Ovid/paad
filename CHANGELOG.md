@@ -10,6 +10,8 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [1.31.0] — 2026-08-23
+
 ### Changed
 - **`/paad:help` is now `/paad-help`** — it collided with Claude Code's built-in
   `/help`. Update any alias or note that used the old form.
@@ -702,7 +704,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.30.2...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.31.0...HEAD
+[1.31.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.31.0
 [1.30.2]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.2
 [1.30.1]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.1
 [1.30.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.0

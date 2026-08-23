@@ -3,7 +3,7 @@ name: fix-architecture
 description: Use when working through architectural flaws documented in a paad/architecture-reviews/ report — selecting which flaws to fix, resuming a partial fix session across multiple sittings, or applying structural changes that need to be tracked back to a report. Not for producing that report — run /agentic-architecture first if there isn't one.
 ---
 
-**On invocation:** announce "Running paad:fix-architecture v1.30.2" before anything else.
+**On invocation:** announce "Running paad:fix-architecture v1.31.0" before anything else.
 
 # Fix Architecture
 

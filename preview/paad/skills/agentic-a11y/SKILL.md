@@ -5,7 +5,7 @@ metadata:
   internal: true
 ---
 
-**On invocation:** announce "Running paad:agentic-a11y v1.30.2-preview" before anything else.
+**On invocation:** announce "Running paad:agentic-a11y v1.31.0-preview" before anything else.
 
 # Accessibility Audit
 
