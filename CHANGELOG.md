@@ -10,6 +10,9 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Added
+- **`/paad-help` links to the full tutorial** at https://curtispoe.org/paad/.
+
 ## [1.31.0] — 2026-08-23
 
 ### Changed

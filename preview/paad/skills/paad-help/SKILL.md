@@ -42,6 +42,8 @@ When showing the overview, display exactly this:
 paad — Engineering-driven AI.
 Use your engineering excellence — the one thing AI reliably skips.
 
+Full tutorial: https://curtispoe.org/paad/
+
 Available skills:
 
   /agentic-a11y [path]                  Accessibility audit (web, mobile, desktop, CLI, games)
