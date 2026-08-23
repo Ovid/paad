@@ -148,9 +148,13 @@ README entry passes every check until the release promotes it — and then fails
 and both trees' version strings already written, and `make release` unable to
 re-run against the dirty tree it just made.
 
+`make promote` now runs `check-readme TREE=preview/paad` before its rsync, so
+this fails the release *before* anything is written rather than after. Run it up
+front anyway — knowing at step 2.5 costs a second, and finding out at step 3
+means starting over:
+
 ```bash
-for d in preview/paad/skills/*/; do n=$(basename "$d"); [ "$n" = paad-help ] && continue; \
-  grep -qE "(^|[^A-Za-z0-9._/-])/$n([^A-Za-z0-9/-]|$)" README.md || echo "MISSING FROM README: $n"; done
+make check-readme TREE=preview/paad
 ```
 
 Anything listed, **stop.** Write the README entry as its own commit on this
@@ -164,12 +168,17 @@ have caught that one.
 Confirm you are on a branch, not `main` — `make release` refuses on `main`, but
 say so before running rather than after.
 
-Release from the branch that already carries the unreleased work, so the feature
-and its bump merge together. `main` holding user-facing work that has not been
-bumped is the leak CLAUDE.md describes under "Releasing": a new install clones
-`main`'s tip and gets it, while existing installs stay behind on the same version
-number. If the work is already merged and there is no such branch, cut one off
-`main` and say that the window is open until it lands.
+Cut the release branch from an up-to-date `main`. The old rule — release from
+the branch that carries the work — is retired, and CLAUDE.md says so: `preview/`
+closed the leak it existed to avoid, so work merges to `main` unbumped and
+unpromoted and accumulates there until someone decides to ship.
+
+Releasing from an older feature branch is now a hazard rather than a habit.
+`make promote` rsyncs *this working tree's* `preview/paad`, so a branch behind
+`main` silently omits everything merged since, and every check passes because
+the omitted work is not there to fail on. `make release` refuses when
+`origin/main` is not an ancestor of `HEAD`; `git fetch origin` first so that
+check is comparing against something current.
 
 ```bash
 make release VERSION=X.Y.Z
@@ -180,22 +189,50 @@ preview markers, rolls the changelog with today's real date, opens a fresh
 `[Unreleased]`, fixes both link refs, rewrites every version string in both trees,
 regenerates `kiro_and_antigravity/` and `pi/`, and runs `make test`.
 
-Promotion refuses on a dirty tree, so anything uncommitted stops the release
-before it mutates anything.
+Promotion refuses on a dirty tree, so uncommitted work stops the release before
+it mutates anything. That covers uncommitted work only — it is not a general
+safety net, and everything below assumes a run that got past it.
 
 **If it fails, stop and report the failure.** Do not hand-patch around it. A
 failing check at this point means either the release is not ready or a generator
 is wrong, and both need a decision from Ovid.
 
-Report the state along with the failure, because it is not clean: `make release`
-mutates before it verifies, so a failure at `make test` leaves the changelog
-rolled and every version string bumped. Say so, and say that re-running
-`make release` will not work — it refuses on the now-dirty tree, and
-`roll_changelog.py` refuses a second time on a version that already has a
-section. Once Ovid has decided and the cause is fixed, the way forward is
-`make export && make test` and then commit; the way out is `git checkout -- .`,
-which discards the roll and the bump together. Neither is the hand-patching this
-step forbids — that means editing the generated output to make a check pass.
+Report the state along with the failure, because it is not clean. A failure at
+`make test` leaves **three** mutations in place, and the first is the one that
+matters most:
+
+1. **`plugins/paad` overwritten wholesale** by promotion's rsync — the release's
+   actual payload, and the largest of the three.
+2. The changelog rolled into a dated section, with a fresh `[Unreleased]`.
+3. Every version string bumped, in both trees.
+
+Say that re-running `make release` will not work: it refuses on the now-dirty
+tree, and `roll_changelog.py` refuses a second time on a version that already
+has a section.
+
+**Do not offer `make export && make test` as the way forward for a failure that
+needs a SKILL.md edit.** It cannot work. The fix has to land in `preview/`,
+`make promote` then refuses on the dirty tree, and `make export` regenerates
+from the *unfixed* `plugins/` — so the only way that advice succeeds is the
+hand-edit of `plugins/` this project forbids everywhere else. For that class,
+the way out is a reset, not a patch. It is available for a failure that touches
+nothing under `preview/` — a stale export, say — where `make export` and a
+commit genuinely finish the job.
+
+**The way out is a reset, and `git checkout -- .` alone does not do it.**
+Promotion brings across skills that exist only in `preview/`, and those arrive
+as *untracked* paths that `git checkout` does not touch — `.gitignore` covers
+nothing under `plugins/`, `kiro_and_antigravity/` or `pi/`, so the operator sees
+a green `git diff` and concludes the rollback worked while an unreleased skill
+sits in the shipped tree, waiting for the next `git add -A`. Use both:
+
+```bash
+git checkout -- . && git clean -fd plugins/ kiro_and_antigravity/ pi/
+```
+
+Scoping `git clean` to those three is safe because all three are generated-only.
+Neither route is the hand-patching this step forbids — that means editing the
+generated output to make a check pass.
 
 ## 4. Read the payload, then show the work
 
