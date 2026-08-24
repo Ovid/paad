@@ -2,8 +2,14 @@
     - Version announce
     - Explain things SIMPLY so that everyone can understand.
     - paad-analyst is another example of something that must be copied.
-    - backlog item count (see docs/FIX-BACKLOG.md)
-    - promp injection guard
+    - backlog item count
+    - prompt injection guard
+- Steal notes from
+  https://github.com/obra/dotfiles/commits/main/.claude/CLAUDE.md
+- Reports:
+    - Reports need to have proper bullet points at the top.
+    - ALL REPORTS should list model name and PAAD version. This is important for
+      debugging and for understanding the context of the report.
 - don't rewrite to red/green/refactor if already done.
 - Persistent, intermittent bug where we announce the version and then stop. We
   should change it to announcing the version and explicitly telling it to
