@@ -15,6 +15,11 @@ In Claude Code:
 
 ```
 /plugin marketplace add Ovid/paad
+```
+
+And then:
+
+```
 /plugin install paad@paad
 ```
 
