@@ -337,9 +337,9 @@ Create the `paad/pushback-reviews/` directory if it doesn't exist.
 ```markdown
 # Pushback Review: <spec name or filename>
 
-**Date:** YYYY-MM-DD
-**Spec:** <file path or "conversation history">
-**Commit:** <current HEAD sha, or "N/A">
+- **Date:** YYYY-MM-DD
+- **Spec:** <file path or "conversation history">
+- **Commit:** <current HEAD sha, or "N/A">
 
 ## Source Control Conflicts
 

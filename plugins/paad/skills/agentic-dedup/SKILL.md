@@ -713,11 +713,11 @@ into table cells.
 ```markdown
 # Semantic Duplicate Code Hunt: <branch-or-scope>
 
-**Date:** YYYY-MM-DD HH:MM:SS
-**Repository:** <repo root>
-**Scope:** <paths/modules/changed files/domain>
-**Commit:** <full-sha or "working tree">
-**Mode:** full scan / changed-code scan / type-constraint scan / domain scan
+- **Date:** YYYY-MM-DD HH:MM:SS
+- **Repository:** <repo root>
+- **Scope:** <paths/modules/changed files/domain>
+- **Commit:** <full-sha or "working tree">
+- **Mode:** full scan / changed-code scan / type-constraint scan / domain scan
 
 ## Executive Summary
 

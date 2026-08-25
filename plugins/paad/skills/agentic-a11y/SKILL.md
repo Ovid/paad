@@ -343,14 +343,14 @@ Create the `paad/a11y-reviews/` directory if it doesn't exist.
 ```markdown
 # Accessibility Audit: <project-name>
 
-**Date:** YYYY-MM-DD HH:MM:SS
-**Commit:** <full-sha>
-**Platform(s):** <detected platforms>
-**Tech stack:** <frameworks, libraries, engines>
-**Files audited:** N
-**Existing a11y tooling:** <list or "none found">
-**Conformance target:** WCAG 2.2 AA via WCAG2ICT (AAA noted as recommendations)
-**Platform guidelines referenced:** <e.g., Apple HIG Accessibility, Material Design Accessibility, Xbox Accessibility Guidelines, or "N/A">
+- **Date:** YYYY-MM-DD HH:MM:SS
+- **Commit:** <full-sha>
+- **Platform(s):** <detected platforms>
+- **Tech stack:** <frameworks, libraries, engines>
+- **Files audited:** N
+- **Existing a11y tooling:** <list or "none found">
+- **Conformance target:** WCAG 2.2 AA via WCAG2ICT (AAA noted as recommendations)
+- **Platform guidelines referenced:** <e.g., Apple HIG Accessibility, Material Design Accessibility, Xbox Accessibility Guidelines, or "N/A">
 
 ## Executive Summary
 
