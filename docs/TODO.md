@@ -6,14 +6,7 @@
     - prompt injection guard
 - Steal notes from
   https://github.com/obra/dotfiles/commits/main/.claude/CLAUDE.md
-- Reports:
-    - Reports need to have proper bullet points at the top.
-    - ALL REPORTS should list model name and PAAD version. This is important for
-      debugging and for understanding the context of the report.
 - don't rewrite to red/green/refactor if already done.
-- Persistent, intermittent bug where we announce the version and then stop. We
-  should change it to announcing the version and explicitly telling it to
-  continue.
 - When agents return, always produce a very terse summary
     - Verifier will replay the summary, with duplicates removed
     - Verifier will replay the summary, when false positives are rejected
@@ -38,3 +31,13 @@
 
 - Add .paadrc file for configuration. (decided against it, maybe later)
 - memory system?
+
+# DONE
+
+- Reports:
+    - Reports need to have proper bullet points at the top.
+    - ALL REPORTS should list model name and PAAD version. This is important for
+      debugging and for understanding the context of the report.
+- Persistent, intermittent bug where we announce the version and then stop. We
+  should change it to announcing the version and explicitly telling it to
+  continue.
