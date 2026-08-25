@@ -10,6 +10,11 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Changed
+- **Skills are less likely to stall right after announcing themselves** — the
+  on-invocation line now tells the agent to proceed with the skill immediately
+  instead of stopping after the announcement.
+
 ### Added
 - **Report headers now record the model and PAAD version** that produced them,
   alongside the date and commit — context for debugging and reproducing a report.

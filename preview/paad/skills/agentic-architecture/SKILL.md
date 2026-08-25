@@ -5,7 +5,7 @@ metadata:
   internal: true
 ---
 
-**On invocation:** announce "Running paad:agentic-architecture v1.31.0-preview" before anything else.
+**On invocation:** announce "Running paad:agentic-architecture v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
 # Agentic Architecture Analysis
 

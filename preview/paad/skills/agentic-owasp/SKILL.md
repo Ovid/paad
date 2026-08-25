@@ -5,7 +5,7 @@ metadata:
   internal: true
 ---
 
-**On invocation:** announce "Running paad:agentic-owasp v1.31.0-preview" before anything else.
+**On invocation:** announce "Running paad:agentic-owasp v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
