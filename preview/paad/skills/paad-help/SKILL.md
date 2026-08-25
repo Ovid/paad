@@ -42,6 +42,8 @@ When showing the overview, display exactly this:
 paad — Engineering-driven AI.
 Use your engineering excellence — the one thing AI reliably skips.
 
+Full tutorial: https://curtispoe.org/paad/
+
 Available skills:
 
   /agentic-a11y [path]                  Accessibility audit (web, mobile, desktop, CLI, games)
@@ -55,6 +57,7 @@ Available skills:
 
 Experimental — may change or be withdrawn in any release, including patches:
 
+  /backlog [clean|fix]                  Clean or fix the out-of-scope bug backlog
   /agentic-dedup [scope]                Find semantic duplication (same meaning, different code)
   /agentic-owasp [scope]                Security review against the OWASP Top 10:2025
   /handoff [save|resume]                Hand this session's work to a fresh session, in writing
@@ -66,6 +69,9 @@ Picking between them:
   Want structural flaws found?          agentic-architecture (diagnoses, does not fix)
   Want them fixed?                      fix-architecture (needs a report first)
   Want bugs in a branch?                agentic-review (a diff, not the codebase)
+  Have a backlog of found bugs?         backlog (experimental; clean stale
+                                        entries, or fix the next one —
+                                        agentic-review fills it)
   Want accessibility barriers?          agentic-a11y (not general correctness)
   Want duplicated logic found?          agentic-dedup (experimental; reports,
                                         never refactors)
@@ -269,6 +275,54 @@ What it does:
      - Backlog updates surfaced in metadata
 
 Best used in a fresh session — consumes significant context.
+```
+
+### backlog
+
+```
+/backlog [clean|fix]                   EXPERIMENTAL
+
+EXPERIMENTAL — arguments, modes, and behavior may change or be withdrawn in
+any release, including patch releases.
+
+Work the project-wide out-of-scope bug backlog that /agentic-review writes
+to. Two modes, one flat file. Never commits — it edits files and prints the
+commit command for you to run.
+
+Input/output: paad/code-reviews/backlog.md (the file /agentic-review fills)
+
+Arguments:
+  /backlog          List the entries, then show the two-option menu
+  /backlog clean    Go straight to Clean mode
+  /backlog fix      Go straight to Fix mode
+
+Requirements:
+  - A populated paad/code-reviews/backlog.md. If it is missing or empty,
+    the skill says so and points you at /agentic-review.
+
+Clean mode:
+  1. One skeptical read-only analyst per entry re-verifies it against the
+     current code: STILL-PRESENT / RESOLVED / GONE, each with cited evidence
+  2. Deletes only RESOLVED/GONE entries — any doubt keeps the entry. A
+     renamed or moved symbol is not treated as a fix
+  3. Dedupes/merges any duplicate survivors (rare — agentic-review dedupes
+     at mint time)
+  4. Prints a git commit command with the resolution notes; does not run it
+
+Fix mode:
+  1. Ranks entries by severity then age, proposes the top one, you pick
+     (one item per run — no batch-fixing)
+  2. Fixes the bug directly or via /vibe
+  3. Validation gate before removal: an INDEPENDENT read-only analyst must
+     confirm from the code that the bug is gone; project tests run if a
+     command exists. No test command means "validated by inspection only" —
+     never a pass on its own, and your own edit is never the evidence
+  4. Gate passes -> deletes the entry and prints the commit command;
+     gate fails -> keeps the entry and reports what is still wrong
+
+Deleting a backlog entry destroys a record, so the skill leans conservative:
+a wrongly-kept entry is one stale line, a wrongly-deleted one loses a real
+bug (recoverable only from git log on the file).
 ```
 
 ### alignment

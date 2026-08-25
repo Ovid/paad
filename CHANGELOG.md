@@ -10,6 +10,16 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Added
+- **`/paad-help` links to the full tutorial** at https://curtispoe.org/paad/.
+- **`/backlog [clean|fix]` — work the out-of-scope bug backlog `/agentic-review`
+  writes. Experimental.** Clean re-verifies each entry against the current code
+  and drops the resolved; Fix picks the next entry and fixes it, removing it only
+  after an independent analyst confirms the bug is gone. Never commits — it prints
+  the commit command for you to run. Experimental: arguments, modes, and behavior
+  may change or be withdrawn in any release, including a patch. See
+  `/paad-help backlog`.
+
 ## [1.31.0] — 2026-08-23
 
 ### Changed
