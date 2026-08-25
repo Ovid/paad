@@ -8,6 +8,8 @@
 # Architecture Report — <repo-name or current folder>
 
 * **Date:** YYYY-MM-DD
+* **Model:** <the model you are running as — from your environment; "unknown" if unavailable>
+* **PAAD version:** <plugin version from your on-invocation announce line>
 * **Commit:** <full-sha>
 * **Languages:** <primary languages/frameworks>
 * **Key directories:** <list>

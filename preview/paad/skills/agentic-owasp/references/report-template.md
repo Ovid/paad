@@ -15,6 +15,8 @@ cells.
 # OWASP Top 10:2025 Review: <branch-or-scope>
 
 * **Date:** YYYY-MM-DD HH:MM:SS
+* **Model:** <the model you are running as — from your environment; "unknown" if unavailable>
+* **PAAD version:** <plugin version from your on-invocation announce line>
 * **Repository:** <repo root>
 * **Scope:** <paths/modules/changed files/categories>
 * **Commit:** <full-sha or "working tree">

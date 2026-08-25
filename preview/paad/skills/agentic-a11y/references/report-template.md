@@ -8,6 +8,8 @@
 # Accessibility Audit: <project-name>
 
 * **Date:** YYYY-MM-DD HH:MM:SS
+* **Model:** <the model you are running as — from your environment; "unknown" if unavailable>
+* **PAAD version:** <plugin version from your on-invocation announce line>
 * **Commit:** <full-sha>
 * **Platform(s):** <detected platforms>
 * **Tech stack:** <frameworks, libraries, engines>

@@ -8,6 +8,8 @@
 # Alignment Review: <topic or project name>
 
 * **Date:** YYYY-MM-DD
+* **Model:** <the model you are running as — from your environment; "unknown" if unavailable>
+* **PAAD version:** <plugin version from your on-invocation announce line>
 * **Commit:** <current HEAD sha, or "N/A">
 
 ## Documents Reviewed

@@ -11,6 +11,8 @@ what a plugin user sees.
 ## [Unreleased]
 
 ### Added
+- **Report headers now record the model and PAAD version** that produced them,
+  alongside the date and commit — context for debugging and reproducing a report.
 - **`/paad-help` links to the full tutorial** at https://curtispoe.org/paad/.
 - **`/backlog [clean|fix]` — work the out-of-scope bug backlog `/agentic-review`
   writes. Experimental.** Clean re-verifies each entry against the current code
