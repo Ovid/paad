@@ -236,8 +236,8 @@ Create the `.reviews/alignment/` directory if it doesn't exist.
 ```markdown
 # Alignment Review: <topic or project name>
 
-**Date:** YYYY-MM-DD
-**Commit:** <current HEAD sha, or "N/A">
+- **Date:** YYYY-MM-DD
+- **Commit:** <current HEAD sha, or "N/A">
 
 ## Documents Reviewed
 

@@ -195,11 +195,11 @@ Create the `.reviews/architecture/` directory if it doesn't exist.
 ```markdown
 # Architecture Report — <repo-name or current folder>
 
-**Date:** YYYY-MM-DD
-**Commit:** <full-sha>
-**Languages:** <primary languages/frameworks>
-**Key directories:** <list>
-**Scope:** <full repo or specific paths>
+- **Date:** YYYY-MM-DD
+- **Commit:** <full-sha>
+- **Languages:** <primary languages/frameworks>
+- **Key directories:** <list>
+- **Scope:** <full repo or specific paths>
 
 ## Repo Overview
 

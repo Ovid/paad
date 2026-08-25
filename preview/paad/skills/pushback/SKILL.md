@@ -5,7 +5,7 @@ metadata:
   internal: true
 ---
 
-**On invocation:** announce "Running paad:pushback v1.31.0-preview" before anything else.
+**On invocation:** announce "Running paad:pushback v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
 # Spec Pushback
 
@@ -334,48 +334,7 @@ Write to `paad/pushback-reviews/<YYYY-MM-DD>-<spec-name>-pushback.md`.
 
 Create the `paad/pushback-reviews/` directory if it doesn't exist.
 
-**Report template:**
-
-```markdown
-# Pushback Review: <spec name or filename>
-
-**Date:** YYYY-MM-DD
-**Spec:** <file path or "conversation history">
-**Commit:** <current HEAD sha, or "N/A">
-
-## Source Control Conflicts
-
-<conflicts found, or "None — no conflicts with recent changes.">
-
-## Issues Reviewed
-
-### [1] <title>
-- **Category:** <contradictions / feasibility / scope imbalance / omissions / ambiguity / security>
-- **Severity:** <critical / serious / moderate / minor>
-- **Issue:** <what's wrong>
-- **Resolution:** <what the user decided>
-
-(Repeat for each issue discussed.)
-
-## Unresolved Issues
-
-Issues not yet discussed (user stopped early). Listed for future reference.
-
-### [N] <title>
-- **Category:** ...
-- **Severity:** ...
-- **Issue:** ...
-- **Suggested options:** ...
-
-(Omit section if all issues were addressed.)
-
-## Summary
-
-- **Issues found:** N (plus K candidates dropped for lacking a defensible consequence)
-- **Unresolved:** N - M   <!-- omit this line entirely when nothing is unresolved -->
-- **Status:** <one or two sentences: what has to happen before implementation
-  starts, and what can ride along. Not a verdict word.>
-```
+The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for that deliverable.
 
 ### List every file you wrote or updated
 

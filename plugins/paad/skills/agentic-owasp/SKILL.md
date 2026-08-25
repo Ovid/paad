@@ -1333,11 +1333,11 @@ cells.
 ```markdown
 # OWASP Top 10:2025 Review: <branch-or-scope>
 
-**Date:** YYYY-MM-DD HH:MM:SS
-**Repository:** <repo root>
-**Scope:** <paths/modules/changed files/categories>
-**Commit:** <full-sha or "working tree">
-**Mode:** full review / changed-code review / category review / dependency review
+- **Date:** YYYY-MM-DD HH:MM:SS
+- **Repository:** <repo root>
+- **Scope:** <paths/modules/changed files/categories>
+- **Commit:** <full-sha or "working tree">
+- **Mode:** full review / changed-code review / category review / dependency review
 
 > This report describes unfixed weaknesses and where they live. Treat it as
 > sensitive until the findings are closed. It is true of the commit named above
