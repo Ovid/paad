@@ -16,6 +16,23 @@ what a plugin user sees.
   instead of stopping after the announcement.
 
 ### Added
+- **`/pushback` asks whether each requirement should exist at all.** A new Warrant
+  phase traces every requirement to the document the spec came from — a brief, a
+  ticket, an email thread — and marks it traced, derived, amplified or untraced.
+  Only amplified and untraced requirements are put to you, with one question: if we
+  ship without this, what observably breaks, for whom, within three months? "A
+  department wants it" is recorded as the owner, not accepted as the answer.
+- **`/pushback` has a simplicity pass, and it stops for a ruling.** A new phase asks
+  whether the proposed solution is bigger than the problem — speculative
+  generality, a layer for one caller, config nobody sets — and proposes each cut
+  with a pragmatic alternative and the concrete condition that would justify
+  building it later. It announces itself by name and count, puts up one table, and
+  does not advance until every row is ruled on. A row nobody ruled on keeps its
+  machinery.
+- **`/pushback` quotes what it is asking about.** Every question now carries the
+  requirement verbatim in a blockquote above it, states the problem in five lines
+  or fewer of plain language, says what happens if you say nothing, and says what
+  the change drags with it before you answer rather than after.
 - **Report headers now record the model and PAAD version** that produced them,
   alongside the date and commit — context for debugging and reproducing a report.
 - **`/paad-help` links to the full tutorial** at https://curtispoe.org/paad/.

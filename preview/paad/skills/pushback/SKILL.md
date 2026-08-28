@@ -59,6 +59,12 @@ digraph scope_critique_resolution {
   "User splits them out?" [shape=diamond];
   "Spec large?" [shape=diamond];
   "Meaningful split exists?" [shape=diamond];
+  "Upstream document found?" [shape=diamond];
+  "Anything amplified or untraced?" [shape=diamond];
+  "More than a third of them?" [shape=diamond];
+  "Machinery proposed?" [shape=diamond];
+  "Any over-engineering?" [shape=diamond];
+  "Every row ruled on?" [shape=diamond];
   "Issues found?" [shape=diamond];
   "Can you name Y and Z?" [shape=diamond];
   "User says good enough / stop?" [shape=diamond];
@@ -70,6 +76,14 @@ digraph scope_critique_resolution {
   "Spec saved to a file?" [shape=diamond];
 
   "Identify groups, recommend splitting, ask" [shape=box];
+  "Trace every requirement; print the table" [shape=box];
+  "Trace against the document's own goals; say so" [shape=box];
+  "Say it is a document-level problem; offer both routes" [shape=box];
+  "Ask the warrant question, one row at a time" [shape=box];
+  "Say solution fits the problem" [shape=box];
+  "Announce by name and count; put up the cut table" [shape=box];
+  "Answer it, then re-put the same table" [shape=box];
+  "Apply accepted cuts; unruled rows keep their machinery" [shape=box];
   "Continue reviewing the remaining spec" [shape=box];
   "Note it as a scope concern, review as-is" [shape=box];
   "Suggest the split — what each piece delivers alone" [shape=box];
@@ -102,9 +116,31 @@ digraph scope_critique_resolution {
   "Spec large?" -> "Say nothing about size" [label="no"];
   "Meaningful split exists?" -> "Suggest the split — what each piece delivers alone" [label="yes"];
   "Meaningful split exists?" -> "Flag the size, explain why splitting isn't practical" [label="no — tightly interdependent"];
-  "Suggest the split — what each piece delivers alone" -> "Issues found?";
-  "Flag the size, explain why splitting isn't practical" -> "Issues found?";
-  "Say nothing about size" -> "Issues found?";
+  "Suggest the split — what each piece delivers alone" -> "Upstream document found?";
+  "Flag the size, explain why splitting isn't practical" -> "Upstream document found?";
+  "Say nothing about size" -> "Upstream document found?";
+
+  "Upstream document found?" -> "Trace every requirement; print the table" [label="yes"];
+  "Upstream document found?" -> "Trace against the document's own goals; say so" [label="no"];
+  "Trace against the document's own goals; say so" -> "Trace every requirement; print the table";
+  "Trace every requirement; print the table" -> "Anything amplified or untraced?";
+  "Anything amplified or untraced?" -> "Machinery proposed?" [label="no"];
+  "Anything amplified or untraced?" -> "More than a third of them?" [label="yes"];
+  "More than a third of them?" -> "Say it is a document-level problem; offer both routes" [label="yes"];
+  "More than a third of them?" -> "Ask the warrant question, one row at a time" [label="no"];
+  "Say it is a document-level problem; offer both routes" -> "Ask the warrant question, one row at a time";
+  "Ask the warrant question, one row at a time" -> "Machinery proposed?";
+
+  "Machinery proposed?" -> "Any over-engineering?" [label="yes"];
+  "Machinery proposed?" -> "Issues found?" [label="no"];
+  "Any over-engineering?" -> "Say solution fits the problem" [label="no"];
+  "Any over-engineering?" -> "Announce by name and count; put up the cut table" [label="yes"];
+  "Say solution fits the problem" -> "Issues found?";
+  "Announce by name and count; put up the cut table" -> "Every row ruled on?";
+  "Every row ruled on?" -> "Answer it, then re-put the same table" [label="no"];
+  "Answer it, then re-put the same table" -> "Every row ruled on?";
+  "Every row ruled on?" -> "Apply accepted cuts; unruled rows keep their machinery" [label="yes"];
+  "Apply accepted cuts; unruled rows keep their machinery" -> "Issues found?";
 
   "Issues found?" -> "Can you name Y and Z?" [label="yes"];
   "Issues found?" -> "Spec saved to a file?" [label="no"];
@@ -210,6 +246,182 @@ a dozen requirements that are all facets of one small change.
 
 Run cohesion before size. If unrelated features are found and the user agrees to split, the size problem may resolve itself.
 
+## Phase 1.6: Warrant
+
+Scope Shape asked whether these are the right *features*. This phase asks something
+narrower and more uncomfortable: **did anyone actually ask for this requirement?**
+
+Every other category in this review makes a requirement better — clearer, more
+feasible, less contradictory. None of them asks whether it should be there at all,
+so a requirement survives by default. Default survival is how a document drifts
+away from what was originally asked for, one reasonable-sounding addition at a time.
+
+### Selection is a trace, not a judgement
+
+You do not warrant every requirement and you do not put every requirement to the
+user. Find the document this spec was derived from — a brief, a ticket, an email
+thread, the transcript of the conversation that produced it — and give every
+requirement one of four verdicts:
+
+| Verdict | Test | Raise? |
+|---|---|---|
+| **Traced** | A line upstream asks for this. Quote it | no |
+| **Derived** | It serves a **named** traced requirement that is incomplete without it | no |
+| **Amplified** | Upstream asked for something smaller. Quote both lines | **yes** |
+| **Untraced** | Nothing upstream asks for it | **yes** |
+
+**Amplified is the verdict that earns this phase.** "Reclaim disk" becoming
+"reclaim disk on a schedule, with a retention policy, configurable per customer"
+passes any traceability check and tripled the work. Quote both lines and let the
+delta be the question. And `Derived` needs a named parent: "it's needed for
+robustness" with no parent is Untraced.
+
+**Where there is no upstream document**, say so, trace against the document's own
+stated goals, and say that is what you did. A document that warrants itself traces
+perfectly, and reporting that as a clean result is worse than reporting nothing.
+
+### The warrant question
+
+For each Amplified or Untraced requirement, before putting it to the user:
+
+> If we ship without this, what observably breaks, for whom, within three months?
+
+One concrete sentence. For an Amplified requirement, ask it of the **added part
+only** — the traced part is not in question. An answer that is concrete and
+specific to this product at its actual scale is a requirement kept deliberately:
+record it and move on. An answer that is empty, generic, or hypothetical goes to
+the user.
+
+### "Someone with authority wants it" is not a warrant
+
+A department, an expert, a standard, a certification, an existing convention, or
+"that's how it's always been done" tells you **who to go back to**. It does not tell
+you what breaks. Record them as the **owner** and raise the requirement anyway.
+
+This is not licence to ignore the owner — it is the opposite. It says the answer is
+not in the document, and names the person who has it.
+
+One exception, and it has to be shown rather than asserted: where the authority is a
+rule with a consequence you can name — a statute with a penalty, a contract with a
+clause, a platform policy with a delisting — that consequence **is** the warrant.
+Write the consequence, not the name of the rule.
+
+### Presentation
+
+Print one table for the whole document, every requirement one row, so nothing is
+traced off-screen:
+
+```markdown
+| # | Requirement (quoted) | Traces to (quoted upstream line) | Verdict | Owner |
+|---|---|---|---|---|
+```
+
+Then take the raised rows one at a time, in the shape under *Presentation order*.
+
+**If more than a third of the requirements raise, stop and say so** before walking
+them one at a time. That many is a finding about the document, not about the rows:
+
+> 14 of 20 requirements do not trace to the brief. That is a document-level problem,
+> and ruling on 14 questions is the wrong way to fix it.
+
+Offer both routes: walk them anyway, or take the untraced set back to whoever wrote
+the brief.
+
+**Do not re-litigate what was already settled.** A requirement carrying a recorded
+narrowing, a revisit trigger, or a note from a previous pushback round has been
+argued once. Trace it, keep it, move on — reopening it every round is the same
+ratchet running backwards.
+
+If everything traces, print the table, say "every requirement traces to the upstream
+document", and move on.
+
+## Phase 1.7: Simplicity Pass
+
+Phase 1.5 asked "are these the right features?" This phase asks a different
+question: **is the proposed solution bigger than the problem?**
+
+Run it on any document that proposes machinery — a design, a technical spec, an
+implementation plan. On a pure requirements document, look only for gold-plated
+non-functionals. This is the **only subtractive phase** in the review: every other
+category can only make the document bigger, so run this one honestly or the spec
+ratchets upward with every round.
+
+### Over-engineering smells
+
+| Smell | What it looks like in a document |
+|---|---|
+| **Speculative generality** | "configurable", "pluggable", "strategy", "provider" — with exactly one known use |
+| **Premature layer** | A service, adapter, manager or interface introduced for a single caller |
+| **New concept, old problem** | A new table, entity or state machine where an existing column, enum or timestamp would do |
+| **New moving part** | A cache, queue, background job, cron, feature flag or dependency for a load the current path already handles |
+| **Config nobody sets** | Settings, environment variables or toggles with one realistic value |
+| **A case that cannot happen** | Multi-region, multi-tenant, multi-currency, per-customer X — in a product that is none of those. Read the project's own description first: in a product that genuinely is multi-region, the same line is a requirement |
+| **Hand-rolled infrastructure** | Validation, retry, scheduling, uniqueness or state machines that this project's own stack already provides |
+| **Gold-plated non-functional** | Performance, monitoring or rollback demands disproportionate to this product's actual scale and audience |
+
+### For each finding, produce
+
+1. **What's proposed** — the machinery, in one line
+2. **What problem it actually solves** — stated plainly; sometimes there isn't one
+3. **The pragmatic alternative** — the smallest thing that solves that problem, named concretely
+4. **What you give up** — honestly. If the answer is "nothing", say so
+5. **The revisit trigger** — the concrete condition that would justify building it: *"extract the interface when a second implementation exists"*, *"add the cache when the list query exceeds ~500ms"*. This is what lets the author cut it without anxiety
+
+### Present it as a decision, not a list
+
+This is the phase most easily skimmed past, because a list of things you *could*
+remove reads as informational. So it stops, by name, and does not resume until it
+is ruled on.
+
+**Announce it by name and count**, on its own, before the table:
+
+> **Simplification pass — 6 cuts proposed. This is a decision point.**
+> Nothing below is applied until you rule on it.
+
+**One numbered table, and nothing else in that message** — no other findings, no
+"meanwhile I also noticed":
+
+```markdown
+| # | Location | Cut this | Use this instead | You give up | Revisit when |
+|---|----------|----------|------------------|-------------|--------------|
+```
+
+Close it with `net: −N requirements`.
+
+**Every row gets a ruling before the review advances.** Offer all three routes each
+time you put the table up: `accept all | reject all | per row`. A row nobody ruled
+on is **not** cut — silence keeps the machinery, which is the outcome this phase
+exists to make visible rather than automatic.
+
+*A response is not a decision* applies here too. A question about row 3 means the
+user is thinking about row 3: answer it, then re-put the same table with the ruled
+rows marked and the rest still open.
+
+### What is not over-engineering
+
+**Read the project's own conventions before calling anything bloat** — steering
+files, architecture decision records, whatever this project keeps. A convention
+recorded there is a decision already taken, and re-litigating it here is not a
+simplification finding, it is noise. Say which document you read; if you found
+none, say that instead of assuming.
+
+The shape to recognise is deliberate repetition that a convention requires:
+
+- **Parity pairs** — the same rule stated in two places on purpose, such as a validator on both sides of the wire
+- **A layer held even for a thin feature** — a pass-through that exists so the next feature has somewhere to go
+- **Fields that exist for the test suite or the audit trail**, not for the feature
+- **A filter repeated on every query**, because omitting it once is a data leak
+
+If you believe one of these *should* go, that is an argument with the convention and
+its owner. Raise it as one, name the document, and do not smuggle it in as a
+simplification cut.
+
+Also: pragmatic is not the same as clever. Removing a layer is a win; compressing
+readable logic into a dense one-liner is not. Never suggest cutting the last test.
+
+If nothing is over-engineered, say **"solution fits the problem"**, skip the
+announce and the table, and move on. A zero-row decision point is ceremony.
+
 ## Phase 2: Spec Critique
 
 Analyze the spec against these categories:
@@ -278,8 +490,20 @@ and says nothing about the rest looks like it stopped early.
 1. Rank all findings by severity (most impactful first)
 2. Present **one issue at a time**
 3. For each issue:
-   - State the problem clearly
+   - **Quote what the issue is about, verbatim, in a blockquote directly above the
+     question** — the requirement, the line, the paragraph, with whatever identifier
+     the document gives it. The user must never have to open a file to understand a
+     question about it, and a paraphrase is you deciding what it says, which is the
+     thing under discussion. If the quote runs long, quote the sentence that carries
+     the decision and say where the rest is.
+   - State the problem in **plain language, in five lines or fewer**. Identifiers,
+     paths and jargon belong in the quote above and the options below, not in the
+     sentence that asks. A question longer than five lines is two questions.
    - Present specific options from best to worst, with your recommendation and a short explanation for each
+   - **Say what happens if the user says nothing** — the default, stated
+   - **Say what the change drags with it, before asking rather than after.** A
+     requirement removed also removes its acceptance criteria, the section that
+     serves it, and the work that would have built it. Name them in the question
    - Wait for the user's decision before presenting the next issue
 4. The user can say "good enough" or "stop" at any point to end the review
 
@@ -362,6 +586,13 @@ These patterns produce pushback that reads well and changes nothing. Avoid them:
 | Filing a bug in the surrounding code as a spec finding | One line at the end. It gets a ranked slot only when it makes the spec's own deliverable unreachable. |
 | Writing a report nobody asked for after resolving everything | The conversation and the spec diff already say it. Reports exist to carry what the user never saw. |
 | Editing the spec after "good enough" | The stop signal ends the review. Confirm before you touch their file. |
+| Deciding a requirement is warranted because you can think of a reason for it | Phase 1.6 is a trace, not a judgement. Every requirement can be given a plausible reason; a quotable upstream line is either there or it is not. |
+| Missing an amplified requirement because the trace is real | The trace being real is the point — it passes traceability and still triples the work. Quote both lines and let the delta be the finding. |
+| Treating "the security team asked for it" as a warrant | That is an owner, not an answer. It says who to go back to, not what breaks. Record the owner and raise it anyway. |
+| Presenting the simplification pass as a list and moving on | It is a decision point. Announce it by name and count, one table, nothing else in the message, and no unruled row advances the review. |
+| Cutting a row nobody ruled on | Silence keeps the machinery. This phase exists to make the cut visible, not automatic. |
+| Calling a recorded convention over-engineering | A convention in a steering file or an ADR is a decision already taken. Argue with it openly and name the document, or leave it. |
+| Asking a question the user has to open a file to understand | Quote the requirement verbatim above the question, every time. |
 | Suggesting a split because the spec is long | Length isn't the test — independent value is. Split only when each piece ships something useful on its own. |
 | Mistaking sequenced work for bundled features | Phases of one coherent feature belong together. Cohesion is about whether they'd be separate PRs, not whether they're separate steps. |
 | Softening findings to seem agreeable | The skill's whole value is saying what a reviewer would say before the code exists. Hedged criticism is worse than none. |
