@@ -1,3 +1,16 @@
+- All security related issues should be written to paad/security/ with a
+  strong recommendation that this directory be added to .gitignore.
+- Costs
+  - Model choice
+  - Reducing token counts
+    - headroom
+    - ponytail
+    - caveman?
+  - Skill analysis
+    - Make skills shorter?
+    - Make skills do more with less?
+  - (See private notes in scratch)
+
 - Skills really don't allow subroutines. Should I start using **templates**?
     - Version announce
     - Explain things SIMPLY so that everyone can understand.
@@ -12,10 +25,6 @@
     - Verifier will replay the summary, when false positives are rejected
 - paad:analyst: add something along the lines of "trust nothing, even your own
   memory; verify everything"
-- Do we want to tell pushback to first look to see if there is a simpler, more
-  correct solution to a spec before pushing back? That could be disastrous if
-  it's written poorly. "Only do this step if you're absolutely sure it's
-  correct, and if you have a better idea, propose it."
 - RELATED: We have a persistent issue whereby the skills assume that the steering files
   are correct, and that code patterns are good (unless challenged). We should
   consider if we can modify skills to be more skeptical of the steering files
@@ -29,8 +38,13 @@
 
 # REJECTED
 
-- Add .paadrc file for configuration. (decided against it, maybe later)
-- memory system?
+- Add .paadrc file for configuration. (decided against it, maybe later) memory
+  system?
+- We tried, with Fable. Turns out we're already good enough: Do we want to
+  tell pushback to first look to see if there is a simpler, more correct
+  solution to a spec before pushing back? That could be disastrous if it's
+  written poorly. "Only do this step if you're absolutely sure it's correct,
+  and if you have a better idea, propose it."
 
 # DONE
 
