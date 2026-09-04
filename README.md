@@ -9,6 +9,8 @@ reviews what the AI is about to work on — the spec, the plan, the architecture
 code — while you can still change it. That's **P**ushback, **A**lignment,
 **A**rchitecture, plus the **D**iscipline to actually run them.
 
+[A full explanation/tutorial is here](https://curtispoe.org/paad/).
+
 ## Quick start
 
 In Claude Code:
