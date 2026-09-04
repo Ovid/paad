@@ -164,6 +164,9 @@ keeping up.
 
 ## The AI sees all of your code and none of your context
 
+<details>
+<summary>Why the missing half is the expensive one</summary>
+
 The model reads your repository faster and more patiently than any human will.
 That part is real, and it's why PAAD works at all.
 
@@ -218,7 +221,12 @@ engineer is holding the rest. **Engineering-driven AI is the arrangement where
 those two halves actually meet.** AI-driven engineering is the one where the
 half that was written down wins by default.
 
+</details>
+
 ## Why people are using PAAD
+
+<details>
+<summary>The four skills people reach for, and what users say about them</summary>
 
 The strongest early adoption has come from four skills:
 
@@ -251,7 +259,12 @@ accessibility review, and smaller task execution with guardrails. But
 `pushback`, `alignment`, and `agentic-review` currently form the core workflow
 that delivers the most consistent day-to-day value.
 
+</details>
+
 ## What it costs you
+
+<details>
+<summary>Honest findings, paid for in tokens</summary>
 
 PAAD is built to be honest about risk. If your spec is weak, your plan is
 misaligned, an architectural decision is fragile, or a change introduces
@@ -265,7 +278,12 @@ thing and rebuilding it — a good bet for software you'll maintain for years, a
 bad one for a prototype you'll throw away on Friday. Spend the review on the
 code you'll still be living with next year.
 
+</details>
+
 ## Workflow
+
+<details>
+<summary>A typical spec → plan → implement → review loop</summary>
 
 There's a lot to take in with PAAD, [so I've written an article to explain how
 to write production-quality code with
@@ -296,6 +314,8 @@ Depending on the type of work, I also use (see below for full descriptions):
 In practice, `pushback` and `alignment` are often worth running more than
 once. They are especially useful when a spec evolves or when the
 implementation plan changes during execution.
+
+</details>
 
 ## Installation
 
@@ -603,6 +623,9 @@ The assistant will follow the procedures defined in the skill files.
 ---
 
 ## Skill reference
+
+<details>
+<summary><strong>Every skill in detail</strong> — arguments, behavior, and where each writes its report</summary>
 
 ### Pushback
 
@@ -1188,6 +1211,8 @@ branch never fills up with half-built tests.
 **This is the only PAAD skill that writes and commits code.** Every other
 skill reports, advises, or edits documents; this one adds tests and commits
 them, one commit per phase, onto the branch you are on.
+
+</details>
 
 </details>
 
