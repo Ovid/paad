@@ -297,6 +297,12 @@ implementation plan changes during execution.
 
 ## Installation
 
+The Quick start above is the whole install for most people. This section is the
+long form: scopes, updating, every other agent, and the alternative routes.
+
+<details>
+<summary><strong>Full installation instructions</strong></summary>
+
 ### Claude Code
 
 #### Install the plugin
@@ -365,7 +371,8 @@ npx skills@latest add Ovid/paad -a cursor -a codex -y  # skip the pickers
 npx skills@latest add Ovid/paad --copy                 # real copies instead of symlinks
 ```
 
-Three things worth knowing before you run it.
+<details>
+<summary>Three things worth knowing before you run it</summary>
 
 **Skills refer to each other by slash command** — `/agentic-architecture`,
 `/pushback`. If your assistant does not take slash commands, ask for the skill
@@ -413,7 +420,10 @@ indistinguishable from one you wrote yourself. Confirm the directory is PAAD's
 — its `SKILL.md` announces `paad:help` — and only then remove it. If it is not
 PAAD's, leave it alone; a stale copy is harmless next to the renamed one.
 
-### Pi — experimental
+</details>
+
+<details>
+<summary><strong>Pi — experimental</strong></summary>
 
 Pi support is **not settled**. The package layout, the skills it exposes, and
 the extension it depends on may change — or the packaging may be withdrawn — in
@@ -483,7 +493,10 @@ at 8 tasks, while `agentic-review` asks for 12 dispatches on diffs over 500
 lines; the skill has a documented two-pass fallback for exactly this case, so
 say yes to it rather than accepting a half-coverage review.
 
-### Copying from `kiro_and_antigravity/` — deprecated
+</details>
+
+<details>
+<summary><strong>Copying from <code>kiro_and_antigravity/</code> — deprecated</strong></summary>
 
 **Prefer `npx skills@latest add Ovid/paad`.** The instructions below still work
 and are not being removed this release, but they are no longer the recommended
@@ -569,6 +582,8 @@ cp -r kiro_and_antigravity/skills/.kiro/skills/pushback .kiro/skills/
 cp -r kiro_and_antigravity/skills/.agent/skills/pushback .agent/skills/
 ```
 
+</details>
+
 ### Using skills outside Claude Code
 
 However you installed them, skills are recognized automatically by your
@@ -581,13 +596,16 @@ perform the task, such as:
 
 The assistant will follow the procedures defined in the skill files.
 
+</details>
+
 ---
 
 ## Skill reference
 
 ### Pushback
 
-#### `/pushback [document]`
+<details>
+<summary><code>/pushback [document]</code> — argues with your spec before anyone builds it</summary>
 
 If English is the new programming language, `pushback` is the code review.
 
@@ -612,11 +630,14 @@ that makes claims about the code, such as an agent steering file (`CLAUDE.md`,
 * **Flexible output** — update the spec in place or write a separate report to
   `paad/pushback-reviews/`
 
+</details>
+
 ---
 
 ### Alignment
 
-#### `/alignment [files...]`
+<details>
+<summary><code>/alignment [files...]</code> — checks that the plan and the spec say the same thing</summary>
 
 AI assistants drift off-scope. `alignment` catches that by checking whether
 requirements, design documents, and implementation plans actually match before
@@ -639,11 +660,14 @@ code gets written.
 * **Flexible output** — update documents in place or write a separate report
   to `paad/alignment-reviews/`
 
+</details>
+
 ---
 
 ### Architecture
 
-#### `/agentic-architecture [path...]`
+<details>
+<summary><code>/agentic-architecture [path...]</code> — five specialists find structural debt while it's cheap</summary>
 
 AI can build quickly on weak foundations. `agentic-architecture` identifies
 those structural problems before they compound. Five specialists review the
@@ -666,7 +690,10 @@ fixes.
 * **Hotspots** — identifies the files and directories most worth reviewing
 * **Report** — written to `paad/architecture-reviews/`
 
-#### `/fix-architecture [report]`
+</details>
+
+<details>
+<summary><code>/fix-architecture [report]</code> — works through those findings one at a time, test-first</summary>
 
 Architecture analysis tells you what is wrong. `fix-architecture` helps you
 resolve those findings one at a time with a test-first workflow. Each fix is
@@ -698,6 +725,8 @@ dependency can only be discovered sequentially. Worktree-based parallelism
 avoids file collisions, but merging multiple structural refactors back
 together is a reliable way to introduce new bugs.
 
+</details>
+
 ---
 
 ### Discipline
@@ -705,7 +734,8 @@ together is a reliable way to introduce new bugs.
 Code quality rarely degrades in one dramatic change. More often, it slips
 through a series of small decisions that each seem reasonable in isolation.
 
-#### `/agentic-review [base-branch] [path]`
+<details>
+<summary><code>/agentic-review [base-branch] [path]</code> — six specialists review your branch before merge</summary>
 
 Discipline means reviewing before merging, every time. `agentic-review` uses
 multiple specialist agents to examine your branch for logic errors, edge
@@ -734,7 +764,10 @@ parallel analysis, finding verification, deduplication, and severity ranking.
 
 Requires a feature branch (not `main` or `master`) with committed changes.
 
-#### `/agentic-a11y [path]`
+</details>
+
+<details>
+<summary><code>/agentic-a11y [path]</code> — accessibility audit against WCAG 2.2 AA, by disability category</summary>
 
 Discipline also means accessibility is not treated as an afterthought.
 `agentic-a11y` scans your codebase for meaningful accessibility barriers and
@@ -766,11 +799,14 @@ platforms, with AAA noted as bonus recommendations.
   improvements
 * **Report** — written to `paad/a11y-reviews/`
 
+</details>
+
 ---
 
 ### Workflow
 
-#### `/makefile`
+<details>
+<summary><code>/makefile</code> — creates or updates a project <code>Makefile</code></summary>
 
 Creates or updates a project `Makefile` with standard targets such as `help`,
 `all`, `test`, `cover`, `lint`, and `format`. It detects your stack
@@ -779,7 +815,10 @@ automatically and never modifies an existing target without asking first.
 Note: this skill might be removed in the future, or moved to a different
 namespace. Let me know if you rely on it.
 
-#### `/vibe [task description]`
+</details>
+
+<details>
+<summary><code>/vibe [task description]</code> — small fixes, TDD guardrails still on</summary>
 
 Speed without recklessness. `vibe` supports smaller fixes and quick changes
 while keeping TDD guardrails in place.
@@ -801,12 +840,17 @@ while keeping TDD guardrails in place.
   for security-sensitive changes, `agentic-a11y` for UI changes, or
   architecture review if the fix was harder than expected
 
-#### `/paad-help [skill-name]`
+</details>
+
+<details>
+<summary><code>/paad-help [skill-name]</code> — lists the skills, or explains one</summary>
 
 Shows help for all PAAD skills or detailed help for one skill.
 
 * **Arguments:** `/paad-help` (overview of all skills) or `/paad-help vibe`
   (detailed help for one skill)
+
+</details>
 
 ---
 
@@ -820,7 +864,8 @@ pin your plugin version — on Claude Code and Pi you can; the npx route tracks
 `main` and has no pinned form, so budget for the churn instead. Please [file what
 breaks](https://github.com/Ovid/paad/issues).
 
-#### `/agentic-dedup [scope]` — experimental
+<details>
+<summary><code>/agentic-dedup [scope]</code> — finds duplicated <em>meaning</em>, not duplicated text</summary>
 
 Duplication that a clone detector finds is the easy kind. The expensive kind
 is two pieces of code that *mean* the same thing while looking nothing alike —
@@ -857,7 +902,10 @@ surfaces when one side is fixed and the other is not.
 
 It never refactors anything. The report is the deliverable.
 
-#### `/agentic-owasp [scope]` — experimental
+</details>
+
+<details>
+<summary><code>/agentic-owasp [scope]</code> — reviews code against the OWASP Top 10:2025</summary>
 
 > **Note**: this skill is experimental and may change in any release, including
 > a patch release. If you build a workflow on it, pin your plugin version (not
@@ -981,7 +1029,10 @@ rediscovering them.
 
 It never fixes anything. The report is the deliverable.
 
-#### `/handoff [save|resume]` — experimental
+</details>
+
+<details>
+<summary><code>/handoff [save|resume]</code> — hands this session's work to a fresh one, in writing</summary>
 
 Claude Code already has `/compact`, and for most of what you want it is
 enough. The gap `handoff` fills is narrow and specific: `/compact`'s summary is
@@ -1022,7 +1073,10 @@ has no memory to catch them with.
 * **Artifact** — `handoff.md` in the working directory, which it suggests you
   add to `.gitignore`
 
-#### `/rethink [what to re-examine]` — experimental
+</details>
+
+<details>
+<summary><code>/rethink [what to re-examine]</code> — checks whether the premises under a recommendation hold</summary>
 
 `pushback` argues with a spec. `rethink` argues with an answer — including one
 of `pushback`'s. When options have been laid out and one has been chosen, it
@@ -1060,7 +1114,10 @@ than waving the recommendation through.
   one, tied to that defect
 * **Writes nothing** — no report, no edits. The conversation is the deliverable
 
-#### `/test-roadmap` — experimental
+</details>
+
+<details>
+<summary><code>/test-roadmap</code> — builds a test suite that catches real regressions</summary>
 
 PAAD is risky to use with codebases without a strong test suite. This skill
 builds that suite for you.
@@ -1130,7 +1187,12 @@ branch never fills up with half-built tests.
 skill reports, advises, or edits documents; this one adds tests and commits
 them, one commit per phase, onto the branch you are on.
 
+</details>
+
 ## Invoking skills
+
+<details>
+<summary>Slash commands, plain English, and the <code>paad:</code> prefix</summary>
 
 The headings above spell each skill with a leading slash — `/pushback`,
 `/agentic-review` — because that's the shortest thing that works. You often
@@ -1147,7 +1209,12 @@ Nothing in PAAD currently collides, so until you install a plugin that shares a
 name, you can ignore it. The help skill is called `paad-help` rather than `help`
 for exactly this reason: `/help` is Claude Code's own built-in.
 
-## Local Development
+</details>
+
+## Working on PAAD itself
+
+<details>
+<summary>Running the preview tree, and the test targets</summary>
 
 The repository carries two copies of the plugin. **`preview/paad/` is where all
 new work goes.** `plugins/paad/` is the last released tree — it is what everyone
@@ -1195,7 +1262,12 @@ make check-references   # references/ dispatches resolve; no orphaned reference 
 make validate           # claude plugin validate on marketplace + plugins
 ```
 
+</details>
+
 ## Contributing
+
+<details>
+<summary>How to submit a change</summary>
 
 1. Fork the repository and create a feature branch.
 2. Make your changes. See `CLAUDE.md` for conventions on adding or modifying skills.
@@ -1213,6 +1285,8 @@ Key rules from `CLAUDE.md`:
 * Update `paad-help` and `CLAUDE.md` when adding or changing skills. The
   `README.md` entry lands on the release branch instead — README describes what
   can actually be installed, and a preview-only skill cannot be yet
+
+</details>
 
 ## Star History
 
