@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" role="img" aria-label="Star history for Ovid/paad: 110 stars as of 2026-09-05">
-<title>Star history for Ovid/paad: 110 stars as of 2026-09-05</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" role="img" aria-label="Star history for Ovid/paad: 110 stars as of 2026-09-06">
+<title>Star history for Ovid/paad: 110 stars as of 2026-09-06</title>
 <desc>Cumulative GitHub stars for Ovid/paad over time.</desc>
 <rect width="800" height="400" fill="#ffffff"/>
 <line x1="60" y1="350" x2="780" y2="350" stroke="#d0d7de" stroke-width="1"/>
@@ -10,12 +10,12 @@
 <text x="52" y="141" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">100</text>
 <line x1="60" y1="30" x2="780" y2="30" stroke="#d0d7de" stroke-width="1"/>
 <text x="52" y="34" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">150</text>
-<text x="768" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Sep 05</text>
-<text x="659" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Aug 07</text>
-<text x="380" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Jun 01</text>
+<text x="768" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Sep 06</text>
+<text x="656" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Aug 07</text>
+<text x="379" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Jun 01</text>
 <text x="60" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Mar 16</text>
-<polyline fill="none" stroke="#e5533d" stroke-width="2" stroke-dasharray="5 4" points="60,348 64,344 68,341 77,339 97,337 110,335 139,333 189,331 197,329 202,327 210,324 306,318 355,316 360,314 380,309 385,303 439,301 472,297 476,288 480,284 501,282 505,280 568,277 580,275 584,271 589,269 593,260 597,241 601,228 605,222"/>
-<polyline fill="none" stroke="#e5533d" stroke-width="2" points="605,222 609,211 614,196 618,188 622,186 626,179 630,177 634,177 638,171 643,169 647,169 651,169 655,164 659,162 663,162 668,156 672,149 676,145 680,145 684,143 688,139 693,139 697,139 701,139 705,137 709,135 713,135 718,130 722,130 726,130 730,130 734,130 738,130 743,128 747,126 751,126 755,126 759,124 763,122 768,117 772,117 776,115 780,115"/>
+<polyline fill="none" stroke="#e5533d" stroke-width="2" stroke-dasharray="5 4" points="60,348 64,344 68,341 77,339 97,337 110,335 139,333 188,331 197,329 201,327 209,324 304,318 354,316 358,314 379,309 383,303 437,301 470,297 474,288 478,284 499,282 503,280 565,277 577,275 581,271 586,269 590,260 594,241 598,228 602,222"/>
+<polyline fill="none" stroke="#e5533d" stroke-width="2" points="602,222 606,211 610,196 614,188 619,186 623,179 627,177 631,177 635,171 639,169 643,169 648,169 652,164 656,162 660,162 664,156 668,149 672,145 677,145 681,143 685,139 689,139 693,139 697,139 701,137 706,135 710,135 714,130 718,130 722,130 726,130 730,130 734,130 739,128 743,126 747,126 751,126 755,124 759,122 763,117 768,117 772,115 776,115 780,115"/>
 <circle cx="780" cy="115" r="3.5" fill="#e5533d"/>
 <rect x="60" y="10" width="10" height="10" fill="#e5533d"/>
 <text x="76" y="19" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#24292f">Ovid/paad — dashed is reconstructed</text>
