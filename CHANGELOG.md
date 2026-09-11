@@ -16,6 +16,10 @@ what a plugin user sees.
   instead of stopping after the announcement.
 
 ### Added
+- **Per-project skill configuration — experimental.** Put instructions in
+  `paad/config/paad.md` (every skill) or `paad/config/<skill-name>.md` (one skill)
+  and the skill reads them on invocation, opening its final answer with `Config: <path>`.
+  Config can contradict a skill's built-in flow; read [CONFIG.md](CONFIG.md) first.
 - **Report headers now record the model and PAAD version** that produced them,
   alongside the date and commit — context for debugging and reproducing a report.
 - **`/paad-help` links to the full tutorial** at https://curtispoe.org/paad/.

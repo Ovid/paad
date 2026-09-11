@@ -248,7 +248,7 @@ def neutralize_paths(text):
     text = text.replace("paad/alignment-reviews/", ".reviews/alignment/")
     # The catch-all must not eat the "paad" in a github.com/Ovid/paad URL —
     # skills link to the repo's issue tracker, which stays valid everywhere.
-    text = re.sub(r"(?<!Ovid/)paad/", ".reviews/", text)
+    text = re.sub(r"(?<!Ovid/)paad/(?!config/)", ".reviews/", text)
 
     # Drop the subagent_type FRAGMENT, not the line. Kiro and Antigravity have
     # no agents/ directory, so the type would dangle — but the dispatch

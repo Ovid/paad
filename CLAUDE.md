@@ -54,9 +54,9 @@ One thing preview does not cover: `scripts/convert_skills.py` has no preview sta
 
 ### Which checks run per tree
 
-`make test` runs the eight per-skill checks once for each tree, through recursive make on `TREE`:
+`make test` runs the nine per-skill checks once for each tree, through recursive make on `TREE`:
 
-**Per-tree** — `check-skill-names`, `check-skill-versions`, `check-digraphs`, `check-help`, `check-frontmatter`, `check-references`, `check-dispatch-sites`, `check-announce`. Each reads its version out of `$(TREE)/.claude-plugin/plugin.json`, so the `-preview` suffix falls out of the tree rather than appearing as a literal anywhere in the Makefile. `check-help` reads preview's own `paad-help`, so it validates against preview's skill list and travels with it at promotion.
+**Per-tree** — `check-skill-names`, `check-skill-versions`, `check-digraphs`, `check-help`, `check-frontmatter`, `check-references`, `check-dispatch-sites`, `check-announce`, `check-config`. `check-config` skips a tree in which no skill carries the configuration paragraph, because a shipped tree that predates `paad/config/` can only acquire it through promotion; it fails partial adoption. Each reads its version out of `$(TREE)/.claude-plugin/plugin.json`, so the `-preview` suffix falls out of the tree rather than appearing as a literal anywhere in the Makefile. `check-help` reads preview's own `paad-help`, so it validates against preview's skill list and travels with it at promotion.
 
 **Both trees, once** — `validate` iterates `plugins/*/ preview/*/`, so preview's manifest is validated too. `check-trees` compares them.
 
@@ -91,12 +91,13 @@ One thing preview does not cover: `scripts/convert_skills.py` has no preview sta
 
 1. Create `preview/paad/skills/<skill-name>/SKILL.md` — never under `plugins/` — with frontmatter (`name` matching the folder, `description`, and `metadata: internal: true`) and instructions
 2. Add the on-invocation announce line as the very first line of the body (after the closing `---` of frontmatter): `**On invocation:** announce "Running paad:<skill-name> v<version>", then immediately proceed with the steps below — do not stop after announcing.` — the version literal must match the tree's own `plugin.json`, so in `preview/` it carries the `-preview` suffix
-3. Consider `$ARGUMENTS` support — if the skill could benefit from user-provided scope (a file path, directory, branch name, etc.), add an Arguments section documenting usage. Users shouldn't need to remember flags; keep arguments positional and intuitive (e.g., `/skillname path/to/scope`).
-4. Add a graphviz digraph (```dot block) covering the skill's decision points and flow, placed immediately after the intro paragraphs and before the first `##` heading. The only exception is `paad:paad-help`, which is a simple display skill. See "Digraph requirements" below.
-5. If the skill dispatches subagents for analysis, dispatch every one of them as `subagent_type: paad:paad-analyst` — the analysis agent in `plugins/paad/agents/`. Specialists and verifiers must not carry `Edit`, `Write`, or `NotebookEdit`; subagents have been observed editing source code to test whether a finding was real.
-6. Document it in `preview/paad/skills/paad-help/SKILL.md` — both the overview table and a detailed help section. **Leave `README.md` alone until the release**: README describes what users can install, and the entry belongs on the release branch as its own commit before `make release` runs
-7. Add a `### Added` entry under `[Unreleased]` in `CHANGELOG.md`
-8. Run `make export && make test`, then drive the skill for real: `claude --plugin-dir ./preview/paad`
+3. Add the **configuration paragraph** directly under the announce line — copy it from any other skill and substitute the skill name in `paad/config/<skill-name>.md`. `make check-config` fails a skill that lacks it or names another skill's file. The paragraph must sit in the body, never in `description` (the export frontmatter check rejects `paad/` there), and must not write `/paad-help` as a slash form (the exporter aborts on it). See `CONFIG.md`.
+4. Consider `$ARGUMENTS` support — if the skill could benefit from user-provided scope (a file path, directory, branch name, etc.), add an Arguments section documenting usage. Users shouldn't need to remember flags; keep arguments positional and intuitive (e.g., `/skillname path/to/scope`).
+5. Add a graphviz digraph (```dot block) covering the skill's decision points and flow, placed immediately after the intro paragraphs and before the first `##` heading. The only exception is `paad:paad-help`, which is a simple display skill. See "Digraph requirements" below.
+6. If the skill dispatches subagents for analysis, dispatch every one of them as `subagent_type: paad:paad-analyst` — the analysis agent in `plugins/paad/agents/`. Specialists and verifiers must not carry `Edit`, `Write`, or `NotebookEdit`; subagents have been observed editing source code to test whether a finding was real.
+7. Document it in `preview/paad/skills/paad-help/SKILL.md` — both the overview table and a detailed help section. **Leave `README.md` alone until the release**: README describes what users can install, and the entry belongs on the release branch as its own commit before `make release` runs
+8. Add a `### Added` entry under `[Unreleased]` in `CHANGELOG.md`
+9. Run `make export && make test`, then drive the skill for real: `claude --plugin-dir ./preview/paad`
 
 **Don't bump the version here.** The bump is the release — run `/release` when the work is ready to ship. See "Releasing".
 

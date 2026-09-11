@@ -7,7 +7,7 @@ SKILLS_DIR := $(TREE)/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test tree-checks validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-export-frontmatter check-export-commands check-export-current check-export-dryrun check-trees bump-version bump-tree promote export release tag
+.PHONY: help test tree-checks validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-config check-export-frontmatter check-export-commands check-export-current check-export-dryrun check-trees bump-version bump-tree promote export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -28,7 +28,7 @@ test: self-tests check-versions check-trees validate check-readme check-export-f
 
 # The per-skill checks, run once per tree. README documents the shipped set only,
 # so check-readme stays out: a preview-only skill is tolerated there, not required.
-tree-checks: check-skill-names check-skill-versions check-digraphs check-help check-frontmatter check-references check-dispatch-sites check-announce check-export-dryrun ## Run the per-tree checks (usage: make tree-checks TREE=preview/paad)
+tree-checks: check-skill-names check-skill-versions check-digraphs check-help check-frontmatter check-references check-dispatch-sites check-announce check-config check-export-dryrun ## Run the per-tree checks (usage: make tree-checks TREE=preview/paad)
 	@echo "$(TREE): tree checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -395,6 +395,32 @@ check-announce: check-skill-names ## Check every skill that writes files announc
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "All skills announce the files they write (paad-help, rethink excluded)."
+
+check-config: check-skill-names ## Check every skill carries the paad/config/ paragraph naming its own config file
+# Skills have no include mechanism, so the paragraph is a copy in every SKILL.md.
+# Grep for the skill's own file name rather than the boilerplate: a copy pasted
+# from another skill reads the wrong config and announces the wrong path.
+# A shipped tree written before this feature has no paragraph anywhere, and it
+# cannot get one except through promotion — so an all-or-nothing tree is skipped,
+# and only partial adoption fails. Once promoted, the skip never fires again.
+	@if ! grep -qrF '**Configuration (experimental):**' $(SKILL_DIRS) 2>/dev/null; then \
+		echo "$(TREE): SKIP check-config — no skill carries the configuration paragraph yet (predates paad/config/)."; \
+		exit 0; \
+	fi; \
+	fail=0; \
+	for dir in $(SKILL_DIRS); do \
+		name=$$(basename "$$dir"); \
+		file="$$dir/SKILL.md"; \
+		if ! grep -qF '**Configuration (experimental):**' "$$file" 2>/dev/null \
+		   || ! grep -qF 'paad/config/paad.md' "$$file" 2>/dev/null \
+		   || ! grep -qF "paad/config/$$name.md" "$$file" 2>/dev/null; then \
+			echo "FAIL: $$name is missing the configuration paragraph, or it names another skill's config file."; \
+			echo "      Every SKILL.md carries it directly under the announce line — see CONFIG.md and CLAUDE.md."; \
+			fail=1; \
+		fi; \
+	done; \
+	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
+	echo "$(TREE): all skills read paad/config/."
 
 check-export-frontmatter: require-export ## Check every exported SKILL.md kept a usable name and description
 	@fail=0; \
