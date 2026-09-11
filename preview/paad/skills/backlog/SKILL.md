@@ -7,6 +7,8 @@ metadata:
 
 **On invocation:** announce "Running paad:backlog v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
+**Configuration (experimental):** before announcing, check for `paad/config/paad.md` and `paad/config/backlog.md`, relative to the working directory. If either exists, read it, add ` with <path>` to the announce line for each file found (both, when both exist), and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch. If neither exists, announce exactly as written. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
+
 # Backlog
 
 **Experimental.** Arguments, modes, and behavior may change — or this skill may be withdrawn — in any release, including a patch release. The semver promise the settled skills carry does not apply here. If you build a workflow on it, pin your plugin version and [file what breaks](https://github.com/Ovid/paad/issues).

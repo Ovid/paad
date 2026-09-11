@@ -7,6 +7,8 @@ metadata:
 
 **On invocation:** announce "Running paad:agentic-architecture v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
+**Configuration (experimental):** before announcing, check for `paad/config/paad.md` and `paad/config/agentic-architecture.md`, relative to the working directory. If either exists, read it, add ` with <path>` to the announce line for each file found (both, when both exist), and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch. If neither exists, announce exactly as written. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
+
 # Agentic Architecture Analysis
 
 Multi-agent architecture analysis of the current codebase. Dispatches specialist agents in parallel — each focused on a different architectural domain — verifies findings to filter false positives, and produces a balanced report of strengths and flaws with concrete evidence.

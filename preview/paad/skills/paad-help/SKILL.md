@@ -7,6 +7,8 @@ metadata:
 
 **On invocation:** announce "Running paad:paad-help v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
+**Configuration (experimental):** before announcing, check for `paad/config/paad.md` and `paad/config/paad-help.md`, relative to the working directory. If either exists, read it, add ` with <path>` to the announce line for each file found (both, when both exist), and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch. If neither exists, announce exactly as written. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
+
 # paad Help
 
 Show help for paad skills. If `$ARGUMENTS` matches a skill name, show detailed help for that skill. Otherwise, show the overview.
@@ -22,7 +24,7 @@ Show help for paad skills. If `$ARGUMENTS` matches a skill name, show detailed h
 
 If `$ARGUMENTS` is provided and matches a skill name (with or without the `paad:` prefix), show the detailed help for that skill only. If the argument doesn't match any skill, say "Unknown skill: [name]. Available skills:" and show the overview.
 
-Do NOT read files or run commands. All help text is below.
+Do NOT read files or run commands, other than the `paad/config/` check above. All help text is below.
 
 ## Common Mistakes
 
@@ -97,6 +99,11 @@ Invoking: the names above are slash commands on Claude Code. If your
 assistant does not take them, ask for the skill by name ("run the pushback
 skill"). If another plugin ships a skill with the same name, disambiguate with
 the paad: prefix — /paad:vibe rather than /vibe.
+
+Configuration (experimental): put instructions in paad/config/paad.md to
+steer every skill, or paad/config/<skill-name>.md to steer one. A skill that
+finds a file announces it ("... with paad/config/vibe.md") and follows it.
+Details and the caveats: https://github.com/Ovid/paad/blob/main/CONFIG.md
 ```
 
 ---

@@ -7,6 +7,8 @@ metadata:
 
 **On invocation:** announce "Running paad:alignment v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
+**Configuration (experimental):** before announcing, check for `paad/config/paad.md` and `paad/config/alignment.md`, relative to the working directory. If either exists, read it, add ` with <path>` to the announce line for each file found (both, when both exist), and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch. If neither exists, announce exactly as written. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
+
 # Alignment Check
 
 Verifies that intent documents (requirements, specs, PRDs) and action documents (plans, tasks, implementation steps) are aligned. Finds gaps in both directions — unaddressed requirements and out-of-scope tasks — then rewrites all tasks in TDD red/green/refactor format.

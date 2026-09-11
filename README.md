@@ -62,6 +62,10 @@ See [Installation](#installation) for the details, including the experimental
 | `/test-roadmap` | Builds a test suite that catches real regressions — experimental |
 | `/handoff [save\|resume]` | Hands this session's work to a fresh one, in writing — experimental |
 
+Every skill can also be steered per project: drop instructions in
+`paad/config/paad.md` (all skills) or `paad/config/<skill-name>.md` (one skill)
+and the skill reads them on invocation. Experimental — see [CONFIG.md](CONFIG.md).
+
 Full descriptions are further down. The rest of this page is why any of it is
 worth your tokens.
 

@@ -15,6 +15,8 @@ metadata:
 
 **On invocation:** announce "Running paad:test-roadmap v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
+**Configuration (experimental):** before announcing, check for `paad/config/paad.md` and `paad/config/test-roadmap.md`, relative to the working directory. If either exists, read it, add ` with <path>` to the announce line for each file found (both, when both exist), and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch. If neither exists, announce exactly as written. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
+
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
 > covered by the semver guarantees the other paad skills carry. Unlike every
