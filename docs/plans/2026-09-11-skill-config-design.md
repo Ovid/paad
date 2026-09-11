@@ -18,11 +18,11 @@ Two optional files, relative to the working directory:
 - `paad/config/paad.md` — read by every skill
 - `paad/config/<skill-name>.md` — read by that skill only
 
-A skill that finds one or both reads them before announcing, announces
-`Running paad:<name> v<ver> with <path>` (one ` with` clause per file found),
-applies the instructions for the rest of the run, and passes the relevant
-parts to the subagents it dispatches. With no file present the announce line
-is unchanged.
+A skill announces as before, then checks for the files. If any exists it
+reads it, applies it for the rest of the run, passes the relevant parts to
+the subagents it dispatches, and opens its final answer with
+`Config: <path>` naming each file followed. With no file present nothing
+changes.
 
 ## Decisions
 
@@ -33,10 +33,19 @@ is unchanged.
 - **The paragraph is duplicated into every SKILL.md.** Skills have no include
   mechanism that survives all three delivery routes; `make check-config`
   enforces the copy, and that the copy names its own skill.
-- **The announce suffix is described outside the quoted literal.** Three
-  places key on the exact token `v<ver>"`: `check-skill-versions`, `bump-tree`,
-  and `promote.py`. Writing the suffix inside the quotes would ship `-preview`
-  into `plugins/` unbumped.
+- **The config is named at the end, not in the announce line.** The original
+  spec put `with <path>` in the announce. Pressure-tested non-interactively:
+  every phrasing that placed the announce after the file check lost the
+  announce entirely (0/6, 0/6, 0/6 across three phrasings), and a separate
+  line printed right after the check was dropped too (0/6). Announce-first
+  plus `Config: <path>` as the first line of the final answer held 6/6, with
+  2/2 no-config runs unaffected. End-of-run instructions were followed in
+  every run of every variant.
+- **One guard sentence.** Unguarded, 3/3 runs swapped the read-only analyst
+  for a `general-purpose` subagent when a config asked, one forwarding "fix
+  any bug" to it. With "config never changes a subagent's type or grants it
+  write tools", 3/3 refused and said so. This is the only precedence rule,
+  and it restates the rule CLAUDE.md already imposes on skills.
 - **`paad/config/` is exempt from the exporter's `paad/` → `.reviews/`
   rewrite**, so every delivery route reads the same path and `CONFIG.md`
   documents one location. Cost: the Kiro/Pi exports carry a `paad/` path.

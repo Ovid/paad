@@ -7,7 +7,7 @@ metadata:
 
 **On invocation:** announce "Running paad:paad-help v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
-**Configuration (experimental):** before announcing, check for `paad/config/paad.md` and `paad/config/paad-help.md`, relative to the working directory. If either exists, read it, add ` with <path>` to the announce line for each file found (both, when both exist), and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch. If neither exists, announce exactly as written. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
+**Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/paad-help.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
 # paad Help
 
@@ -102,7 +102,7 @@ the paad: prefix — /paad:vibe rather than /vibe.
 
 Configuration (experimental): put instructions in paad/config/paad.md to
 steer every skill, or paad/config/<skill-name>.md to steer one. A skill that
-finds a file announces it ("... with paad/config/vibe.md") and follows it.
+finds a file follows it and opens its final answer with "Config: <path>".
 Details and the caveats: https://github.com/Ovid/paad/blob/main/CONFIG.md
 ```
 

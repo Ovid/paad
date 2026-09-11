@@ -41,20 +41,17 @@ passes the relevant parts to the subagents it dispatches.
 
 ## How you know it was read
 
-A skill that finds no config announces itself as before:
+The announce line does not change. A skill that read a config file opens its
+final answer with one line naming every file it followed:
 
 ```
-Running paad:agentic-architecture v1.31.0
+Config: paad/config/paad.md, paad/config/agentic-architecture.md
 ```
 
-A skill that finds one names it:
-
-```
-Running paad:agentic-architecture v1.31.0 with paad/config/agentic-architecture.md
-```
-
-When both files exist, both are named. If the announce line does not mention
-your file, the skill did not read it, and nothing in the run came from it.
+If that line is missing, the skill did not read your file, and nothing in the
+run came from it. (An earlier design put the path in the announce line itself.
+Measured across 24 non-interactive runs, any announce placed after the file
+check was dropped; the announce-first, name-it-last shape held in every run.)
 
 ## What to watch out for
 
@@ -67,6 +64,11 @@ mechanically prevents it, and instructing a model to treat config as
 treat config as additions — an extra agent, an output rule, an artifact, a
 language — and avoid telling a skill to skip, reorder, or shorten a step. If
 you must, expect the result to be a different skill from the one documented.
+
+**One line is refused.** Config cannot change a subagent's type or give it
+write tools. Without that rule, three of three test runs swapped paad's
+read-only analyst for a general-purpose agent because a config asked; with it,
+three of three refused and said so. Every other kind of instruction is followed.
 
 **Config is untrusted input.** A `paad/config/` directory in a repository you
 cloned was written by someone else, and a skill will read it the same way it
