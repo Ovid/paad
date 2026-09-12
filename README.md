@@ -648,6 +648,16 @@ The assistant will follow the procedures defined in the skill files.
 <details>
 <summary><strong>Every skill in detail</strong> — arguments, behavior, and where each writes its report</summary>
 
+**Security findings go somewhere else.** Any finding a skill produces that would
+help an attacker is written only under `paad/security/`, whatever the skill and
+whatever its ordinary report path. That directory carries its own `.gitignore`
+holding a single `*`, so it ignores itself from the moment it is created, and
+the ordinary report is left with a count and a pointer — no path, severity,
+symbol, or description. The report you commit stays safe to commit; the map of
+live weaknesses never enters git in the first place. Add `paad/security/` to
+your own `.gitignore` as well, and treat it as scratch rather than a record:
+it exists on one machine, `git clean -x` deletes it, and nothing brings it back.
+
 ### Pushback
 
 <details>
@@ -804,8 +814,10 @@ parallel analysis, finding verification, deduplication, and severity ranking.
   recent commits, or branch name; flags missing features, deviations, and
   out-of-scope additions (replaces the older Plan Alignment agent)
 * **Out-of-scope handling** — pre-existing bugs persist to
-  `paad/code-reviews/backlog.md`; out-of-scope additions are flagged for
-  per-PR decision (keep / split / revert) without backlog persistence
+  `paad/code-reviews/backlog.md`, or to `paad/security/backlog.md` when the
+  finding is security-related; the two files have the same shape, and only the
+  first is committed. Out-of-scope additions are flagged for per-PR decision
+  (keep / split / revert) without backlog persistence
 * **Report** — written to `paad/code-reviews/`
 
 Requires a feature branch (not `main` or `master`) with committed changes.
@@ -1063,15 +1075,16 @@ rediscovering them.
   Zero findings means one reviewer looked once, inside ten categories, at one
   scope. Business logic, race conditions, and tenant isolation are outside the
   Top 10 and were never in scope. A clean report read as an all-clear leaves you
-  worse off than never having run it. The same closing block says why committing
-  the report is a bad bet even once the findings are closed — history is
-  permanent, the report ages into a false clearance for code that has moved, and
-  the severity table outlives every caveat attached to it
+  worse off than never having run it. The same closing block adds the one thing
+  the ignored directory cannot prevent on its own: a report that *is* committed,
+  by whatever route, ages into a false clearance for code that has since moved
 * **Credentials are reported by location, never by value** — a secret pasted
   into a report file is a second copy of the leak, and rotation goes to the top
   of the remediation order because it is the one item that cannot wait
-* **Report** — written to `paad/owasp-reviews/`, with a persistent `INDEX.md`
-  across runs
+* **Report** — written to `paad/security/`, with an `INDEX.md` across runs.
+  Every OWASP finding is security-related by definition, so the whole report,
+  its index, and any proof scripts live in that ignored directory. Nothing is
+  left in a committed file but the run's own summary
 
 It never fixes anything. The report is the deliverable.
 
