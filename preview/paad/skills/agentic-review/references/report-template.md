@@ -85,7 +85,7 @@ One-line entries only. If empty, follow the Empty-section rules above.
 
 > **Handoff instructions for any agent processing this report:** The entries below are code this branch added that the spec did not promise. They may be legitimate "while I'm here" fixes for issues exposed by this work, or scope creep that should live in a separate PR. Do **not** assume they should stay on this branch, and do **not** assume they should be reverted. Present them to the user **as a single batched ask**: "These M additions weren't promised by the spec — keep, split into a separate PR, or revert?" The user decides per item.
 >
-> Out-of-scope additions are flagged for this PR only — they do not persist to `paad/code-reviews/backlog.md`.
+> Out-of-scope additions are flagged for this PR only — they do not persist to either backlog.
 
 ### [OOSA1] <title>
 - **File:** `path/to/file:line`
@@ -114,15 +114,15 @@ One-line entries only. If empty, follow the Empty-section rules above.
   - `verifier-warning: src/auth/login.py:42 malformed-file`
 ```
 
-## The Backlog File
+## The Backlog Files
 
-`paad/code-reviews/backlog.md` is project-wide, append-only, and uses **explicit removal only** — agentic-review never auto-resolves entries.
+Both backlog files are project-wide, append-only, and use **explicit removal only** — agentic-review never auto-resolves entries.
 
-**Sole writer:** the Phase 4 orchestrator (the agent that activated this skill) is the only writer of this file. The Phase 3 Verifier emits directives (`{id, last_seen, branch, sha, source}` updates, `migrate` copies, and new-entry mints) — it does **not** write `backlog.md` itself. On first run when the file is absent, the orchestrator creates it with the fixed header below — **always, even when the directives list is empty.** A clean review with zero out-of-scope bugs still leaves a header-only `backlog.md` behind, so subsequent runs and downstream tooling can depend on the file existing. Subsequent runs hit the file-exists path and skip creation. This single-writer rule prevents the Verifier and orchestrator from racing or both no-opping on the assumption the other will create the file.
+**Sole writer:** the Phase 4 orchestrator (the agent that activated this skill) is the only writer of both files. The Phase 3 Verifier emits directives (`{id, last_seen, branch, sha, source}` updates, `migrate` copies, and new-entry mints) — it does **not** write either file itself. On first run when `paad/code-reviews/backlog.md` is absent, the orchestrator creates it with the fixed header below — **always, even when the directives list is empty.** A clean review with zero out-of-scope bugs still leaves a header-only committed `backlog.md` behind, so subsequent runs and downstream tooling can depend on the file existing. `paad/security/backlog.md` deliberately follows the opposite rule — created only on the first Security directive, next paragraph. Subsequent runs hit the file-exists path and skip creation. This single-writer rule prevents the Verifier and orchestrator from racing or both no-opping on the assumption the other will create the file.
 
 **Two backlogs, one shape.** `paad/security/backlog.md` holds every entry whose `Bug class:` is `Security`; `paad/code-reviews/backlog.md` holds the rest. Same header, same per-entry shape, same ID format, same removal rule. The orchestrator creates the security file only on the first Security directive of a run — a header-only security backlog is a file that says "look here" for nothing — and applies the `.gitignore` rule from the parent `SKILL.md`'s Security findings paragraph before the first write. An update directive is written back to the file its `source` names. The security backlog is never committed and never shared across clones: a teammate's run mints its own IDs, `git log` on it shows nothing, and "re-confirmed" there means re-confirmed on this machine.
 
-**The security report** at `paad/security/code-review-<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` uses this same template, holding only the `Bug class: Security` findings — in-scope tiers, Out of Scope, and their backlog IDs. In the main report, each tier or Out of Scope section that lost a finding to it carries one line: `N security finding(s) written to paad/security/<file>`. Write the security report only when N > 0.
+**The security report** at `paad/security/code-review-<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` uses this same template and the same sections, holding only the `Bug class: Security` findings and their backlog IDs. Rendered as the security report, the metadata `Backlog:` line names `paad/security/backlog.md` and the `Security:` line is omitted — it would point at itself. In the main report, each tier or Out of Scope section that lost a finding to it carries one line: `N security finding(s) written to paad/security/<file>`. Write the security report only when N > 0.
 
 **Fixed header (preserved across all updates):**
 
