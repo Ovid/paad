@@ -30,7 +30,7 @@
 
 ## Executive Summary
 
-2-3 sentences: overall assessment, highest-severity finding if any, general confidence level. A routed (`Bug class: Security`) finding appears here at most as "security-related, see the security report" — not its class, mechanism, symbol, path, severity, or the words that name the weakness. If it was the highest-severity finding, say only that the highest-severity finding is in the security report.
+2-3 sentences: overall assessment, highest-severity finding if any, general confidence level. A routed (`Bug class: Security`) finding appears here at most as "security-related, see the security report" — not its class, mechanism, symbol, path, severity beyond that, or the words that name the weakness. If it was the highest-severity finding, say only that the highest-severity finding is in the security report.
 
 ## Critical Issues
 
@@ -102,7 +102,7 @@ One-line entries only. If empty, follow the Empty-section rules above.
 - **Scope:** <files reviewed — changed + adjacent. When Phase 1 steps 6-8 traced no adjacent files, write the literal string `no adjacent files traced` rather than listing only the changed files.>
 - **Raw findings:** N (before verification)
 - **Verified findings:** M (after verification)
-- **Filtered out:** N - M <the number only. When a rejected or merged candidate was security-related, its reason goes in the security report's copy of this line; the main report says `reasons in the security report`. Otherwise the reasons may follow the number.>
+- **Filtered out:** N - M <the number only. When a rejected or merged candidate was security-related, or was merged into a routed finding, its reason goes in the security report's copy of this line; the main report says `reasons in the security report`. Otherwise the reasons may follow the number.>
 - **Out-of-scope findings:** N (Critical: a, Important: b, Suggestion: c)
 - **Out-of-scope additions:** K
 - **Backlog:** X new entries added, Y re-confirmed (see `paad/code-reviews/backlog.md`)
