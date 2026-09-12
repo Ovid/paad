@@ -34,8 +34,8 @@ The paragraph says four things.
 
 1. **Definition.** A finding is security-related if reading it would help an
    attacker. Examples: the OWASP Top 10:2025 categories, plus anything in a
-   payment, tenant-isolation, or secret-handling path. On the edge, split it
-   out.
+   payment, tenant-isolation, or secret-handling path. On the edge, treat it
+   as security.
 2. **Destination.** Security findings are written only under
    `paad/security/`, in `<skill>-<the skill's usual stamp>.md`. Before the
    first write of a run, the skill ensures `paad/security/.gitignore` exists
@@ -74,7 +74,7 @@ and Pi get `.reviews/security/` with the same ignore file. No generator change.
   `paad/security/`. Report: `paad/security/owasp-<scope>-<stamp>-<sha>.md`.
   Index stays OWASP's own at `paad/security/INDEX.md`, same schema, same
   structural guard. Proof scripts, today written "under the report directory", go
-  under `paad/security/proofs/`. The "why committing is a bad bet" passage
+  under `paad/security/<report-stem>-proofs/`. The "why committing is a bad bet" passage
   collapses to the shared block plus one OWASP-specific line: a committed
   report ages into a false clearance. Cross-run reading checks both
   `paad/security/` and, if present, the old `paad/owasp-reviews/`.
@@ -102,7 +102,10 @@ and Pi get `.reviews/security/` with the same ignore file. No generator change.
   `paad/security/test-roadmap-findings.md` instead of the normal findings
   log. The build-mode `git add` list and the execute-mode commit invariant
   gain one sentence: never `git add -f` anything under `paad/security/`.
-  Post-Review names the security log the way it names the findings log.
+  Post-Review names the security log the way it names the findings log. The
+  roadmap's pointer to a routed entry is a count line only, and the test that
+  pins it is named for input and outcome, never for the weakness, since both
+  are committed.
 - **agentic-architecture, pushback, agentic-dedup.** Qualifying findings go to
   `paad/security/<skill>-<stamp>.md`; the main report keeps count and pointer;
   Post-Review emits the block when N > 0. For pushback the rule covers the
@@ -114,8 +117,7 @@ and Pi get `.reviews/security/` with the same ignore file. No generator change.
 
 ## Migration (warn-only)
 
-Nothing is moved or edited automatically. The goal is to keep this change
-small.
+Nothing is edited automatically. The goal is to keep this change small.
 
 - **OWASP reports.** A run that finds `paad/owasp-reviews/` adds one
   Post-Review line: move it under `paad/security/`; a committed copy stays in
@@ -123,11 +125,13 @@ small.
   the developer never moves it.
 - **Backlog entries.** `agentic-review` reads `Bug class: Security` entries
   from the old `paad/code-reviews/backlog.md` for dedup but never edits that
-  file. When it finds any, Post-Review says how many and tells the developer
-  to move them to `paad/security/backlog.md`.
+  file. A finding that matches one is copied into `paad/security/backlog.md`
+  under its original ID, so the ID survives the move. Post-Review says how
+  many were copied and tells the developer to delete the committed copies,
+  and how many unmatched legacy entries remain to move by hand.
 - **This repo.** Move the local untracked `paad/owasp-reviews/` under
-  `paad/security/` by hand first, then swap the root `.gitignore`'s two
-  `owasp-reviews` lines for `paad/security/`. In that order: the other order
+  `paad/security/` by hand first, then swap the root `.gitignore`'s single
+  `paad/owasp-reviews/` line for `paad/security/`. In that order: the other order
   leaves live findings visible to `git add -A` in between.
 - **Nothing else moves.** Non-security reports, the roadmap, the analysis
   file and the ordinary findings log stay where they are and stay
