@@ -52,7 +52,18 @@ The paragraph says four things.
    paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
    Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
    If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+   paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
    ```
+
+   The last line is a durability warning, not a leak warning. Measured against
+   git 2.53.0: with the `*` ignore file, `git status` is clean, `git add -A`
+   stages nothing, and an explicit `git add` of a file inside refuses without
+   `-f`. `git clean -fd`, `git stash -u`, and branch checkout leave the
+   directory intact; `git clean -fdx`/`-fdX` delete it; `git stash -a` stashes
+   it and `stash pop` restores it; a new worktree does not contain it. A root
+   `.gitignore` entry behaves identically on every one of those, so there is no
+   safer placement, only the extra line for the developer who deletes the local
+   ignore file.
 
 The exporter already rewrites `paad/` to `.reviews/`, so Kiro, Antigravity
 and Pi get `.reviews/security/` with the same ignore file. No generator change.
@@ -62,17 +73,31 @@ and Pi get `.reviews/security/` with the same ignore file. No generator change.
 - **agentic-owasp.** Every `paad/owasp-reviews/` path becomes
   `paad/security/`. Report: `paad/security/owasp-<scope>-<stamp>-<sha>.md`.
   Index stays OWASP's own at `paad/security/INDEX.md`, same schema, same
-  structural guard. Proof scripts, which have no stated location today, go
+  structural guard. Proof scripts, today written "under the report directory", go
   under `paad/security/proofs/`. The "why committing is a bad bet" passage
   collapses to the shared block plus one OWASP-specific line: a committed
   report ages into a false clearance. Cross-run reading checks both
   `paad/security/` and, if present, the old `paad/owasp-reviews/`.
 - **agentic-review.** Security specialist and `references/security.md`
-  unchanged. The orchestrator writes `Bug class: Security` findings, in scope
-  and out, to `paad/security/code-review-<branch>-<stamp>-<sha>.md`. Security
-  backlog entries go to `paad/security/backlog.md`, same schema and IDs. The
+  unchanged. The verifier applies the shared paragraph's definition to every
+  finding it sees and retags a qualifying one to `Bug class: Security`,
+  whichever specialist found it — an off-by-one in a refund calculation is a
+  security finding under the definition even though the Logic specialist found
+  it. The orchestrator then routes by bug class alone, no second judgment: it
+  writes `Bug class: Security` findings, in scope and out, to
+  `paad/security/code-review-<branch>-<stamp>-<sha>.md`. Security backlog
+  entries go to `paad/security/backlog.md`, same schema and IDs. The
   pre-filter reads both backlogs and hands the verifier one merged slice. The
-  existing step-4 security warning is replaced by the shared block.
+  existing step-4 security warning is replaced by the shared block. The
+  backlog lifecycle prose ("`git log` on the file is the audit trail") is
+  scoped to the committed backlog: security entries have no history and no
+  sharing across clones, so a teammate's run mints its own IDs and the
+  "re-confirmed" count in Post-Review means re-confirmed on this machine.
+- **backlog.** Clean and Fix read both `paad/code-reviews/backlog.md` and
+  `paad/security/backlog.md`, and write each entry back to the file it came
+  from. Without this, security entries have no consumer. The printed commit
+  command covers only the committed backlog; edits to the security backlog are
+  reported in the artifact list and never committed.
 - **test-roadmap.** Findings that pass the disclosure test go to
   `paad/security/test-roadmap-findings.md` instead of the normal findings
   log. The build-mode `git add` list and the execute-mode commit invariant
@@ -80,7 +105,10 @@ and Pi get `.reviews/security/` with the same ignore file. No generator change.
   Post-Review names the security log the way it names the findings log.
 - **agentic-architecture, pushback, agentic-dedup.** Qualifying findings go to
   `paad/security/<skill>-<stamp>.md`; the main report keeps count and pointer;
-  Post-Review emits the block when N > 0.
+  Post-Review emits the block when N > 0. For pushback the rule covers the
+  pushback report only. A requirement the user agrees to add to their spec
+  ("this endpoint must require auth") is a requirement, not a finding, and is
+  theirs to commit; Phase 3 writes it into the spec as it does today.
 - **Digraphs.** Each of the six gains one node for the split, since it is a
   gate the agent could skip.
 
@@ -97,8 +125,10 @@ small.
   from the old `paad/code-reviews/backlog.md` for dedup but never edits that
   file. When it finds any, Post-Review says how many and tells the developer
   to move them to `paad/security/backlog.md`.
-- **This repo.** Root `.gitignore` swaps its two `owasp-reviews` lines for
-  `paad/security/`. The local untracked `paad/owasp-reviews/` is moved by hand.
+- **This repo.** Move the local untracked `paad/owasp-reviews/` under
+  `paad/security/` by hand first, then swap the root `.gitignore`'s two
+  `owasp-reviews` lines for `paad/security/`. In that order: the other order
+  leaves live findings visible to `git add -A` in between.
 - **Nothing else moves.** Non-security reports, the roadmap, the analysis
   file and the ordinary findings log stay where they are and stay
   committable.
@@ -106,13 +136,16 @@ small.
 ## Checks, docs, verification
 
 - `make check-security` joins the per-tree block: the six skills carry the
-  shared paragraph verbatim; no skill outside the six mentions
-  `paad/security/`. Same skip rule as `check-config` for a shipped tree that
-  predates it.
+  shared paragraph verbatim, and `paad/security/` appears only in an explicit
+  allowlist — the six, `paad-help` (documents it), and `backlog` (consumes
+  it). Any other skill mentioning the path fails. Same skip rule as
+  `check-config` for a shipped tree that predates it.
 - `paad-help` gains a short "Security findings" note and updated artifact
-  lines for the six skills. README changes land on the release branch.
+  lines for the six skills and `backlog`. README changes land on the release branch.
   Changelog: one `### Changed` entry, three lines, under `[Unreleased]`.
 - Verification: drive `agentic-review` and `test-roadmap` against a scratch
-  repo with a planted injection bug, three runs each. Pass means the main
-  report has only the count-and-pointer line, the security file has the
-  finding, and `git status` shows nothing under `paad/security/`.
+  repo with a planted injection bug, ten runs each, pass is ten of ten. Three
+  runs pass a one-in-five routing miss about half the time, and a miss here is
+  the leak. Pass means the main report has only the count-and-pointer line,
+  the security file has the finding, and `git status` shows nothing under
+  `paad/security/`.
