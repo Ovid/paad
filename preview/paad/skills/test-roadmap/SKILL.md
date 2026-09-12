@@ -75,8 +75,8 @@ digraph route {
   "git switch -c <name>" -> "paad/test-roadmap/test-roadmap.md exists?";
   "paad/test-roadmap/test-roadmap.md exists?" -> "Load references/execute-test-roadmap.md (next phase, break-it-check, commit)" [label="yes"];
   "paad/test-roadmap/test-roadmap.md exists?" -> "Load references/build-test-roadmap.md (Detect, Grade, Plan, Critique, Write)" [label="no"];
-  "Load references/execute-test-roadmap.md (next phase, break-it-check, commit)" -> "Suspected bug clears the inclusion gate?";
-  "Load references/build-test-roadmap.md (Detect, Grade, Plan, Critique, Write)" -> "Suspected bug clears the inclusion gate?";
+  "Load references/execute-test-roadmap.md (next phase, break-it-check, commit)" -> "Suspected bug clears the inclusion gate?" [label="on each suspected bug, mid-run"];
+  "Load references/build-test-roadmap.md (Detect, Grade, Plan, Critique, Write)" -> "Suspected bug clears the inclusion gate?" [label="on each suspected bug, mid-run"];
   "Suspected bug clears the inclusion gate?" -> "Drop it, never a vague note" [label="no"];
   "Suspected bug clears the inclusion gate?" -> "Would reading it help an attacker?" [label="yes"];
   "Would reading it help an attacker?" -> "Log to paad/security/test-roadmap-findings.md; count line in the ordinary log; never git add -f" [label="yes, or on the edge"];

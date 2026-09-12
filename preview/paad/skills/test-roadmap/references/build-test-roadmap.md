@@ -112,10 +112,13 @@ symbol, because the roadmap is committed. And the test that pins it is the
 reproduction by design, so name it for the input and the observed outcome in
 neutral terms — what was passed, what came back or was raised — never for the
 class of weakness or the word that names it; the developer decodes it from the
-log entry, an attacker reading the suite does not. Where it does not clear the
-gate, it is dropped, not written down as a vague note: a findings log of hunches
-is noise the developer learns to skip, the same cry-wolf failure the clean-run
-rule exists to prevent.
+log entry, an attacker reading the suite does not. That holds for the test's
+name, docstring, comments, and assertion messages alike.
+`test_lookup_with_quoted_id_returns_row`, not `test_sql_injection_in_lookup`.
+And the same neutral wording holds for that phase's title and `Catches:` line.
+Where it does not clear the gate, it is dropped, not written down as a vague
+note: a findings log of hunches is noise the developer learns to skip, the same
+cry-wolf failure the clean-run rule exists to prevent.
 
 ## Stage 4 — Critique
 
@@ -147,14 +150,16 @@ any qualifying finding:
   This is the sink for anything unbounded (Stage 2's full list, the ledger in
   full); main context never carries it.
 - **`paad/test-roadmap/test-roadmap-findings.md`** — the findings log (see *The findings
-  log*, below), written only if Stage 3/4 recorded at least one entry. If they
+  log*, below), written only if Stage 3/4 recorded at least one entry — a
+  count line counts as an entry. If they
   recorded none, this file is not created here — execute mode creates it the
   first time a phase surfaces a qualifying finding.
 - **`paad/security/test-roadmap-findings.md`** — the security findings log:
   entries that pass the inclusion gate *and* the security test in the router's
   Security findings paragraph (reading it would help an attacker). Same entry
   format. Created only when there is an entry to write, after the paragraph's
-  `.gitignore` rule. Never committed.
+  `.gitignore` rule. Never committed. IDs are `S1`, `S2`, … — their own
+  sequence.
 
 **These artifacts are read by the developer, so they follow `references/test-pushback.md
 § Talking to the developer`.** In particular the ledger's class names
@@ -194,8 +199,9 @@ Files written or updated:
   new  paad/test-roadmap/test-roadmap.md  (14 phases)
 ```
 
-Name the security log the same way, only when this run added to it, and follow
-the file list with the Security block from the router's `## Post-Review`.
+Name the security log the same way, but with no description, only when this run
+added to it, and follow the file list with the Security block from the router's
+`## Post-Review`.
 
 **Then tell the developer the total, in plain words.** Build mode's approach
 menus fire *before* any plan exists, so during them there is no phase total to
@@ -317,9 +323,12 @@ miss any one and the observation is dropped, never downgraded to a vague note
 files: if reading it would help an attacker — the router's Security findings
 paragraph gives the definition — it goes to
 `paad/security/test-roadmap-findings.md`; otherwise to
-`paad/test-roadmap/test-roadmap-findings.md`. The ordinary log carries one
-line in place of each routed entry: `N security finding(s) written to
-paad/security/test-roadmap-findings.md`. On the edge, route to security.
+`paad/test-roadmap/test-roadmap-findings.md`. Before the first write there this
+run, make sure `paad/security/.gitignore` exists and contains the single line
+`*` — create it if absent, never rewrite it. The ordinary log carries one line
+per run, where the first routed entry would have gone, with N the run's count:
+`N security finding(s) written to paad/security/test-roadmap-findings.md`. On
+the edge, route to security.
 
 **Entry format** — one block per finding:
 
@@ -353,7 +362,9 @@ symbol, because the roadmap is committed. And the test that pins it is the
 reproduction by design, so name it for the input and the observed outcome in
 neutral terms — what was passed, what came back or was raised — never for the
 class of weakness or the word that names it; the developer decodes it from the
-log entry, an attacker reading the suite does not.
+log entry, an attacker reading the suite does not. That holds for the test's
+name, docstring, comments, and assertion messages alike.
+`test_lookup_with_quoted_id_returns_row`, not `test_sql_injection_in_lookup`.
 
 The ordinary log is **append-only and committed with whatever produced it**, so it
 survives a fresh clone like the roadmap does; the security log is append-only

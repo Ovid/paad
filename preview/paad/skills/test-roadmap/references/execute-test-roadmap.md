@@ -83,8 +83,9 @@ Files written or updated:
 
 Name the findings log only when this run actually added an entry to it, and say
 what the entry was about in a few words, so a real bug does not sit unread.
-Name the security log the same way, only when this run added to it, and follow
-the file list with the Security block from the router's `## Post-Review`.
+Name the security log the same way, but with no description, only when this run
+added to it, and follow the file list with the Security block from the router's
+`## Post-Review`.
 
 Then recompute the counts from the roadmap
 (`references/test-pushback.md § Talking to the developer`) and end the run one
@@ -352,14 +353,19 @@ symbol, because the roadmap is committed. And the test that pins it is the
 reproduction by design, so name it for the input and the observed outcome in
 neutral terms — what was passed, what came back or was raised — never for the
 class of weakness or the word that names it; the developer decodes it from the
-log entry, an attacker reading the suite does not.
+log entry, an attacker reading the suite does not. That holds for the test's
+name, docstring, comments, and assertion messages alike.
+`test_lookup_with_quoted_id_returns_row`, not `test_sql_injection_in_lookup`.
 
-Create `paad/test-roadmap/test-roadmap-findings.md` if it does not yet exist (build mode
-writes it only when its own stages found something); otherwise append. **Commit
-the ordinary log in the same commit as the phase's tests** (step 6 of the loop), so a finding
-never lands without the test that pins it, and both survive a fresh clone; the
-security log is never committed and never `git add -f`'d — the commit invariant
-in step 6 covers only what git can see.
+Create `paad/test-roadmap/test-roadmap-findings.md` — or
+`paad/security/test-roadmap-findings.md` — if it does not yet exist (build mode
+writes either only when its own stages found something); otherwise append.
+Before the first write there this run, make sure `paad/security/.gitignore`
+exists and contains the single line `*` — create it if absent, never rewrite it.
+**Commit the ordinary log in the same commit as the phase's tests** (step 6 of
+the loop), so a finding never lands without the test that pins it, and both
+survive a fresh clone; the security log is never committed and never
+`git add -f`'d — the commit invariant in step 6 covers only what git can see.
 
 When the phase lands, tell the developer in plain words how many findings you
 logged and point them at the file — *"I logged 2 concrete bugs I hit while
