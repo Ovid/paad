@@ -54,9 +54,9 @@ One thing preview does not cover: `scripts/convert_skills.py` has no preview sta
 
 ### Which checks run per tree
 
-`make test` runs the nine per-skill checks once for each tree, through recursive make on `TREE`:
+`make test` runs the ten per-skill checks once for each tree, through recursive make on `TREE`:
 
-**Per-tree** — `check-skill-names`, `check-skill-versions`, `check-digraphs`, `check-help`, `check-frontmatter`, `check-references`, `check-dispatch-sites`, `check-announce`, `check-config`. `check-config` skips a tree in which no skill carries the configuration paragraph, because a shipped tree that predates `paad/config/` can only acquire it through promotion; it fails partial adoption. Each reads its version out of `$(TREE)/.claude-plugin/plugin.json`, so the `-preview` suffix falls out of the tree rather than appearing as a literal anywhere in the Makefile. `check-help` reads preview's own `paad-help`, so it validates against preview's skill list and travels with it at promotion.
+**Per-tree** — `check-skill-names`, `check-skill-versions`, `check-digraphs`, `check-help`, `check-frontmatter`, `check-references`, `check-dispatch-sites`, `check-announce`, `check-config`, `check-security`. `check-config` skips a tree in which no skill carries the configuration paragraph, because a shipped tree that predates `paad/config/` can only acquire it through promotion; it fails partial adoption. `check-security` skips on the same no-marker rule as `check-config` for the paragraph copies, but always enforces the `paad/security/` allowlist. Each reads its version out of `$(TREE)/.claude-plugin/plugin.json`, so the `-preview` suffix falls out of the tree rather than appearing as a literal anywhere in the Makefile. `check-help` reads preview's own `paad-help`, so it validates against preview's skill list and travels with it at promotion.
 
 **Both trees, once** — `validate` iterates `plugins/*/ preview/*/`, so preview's manifest is validated too. `check-trees` compares them.
 

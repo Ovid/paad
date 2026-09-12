@@ -7,12 +7,14 @@ include mechanism; this script is what keeps the copies identical. It also
 fails any skill outside the allowlist that names paad/security/, so a new
 skill cannot start writing there without joining the list.
 
-A tree in which no skill carries the paragraph is skipped: a shipped tree that
-predates the feature can only acquire it through promotion. Partial adoption
-fails.
+On a tree in which no skill carries the paragraph, the paragraph check is
+skipped: a shipped tree that predates the feature can only acquire it through
+promotion. Partial adoption fails. The allowlist is enforced regardless: a tree
+that predates paad/security/ cannot name it, so the scan costs nothing.
 """
 
 import pathlib
+import shutil
 import sys
 import tempfile
 
@@ -56,22 +58,24 @@ def check(skills_dir):
         for d in sorted(skills_dir.iterdir())
         if (d / "SKILL.md").is_file()
     }
-    if not any(MARKER in text for text in skill_md.values()):
-        return None
+    adopted = any(MARKER in text for text in skill_md.values())
 
     problems = []
-    for name in sorted(PRODUCERS):
-        text = _normalize(skill_md.get(name, ""))
-        if PARAGRAPH not in text:
-            problems.append(f"{name}: the Security findings paragraph is missing or not verbatim")
-        if _normalize(BLOCK) not in text:
-            problems.append(f"{name}: the Post-Review Security block is missing or not verbatim")
+    if adopted:
+        for name in sorted(PRODUCERS):
+            text = _normalize(skill_md.get(name, ""))
+            if PARAGRAPH not in text:
+                problems.append(f"{name}: the Security findings paragraph is missing or not verbatim")
+            if _normalize(BLOCK) not in text:
+                problems.append(f"{name}: the Post-Review Security block is missing or not verbatim")
     for d in sorted(skills_dir.iterdir()):
         if d.name in ALLOWED or not d.is_dir():
             continue
         for md in sorted(d.rglob("*.md")):
             if PATH in md.read_text(encoding="utf-8"):
                 problems.append(f"{md.relative_to(skills_dir)}: names {PATH} but {d.name} is not in the allowlist")
+    if not adopted and not problems:
+        return None
     return problems
 
 
@@ -82,11 +86,20 @@ def _write_skill(root, name, body):
 
 def self_test():
     good = f"---\nname: x\n---\n\n{PARAGRAPH}\n\n## Post-Review\n\n   ```\n" + \
-        "\n".join("   " + l for l in BLOCK.splitlines()) + "\n   ```\n"
+        "\n".join("   " + line for line in BLOCK.splitlines()) + "\n   ```\n"
     with tempfile.TemporaryDirectory() as tmp:
         root = pathlib.Path(tmp)
         _write_skill(root, "vibe", "---\nname: vibe\n---\nnothing here\n")
         assert check(root) is None, "tree without the marker must be skipped"
+
+        _write_skill(root, "handoff", "---\nname: handoff\n---\nnothing here\n")
+        (root / "handoff" / "references").mkdir()
+        (root / "handoff" / "references" / "x.md").write_text("writes paad/security/handoff.md\n", encoding="utf-8")
+        assert check(root) == ["handoff/references/x.md: names paad/security/ but handoff is not in the allowlist"], check(root)
+        shutil.rmtree(root / "handoff")
+
+        _write_skill(root, "backlog", "---\nname: backlog\n---\nreads paad/security/\n")
+        assert check(root) is None, check(root)
 
         for name in PRODUCERS:
             _write_skill(root, name, good)
