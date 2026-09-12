@@ -30,7 +30,7 @@
 
 ## Executive Summary
 
-2-3 sentences: overall assessment, highest-severity finding if any, general confidence level.
+2-3 sentences: overall assessment, highest-severity finding if any, general confidence level. A routed (`Bug class: Security`) finding appears here at most as "security-related, see the security report" — not its class, mechanism, symbol, path, severity, or the words that name the weakness. If it was the highest-severity finding, say only that the highest-severity finding is in the security report.
 
 ## Critical Issues
 
@@ -98,11 +98,11 @@ One-line entries only. If empty, follow the Empty-section rules above.
 
 ## Review Metadata
 
-- **Agents dispatched:** all six lenses, each listed by name with a status — `findings (N)` | `bailed: <reason token>` | `NOT DISPATCHED: <reason>`. Every lens appears every run; a lens that never ran leaves no other trace, so this field is the only place its absence can surface.
+- **Agents dispatched:** all six lenses, each listed by name with a status — `findings (N)` | `bailed: <reason token>` | `NOT DISPATCHED: <reason>`. Every lens appears every run; a lens that never ran leaves no other trace, so this field is the only place its absence can surface. Counts only — no finding is described on this line.
 - **Scope:** <files reviewed — changed + adjacent. When Phase 1 steps 6-8 traced no adjacent files, write the literal string `no adjacent files traced` rather than listing only the changed files.>
 - **Raw findings:** N (before verification)
 - **Verified findings:** M (after verification)
-- **Filtered out:** N - M
+- **Filtered out:** N - M <the number only. When a rejected or merged candidate was security-related, its reason goes in the security report's copy of this line; the main report says `reasons in the security report`. Otherwise the reasons may follow the number.>
 - **Out-of-scope findings:** N (Critical: a, Important: b, Suggestion: c)
 - **Out-of-scope additions:** K
 - **Backlog:** X new entries added, Y re-confirmed (see `paad/code-reviews/backlog.md`)
@@ -122,7 +122,7 @@ Both backlog files are project-wide, append-only, and use **explicit removal onl
 
 **Two backlogs, one shape.** `paad/security/backlog.md` holds every entry whose `Bug class:` is `Security`; `paad/code-reviews/backlog.md` holds the rest. Same header, same per-entry shape, same ID format, same removal rule. The orchestrator creates the security file only on the first Security directive of a run — a header-only security backlog is a file that says "look here" for nothing — and applies the `.gitignore` rule from the parent `SKILL.md`'s Security findings paragraph before the first write. An update directive is written back to the file its `source` names. The security backlog is never committed and never shared across clones: a teammate's run mints its own IDs, `git log` on it shows nothing, and "re-confirmed" there means re-confirmed on this machine.
 
-**The security report** at `paad/security/code-review-<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` uses this same template and the same sections, holding only the `Bug class: Security` findings and their backlog IDs. Rendered as the security report, the metadata `Backlog:` line names `paad/security/backlog.md` and the `Security:` line is omitted — it would point at itself. In the main report, each tier or Out of Scope section that lost a finding to it carries one line: `N security finding(s) written to paad/security/<file>`. Write the security report only when N > 0.
+**The security report** at `paad/security/code-review-<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` uses this same template and the same sections, holding only the `Bug class: Security` findings and their backlog IDs. Its Executive Summary, `Filtered out` reasons and every other prose field may say everything about them — it is the only file that does. Rendered as the security report, the metadata `Backlog:` line names `paad/security/backlog.md` and the `Security:` line is omitted — it would point at itself. In the main report, each tier or Out of Scope section that lost a finding to it carries one line: `N security finding(s) written to paad/security/<file>`. Write the security report only when N > 0. That count line is the only trace a routed finding leaves in the main report: the Executive Summary, Review Metadata and every other prose field describe it as security-related at most; the weakness, its mechanism and its symbol appear only in the security report.
 
 **Fixed header (preserved across all updates):**
 
