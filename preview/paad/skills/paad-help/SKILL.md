@@ -104,6 +104,11 @@ Configuration (experimental): put instructions in paad/config/paad.md to
 steer every skill, or paad/config/<skill-name>.md to steer one. A skill that
 finds a file follows it and opens its final answer with "Config: <path>".
 Details and the caveats: https://github.com/Ovid/paad/blob/main/CONFIG.md
+
+Security findings: any finding that would help an attacker is written only
+under paad/security/, which carries its own .gitignore, and the ordinary
+report gets a count and a pointer. Add paad/security/ to your root
+.gitignore too. The directory is local scratch — git clean -x deletes it.
 ```
 
 ---
@@ -154,6 +159,7 @@ Multi-agent architecture analysis. Diagnosis only — finds strengths and
 flaws with evidence but does not propose fixes.
 
 Output: paad/architecture-reviews/
+        paad/security/agentic-architecture-<date>-<repo>.md (security findings, ignored)
 
 Arguments:
   /agentic-architecture                          Full repo
@@ -231,6 +237,8 @@ Multi-agent bug-hunting code review of the current branch.
 
 Output:   paad/code-reviews/<branch>-<timestamp>-<short-sha>.md (per-review)
           paad/code-reviews/backlog.md (project-wide, persistent)
+          paad/security/code-review-<branch>-<timestamp>-<sha>.md and
+          paad/security/backlog.md (security findings, ignored)
 
 Arguments:
   /agentic-review                    Diff against the default branch
@@ -296,7 +304,9 @@ Work the project-wide out-of-scope bug backlog that /agentic-review writes
 to. Two modes, one flat file. Never commits — it edits files and prints the
 commit command for you to run.
 
-Input/output: paad/code-reviews/backlog.md (the file /agentic-review fills)
+Input/output: paad/code-reviews/backlog.md and paad/security/backlog.md
+              (the files /agentic-review fills; the security one is never
+              committed)
 
 Arguments:
   /backlog          List the entries, then show the two-option menu
@@ -304,8 +314,9 @@ Arguments:
   /backlog fix      Go straight to Fix mode
 
 Requirements:
-  - A populated paad/code-reviews/backlog.md. If it is missing or empty,
-    the skill says so and points you at /agentic-review.
+  - A populated paad/code-reviews/backlog.md or paad/security/backlog.md.
+    If both are missing or empty, the skill says so and points you at
+    /agentic-review.
 
 Clean mode:
   1. One skeptical read-only analyst per entry re-verifies it against the
@@ -418,7 +429,8 @@ or says it is unconditional.
 
 Output: the conversation, plus your spec if you ask for edits.
         Writes paad/pushback-reviews/ only when issues go undiscussed
-        or you ask for a report.
+        or you ask for a report. Security findings in that report go to
+        paad/security/pushback-<date>-<spec>.md (ignored).
 
 Arguments:
   /pushback path/to/spec.md    Review a specific file
@@ -548,6 +560,7 @@ independently evolved implementations. Not a syntactic clone detector.
 
 Output: paad/dedup-reviews/<branch-or-scope>-<timestamp>-<sha>.md
         paad/dedup-reviews/INDEX.md (persistent, newest run on top)
+        paad/security/agentic-dedup-<branch-or-scope>-<timestamp>-<sha>.md (security findings, ignored)
 
 Arguments:
   /agentic-dedup                     Scan the repository
@@ -592,8 +605,11 @@ Multi-agent security review of source code against the OWASP Top 10:2025.
 Reads code. Never starts the app, never sends a request anywhere, never
 writes exploit code, never fixes what it finds.
 
-Output: paad/owasp-reviews/<branch-or-scope>-<timestamp>-<sha>.md
-        paad/owasp-reviews/INDEX.md (persistent, newest run on top)
+Output: paad/security/owasp-<branch-or-scope>-<timestamp>-<sha>.md
+        paad/security/INDEX.md (newest run on top; local scratch, not
+        persistent across git clean -x)
+        paad/security/<report-stem>-proofs/ (if you authorized the proof stage)
+        Everything lands under paad/security/, which ignores itself.
 
 Arguments:
   /agentic-owasp                     Review the repository
@@ -695,6 +711,7 @@ takes 15 invocations. Running it once leaves you with a plan and no
 tests.
 
 Output: paad/test-roadmap/test-roadmap.md (the roadmap, and the memory)
+        paad/security/test-roadmap-findings.md (security findings, never committed)
         Tests, committed one phase per commit, on your working branch
 
 Arguments:
