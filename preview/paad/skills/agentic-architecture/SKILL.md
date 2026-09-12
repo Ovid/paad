@@ -9,6 +9,8 @@ metadata:
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-architecture.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+
 # Agentic Architecture Analysis
 
 Multi-agent architecture analysis of the current codebase. Dispatches specialist agents in parallel — each focused on a different architectural domain — verifies findings to filter false positives, and produces a balanced report of strengths and flaws with concrete evidence.
@@ -280,6 +282,17 @@ After writing the report:
    ```
    Files written or updated:
      new      paad/architecture-reviews/architecture-2026-08-01-10-42-13.md
+   ```
+
+   When the run wrote a security file, add the Security block once, filling in
+   N, the file, and new or updated:
+
+   ```
+   Security: N finding(s) in paad/security/<file> (new|updated).
+   paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+   Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+   If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+   paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
    ```
 
    Then give the finding counts (strengths and flaws by impact level)
