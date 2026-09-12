@@ -54,6 +54,8 @@ digraph analysis_flow {
   "Merge duplicates, note the agreeing specialists" [shape=box];
   "DROP the finding" [shape=box];
   "Keep the finding" [shape=box];
+  "Would reading it help an attacker?" [shape=diamond];
+  "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [shape=box, style=bold];
   "Write report to paad/architecture-reviews/" [shape=box];
   "Report location, counts, 3-6 bullet summary" [shape=box];
   "STOP: diagnosis only — do NOT propose fixes" [shape=box, style=bold];
@@ -83,7 +85,10 @@ digraph analysis_flow {
   "Reported by multiple specialists?" -> "Keep the finding" [label="no"];
   "Merge duplicates, note the agreeing specialists" -> "Keep the finding";
 
-  "Keep the finding" -> "Write report to paad/architecture-reviews/";
+  "Keep the finding" -> "Would reading it help an attacker?";
+  "Would reading it help an attacker?" -> "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [label="yes, or on the edge"];
+  "Would reading it help an attacker?" -> "Write report to paad/architecture-reviews/" [label="no"];
+  "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" -> "Write report to paad/architecture-reviews/";
   "DROP the finding" -> "Write report to paad/architecture-reviews/" [label="counted under Filtered out"];
   "Write report to paad/architecture-reviews/" -> "Report location, counts, 3-6 bullet summary";
   "Report location, counts, 3-6 bullet summary" -> "STOP: diagnosis only — do NOT propose fixes";
@@ -196,6 +201,8 @@ Write verified findings to `paad/architecture-reviews/<YYYY-MM-DD>-<git-repo-nam
 
 Create the `paad/architecture-reviews/` directory if it doesn't exist.
 
+Findings that meet the Security findings paragraph's definition go to `paad/security/agentic-architecture-<YYYY-MM-DD>-<git-repo-name>.md` instead, same template, after the paragraph's `.gitignore` rule: before the first write under `paad/security/` this run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it. The main report carries the count-and-pointer line where they would have gone — one line per report section that lost a finding, with N that section's count. Write the security file only when there is at least one.
+
 The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for the Phase 4 deliverable.
 
 ## Flaw/Risk Type Reference
@@ -282,10 +289,10 @@ After writing the report:
    ```
    Files written or updated:
      new      paad/architecture-reviews/architecture-2026-08-01-10-42-13.md
+     new      paad/security/agentic-architecture-2026-08-01-myrepo.md   (only when written)
    ```
 
-   When the run wrote a security file, add the Security block once, filling in
-   N, the file, and new or updated:
+   When N > 0, emit the Security block once:
 
    ```
    Security: N finding(s) in paad/security/<file> (new|updated).
