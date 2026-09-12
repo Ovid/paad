@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Branch:** `ovid/security`
-**Status:** design agreed, not implemented
+**Status:** implemented, 10/10 agentic-review, 10/10 test-roadmap
 
 ## Problem
 
