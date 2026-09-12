@@ -12,8 +12,8 @@
 
 **Failure handling:**
 
-- If writing `paad/code-reviews/backlog.md` fails for any reason (permissions, disk, malformed existing file), surface the error to the user and write the per-review report anyway. Only an **attempted-and-failed** write may skip the backlog, and only with the underlying error text shown to the user. Deferring it because context is short, or because the IDs already appear in the report, is a review defect.
-- **Confirm the write before reporting it.** After writing the backlog, re-read the file and check that every backlog ID printed in the report appears in it. The counts in Post-Review come from what you read back, not from what the Verifier directed you to write. If they disagree, report the discrepancy rather than the intended numbers.
+- If writing `paad/code-reviews/backlog.md` or `paad/security/backlog.md` fails for any reason (permissions, disk, malformed existing file), surface the error to the user and write the per-review report anyway. Only an **attempted-and-failed** write may skip the backlog, and only with the underlying error text shown to the user. Deferring it because context is short, or because the IDs already appear in the report, is a review defect.
+- **Confirm the write before reporting it.** After writing the backlog, re-read each backlog file you wrote and check that every backlog ID printed in the report appears in the file its report names. The counts in Post-Review come from what you read back, not from what the Verifier directed you to write. If they disagree, report the discrepancy rather than the intended numbers.
 
 **Report template:**
 
@@ -60,7 +60,8 @@ One-line entries only. If empty, follow the Empty-section rules above.
 > Instead, present them to the user **batched by tier**: one ask for all out-of-scope
 > Critical findings, one ask for all Important, one for Suggestions. For each tier, the
 > user decides which (if any) to address. When you fix an out-of-scope finding, remove
-> its entry from `paad/code-reviews/backlog.md` by ID.
+> its entry from the backlog that holds it by ID — `paad/code-reviews/backlog.md`, or
+> `paad/security/backlog.md` when this is the security report.
 
 ### Out-of-Scope Critical
 #### [OOSC1] <title> — backlog id: `<id>`
@@ -105,6 +106,7 @@ One-line entries only. If empty, follow the Empty-section rules above.
 - **Out-of-scope findings:** N (Critical: a, Important: b, Suggestion: c)
 - **Out-of-scope additions:** K
 - **Backlog:** X new entries added, Y re-confirmed (see `paad/code-reviews/backlog.md`)
+- **Security:** N finding(s) written to `paad/security/<file>`; security backlog: X new, Y re-confirmed on this machine
 - **Steering files consulted:** <list or "none found">
 - **Intent sources consulted:** <e.g., "PR description", "docs/plans/foo-design.md", "recent commit messages", or "none — Spec Compliance skipped">
 - **Verifier warnings:** <count, or "none". When > 0, render the warnings as a sublist below this line — one bullet per warning, each verbatim from the Verifier's emitted line. Example:>
@@ -116,7 +118,11 @@ One-line entries only. If empty, follow the Empty-section rules above.
 
 `paad/code-reviews/backlog.md` is project-wide, append-only, and uses **explicit removal only** — agentic-review never auto-resolves entries.
 
-**Sole writer:** the Phase 4 orchestrator (the agent that activated this skill) is the only writer of this file. The Phase 3 Verifier emits directives (`{id, last_seen, branch, sha}` updates and new-entry mints) — it does **not** write `backlog.md` itself. On first run when the file is absent, the orchestrator creates it with the fixed header below — **always, even when the directives list is empty.** A clean review with zero out-of-scope bugs still leaves a header-only `backlog.md` behind, so subsequent runs and downstream tooling can depend on the file existing. Subsequent runs hit the file-exists path and skip creation. This single-writer rule prevents the Verifier and orchestrator from racing or both no-opping on the assumption the other will create the file.
+**Sole writer:** the Phase 4 orchestrator (the agent that activated this skill) is the only writer of this file. The Phase 3 Verifier emits directives (`{id, last_seen, branch, sha, source}` updates, `migrate` copies, and new-entry mints) — it does **not** write `backlog.md` itself. On first run when the file is absent, the orchestrator creates it with the fixed header below — **always, even when the directives list is empty.** A clean review with zero out-of-scope bugs still leaves a header-only `backlog.md` behind, so subsequent runs and downstream tooling can depend on the file existing. Subsequent runs hit the file-exists path and skip creation. This single-writer rule prevents the Verifier and orchestrator from racing or both no-opping on the assumption the other will create the file.
+
+**Two backlogs, one shape.** `paad/security/backlog.md` holds every entry whose `Bug class:` is `Security`; `paad/code-reviews/backlog.md` holds the rest. Same header, same per-entry shape, same ID format, same removal rule. The orchestrator creates the security file only on the first Security directive of a run — a header-only security backlog is a file that says "look here" for nothing — and applies the `.gitignore` rule from the parent `SKILL.md`'s Security findings paragraph before the first write. An update directive is written back to the file its `source` names. The security backlog is never committed and never shared across clones: a teammate's run mints its own IDs, `git log` on it shows nothing, and "re-confirmed" there means re-confirmed on this machine.
+
+**The security report** at `paad/security/code-review-<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` uses this same template, holding only the `Bug class: Security` findings — in-scope tiers, Out of Scope, and their backlog IDs. In the main report, each tier or Out of Scope section that lost a finding to it carries one line: `N security finding(s) written to paad/security/<file>`. Write the security report only when N > 0.
 
 **Fixed header (preserved across all updates):**
 
