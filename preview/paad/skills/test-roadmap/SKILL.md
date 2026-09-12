@@ -51,6 +51,11 @@ digraph route {
   "paad/test-roadmap/test-roadmap.md exists?" [shape=diamond];
   "Load references/build-test-roadmap.md (Detect, Grade, Plan, Critique, Write)" [shape=box];
   "Load references/execute-test-roadmap.md (next phase, break-it-check, commit)" [shape=box];
+  "Suspected bug clears the inclusion gate?" [shape=diamond];
+  "Would reading it help an attacker?" [shape=diamond];
+  "Log to paad/security/test-roadmap-findings.md; count line in the ordinary log; never git add -f" [shape=box, style=bold];
+  "Log to paad/test-roadmap/test-roadmap-findings.md" [shape=box];
+  "Drop it, never a vague note" [shape=box];
 
   "Inside a git repo?" -> "STOP: needs a git checkout" [label="no"];
   "Inside a git repo?" -> "Detached HEAD?" [label="yes"];
@@ -70,6 +75,12 @@ digraph route {
   "git switch -c <name>" -> "paad/test-roadmap/test-roadmap.md exists?";
   "paad/test-roadmap/test-roadmap.md exists?" -> "Load references/execute-test-roadmap.md (next phase, break-it-check, commit)" [label="yes"];
   "paad/test-roadmap/test-roadmap.md exists?" -> "Load references/build-test-roadmap.md (Detect, Grade, Plan, Critique, Write)" [label="no"];
+  "Load references/execute-test-roadmap.md (next phase, break-it-check, commit)" -> "Suspected bug clears the inclusion gate?";
+  "Load references/build-test-roadmap.md (Detect, Grade, Plan, Critique, Write)" -> "Suspected bug clears the inclusion gate?";
+  "Suspected bug clears the inclusion gate?" -> "Drop it, never a vague note" [label="no"];
+  "Suspected bug clears the inclusion gate?" -> "Would reading it help an attacker?" [label="yes"];
+  "Would reading it help an attacker?" -> "Log to paad/security/test-roadmap-findings.md; count line in the ordinary log; never git add -f" [label="yes, or on the edge"];
+  "Would reading it help an attacker?" -> "Log to paad/test-roadmap/test-roadmap-findings.md" [label="no"];
 }
 ```
 
@@ -142,7 +153,9 @@ a run after that file was deleted — either way, build it.
 
 If it ever grows a third condition, that is a signal something has been put
 in the wrong place — take it back to `build-test-roadmap.md` or
-`execute-test-roadmap.md`, not to this file.
+`execute-test-roadmap.md`, not to this file. The one exception is `## Post-Review`
+below, which lives here because `make check-security` requires the Security
+block in this file.
 
 This router never loads `references/break-it-check.md`,
 `references/test-pushback.md`, or `references/test-theater.md` directly.
@@ -173,7 +186,7 @@ not re-detect or re-ask anything build mode already settled.
 
 ## Post-Review
 
-Both mode files end the run with their own file list (`references/execute-test-roadmap.md § Ending the run`, `references/build-test-roadmap.md § Stage 5`). When the run wrote `paad/security/test-roadmap-findings.md`, that list is followed by the Security block, once:
+Both mode files end the run with their own file list (`references/execute-test-roadmap.md § Ending the run`, `references/build-test-roadmap.md § Stage 5`). When the run added to `paad/security/test-roadmap-findings.md`, the mode file's file list is followed by the Security block, once:
 
 ```
 Security: N finding(s) in paad/security/<file> (new|updated).
