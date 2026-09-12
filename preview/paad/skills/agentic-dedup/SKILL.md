@@ -614,7 +614,7 @@ Write verified findings to `paad/dedup-reviews/<branch-or-scope>-<YYYY-MM-DD-HH-
 
 Create the directory if it does not exist.
 
-Findings that meet the Security findings paragraph's definition — Critical/Important entries naming authorization, credential, secret, token, or PII handling among them — go to `paad/security/agentic-dedup-<branch-or-scope>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` instead, same template, omitting any section that received no routed finding (keep the header block), after the paragraph's `.gitignore` rule: before the first write under `paad/security/` this run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it. The main report carries the count-and-pointer line where they would have gone — one line per report section that lost a finding, with N that section's count. The Executive Summary and the INDEX row mention routed findings as that count line only, never by concept, path, or severity. Write the security file only when there is at least one.
+Findings that meet the Security findings paragraph's definition — at any severity; here that is typically entries naming authorization, credential, secret, token, PII, payment, or tenant-isolation handling — go to `paad/security/agentic-dedup-<branch-or-scope>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` instead, same template, omitting any section that received no routed finding (keep the header block), after the paragraph's `.gitignore` rule: before the first write under `paad/security/` this run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it. The main report carries the count-and-pointer line where they would have gone — one line per report section that lost a finding, with N that section's count. Rows in the Type and Constraint table and the Rejected Candidates table are findings for this rule. The Executive Summary mentions routed findings as that count line only, never by concept, path, or severity, and the INDEX row carries them as a ` +N security` suffix in its Findings cell. On the unverified path the security file carries the same retitled section and banner. Write the security file only when there is at least one.
 
 ### Slug rule for `<branch-or-scope>`
 
@@ -703,7 +703,9 @@ Each row:
 - **Commit**: short SHA from the report header.
 - **Mode**: full / changed / type-constraint / domain.
 - **Findings (C/I/S)**: counts of Critical / Important / Suggestion
-  findings as written in the report.
+  findings as written in the report. Counts only what the main report
+  holds; when findings were routed, append ` +N security` to this cell
+  so the column set is unchanged.
 - **Specialists missing**: comma-separated list of specialists whose
   Phase 3 outcome was not `returned`, or `—` if all returned.
 - **Entry**: relative link to the report file just written.

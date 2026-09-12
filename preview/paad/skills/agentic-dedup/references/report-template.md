@@ -24,7 +24,7 @@ into table cells.
 
 ## Executive Summary
 
-2-4 sentences summarizing the most important duplication risks, confidence level, and whether consolidation is recommended now or later.
+2-4 sentences summarizing the most important duplication risks that remain in this report; routed findings appear as their count line only. Also give the confidence level and whether consolidation is recommended now or later.
 
 ## Findings by Severity
 
