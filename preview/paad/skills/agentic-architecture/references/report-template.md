@@ -55,6 +55,8 @@ Ranked by impact (High/Medium/Low), 10–25 items:
 | S1 | Clear modular boundaries | Observed / Not observed / Not assessed / Not applicable | #S-ID or — |
 (continue for all 14)
 
+When a security file was written this run, rows 30, 33 and S10 read `See security file` in Status and `see paad/security/` in Finding regardless of what was found; a routed finding of any other row type keeps its row's status with no per-row pointer.
+
 ## Hotspots
 
 Top 3 files/directories to review:

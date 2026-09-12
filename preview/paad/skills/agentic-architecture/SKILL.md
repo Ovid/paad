@@ -201,7 +201,7 @@ Write verified findings to `paad/architecture-reviews/<YYYY-MM-DD>-<git-repo-nam
 
 Create the `paad/architecture-reviews/` directory if it doesn't exist.
 
-Findings that meet the Security findings paragraph's definition go to `paad/security/agentic-architecture-<YYYY-MM-DD>-<git-repo-name>.md` instead, same template, omitting any section that received no routed finding (keep the header block), after the paragraph's `.gitignore` rule: before the first write under `paad/security/` this run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it. The main report carries the count-and-pointer line where they would have gone — one line per report section that lost a finding, with N that section's count. A hotspot or next question that exists only because of a routed finding goes to the security file with it; in the Coverage Checklist the routed finding's row keeps its status and cites `paad/security/` in the Finding column instead of an F-ID. Write the security file only when there is at least one.
+Findings that meet the Security findings paragraph's definition go to `paad/security/agentic-architecture-<YYYY-MM-DD>-<git-repo-name>.md` instead, same template, omitting any section that received no routed finding (keep the header block), after the paragraph's `.gitignore` rule: before the first write under `paad/security/` this run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it. The main report carries the count-and-pointer line where they would have gone — one line per report section that lost a finding, with N that section's count. A hotspot or next question that exists only because of a routed finding goes to the security file with it. Whenever a security file was written this run, the security-typed checklist rows (30, 33, S10) in the main report read `See security file` in Status and `see paad/security/` in Finding regardless of what was found — their real status lives in the security file's own checklist; a routed finding of any other row type keeps that row's status but gets no per-row pointer, counting only toward its section's count line. Write the security file only when there is at least one.
 
 The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for the Phase 4 deliverable.
 
@@ -293,7 +293,7 @@ After writing the report:
      new      paad/security/agentic-architecture-2026-08-01-myrepo.md
    ```
 
-   When N > 0, emit the Security block once:
+   When any finding was routed, emit the Security block once:
 
    ```
    Security: N finding(s) in paad/security/<file> (new|updated).

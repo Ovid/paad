@@ -86,7 +86,7 @@ No flags. Any other argument: show the menu.
 ## On Invocation
 
 1. **Empty check.** If both `paad/code-reviews/backlog.md` and `paad/security/backlog.md` are missing, or together contain zero `## <id>` entries, say: *"Backlog is empty. Run `/agentic-review` to populate it."* and stop.
-2. **Otherwise** read both files and print one line per entry — `id`, severity, `File`, and the one-line description — so the user sees what is in scope. Show which file each entry came from; every edit goes back to the file the entry came from. When both files hold the same `## <id>`, it is one entry whose source is `paad/security/backlog.md`; the committed copy is a legacy entry `/agentic-review` already migrated, so treat it as a merge-loser — delete it from the committed file, no verification gate, and note it in the commit message as `migrated <id>`. Never move an unmatched legacy entry between files; `/agentic-review` owns migration.
+2. **Otherwise** read both files and print one line per entry — `id`, severity, `File`, and the one-line description — so the user sees what is in scope. Show which file each entry came from; every edit goes back to the file the entry came from. When both files hold the same `## <id>`, it is one entry whose source is `paad/security/backlog.md`; the committed copy is a legacy entry `/agentic-review` already migrated, so treat it as a merge-loser — delete it from the committed file, no verification gate, and note it in the commit message as `removed <id>`. Never move an unmatched legacy entry between files; `/agentic-review` owns migration.
 3. **Route.** If `$ARGUMENTS` selected a mode, enter it. Otherwise show the menu and **wait**:
 
    ```

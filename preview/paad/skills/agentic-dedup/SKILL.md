@@ -87,7 +87,7 @@ digraph session {
   "Any finding would help an attacker?" -> "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" [label="yes, or on the edge"];
   "Any finding would help an attacker?" -> "Phase 5: Report (verified findings)" [label="no, verified"];
   "Any finding would help an attacker?" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="no, unverified"];
-  "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" -> "Phase 5: Report (verified findings)";
+  "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" -> "Phase 5: Report (verified findings)" [label="if verified"];
   "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="if unverified"];
   "Report: no duplication found in scope" -> "Post-Review: Security block when any finding was routed";
   "Phase 5: Report (verified findings)" -> "Post-Review: Security block when any finding was routed";
