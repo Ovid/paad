@@ -332,6 +332,9 @@ else once the session ends; that is what the file is for.
 - Apply agreed-upon changes to the original file
 - Add/modify requirements based on the user's responses
 - Don't touch requirements that weren't discussed
+- **Write the requirement, never the weakness:** "the export endpoint must
+  filter by tenant", not "the export endpoint currently leaks other tenants'
+  rows". The spec is committed; the finding it answers is not.
 - **After a stop signal, ask before editing.** "Good enough" ends the review,
   not just the current issue. Applying changes the user already agreed to is
   fine — confirm first. Editing a spec the author has stopped reading is how a
@@ -349,37 +352,15 @@ Security findings paragraph's definition goes to
 any section that received no routed finding (keep the header block). Before the
 first write under `paad/security/` this run, make sure `paad/security/.gitignore`
 exists and contains the single line `*` — create it if absent, never rewrite it.
-Each report section that lost a finding (Issues Reviewed, Unresolved Issues)
-carries the count-and-pointer line in its place, N being that section's count;
-the Summary counts routed findings in its totals and says nothing else about
-them. A requirement the user agreed to add to their spec — "this endpoint must
+Each report section that lost a finding carries the count-and-pointer line in
+its place, N being that section's count. Resolution does not exempt an entry: a
+resolved issue's Issues Reviewed entry still names the weakness and is routed
+like any other. The Summary counts routed findings in its totals and says
+nothing else about them. A requirement the user agreed to add to their spec — "this endpoint must
 require auth" — is a requirement, not a finding: it is theirs to commit, and the
 spec update above writes it as it always has.
 
 The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for that deliverable.
-
-### List every file you wrote or updated
-
-End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated, the report if one was written, and the security file if one was written:
-
-```
-Files written or updated:
-  updated  docs/specs/checkout-prd.md
-  new      paad/pushback-reviews/2026-08-01-checkout-pushback.md
-  new      paad/security/pushback-2026-08-01-checkout.md
-```
-
-When N > 0, emit the Security block once:
-
-```
-Security: N finding(s) in paad/security/<file> (new|updated).
-paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
-Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
-If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
-paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
-```
-
-Say it even when only one file changed, and even when the user watched you change it.
 
 ## Common Mistakes
 
@@ -401,3 +382,26 @@ These patterns produce pushback that reads well and changes nothing. Avoid them:
 | Manufacturing issues to fill all six categories | Not every spec has security concerns or contradictions. Say a category is clean and move on. |
 | Continuing past "good enough" | That's the stop signal. Keep going and the user stops reading. |
 | Rewriting the spec instead of critiquing it | Present issues and let the user decide. Silent rewrites replace their judgment with yours. |
+
+## Post-Review
+
+End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated, the report if one was written, and the security file if one was written:
+
+```
+Files written or updated:
+  updated  docs/specs/checkout-prd.md
+  new      paad/pushback-reviews/2026-08-01-checkout-pushback.md
+  new      paad/security/pushback-2026-08-01-checkout.md
+```
+
+When any finding was routed, emit the Security block once:
+
+```
+Security: N finding(s) in paad/security/<file> (new|updated).
+paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
+```
+
+Say it even when only one file changed, and even when the user watched you change it.
