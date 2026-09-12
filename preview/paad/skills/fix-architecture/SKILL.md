@@ -478,7 +478,7 @@ After the developer stops or the batch is complete:
 
      ```
      Files written or updated:
-       updated  paad/architecture-reviews/architecture-2026-07-14-09-10-05.md
+       updated  paad/architecture-reviews/2026-07-14-myrepo-architecture-report.md
        12 source files changed across 3 modules (see git diff)
      ```
 2. Suggest: "Run `/fix-architecture` again in a fresh session to continue fixing remaining flaws."
