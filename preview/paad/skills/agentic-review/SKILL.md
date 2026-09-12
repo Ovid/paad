@@ -27,7 +27,7 @@ digraph classification {
   "Branch causes/worsens this bug?" [shape=diamond];
   "Touch is purely cosmetic AND bug is purely pre-existing?" [shape=diamond];
   "Match in pre-filtered backlog?" [shape=diamond];
-  "Matched entry is in the committed backlog with Bug class: Security?" [shape=diamond];
+  "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" [shape=diamond];
 
   "In-scope" [shape=box, style=bold];
   "Out-of-scope (bug)" [shape=box, style=bold];
@@ -35,7 +35,7 @@ digraph classification {
   "Update last_seen in the entry's source file" [shape=box];
   "Mint new backlog entry" [shape=box];
   "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" [shape=box];
-  "Bug class: Security (set by the Verifier before dedup)?" [shape=diamond];
+  "Bug class: Security (set by the Verifier)?" [shape=diamond];
   "Write to paad/security/ report and backlog; count-and-pointer line in the main report" [shape=box, style=bold];
   "Write to paad/code-reviews/ report and backlog" [shape=box];
 
@@ -49,16 +49,16 @@ digraph classification {
   "Branch causes/worsens this bug?" -> "In-scope" [label="yes (promote)"];
   "Branch causes/worsens this bug?" -> "Out-of-scope (bug)" [label="no"];
   "Out-of-scope (bug)" -> "Match in pre-filtered backlog?";
-  "Match in pre-filtered backlog?" -> "Matched entry is in the committed backlog with Bug class: Security?" [label="yes"];
-  "Matched entry is in the committed backlog with Bug class: Security?" -> "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" [label="yes"];
-  "Matched entry is in the committed backlog with Bug class: Security?" -> "Update last_seen in the entry's source file" [label="no"];
+  "Match in pre-filtered backlog?" -> "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" [label="yes"];
+  "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" [label="yes"];
+  "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Update last_seen in the entry's source file" [label="no"];
   "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" -> "Write to paad/security/ report and backlog; count-and-pointer line in the main report";
   "Match in pre-filtered backlog?" -> "Mint new backlog entry" [label="no"];
-  "In-scope" -> "Bug class: Security (set by the Verifier before dedup)?";
-  "Update last_seen in the entry's source file" -> "Bug class: Security (set by the Verifier before dedup)?";
-  "Mint new backlog entry" -> "Bug class: Security (set by the Verifier before dedup)?";
-  "Bug class: Security (set by the Verifier before dedup)?" -> "Write to paad/security/ report and backlog; count-and-pointer line in the main report" [label="yes"];
-  "Bug class: Security (set by the Verifier before dedup)?" -> "Write to paad/code-reviews/ report and backlog" [label="no"];
+  "In-scope" -> "Bug class: Security (set by the Verifier)?";
+  "Update last_seen in the entry's source file" -> "Bug class: Security (set by the Verifier)?";
+  "Mint new backlog entry" -> "Bug class: Security (set by the Verifier)?";
+  "Bug class: Security (set by the Verifier)?" -> "Write to paad/security/ report and backlog; count-and-pointer line in the main report" [label="yes"];
+  "Bug class: Security (set by the Verifier)?" -> "Write to paad/code-reviews/ report and backlog" [label="no"];
 }
 ```
 
