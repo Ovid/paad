@@ -63,8 +63,9 @@ digraph session {
   "Phase 5: Report (verified findings)" [shape=box];
   "Phase 5: Report (Specialist Findings — Unverified banner)" [shape=box];
   "Report: no duplication found in scope" [shape=box];
-  "Post-Review: sensitive paths named?" [shape=diamond];
-  "Warn before committing the report" [shape=box, style=bold];
+  "Any finding would help an attacker?" [shape=diamond];
+  "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" [shape=box, style=bold];
+  "Post-Review: Security block when any finding was routed" [shape=box];
   "Done — do NOT auto-refactor" [shape=doublecircle];
 
   "Phase 1: Reconnaissance" -> "Phase 2: Candidate Discovery";
@@ -76,19 +77,22 @@ digraph session {
   "Retry that specialist ONCE" -> "Phase 4: Verifier" [label="record outcome map either way"];
   "Any specialist errored/timed_out/malformed?" -> "Phase 4: Verifier" [label="no"];
   "Phase 4: Verifier" -> "Verifier returned?";
-  "Verifier returned?" -> "Phase 5: Report (verified findings)" [label="yes"];
+  "Verifier returned?" -> "Any finding would help an attacker?" [label="yes"];
   "Verifier returned?" -> "Retry verifier ONCE" [label="no"];
   "Retry verifier ONCE" -> "Verifier returned on retry?";
-  "Verifier returned on retry?" -> "Phase 5: Report (verified findings)" [label="yes"];
+  "Verifier returned on retry?" -> "Any finding would help an attacker?" [label="yes"];
   "Verifier returned on retry?" -> "User says proceed unverified?" [label="no"];
-  "User says proceed unverified?" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="yes"];
+  "User says proceed unverified?" -> "Any finding would help an attacker?" [label="yes"];
   "User says proceed unverified?" -> "STOP: surface verifier failure, write no report" [label="no"];
-  "Report: no duplication found in scope" -> "Post-Review: sensitive paths named?";
-  "Phase 5: Report (verified findings)" -> "Post-Review: sensitive paths named?";
-  "Phase 5: Report (Specialist Findings — Unverified banner)" -> "Post-Review: sensitive paths named?";
-  "Post-Review: sensitive paths named?" -> "Warn before committing the report" [label="yes"];
-  "Post-Review: sensitive paths named?" -> "Done — do NOT auto-refactor" [label="no"];
-  "Warn before committing the report" -> "Done — do NOT auto-refactor";
+  "Any finding would help an attacker?" -> "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" [label="yes, or on the edge"];
+  "Any finding would help an attacker?" -> "Phase 5: Report (verified findings)" [label="no, verified"];
+  "Any finding would help an attacker?" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="no, unverified"];
+  "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" -> "Phase 5: Report (verified findings)";
+  "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="if unverified"];
+  "Report: no duplication found in scope" -> "Post-Review: Security block when any finding was routed";
+  "Phase 5: Report (verified findings)" -> "Post-Review: Security block when any finding was routed";
+  "Phase 5: Report (Specialist Findings — Unverified banner)" -> "Post-Review: Security block when any finding was routed";
+  "Post-Review: Security block when any finding was routed" -> "Done — do NOT auto-refactor";
 }
 ```
 
@@ -610,6 +614,8 @@ Write verified findings to `paad/dedup-reviews/<branch-or-scope>-<YYYY-MM-DD-HH-
 
 Create the directory if it does not exist.
 
+Findings that meet the Security findings paragraph's definition — Critical/Important entries naming authorization, credential, secret, token, or PII handling among them — go to `paad/security/agentic-dedup-<branch-or-scope>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` instead, same template, omitting any section that received no routed finding (keep the header block), after the paragraph's `.gitignore` rule: before the first write under `paad/security/` this run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it. The main report carries the count-and-pointer line where they would have gone — one line per report section that lost a finding, with N that section's count. The Executive Summary and the INDEX row mention routed findings as that count line only, never by concept, path, or severity. Write the security file only when there is at least one.
+
 ### Slug rule for `<branch-or-scope>`
 
 The token must be derived from the current branch name (or, when the
@@ -642,7 +648,8 @@ Examples:
 
 After interpolation, verify the final path:
 
-- Resolves under `paad/dedup-reviews/` — no leading `/`, no
+- Resolves under `paad/dedup-reviews/` (`paad/security/` for the
+  security file) — no leading `/`, no
   `..` segments, no `/` characters surviving the slug rule above.
 - Does not collide with an existing file. On collision (same
   branch-slug, same date-time, same short-sha — possible when two
@@ -776,12 +783,17 @@ After writing the report:
 
    ```
    Files written or updated:
-     new      paad/dedup-reviews/dedup-2026-08-01-10-42-13.md
+     new      paad/dedup-reviews/main-2026-08-01-10-42-13-a1b2c3d.md
      updated  paad/dedup-reviews/INDEX.md
+     new      paad/security/agentic-dedup-main-2026-08-01-10-42-13-a1b2c3d.md
    ```
 
-   When the run wrote a security file, add the Security block once, filling in
-   N, the file, and new or updated:
+   The security line appears only when the run wrote that file. Then give the
+   finding counts by severity.
+2. Highlight any exact semantic duplicates that are safe to consolidate.
+3. Highlight any near-duplicates where contract tests are safer than shared implementation.
+4. Do **not** auto-refactor anything. The report is the deliverable.
+5. **Security block** — when any finding was routed, once:
 
    ```
    Security: N finding(s) in paad/security/<file> (new|updated).
@@ -790,28 +802,3 @@ After writing the report:
    If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
    paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
    ```
-
-   Then give the finding counts by severity.
-2. Highlight any exact semantic duplicates that are safe to consolidate.
-3. Highlight any near-duplicates where contract tests are safer than shared implementation.
-4. Do **not** auto-refactor anything. The report is the deliverable.
-5. **Security-disclosure warning.** If any Critical or Important
-   finding names code that handles authorization, authentication,
-   credentials, password hashing, secret material, encryption keys,
-   session tokens, or PII, surface this to the user before they
-   commit the report:
-
-   > "This report names sensitive code paths (authorization /
-   > credential / secret-handling). The file is unencrypted on disk
-   > and will be committed if you `git add paad/dedup-reviews/`.
-   > If this branch is published or the repo is public, anyone reading
-   > the diff sees a roadmap of where the security-relevant duplication
-   > lives. Confirm you want to commit, or move the report out of the
-   > tracked tree."
-
-   This is the dedup-side analogue to `agentic-review`'s same warning;
-   apply when finding bodies, file paths, or the canonical-concept
-   lines mention any of: `auth`, `authz`, `permission`, `role`,
-   `scope`, `entitlement`, `password`, `bcrypt`/`argon2`/`scrypt`,
-   `token`, `secret`, `credential`, `kms`, `vault`, `pii`, `gdpr`.
-
