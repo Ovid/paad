@@ -201,7 +201,7 @@ Write verified findings to `paad/architecture-reviews/<YYYY-MM-DD>-<git-repo-nam
 
 Create the `paad/architecture-reviews/` directory if it doesn't exist.
 
-Findings that meet the Security findings paragraph's definition go to `paad/security/agentic-architecture-<YYYY-MM-DD>-<git-repo-name>.md` instead, same template, after the paragraph's `.gitignore` rule: before the first write under `paad/security/` this run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it. The main report carries the count-and-pointer line where they would have gone — one line per report section that lost a finding, with N that section's count. Write the security file only when there is at least one.
+Findings that meet the Security findings paragraph's definition go to `paad/security/agentic-architecture-<YYYY-MM-DD>-<git-repo-name>.md` instead, same template, omitting any section that received no routed finding (keep the header block), after the paragraph's `.gitignore` rule: before the first write under `paad/security/` this run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it. The main report carries the count-and-pointer line where they would have gone — one line per report section that lost a finding, with N that section's count. A hotspot or next question that exists only because of a routed finding goes to the security file with it; in the Coverage Checklist the routed finding's row keeps its status and cites `paad/security/` in the Finding column instead of an F-ID. Write the security file only when there is at least one.
 
 The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for the Phase 4 deliverable.
 
@@ -279,17 +279,18 @@ These patterns produce low-quality architecture analyses. Avoid them:
 | Applying distributed system patterns to monoliths | Mark distributed-specific categories as Not applicable when reviewing a monolith |
 | Counting lines as proof | A 500-line file might be perfectly cohesive; a 50-line file might violate single responsibility — analyze content, not metrics |
 
-## Post-Analysis
+## Post-Review
 
 After writing the report:
 1. **List every file this run wrote or changed, before anything else** — a
    report the developer does not know exists is a report nobody reads. One line
-   per path, each marked new or updated, even when there is only one:
+   per path, each marked new or updated, even when there is only one; the
+   second line appears only when the file was written:
 
    ```
    Files written or updated:
-     new      paad/architecture-reviews/architecture-2026-08-01-10-42-13.md
-     new      paad/security/agentic-architecture-2026-08-01-myrepo.md   (only when written)
+     new      paad/architecture-reviews/2026-08-01-myrepo-architecture-report.md
+     new      paad/security/agentic-architecture-2026-08-01-myrepo.md
    ```
 
    When N > 0, emit the Security block once:
