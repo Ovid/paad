@@ -87,6 +87,8 @@ digraph scope_critique_resolution {
   "ASK where to write the spec first" [shape=box];
   "ASK before editing after a stop signal" [shape=box];
   "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
+  "Any report finding would help an attacker?" [shape=diamond];
+  "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" [shape=box, style=bold];
   "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [shape=box];
   "Skip the report — conversation and diff carry it" [shape=box];
   "List every file written or updated" [shape=box];
@@ -135,7 +137,10 @@ digraph scope_critique_resolution {
   "Stopped early?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="no"];
   "ASK before editing after a stop signal" -> "Apply agreed changes; leave undiscussed requirements alone";
   "Apply agreed changes; leave undiscussed requirements alone" -> "Unresolved issues, or user asked for a report?";
-  "Unresolved issues, or user asked for a report?" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [label="yes"];
+  "Unresolved issues, or user asked for a report?" -> "Any report finding would help an attacker?" [label="yes"];
+  "Any report finding would help an attacker?" -> "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" [label="yes, or on the edge"];
+  "Any report finding would help an attacker?" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [label="no"];
+  "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md";
   "Unresolved issues, or user asked for a report?" -> "Skip the report — conversation and diff carry it" [label="no"];
   "Write paad/pushback-reviews/<date>-<spec>-pushback.md" -> "List every file written or updated";
   "Skip the report — conversation and diff carry it" -> "List every file written or updated";
@@ -338,20 +343,33 @@ Write to `paad/pushback-reviews/<YYYY-MM-DD>-<spec-name>-pushback.md`.
 
 Create the `paad/pushback-reviews/` directory if it doesn't exist.
 
+This rule covers the report only. A finding in the report that meets the
+Security findings paragraph's definition goes to
+`paad/security/pushback-<YYYY-MM-DD>-<spec-name>.md` — same template, omitting
+any section that received no routed finding (keep the header block). Before the
+first write under `paad/security/` this run, make sure `paad/security/.gitignore`
+exists and contains the single line `*` — create it if absent, never rewrite it.
+Each report section that lost a finding (Issues Reviewed, Unresolved Issues)
+carries the count-and-pointer line in its place, N being that section's count;
+the Summary counts routed findings in its totals and says nothing else about
+them. A requirement the user agreed to add to their spec — "this endpoint must
+require auth" — is a requirement, not a finding: it is theirs to commit, and the
+spec update above writes it as it always has.
+
 The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for that deliverable.
 
 ### List every file you wrote or updated
 
-End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated and the report if one was written:
+End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated, the report if one was written, and the security file if one was written:
 
 ```
 Files written or updated:
   updated  docs/specs/checkout-prd.md
   new      paad/pushback-reviews/2026-08-01-checkout-pushback.md
+  new      paad/security/pushback-2026-08-01-checkout.md
 ```
 
-When the run wrote a security file, add the Security block once, filling in
-N, the file, and new or updated:
+When N > 0, emit the Security block once:
 
 ```
 Security: N finding(s) in paad/security/<file> (new|updated).
