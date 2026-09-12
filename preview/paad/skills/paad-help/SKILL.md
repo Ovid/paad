@@ -109,6 +109,8 @@ Security findings: any finding that would help an attacker is written only
 under paad/security/, which carries its own .gitignore, and the ordinary
 report gets a count and a pointer. Add paad/security/ to your root
 .gitignore too. The directory is local scratch — git clean -x deletes it.
+Reports from older releases in paad/owasp-reviews/, and Bug class: Security
+entries in paad/code-reviews/backlog.md, move under it by hand.
 ```
 
 ---
@@ -277,8 +279,9 @@ What it does:
        Plan Alignment agent)
   3. Verifies findings (reads actual code, filters false positives)
   4. Classifies each finding as in-scope (this branch caused/worsened it),
-     out-of-scope (pre-existing bug — persists to project-wide backlog),
-     or out-of-scope-addition (this branch added it but the spec didn't
+     out-of-scope (pre-existing bug — persists to the project-wide backlog,
+     or the security backlog for Bug class: Security), or
+     out-of-scope-addition (this branch added it but the spec didn't
      promise it — flagged for per-PR user decision)
   5. Writes a report with:
      - In-scope issues ranked: Critical / Important / Suggestion
@@ -301,7 +304,7 @@ EXPERIMENTAL — arguments, modes, and behavior may change or be withdrawn in
 any release, including patch releases.
 
 Work the project-wide out-of-scope bug backlog that /agentic-review writes
-to. Two modes, one flat file. Never commits — it edits files and prints the
+to. Two modes, two flat files. Never commits — it edits files and prints the
 commit command for you to run.
 
 Input/output: paad/code-reviews/backlog.md and paad/security/backlog.md
