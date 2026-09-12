@@ -5,5 +5,5 @@ __pycache__/
 handoff.md
 
 # These contain potential zero-days for projects. They must *not* be committed
-paad/owasp-reviews/
+paad/security/
 paad/owasp-llm-reviews/
