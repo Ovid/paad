@@ -55,7 +55,7 @@ Ranked by impact (High/Medium/Low), 10–25 items:
 | S1 | Clear modular boundaries | Observed / Not observed / Not assessed / Not applicable | #S-ID or — |
 (continue for all 14)
 
-When a security file was written this run, rows 30, 33 and S10 read `See security file` in Status and `see paad/security/` in Finding regardless of what was found; a routed finding of any other row type keeps its row's status with no per-row pointer.
+When a security file was written this run, rows 30, 33 and S10 read `See security file` in Status and `see paad/security/` in Finding regardless of what was found, and every other row's status counts only this report's own findings; state that above the checklist in one line: `Statuses count this report's findings only; routed findings are in the security file's checklist.`
 
 ## Hotspots
 
@@ -75,6 +75,7 @@ Up to 5 questions to guide follow-up investigation. Questions only — no sugges
 - **Raw findings:** N (before verification)
 - **Verified findings:** M (after verification)
 - **Filtered out:** N - M
-- **By impact:** X high, Y medium, Z low
+- **By impact:** X high, Y medium, Z low (this report's findings only; routed findings are excluded)
+- **Security:** N finding(s) written to paad/security/<file> (only when a security file was written)
 - **Steering files consulted:** <list or "none found">
 ```
