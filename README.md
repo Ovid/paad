@@ -1025,9 +1025,10 @@ Requires a git checkout and a working branch. Started on `main` (or `master`,
 or `trunk`), it stops and offers to create a branch first, so your primary
 branch never fills up with half-built tests.
 
-**This is the only PAAD skill that writes and commits code.** Every other
-skill reports, advises, or edits documents; this one adds tests and commits
-them, one commit per phase, onto the branch you are on.
+**This skill writes tests and commits them** — one commit per phase, onto the
+branch you are on. `/fix-architecture` and `/vibe` also commit; `/backlog fix`
+edits source and leaves the commit to you. Every other skill reports, advises,
+or edits documents.
 
 </details>
 

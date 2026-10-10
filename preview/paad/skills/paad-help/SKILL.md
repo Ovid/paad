@@ -79,8 +79,8 @@ Picking between them:
                                         never refactors)
   Worried about security specifically?  agentic-owasp (experimental; the OWASP
                                         Top 10:2025, never exploits or fixes)
-  Have no tests, or tests you distrust? test-roadmap (the only skill that writes
-                                        and commits code)
+  Have no tests, or tests you distrust? test-roadmap (writes tests and commits
+                                        them, one commit per phase)
   Have one document, is it any good?    pushback (a spec, a steering file, a
                                         generated report)
   Been handed options, are they sound?  rethink (checks premises, does not
@@ -708,7 +708,8 @@ Best used in a fresh session — consumes significant context.
 ```
 /test-roadmap
 
-This is the only paad skill that writes and commits code.
+This skill writes tests and commits them, one commit per phase.
+/fix-architecture and /vibe also commit; the rest do not.
 
 Builds a test suite that catches real regressions, in phases, across as
 many sessions as it takes. One command on day 1 and on day 90.
