@@ -330,7 +330,8 @@ Then ask: **"Would you like me to update the spec directly, write a separate pus
 the conversation and the spec diff already carry the outcome — a report restates
 what the user just watched happen. Write one when the user asks for it, or when
 issues went undiscussed. Findings the user stopped before reaching exist nowhere
-else once the session ends; that is what the file is for.
+else once the session ends; that is what the file is for. A routed one survives
+only as long as `paad/security/` does — the Security block says so.
 
 ### If updating the spec
 
@@ -348,6 +349,8 @@ else once the session ends; that is what the file is for.
 ### If writing a report
 
 Write to `paad/pushback-reviews/<YYYY-MM-DD>-<spec-name>-pushback.md`.
+
+`<spec-name>` is the spec file's name without directory or extension, lowercased, with every run of characters outside `a-z0-9` replaced by one `-` — never a path, never `..`. A spec from conversation history uses the file it was just saved to.
 
 Create the `paad/pushback-reviews/` directory if it doesn't exist.
 
