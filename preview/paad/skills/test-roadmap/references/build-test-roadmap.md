@@ -324,8 +324,8 @@ files: if reading it would help an attacker — the router's Security findings
 paragraph gives the definition — it goes to
 `paad/security/test-roadmap-findings.md`; otherwise to
 `paad/test-roadmap/test-roadmap-findings.md`. Before the first write there this
-run, make sure `paad/security/.gitignore` exists and contains the single line
-`*` — create it if absent, never rewrite it. The ordinary log carries one line
+run, run the router's Security findings paragraph's `.gitignore` check, and
+write nothing there unless it passes. The ordinary log carries one line
 per run, where the first routed entry would have gone, with N the run's count:
 `N security finding(s) written to paad/security/test-roadmap-findings.md`. On
 the edge, route to security.

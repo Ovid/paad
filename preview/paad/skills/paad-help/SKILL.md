@@ -110,7 +110,9 @@ under paad/security/, which carries its own .gitignore, and the ordinary
 report gets a count and a pointer. Add paad/security/ to your root
 .gitignore too. The directory is local scratch — git clean -x deletes it.
 Reports from older releases in paad/owasp-reviews/, and Bug class: Security
-entries in paad/code-reviews/backlog.md, move under it by hand.
+entries in paad/code-reviews/backlog.md, move under it by hand. If git
+tracked them, git rm --cached the old copies; history keeps what was
+committed, so rotate whatever it exposed.
 ```
 
 ---

@@ -360,8 +360,8 @@ name, docstring, comments, and assertion messages alike.
 Create `paad/test-roadmap/test-roadmap-findings.md` — or
 `paad/security/test-roadmap-findings.md` — if it does not yet exist (build mode
 writes either only when its own stages found something); otherwise append.
-Before the first write there this run, make sure `paad/security/.gitignore`
-exists and contains the single line `*` — create it if absent, never rewrite it.
+Before the first write there this run, run the router's Security findings
+paragraph's `.gitignore` check, and write nothing there unless it passes.
 **Commit the ordinary log in the same commit as the phase's tests** (step 6 of
 the loop), so a finding never lands without the test that pins it, and both
 survive a fresh clone; the security log is never committed and never

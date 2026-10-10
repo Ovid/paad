@@ -11,7 +11,7 @@ what a plugin user sees.
 ## [Unreleased]
 
 ### Changed
-- **Security findings now land only in `paad/security/`, a directory that ignores itself.** Every skill that can find one — agentic-owasp, agentic-review, test-roadmap, agentic-architecture, pushback, agentic-dedup — writes it there and leaves a count in the ordinary report. Add `paad/security/` to your root `.gitignore`; move any `paad/owasp-reviews/` and any `Bug class: Security` backlog entries under it by hand.
+- **Security findings now land only in `paad/security/`, a directory that ignores itself.** Every skill that can find one — agentic-owasp, agentic-review, test-roadmap, agentic-architecture, pushback, agentic-dedup — writes it there and leaves a count in the ordinary report. Add `paad/security/` to your root `.gitignore`; move any `paad/owasp-reviews/` and any `Bug class: Security` backlog entries under it by hand, and `git rm --cached` any that git tracked — history keeps them, so rotate what they exposed.
 - **Skills are less likely to stall right after announcing themselves** — the
   on-invocation line now tells the agent to proceed with the skill immediately
   instead of stopping after the announcement.
