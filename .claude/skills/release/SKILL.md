@@ -129,7 +129,8 @@ Semver against what is in `[Unreleased]`, not against how much work it felt like
 | Wording, digraph, or bug fixes only | PATCH |
 | A renamed or removed skill | breaking — say so explicitly |
 
-A breaking change to a settled skill is a MAJOR bump — 2.0.0 was the first.
+A breaking change to a settled skill is a MAJOR bump (2.0.0, the security-routing
+release, is the first).
 Call it out in the changelog with a `**Breaking:**` bullet, and raise it and let
 Ovid decide.
 
