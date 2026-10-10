@@ -800,8 +800,7 @@ After writing the report:
    finding counts by severity.
 2. Highlight any exact semantic duplicates that are safe to consolidate.
 3. Highlight any near-duplicates where contract tests are safer than shared implementation.
-4. Do **not** auto-refactor anything. The report is the deliverable.
-5. **Security block** — when any finding was routed, once:
+4. **Security block** — when any finding was routed, once:
 
    ```
    Security: N finding(s) in paad/security/<file> (new|updated).
@@ -810,3 +809,4 @@ After writing the report:
    If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
    paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
    ```
+5. Do **not** auto-refactor anything. The report is the deliverable.

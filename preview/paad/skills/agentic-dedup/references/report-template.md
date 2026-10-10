@@ -60,6 +60,8 @@ For each verified type/schema/constraint duplicate or near-duplicate:
 |---------|------------|------------|--------------|------|----------------|
 | <concept> | `path:line` | `path:line` | exact / overlap / subset / superset / drift | low/medium/high | <action> |
 
+A row that meets the Security findings definition in `SKILL.md` goes in the security file's copy of this table, never here; this table carries the `N security finding(s) written to paad/security/<file>` line in its place.
+
 ## Rejected Candidate Duplicates
 
 List high-interest rejected candidates briefly. This section prevents future reviewers from rediscovering the same false positives.
@@ -68,6 +70,8 @@ List high-interest rejected candidates briefly. This section prevents future rev
 |-----------|-----------------|
 | `path:line` vs `path:line` | Similar structure but different domain contract |
 | `path:line` vs `path:line` | Intentional bounded-context separation |
+
+A row that meets the Security findings definition in `SKILL.md` goes in the security file's copy of this table, never here; this table carries the `N security finding(s) written to paad/security/<file>` line in its place.
 
 ## Consolidation Strategy
 
