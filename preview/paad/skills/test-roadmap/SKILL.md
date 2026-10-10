@@ -1,7 +1,7 @@
 ---
 name: test-roadmap
 description: >
-  EXPERIMENTAL. Analyzes a repository and any existing test suite, grades
+  Analyzes a repository and any existing test suite, grades
   existing tests for weakness, classifies mocks, emits a phased roadmap for
   building a test suite that catches real regressions, then executes those
   phases one at a time. Use when planning or building a test suite, assessing
@@ -13,18 +13,14 @@ metadata:
   internal: true
 ---
 
-**On invocation:** announce "Running paad:test-roadmap v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:test-roadmap v2.0.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/test-roadmap.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
 **Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files paad/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
 
-> **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
-> change or be withdrawn in any release, including patch releases. It is not
-> covered by the semver guarantees the other paad skills carry. Unlike every
-> other paad skill, this one **writes code and commits it** — tests, one commit
-> per phase, onto your working branch. Report rough edges at
-> <https://github.com/Ovid/paad/issues>.
+> Unlike the review skills, this one **writes code and commits it** —
+> tests, one commit per phase, onto your working branch.
 
 # test-roadmap
 

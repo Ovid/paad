@@ -49,6 +49,9 @@ See [Installation](#installation) for the details, including the experimental
 | `/fix-architecture [report]` | Works through those findings one at a time, test-first |
 | `/agentic-a11y [path]` | Accessibility audit against WCAG 2.2 AA, by disability category |
 | `/vibe [task]` | Small fixes, TDD guardrails still on |
+| `/rethink [topic]` | Checks whether the premises under a recommendation hold |
+| `/test-roadmap` | Builds a test suite that catches real regressions |
+| `/handoff [save\|resume]` | Hands this session's work to a fresh one, in writing |
 | `/makefile` | Creates or updates a project `Makefile` |
 | `/paad-help [skill-name]` | Lists the skills, or explains one |
 
@@ -58,13 +61,12 @@ See [Installation](#installation) for the details, including the experimental
 |---|---|
 | `/agentic-dedup [scope]` | Finds duplicated *meaning*, not duplicated text — experimental |
 | `/agentic-owasp [scope]` | Reviews code against the OWASP Top 10:2025 — experimental |
-| `/rethink [topic]` | Checks whether the premises under a recommendation hold — experimental |
-| `/test-roadmap` | Builds a test suite that catches real regressions — experimental |
-| `/handoff [save\|resume]` | Hands this session's work to a fresh one, in writing — experimental |
+| `/backlog [clean\|fix]` | Clears fixed bugs out of the review backlog, or fixes the next one — experimental |
 
 Every skill can also be steered per project: drop instructions in
 `paad/config/paad.md` (all skills) or `paad/config/<skill-name>.md` (one skill)
-and the skill reads them on invocation. Experimental — see [CONFIG.md](CONFIG.md).
+and the skill reads them on invocation. Experimental — see
+[Configuring skills per project](#configuring-skills-per-project).
 
 Full descriptions are further down. The rest of this page is why any of it is
 worth your tokens.
@@ -145,7 +147,107 @@ and you make the calls.
 You stay in the driver's seat. That is the point, and it's also the cost: PAAD
 gives you visibility and control, not autopilot.
 
-### What PAAD can't fix
+## Workflow
+
+There's a lot to take in with PAAD, [so I've written an article to explain how
+to write production-quality code with
+it](https://curtispoe.org/articles/watching-claude-sonnet-outperform-opus).
+
+If you are new to PAAD, start with `/paad-help` to see the available skills and when to use them.
+
+A typical workflow looks like this:
+
+1. Write the spec, using your existing spec-driven development method.
+2. Run `pushback` on the spec. Revise and repeat as needed.
+3. Develop the task list (you or the agent).
+4. Run `pushback` on the task list. Revise and repeat as needed.
+5. Run `alignment` on the task list to check it against the spec, and rewrite
+   it for TDD. Revise and repeat as needed.
+6. Execute the tasks, in a fresh session for each task.
+7. Run `agentic-review` on the result. Fix findings and repeat as needed.
+8. Human PR approval and merge. Repeat for the next feature.
+
+That is the per-feature loop (section 10 of [the
+tutorial](https://curtispoe.org/paad/)). It improves the quality of each feature
+before it gets merged into your primary branch:
+
+<p align="center">
+  <img src="images/pushback.png" alt="PAAD per-feature loop: write the spec, then /pushback on it; develop the task list, then /pushback and /alignment on it; execute the tasks, then /agentic-review the result; human PR approval and merge" width="700">
+</p>
+
+AI is now good enough that, with `pushback` alone, fewer issues surface in the
+rest of the loop. But the loop only minimizes slop in the current task. It
+can't prevent slop across the project as a whole. That takes aggressive
+technical debt management: `agentic-architecture` to find the structural
+problems, `fix-architecture` to work through them, and `agentic-review`
+before the fixes merge.
+
+<p align="center">
+  <img src="images/architecture.png" alt="PAAD aggressive technical debt maintenance: reserve time and choose scope, then /agentic-architecture; prioritise findings on a feature branch, then /fix-architecture; verify the changes, then /agentic-review; human PR approval and merge" width="700">
+</p>
+
+Not sure if the AI is presenting you with the best options? Run `rethink` to
+check whether the premises behind a recommendation actually hold.
+
+Depending on the type of work, I also use (see below for full descriptions):
+
+1. `agentic-a11y` for UI changes and accessibility-sensitive work
+2. `vibe` for small fixes that still benefit from guardrails
+
+Rerun `pushback` and `alignment` whenever the spec or the task list changes.
+
+## Configuring skills per project
+
+> **Experimental.** This may change or be withdrawn in any release, including
+> a patch release. If you build on it, pin your plugin version.
+
+Tired of typing the same extra instructions after every slash command, or of
+writing a wrapper skill just to add them? Put them in a file and every paad
+skill reads it on its own:
+
+| File | Read by |
+|---|---|
+| `paad/config/paad.md` | every paad skill |
+| `paad/config/<skill-name>.md` | that one skill, e.g. `paad/config/agentic-review.md` |
+
+Both are optional, relative to where you run the skill (normally the repo
+root). There is no schema — write plain instructions, as you would have typed
+them. For example, `paad/config/agentic-architecture.md`:
+
+```markdown
+- All output must be in simplified technical English.
+- Add one more subagent that looks for over-engineering.
+- Keep a log in `paad/logs/agentic-architecture.md` of every finding an
+  agent raised that the verifier discarded.
+```
+
+The skill follows it for the whole run and passes the relevant parts to the
+subagents it dispatches. **You know it was read** because the skill's final
+answer opens with a line naming each file it followed:
+
+```
+Config: paad/config/paad.md, paad/config/agentic-architecture.md
+```
+
+No such line means nothing in the run came from your config.
+
+What to watch for:
+
+- **Add, don't subtract.** Config can tell a skill to skip or reorder its own
+  safety gates, and the skill may comply. Use it for additions — an extra
+  agent, an output rule, an artifact, a language.
+- **One thing is refused:** config cannot change a subagent's type or give it
+  write tools. The skill says so and carries on.
+- **It's untrusted input.** A `paad/config/` in a repo you cloned was written
+  by someone else, and a skill will follow it. Read it before you run anything.
+- **Results vary.** If a config line matters, check the output for it.
+
+The full details are in [CONFIG.md](CONFIG.md).
+
+## What PAAD can't fix
+
+<details>
+<summary>The limits, and who has to cover them</summary>
 
 An engineer has to drive this — including knowing when the tool is wrong.
 
@@ -165,6 +267,8 @@ An engineer has to drive this — including knowing when the tool is wrong.
 If you want the assistant to think for you, PAAD is the wrong tool. It exists
 for engineers who want to stay responsible for the result and need help
 keeping up.
+
+</details>
 
 ## The AI sees all of your code and none of your context
 
@@ -284,43 +388,6 @@ code you'll still be living with next year.
 
 </details>
 
-## Workflow
-
-<details>
-<summary>A typical spec → plan → implement → review loop</summary>
-
-There's a lot to take in with PAAD, [so I've written an article to explain how
-to write production-quality code with
-it](https://curtispoe.org/articles/watching-claude-sonnet-outperform-opus).
-
-If you are new to PAAD, start with `/paad-help` to see the available skills and when to use them.
-
-A typical workflow looks like this:
-
-1. Write your spec.
-2. Run `pushback` to critically review the spec before implementation.
-3. Create your final implementation plan from the spec.
-4. Run `alignment` to verify that requirements, design, and planned work are
-   aligned with decisions.
-5. Implement the change.
-6. Run `agentic-review` on the working branch before merging (often more than
-   once).
-
-Not sure if the AI is presenting you with the best options? Run `rethink` to
-check whether the premises behind a recommendation actually hold.
-
-Depending on the type of work, I also use (see below for full descriptions):
-
-1. `agentic-architecture` to identify structural issues before they spread
-2. `agentic-a11y` for UI changes and accessibility-sensitive work
-3. `vibe` for small fixes that still benefit from guardrails
-
-In practice, `pushback` and `alignment` are often worth running more than
-once. They are especially useful when a spec evolves or when the
-implementation plan changes during execution.
-
-</details>
-
 ## Installation
 
 The Quick start above is the whole install for most people. This section is the
@@ -407,7 +474,7 @@ the way you invoke it differs.
 
 **These skills work by splitting one job across several helper agents.**
 `agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`,
-`agentic-owasp`, `test-roadmap` and `rethink` all work this way. If your
+`agentic-owasp`, `test-roadmap`, `rethink` and `backlog` all work this way. If your
 assistant supports helper agents, each helper gets its own separate conversation
 and examines your code from one angle — security, error handling, and so on —
 and they all work at the same time. If your assistant does not support them, a
@@ -431,6 +498,9 @@ runtime:
 * **`test-roadmap` loses a real check.** One of its gates works by asking a
   helper that has not seen the test to try to break it. A single agent holding
   both cannot be blinded, so that gate reports success while verifying nothing.
+* **`backlog fix` loses its independent check.** It removes an entry only after
+  a separate analyst confirms the bug is gone. Without helper agents, the agent
+  that made the fix is the one confirming it.
 
 **Updates track `main`, and there is no pinned form.** Re-run the same command
 to pull the latest; there is no version argument, so the version a skill
@@ -474,7 +544,7 @@ Invoke a skill with `/skill:<name>` or by name.
 #### The multi-agent skills need two more pieces
 
 `agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`,
-`agentic-owasp` and `rethink` split their work across helper agents. Pi does not
+`agentic-owasp`, `rethink` and `backlog` split their work across helper agents. Pi does not
 support helper agents on its own, and a Pi package cannot declare them, so
 neither piece ships inside the package. Without both pieces installed those
 skills still run — a single agent does every pass itself, one after another, in
@@ -631,6 +701,25 @@ The assistant will follow the procedures defined in the skill files.
 <details>
 <summary><strong>Every skill in detail</strong> — arguments, behavior, and where each writes its report</summary>
 
+**Security findings go somewhere else.** In `agentic-review`,
+`agentic-architecture`, `agentic-owasp`, `agentic-dedup`, `pushback` and
+`test-roadmap`, any finding that would help an attacker is written only under
+`paad/security/`, whatever the skill's ordinary report path. No other skill
+routes anything there: an `alignment` report or a `handoff.md` that records a
+weakness lands where that skill always writes. That directory carries its own `.gitignore`
+holding a single `*`, so it ignores itself from the moment it is created, and
+the ordinary report is left with a count and a pointer — no path, severity,
+symbol, or description. The skills never add the map of live weaknesses to
+git, and they stop and ask rather than write there if that `.gitignore` is
+wrong or git already tracks something in the directory. That protection has
+limits. `git add -f`, or deleting the `.gitignore`, bypasses it. Anything
+committed before stays in history, so moving it does not help: `git rm
+--cached` it and rotate what it exposed. `/test-roadmap` and `/fix-architecture`
+are the exceptions by design: the tests that pin a security finding are
+committed, and their neutral names do not stop them reproducing the weakness. Add `paad/security/` to your
+own `.gitignore` as well, and treat it as scratch rather than a record: it
+exists on one machine, `git clean -x` deletes it, and nothing brings it back.
+
 ### Pushback
 
 <details>
@@ -658,6 +747,47 @@ that makes claims about the code, such as an agent steering file (`CLAUDE.md`,
   one at a time, with concrete options and recommendations
 * **Flexible output** — update the spec in place or write a separate report to
   `paad/pushback-reviews/`
+
+</details>
+
+<details>
+<summary><code>/rethink [what to re-examine]</code> — checks whether the premises under a recommendation hold</summary>
+
+`pushback` argues with a spec. `rethink` argues with an answer — including one
+of `pushback`'s. When options have been laid out and one has been chosen, it
+goes and checks whether the premises under that choice actually hold.
+
+The distinction it exists for: a recommendation can be correct *and* unsound.
+The premises may hold and yet have been taken on faith from a source nobody
+tested. That answer is right today and will stay right until the day it isn't,
+with no one watching. `rethink` reports that case as its own verdict rather
+than waving the recommendation through.
+
+* **Arguments:** `/rethink` (the most recent option set) or
+  `/rethink the caching approach` (when several decisions are live)
+* **Premise extraction** — writes out everything the recommendation depends on,
+  including the unstated assumptions, sorted into checkable now, checkable by
+  experiment, and not checkable at all
+* **Primary sources only** — verifies against the software, not its
+  documentation; a claim sourced from a doc is checked against the thing the
+  doc describes
+* **Five verdicts** — Sound, Lucky (holds but unchecked), Wrong reason (false
+  premise, surviving conclusion), Premise false, and Ungrounded (with the
+  cheapest experiment that would settle it)
+* **Evidence per premise** — every claim names what was checked to reach it
+* **Plain-terms walkthrough** — you probably ran this because you weren't sure
+  about the options, so it re-presents them without jargon or internal names,
+  with pros *and* cons for each, and says what verification changed about where
+  each one stands
+* **A recommendation, with its reason** — and where the call also turns on
+  something it can't see (a deadline, headcount, an unshipped roadmap) it gives
+  you both halves: the option the evidence supports, plus the specific missing
+  input and what it would flip the answer to. It goes silent only when the
+  evidence supports no default at all
+* **No option list** — deliberately unlike `pushback`. It proposes an
+  alternative only when verification exposed a real defect, and then exactly
+  one, tied to that defect
+* **Writes nothing** — no report, no edits. The conversation is the deliverable
 
 </details>
 
@@ -742,6 +872,8 @@ multiple sessions.
 * **Status tracking** — records outcomes in the report: Fixed, Won't fix,
   Partially fixed, Skipped, Fixed (pre-existing), Attempted/reverted
 * **Flaw dependency detection** — flags when fixing one flaw resolves others
+* **Security flaws** — also loads the flaws `agentic-architecture` moved to
+  `paad/security/`, and commits fixing them name neither the flaw nor the report
 * **Iterative workflow** — designed to run across multiple sessions against
   the same report
 
@@ -787,8 +919,10 @@ parallel analysis, finding verification, deduplication, and severity ranking.
   recent commits, or branch name; flags missing features, deviations, and
   out-of-scope additions (replaces the older Plan Alignment agent)
 * **Out-of-scope handling** — pre-existing bugs persist to
-  `paad/code-reviews/backlog.md`; out-of-scope additions are flagged for
-  per-PR decision (keep / split / revert) without backlog persistence
+  `paad/code-reviews/backlog.md`, or to `paad/security/backlog.md` when the
+  finding is security-related; the two files have the same shape, and only the
+  first is committed. Out-of-scope additions are flagged for per-PR decision
+  (keep / split / revert) without backlog persistence
 * **Report** — written to `paad/code-reviews/`
 
 Requires a feature branch (not `main` or `master`) with committed changes.
@@ -830,6 +964,80 @@ platforms, with AAA noted as bonus recommendations.
 
 </details>
 
+<details>
+<summary><code>/test-roadmap</code> — builds a test suite that catches real regressions</summary>
+
+PAAD is risky to use with codebases without a strong test suite. This skill
+builds that suite for you.
+
+High coverage numbers lie. A line can be "covered" by a test that asserts
+nothing — green forever, catching nothing. So when you finally refactor the
+scary part of a legacy codebase, the suite stays quiet and the regression
+ships anyway.
+
+`test-roadmap` builds the suite that does *not* stay quiet. It pins your
+code's **current** behavior, deliberately including the buggy parts, so that
+the day you start changing things the tests break loudly and tell you exactly
+what you changed.
+
+**Run it once to get a roadmap. Then keep running it — one phase of tests per
+run — until the roadmap is done.**
+
+That is the whole usage model, and it is the one thing people get wrong: they
+run `/test-roadmap`, get a plan, and stop with zero tests written. The
+command does something different every time you invoke it, because it looks
+for `paad/test-roadmap/test-roadmap.md` and routes on whether it exists:
+
+| Invocation | What it does |
+| --- | --- |
+| **1st run** — no roadmap yet | Detects your stack, grades the tests you already have, and writes a phased plan to `paad/test-roadmap/test-roadmap.md`. **Writes no tests.** |
+| **2nd run** | Writes Phase 1's tests, proves they catch the bug they claim to, commits them, marks the phase done. |
+| **3rd run** | Phase 2. |
+| **…** | …one phase per run… |
+| **Final run** | The last phase lands and the skill tells you the roadmap is finished. Then you stop. |
+
+So a 14-phase roadmap takes 15 invocations. Each run ends by telling you where
+you are (`Phase 8 of 14 — 7 done, 6 to go`) and whether to run it again. One
+phase per run is deliberate: each phase gets written, verified against a
+deliberately injected bug, and committed on its own, with a clean context.
+
+Sessions don't need to be consecutive, or even the same session — the roadmap
+file is the memory, so you can pick it up tomorrow, on a fresh clone, after a
+squash merge, and it resumes from what has already landed.
+
+* **Arguments:** `/test-roadmap` (no arguments — the presence of the
+  roadmap file selects build mode or execute mode)
+* **Every phase names the bug it would catch** — a phase that cannot answer
+  *"what breakage makes these tests go red?"* is coverage theater, and gets
+  rewritten or dropped
+* **It proves each test actually works** — before a phase counts as done, it
+  injects the very bug the phase claims to catch and confirms the test goes
+  red; a passing command and a covered line are never accepted as proof
+* **Bug injection is disposable** — it happens in a throwaway `git worktree`,
+  never in your working tree, database, or config
+* **It grades the tests you already have** — existing tests are classified
+  against a catalog of test theater (assertion-free, tautological,
+  snapshot-only, over-mocked, happy-path-only) before anything new is planned
+* **It will not call a phase done while the run is noisy** — your whole suite
+  runs normally and again under coverage; it fixes what is its own to fix and
+  surfaces the rest, and never edits your code to quiet a warning
+* **You finish with a bug list you did not start with** — contradictions found
+  while pinning behavior are logged with the test that proves them. It never
+  fixes them; that is your call
+* **Resumable** — across unrelated commits, squash merges, fresh clones, and
+  sessions that remember nothing about the last one
+
+Requires a git checkout and a working branch. Started on `main` (or `master`,
+or `trunk`), it stops and offers to create a branch first, so your primary
+branch never fills up with half-built tests.
+
+**This skill writes tests and commits them** — one commit per phase, onto the
+branch you are on. `/fix-architecture` and `/vibe` also commit; `/backlog fix`
+edits source and leaves the commit to you. Every other skill reports, advises,
+or edits documents.
+
+</details>
+
 ---
 
 ### Workflow
@@ -868,6 +1076,50 @@ while keeping TDD guardrails in place.
 * **Post-fix summary** — suggests relevant next steps such as `agentic-review`
   for security-sensitive changes, `agentic-a11y` for UI changes, or
   architecture review if the fix was harder than expected
+
+</details>
+
+<details>
+<summary><code>/handoff [save|resume]</code> — hands this session's work to a fresh one, in writing</summary>
+
+Claude Code already has `/compact`, and for most of what you want it is
+enough. The gap `handoff` fills is narrow and specific: `/compact`'s summary is
+written by the machine, lands without being read, and lives inside the
+transcript where you cannot edit it. `handoff` writes the same kind of state to
+a file you can open, correct, and hand to a genuinely fresh session.
+
+That makes the review the point, not a courtesy. A handoff nobody reads is a
+worse `/compact` — same summary, more ceremony — and the skill says so out loud
+rather than letting it slide.
+
+The thing it guards against isn't forgetfulness. An agent writing a handoff
+unaided keeps the expensive material well: the approaches already tried and
+abandoned, the reasons behind them, the constraint you mentioned once an hour
+ago. What it gets wrong is the cheap material — a test's file path, which
+changes are really in the last commit, a line number, who said the sentence
+it's quoting. Those are settleable with a tool in seconds, and they arrive in
+exactly the same confident voice as everything it got right. A fresh session
+has no memory to catch them with.
+
+* **Arguments:** `/handoff` (infers from whether the session has history) or
+  `/handoff save` or `/handoff resume`
+* **Verifies before it writes** — commit, branch, dirty state, file paths, line
+  numbers, test names, and whether the suite actually passes are checked with
+  tools, not recalled. What can't be settled is marked inferred instead of
+  asserted
+* **Weighted toward what a fresh session can't reconstruct** — decisions and
+  their reasons, approaches ruled out and how far they got, constraints that
+  exist nowhere on disk. No architecture tour, no session narrative, nothing
+  `git diff` already shows
+* **Asks for the review that matters** — names the two or three claims it is
+  least sure of, rather than a general disclaimer you'd skim
+* **Checks for drift on the way back in** — compares the recorded commit
+  against HEAD, confirms the files it named still exist, and reports mismatches
+  before acting on anything
+* **Never deletes the handoff** — it's untracked, so git can't restore it. The
+  next save overwrites it
+* **Artifact** — `handoff.md` in the working directory, which it suggests you
+  add to `.gitignore`
 
 </details>
 
@@ -1046,175 +1298,42 @@ rediscovering them.
   Zero findings means one reviewer looked once, inside ten categories, at one
   scope. Business logic, race conditions, and tenant isolation are outside the
   Top 10 and were never in scope. A clean report read as an all-clear leaves you
-  worse off than never having run it. The same closing block says why committing
-  the report is a bad bet even once the findings are closed — history is
-  permanent, the report ages into a false clearance for code that has moved, and
-  the severity table outlives every caveat attached to it
+  worse off than never having run it. The same closing block adds the one thing
+  the ignored directory cannot prevent on its own: a report that *is* committed,
+  by whatever route, ages into a false clearance for code that has since moved
 * **Credentials are reported by location, never by value** — a secret pasted
   into a report file is a second copy of the leak, and rotation goes to the top
   of the remediation order because it is the one item that cannot wait
-* **Report** — written to `paad/owasp-reviews/`, with a persistent `INDEX.md`
-  across runs
+* **Report** — written to `paad/security/`, with an `INDEX.md` across runs.
+  Every OWASP finding is security-related by definition, so the whole report,
+  its index, and any proof scripts live in that ignored directory. Nothing is
+  left in a committed file but the run's own summary
 
 It never fixes anything. The report is the deliverable.
 
 </details>
 
 <details>
-<summary><code>/handoff [save|resume]</code> — hands this session's work to a fresh one, in writing</summary>
+<summary><code>/backlog [clean|fix]</code> — clears fixed bugs out of the review backlog, or fixes the next one</summary>
 
-Claude Code already has `/compact`, and for most of what you want it is
-enough. The gap `handoff` fills is narrow and specific: `/compact`'s summary is
-written by the machine, lands without being read, and lives inside the
-transcript where you cannot edit it. `handoff` writes the same kind of state to
-a file you can open, correct, and hand to a genuinely fresh session.
+`/agentic-review` records pre-existing bugs it finds outside your branch in a
+backlog instead of losing them. Nothing ever empties that backlog: entries
+pile up long after the bug they describe was fixed, until nobody reads it.
+`backlog` is the other half — it keeps the list honest, and works it.
 
-That makes the review the point, not a courtesy. A handoff nobody reads is a
-worse `/compact` — same summary, more ceremony — and the skill says so out loud
-rather than letting it slide.
-
-The thing it guards against isn't forgetfulness. An agent writing a handoff
-unaided keeps the expensive material well: the approaches already tried and
-abandoned, the reasons behind them, the constraint you mentioned once an hour
-ago. What it gets wrong is the cheap material — a test's file path, which
-changes are really in the last commit, a line number, who said the sentence
-it's quoting. Those are settleable with a tool in seconds, and they arrive in
-exactly the same confident voice as everything it got right. A fresh session
-has no memory to catch them with.
-
-* **Arguments:** `/handoff` (infers from whether the session has history) or
-  `/handoff save` or `/handoff resume`
-* **Verifies before it writes** — commit, branch, dirty state, file paths, line
-  numbers, test names, and whether the suite actually passes are checked with
-  tools, not recalled. What can't be settled is marked inferred instead of
-  asserted
-* **Weighted toward what a fresh session can't reconstruct** — decisions and
-  their reasons, approaches ruled out and how far they got, constraints that
-  exist nowhere on disk. No architecture tour, no session narrative, nothing
-  `git diff` already shows
-* **Asks for the review that matters** — names the two or three claims it is
-  least sure of, rather than a general disclaimer you'd skim
-* **Checks for drift on the way back in** — compares the recorded commit
-  against HEAD, confirms the files it named still exist, and reports mismatches
-  before acting on anything
-* **Never deletes the handoff** — it's untracked, so git can't restore it. The
-  next save overwrites it
-* **Artifact** — `handoff.md` in the working directory, which it suggests you
-  add to `.gitignore`
-
-</details>
-
-<details>
-<summary><code>/rethink [what to re-examine]</code> — checks whether the premises under a recommendation hold</summary>
-
-`pushback` argues with a spec. `rethink` argues with an answer — including one
-of `pushback`'s. When options have been laid out and one has been chosen, it
-goes and checks whether the premises under that choice actually hold.
-
-The distinction it exists for: a recommendation can be correct *and* unsound.
-The premises may hold and yet have been taken on faith from a source nobody
-tested. That answer is right today and will stay right until the day it isn't,
-with no one watching. `rethink` reports that case as its own verdict rather
-than waving the recommendation through.
-
-* **Arguments:** `/rethink` (the most recent option set) or
-  `/rethink the caching approach` (when several decisions are live)
-* **Premise extraction** — writes out everything the recommendation depends on,
-  including the unstated assumptions, sorted into checkable now, checkable by
-  experiment, and not checkable at all
-* **Primary sources only** — verifies against the software, not its
-  documentation; a claim sourced from a doc is checked against the thing the
-  doc describes
-* **Five verdicts** — Sound, Lucky (holds but unchecked), Wrong reason (false
-  premise, surviving conclusion), Premise false, and Ungrounded (with the
-  cheapest experiment that would settle it)
-* **Evidence per premise** — every claim names what was checked to reach it
-* **Plain-terms walkthrough** — you probably ran this because you weren't sure
-  about the options, so it re-presents them without jargon or internal names,
-  with pros *and* cons for each, and says what verification changed about where
-  each one stands
-* **A recommendation, with its reason** — and where the call also turns on
-  something it can't see (a deadline, headcount, an unshipped roadmap) it gives
-  you both halves: the option the evidence supports, plus the specific missing
-  input and what it would flip the answer to. It goes silent only when the
-  evidence supports no default at all
-* **No option list** — deliberately unlike `pushback`. It proposes an
-  alternative only when verification exposed a real defect, and then exactly
-  one, tied to that defect
-* **Writes nothing** — no report, no edits. The conversation is the deliverable
-
-</details>
-
-<details>
-<summary><code>/test-roadmap</code> — builds a test suite that catches real regressions</summary>
-
-PAAD is risky to use with codebases without a strong test suite. This skill
-builds that suite for you.
-
-High coverage numbers lie. A line can be "covered" by a test that asserts
-nothing — green forever, catching nothing. So when you finally refactor the
-scary part of a legacy codebase, the suite stays quiet and the regression
-ships anyway.
-
-`test-roadmap` builds the suite that does *not* stay quiet. It pins your
-code's **current** behavior, deliberately including the buggy parts, so that
-the day you start changing things the tests break loudly and tell you exactly
-what you changed.
-
-**Run it once to get a roadmap. Then keep running it — one phase of tests per
-run — until the roadmap is done.**
-
-That is the whole usage model, and it is the one thing people get wrong: they
-run `/test-roadmap`, get a plan, and stop with zero tests written. The
-command does something different every time you invoke it, because it looks
-for `paad/test-roadmap/test-roadmap.md` and routes on whether it exists:
-
-| Invocation | What it does |
-| --- | --- |
-| **1st run** — no roadmap yet | Detects your stack, grades the tests you already have, and writes a phased plan to `paad/test-roadmap/test-roadmap.md`. **Writes no tests.** |
-| **2nd run** | Writes Phase 1's tests, proves they catch the bug they claim to, commits them, marks the phase done. |
-| **3rd run** | Phase 2. |
-| **…** | …one phase per run… |
-| **Final run** | The last phase lands and the skill tells you the roadmap is finished. Then you stop. |
-
-So a 14-phase roadmap takes 15 invocations. Each run ends by telling you where
-you are (`Phase 8 of 14 — 7 done, 6 to go`) and whether to run it again. One
-phase per run is deliberate: each phase gets written, verified against a
-deliberately injected bug, and committed on its own, with a clean context.
-
-Sessions don't need to be consecutive, or even the same session — the roadmap
-file is the memory, so you can pick it up tomorrow, on a fresh clone, after a
-squash merge, and it resumes from what has already landed.
-
-* **Arguments:** `/test-roadmap` (no arguments — the presence of the
-  roadmap file selects build mode or execute mode)
-* **Every phase names the bug it would catch** — a phase that cannot answer
-  *"what breakage makes these tests go red?"* is coverage theater, and gets
-  rewritten or dropped
-* **It proves each test actually works** — before a phase counts as done, it
-  injects the very bug the phase claims to catch and confirms the test goes
-  red; a passing command and a covered line are never accepted as proof
-* **Bug injection is disposable** — it happens in a throwaway `git worktree`,
-  never in your working tree, database, or config
-* **It grades the tests you already have** — existing tests are classified
-  against a catalog of test theater (assertion-free, tautological,
-  snapshot-only, over-mocked, happy-path-only) before anything new is planned
-* **It will not call a phase done while the run is noisy** — your whole suite
-  runs normally and again under coverage; it fixes what is its own to fix and
-  surfaces the rest, and never edits your code to quiet a warning
-* **You finish with a bug list you did not start with** — contradictions found
-  while pinning behavior are logged with the test that proves them. It never
-  fixes them; that is your call
-* **Resumable** — across unrelated commits, squash merges, fresh clones, and
-  sessions that remember nothing about the last one
-
-Requires a git checkout and a working branch. Started on `main` (or `master`,
-or `trunk`), it stops and offers to create a branch first, so your primary
-branch never fills up with half-built tests.
-
-**This is the only PAAD skill that writes and commits code.** Every other
-skill reports, advises, or edits documents; this one adds tests and commits
-them, one commit per phase, onto the branch you are on.
+* **Arguments:** `/backlog` (list entries, then choose), `/backlog clean`, or
+  `/backlog fix`
+* **Clean** — one skeptical read-only analyst per entry re-checks it against
+  the current code and deletes it only on cited evidence that the bug is fixed
+  or the code is gone. Any doubt keeps the entry; a renamed symbol is not a fix
+* **Fix** — proposes the most severe, oldest entry (you can pick another), fixes it, and removes it only
+  after an independent analyst confirms from the code that the bug is gone.
+  One entry per run
+* **Both backlogs** — reads `paad/code-reviews/backlog.md` and the
+  uncommitted `paad/security/backlog.md`, and writes each edit back to the file
+  it came from
+* **Never commits** — prints the commit command for you to run, and never
+  includes the security backlog in it
 
 </details>
 

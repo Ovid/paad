@@ -5,7 +5,7 @@ metadata:
   internal: true
 ---
 
-**On invocation:** announce "Running paad:paad-help v1.31.0-preview", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:paad-help v2.0.0-preview", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/paad-help.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
@@ -54,7 +54,10 @@ Available skills:
   /agentic-review [base-branch] [path]  Multi-agent code review of current branch (bug hunting)
   /alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
   /makefile                             Create or update a Makefile with standard targets
+  /handoff [save|resume]                Hand this session's work to a fresh session, in writing
   /pushback [document]                  Spec/PRD/doc critic (finds issues before you build)
+  /rethink [what to re-examine]         Verify the premises under options already on the table
+  /test-roadmap                         Plan and build a test suite that catches real regressions
   /vibe [task description]              Safe vibe coding with TDD guardrails
 
 Experimental — may change or be withdrawn in any release, including patches:
@@ -62,9 +65,6 @@ Experimental — may change or be withdrawn in any release, including patches:
   /backlog [clean|fix]                  Clean or fix the out-of-scope bug backlog
   /agentic-dedup [scope]                Find semantic duplication (same meaning, different code)
   /agentic-owasp [scope]                Security review against the OWASP Top 10:2025
-  /handoff [save|resume]                Hand this session's work to a fresh session, in writing
-  /rethink [what to re-examine]         Verify the premises under options already on the table
-  /test-roadmap                         Plan and build a test suite that catches real regressions
 
 Picking between them:
 
@@ -79,14 +79,14 @@ Picking between them:
                                         never refactors)
   Worried about security specifically?  agentic-owasp (experimental; the OWASP
                                         Top 10:2025, never exploits or fixes)
-  Have no tests, or tests you distrust? test-roadmap (experimental; the only
-                                        skill that writes and commits code)
+  Have no tests, or tests you distrust? test-roadmap (writes tests and commits
+                                        them, one commit per phase)
   Have one document, is it any good?    pushback (a spec, a steering file, a
                                         generated report)
-  Been handed options, are they sound?  rethink (experimental; checks premises,
-                                        does not invent alternatives)
-  Out of context, work unfinished?      handoff (experimental; writes a file for
-                                        a NEW session — /compact stays in this one)
+  Been handed options, are they sound?  rethink (checks premises, does not
+                                        invent alternatives)
+  Out of context, work unfinished?      handoff (writes a file for a NEW
+                                        session — /compact stays in this one)
   Have a spec AND a plan, do they match? alignment (needs both; does not read code)
   Making a small change?                vibe (1-3 files, same module)
   Change is clearly multi-module?       write a plan, then alignment against it
@@ -480,13 +480,10 @@ Works within an existing conversation — no fresh session needed.
 ### rethink
 
 ```
-/rethink [what to re-examine]          EXPERIMENTAL
+/rethink [what to re-examine]
 
 Independently verifies the premises under options that are already on
 the table. Reports what it checked, and how it checked it.
-
-Experimental: arguments, verdicts, and output shape may change — or the
-skill may be withdrawn — in any release, including a patch release.
 
 Output: none — it speaks in the conversation and writes no files.
 
@@ -711,9 +708,8 @@ Best used in a fresh session — consumes significant context.
 ```
 /test-roadmap
 
-EXPERIMENTAL — arguments, output paths, and behavior may change or be
-withdrawn in any release, including patch releases. This is the only paad
-skill that writes and commits code.
+This skill writes tests and commits them, one commit per phase.
+/fix-architecture and /vibe also commit; the rest do not.
 
 Builds a test suite that catches real regressions, in phases, across as
 many sessions as it takes. One command on day 1 and on day 90.
@@ -766,13 +762,10 @@ Best used in a fresh session — consumes significant context.
 ### handoff
 
 ```
-/handoff [save|resume]                 EXPERIMENTAL
+/handoff [save|resume]
 
 Writes a handoff.md that lets a FRESH session continue this one's
 work, and reads it back on the other side.
-
-Experimental: arguments, file format, and behavior may change — or the
-skill may be withdrawn — in any release, including a patch release.
 
 Output: handoff.md in the working directory. Suggests you gitignore it.
 

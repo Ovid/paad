@@ -3,7 +3,11 @@ name: agentic-architecture
 description: Use when assessing the architectural health of a codebase — before a major refactor, when onboarding to an unfamiliar repo, after rapid growth, when planning a redesign, or to surface structural strengths and risks before they become expensive. Not for fixing what it finds, and not for reviewing a branch diff.
 ---
 
-**On invocation:** announce "Running paad:agentic-architecture v1.31.0" before anything else.
+**On invocation:** announce "Running paad:agentic-architecture v2.0.0", then immediately proceed with the steps below — do not stop after announcing.
+
+**Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-architecture.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
+
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files paad/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
 
 # Agentic Architecture Analysis
 
@@ -48,7 +52,11 @@ digraph analysis_flow {
   "Merge duplicates, note the agreeing specialists" [shape=box];
   "DROP the finding" [shape=box];
   "Keep the finding" [shape=box];
-  "Write report to paad/architecture-reviews/" [shape=box];
+  "Would reading it help an attacker?" [shape=diamond];
+  "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [shape=box, style=bold];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
+  "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" [shape=box];
   "Report location, counts, 3-6 bullet summary" [shape=box];
   "STOP: diagnosis only — do NOT propose fixes" [shape=box, style=bold];
 
@@ -77,9 +85,15 @@ digraph analysis_flow {
   "Reported by multiple specialists?" -> "Keep the finding" [label="no"];
   "Merge duplicates, note the agreeing specialists" -> "Keep the finding";
 
-  "Keep the finding" -> "Write report to paad/architecture-reviews/";
-  "DROP the finding" -> "Write report to paad/architecture-reviews/" [label="counted under Filtered out"];
-  "Write report to paad/architecture-reviews/" -> "Report location, counts, 3-6 bullet summary";
+  "Keep the finding" -> "Would reading it help an attacker?";
+  "Would reading it help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
+  "Would reading it help an attacker?" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" [label="no"];
+  "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)";
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)";
+  "DROP the finding" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" [label="counted under Filtered out"];
+  "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" -> "Report location, counts, 3-6 bullet summary";
   "Report location, counts, 3-6 bullet summary" -> "STOP: diagnosis only — do NOT propose fixes";
 }
 ```
@@ -190,78 +204,9 @@ Write verified findings to `paad/architecture-reviews/<YYYY-MM-DD>-<git-repo-nam
 
 Create the `paad/architecture-reviews/` directory if it doesn't exist.
 
-**Report template:**
+Findings that meet the Security findings paragraph's definition go to `paad/security/agentic-architecture-<YYYY-MM-DD>-<git-repo-name>.md` instead, same template, omitting any section that received no routed finding (always keep the header block, the Coverage Checklist and Analysis Metadata), after the paragraph's `.gitignore` check, and only if it passes. The main report carries the count-and-pointer line where they would have gone — one line per report section that lost a finding, with N that section's count. A hotspot or next question that a routed finding contributed to goes to the security file with it; one kept in the main report for other reasons must not mention, hint at, or ask about the routed finding. Whenever a security file was written this run, the security-typed checklist rows (30, 33, S10) in the main report read `See security file` in Status and `see paad/security/` in Finding regardless of what was found; every other row's status in the main report counts only the main report's own findings, as if routed findings were not there, so no row's status reveals a routed finding's category. The security file's own checklist carries the real status of every row. In Analysis Metadata, routed findings count in Raw and Verified — they were verified, not filtered out — and are excluded from `By impact`, which covers the main report's own findings; add `**Security:** N finding(s) written to paad/security/<file>`. Write the security file only when there is at least one. A same-day re-run replaces both files together; if it routes nothing, delete any same-day security file, so `/fix-architecture` never loads a previous run's flaws as this report's.
 
-```markdown
-# Architecture Report — <repo-name or current folder>
-
-- **Date:** YYYY-MM-DD
-- **Commit:** <full-sha>
-- **Languages:** <primary languages/frameworks>
-- **Key directories:** <list>
-- **Scope:** <full repo or specific paths>
-
-## Repo Overview
-
-Brief description of the codebase: what it does, how it's structured, approximate size.
-
-## Strengths
-
-Ranked by impact (High/Medium/Low), 5–15 items:
-
-### [S-ID] <Strength label>
-- **Category:** <S1-S14 category name>
-- **Impact:** High / Medium / Low
-- **Explanation:** 1-2 sentences
-- **Evidence:** `path:line-range` (`symbol`), excerpt: "short excerpt"
-- **Found by:** <specialist name(s)>
-
-## Flaws/Risks
-
-Ranked by impact (High/Medium/Low), 10–25 items:
-
-### [F-ID] <Flaw label>
-- **Category:** <flaw type 1-34 name>
-- **Impact:** High / Medium / Low
-- **Explanation:** 1-2 sentences
-- **Evidence:** `path:line-range` (`symbol`), excerpt: "short excerpt"
-- **Found by:** <specialist name(s)>
-
-## Coverage Checklist
-
-### Flaw/Risk Types 1–34
-| # | Type | Status | Finding |
-|---|------|--------|---------|
-| 1 | Global mutable state | Observed / Not observed / Not assessed | #F-ID or — |
-(continue for all 34)
-
-### Strength Categories S1–S14
-| # | Category | Status | Finding |
-|---|----------|--------|---------|
-| S1 | Clear modular boundaries | Observed / Not observed / Not assessed / Not applicable | #S-ID or — |
-(continue for all 14)
-
-## Hotspots
-
-Top 3 files/directories to review:
-1. `path/` — brief why (can include risk hotspots and strong core hotspots)
-2. ...
-3. ...
-
-## Next Questions
-
-Up to 5 questions to guide follow-up investigation. Questions only — no suggested solutions.
-
-## Analysis Metadata
-
-- **Agents dispatched:** <list with focus areas>
-- **Scope:** <files analyzed>
-- **Raw findings:** N (before verification)
-- **Verified findings:** M (after verification)
-- **Filtered out:** N - M
-- **By impact:** X high, Y medium, Z low
-- **Steering files consulted:** <list or "none found">
-```
+The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for the Phase 4 deliverable.
 
 ## Flaw/Risk Type Reference
 
@@ -337,18 +282,30 @@ These patterns produce low-quality architecture analyses. Avoid them:
 | Applying distributed system patterns to monoliths | Mark distributed-specific categories as Not applicable when reviewing a monolith |
 | Counting lines as proof | A 500-line file might be perfectly cohesive; a 50-line file might violate single responsibility — analyze content, not metrics |
 
-## Post-Analysis
+## Post-Review
 
 After writing the report:
 1. **List every file this run wrote or changed, before anything else** — a
    report the developer does not know exists is a report nobody reads. One line
-   per path, each marked new or updated, even when there is only one:
+   per path, each marked new or updated, even when there is only one; the
+   second line appears only when the file was written:
 
    ```
    Files written or updated:
-     new      paad/architecture-reviews/architecture-2026-08-01-10-42-13.md
+     new      paad/architecture-reviews/2026-08-01-myrepo-architecture-report.md
+     new      paad/security/agentic-architecture-2026-08-01-myrepo.md
    ```
 
-   Then give the finding counts (strengths and flaws by impact level)
+   When any finding was routed, emit the Security block once:
+
+   ```
+   Security: N finding(s) in paad/security/<file> (new|updated).
+   paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+   Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+   If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+   paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
+   ```
+
+   Then give the finding counts (strengths and flaws by impact level, routed findings included — this is terminal output, not the committed report)
 2. Print a brief summary (3-6 bullet points) of the highest-impact strengths and risks
 3. Do **not** propose fixes. The report is the deliverable.

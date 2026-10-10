@@ -3,7 +3,9 @@ name: agentic-a11y
 description: Use when auditing a user-facing app — web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, or games — for accessibility barriers or WCAG 2.2 conformance, before shipping UI changes, or in response to concerns about screen-reader, keyboard, low-vision, motor, cognitive, or photosensitive users. Not for general bug hunting or code correctness.
 ---
 
-**On invocation:** announce "Running paad:agentic-a11y v1.31.0" before anything else.
+**On invocation:** announce "Running paad:agentic-a11y v2.0.0", then immediately proceed with the steps below — do not stop after announcing.
+
+**Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-a11y.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
 # Accessibility Audit
 
@@ -338,104 +340,7 @@ Write verified findings to `.reviews/a11y-reviews/a11y-<YYYY-MM-DD-HH-MM-SS>.md`
 
 Create the `.reviews/a11y-reviews/` directory if it doesn't exist.
 
-**Report template:**
-
-```markdown
-# Accessibility Audit: <project-name>
-
-- **Date:** YYYY-MM-DD HH:MM:SS
-- **Commit:** <full-sha>
-- **Platform(s):** <detected platforms>
-- **Tech stack:** <frameworks, libraries, engines>
-- **Files audited:** N
-- **Existing a11y tooling:** <list or "none found">
-- **Conformance target:** WCAG 2.2 AA via WCAG2ICT (AAA noted as recommendations)
-- **Platform guidelines referenced:** <e.g., Apple HIG Accessibility, Material Design Accessibility, Xbox Accessibility Guidelines, or "N/A">
-
-## Executive Summary
-
-2-3 sentences: overall accessibility posture, highest-severity findings, estimated conformance level (A / partial AA / AA / partial AAA).
-
-## Impact Summary by User Group
-
-Brief summary of how the codebase affects each group:
-- **Screen reader users:** <1-2 sentences>
-- **Low-vision users:** <1-2 sentences>
-- **Colorblind users:** <1-2 sentences>
-- **Motor-impaired users (keyboard/switch/sip-and-puff):** <1-2 sentences>
-- **Cognitive and learning disabilities:** <1-2 sentences>
-- **Deaf and hard-of-hearing users:** <1-2 sentences>
-- **Vestibular and photosensitive users:** <1-2 sentences>
-
-## Critical Issues (Complete Barriers)
-
-### [C1] <title>
-- **File:** `path/to/file:line`
-- **Platform:** <which platform this applies to>
-- **Barrier:** What's wrong
-- **Criterion:** <WCAG criterion or platform guideline> — Level <A/AA>
-- **Affects:** Who is blocked and how
-- **Fix:** Concrete code-level recommendation
-- **Confidence:** High/Medium
-- **Found by:** <specialist name(s)>
-
-(Repeat for each critical issue, or "None found.")
-
-## Serious Issues (Major Difficulty)
-
-(Same structure as Critical, or "None found.")
-
-## Moderate Issues (Friction)
-
-(Same structure, or "None found.")
-
-## Minor Issues & AAA Recommendations
-
-One-line entries with criterion reference. Omit section if none.
-Mark AAA items with [AAA] prefix.
-
-## Conformance Checklist
-
-For each WCAG principle, list criteria checked and their status. For non-web platforms, criteria are interpreted via WCAG2ICT. Mark criteria that do not apply to the detected platform as "N/A" with brief explanation.
-
-### Perceivable
-| Criterion | Level | Status | Finding |
-|-----------|-------|--------|---------|
-| 1.1.1 Non-text Content | A | Pass / Fail / Partial / N/A / Not assessed | #ID or — |
-(continue for all Perceivable criteria assessed)
-
-### Operable
-(same table format)
-
-### Understandable
-(same table format)
-
-### Robust
-(same table format)
-
-### Platform-Specific Guidelines
-| Guideline | Status | Finding |
-|-----------|--------|---------|
-| <e.g., Apple HIG: Dynamic Type> | Pass / Fail / Partial | #ID or — |
-(list platform-specific guidelines checked beyond WCAG, or omit section if web-only)
-
-## Quick Wins
-
-Top 5 fixes that would have the largest positive impact for the least effort. Each entry: what to fix, which findings it addresses, estimated effort (small/medium/large).
-
-## Audit Metadata
-
-- **Agents dispatched:** <list with focus areas>
-- **Platform(s) detected:** <list>
-- **Scope:** <files audited>
-- **Raw findings:** N (before verification)
-- **Verified findings:** M (after verification)
-- **Filtered out:** N - M
-- **By severity:** X critical, Y serious, Z moderate, W minor
-- **By conformance level:** X Level A, Y Level AA, Z Level AAA
-- **Steering files consulted:** <list or "none found">
-- **Existing a11y tooling:** <list or "none found">
-```
+The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for the Phase 4 deliverable.
 
 ## Common Mistakes
 

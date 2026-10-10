@@ -129,13 +129,15 @@ Semver against what is in `[Unreleased]`, not against how much work it felt like
 | Wording, digraph, or bug fixes only | PATCH |
 | A renamed or removed skill | breaking — say so explicitly |
 
-paad has stayed on `1.x`. A breaking change still gets called out in the
-changelog even if the major does not move; raise it and let Ovid decide.
+A breaking change to a settled skill is a MAJOR bump (2.0.0, the security-routing
+release, is the first).
+Call it out in the changelog with a `**Breaking:**` bullet, and raise it and let
+Ovid decide.
 
 State your reasoning and the proposed number, then **wait for confirmation.**
 Do not proceed on a version you picked unilaterally.
 
-Note for the experimental skills (`agentic-dedup`, `test-roadmap`): their
+Note for the experimental skills (`agentic-dedup`, `agentic-owasp`, `backlog`): their
 arguments and output may change in any release including a patch, so a breaking
 change to one of them does not force a major.
 

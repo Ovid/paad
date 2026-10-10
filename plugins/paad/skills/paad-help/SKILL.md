@@ -3,7 +3,9 @@ name: paad-help
 description: Use when the user asks which paad skills exist, what a paad skill does, which one fits their situation, or how to invoke one — including "what can paad do", "list the paad skills", "is there a paad skill for X", or a request for the arguments of a named paad skill
 ---
 
-**On invocation:** announce "Running paad:paad-help v1.31.0" before anything else.
+**On invocation:** announce "Running paad:paad-help v2.0.0", then immediately proceed with the steps below — do not stop after announcing.
+
+**Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/paad-help.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
 # paad Help
 
@@ -20,7 +22,7 @@ Show help for paad skills. If `$ARGUMENTS` matches a skill name, show detailed h
 
 If `$ARGUMENTS` is provided and matches a skill name (with or without the `paad:` prefix), show the detailed help for that skill only. If the argument doesn't match any skill, say "Unknown skill: [name]. Available skills:" and show the overview.
 
-Do NOT read files or run commands. All help text is below.
+Do NOT read files or run commands, other than the `paad/config/` check above. All help text is below.
 
 ## Common Mistakes
 
@@ -40,6 +42,8 @@ When showing the overview, display exactly this:
 paad — Engineering-driven AI.
 Use your engineering excellence — the one thing AI reliably skips.
 
+Full tutorial: https://curtispoe.org/paad/
+
 Available skills:
 
   /agentic-a11y [path]                  Accessibility audit (web, mobile, desktop, CLI, games)
@@ -48,35 +52,39 @@ Available skills:
   /agentic-review [base-branch] [path]  Multi-agent code review of current branch (bug hunting)
   /alignment [files...]                 Requirements-to-tasks alignment + TDD rewrite
   /makefile                             Create or update a Makefile with standard targets
+  /handoff [save|resume]                Hand this session's work to a fresh session, in writing
   /pushback [document]                  Spec/PRD/doc critic (finds issues before you build)
+  /rethink [what to re-examine]         Verify the premises under options already on the table
+  /test-roadmap                         Plan and build a test suite that catches real regressions
   /vibe [task description]              Safe vibe coding with TDD guardrails
 
 Experimental — may change or be withdrawn in any release, including patches:
 
+  /backlog [clean|fix]                  Clean or fix the out-of-scope bug backlog
   /agentic-dedup [scope]                Find semantic duplication (same meaning, different code)
   /agentic-owasp [scope]                Security review against the OWASP Top 10:2025
-  /handoff [save|resume]                Hand this session's work to a fresh session, in writing
-  /rethink [what to re-examine]         Verify the premises under options already on the table
-  /test-roadmap                         Plan and build a test suite that catches real regressions
 
 Picking between them:
 
   Want structural flaws found?          agentic-architecture (diagnoses, does not fix)
   Want them fixed?                      fix-architecture (needs a report first)
   Want bugs in a branch?                agentic-review (a diff, not the codebase)
+  Have a backlog of found bugs?         backlog (experimental; clean stale
+                                        entries, or fix the next one —
+                                        agentic-review fills it)
   Want accessibility barriers?          agentic-a11y (not general correctness)
   Want duplicated logic found?          agentic-dedup (experimental; reports,
                                         never refactors)
   Worried about security specifically?  agentic-owasp (experimental; the OWASP
                                         Top 10:2025, never exploits or fixes)
-  Have no tests, or tests you distrust? test-roadmap (experimental; the only
-                                        skill that writes and commits code)
+  Have no tests, or tests you distrust? test-roadmap (writes tests and commits
+                                        them, one commit per phase)
   Have one document, is it any good?    pushback (a spec, a steering file, a
                                         generated report)
-  Been handed options, are they sound?  rethink (experimental; checks premises,
-                                        does not invent alternatives)
-  Out of context, work unfinished?      handoff (experimental; writes a file for
-                                        a NEW session — /compact stays in this one)
+  Been handed options, are they sound?  rethink (checks premises, does not
+                                        invent alternatives)
+  Out of context, work unfinished?      handoff (writes a file for a NEW
+                                        session — /compact stays in this one)
   Have a spec AND a plan, do they match? alignment (needs both; does not read code)
   Making a small change?                vibe (1-3 files, same module)
   Change is clearly multi-module?       write a plan, then alignment against it
@@ -89,6 +97,22 @@ Invoking: the names above are slash commands on Claude Code. If your
 assistant does not take them, ask for the skill by name ("run the pushback
 skill"). If another plugin ships a skill with the same name, disambiguate with
 the paad: prefix — /paad:vibe rather than /vibe.
+
+Configuration (experimental): put instructions in paad/config/paad.md to
+steer every skill, or paad/config/<skill-name>.md to steer one. A skill that
+finds a file follows it and opens its final answer with "Config: <path>".
+Details and the caveats: https://github.com/Ovid/paad/blob/main/CONFIG.md
+
+Security findings: any finding that would help an attacker is written only
+under paad/security/, which carries its own .gitignore, and the ordinary
+report gets a count and a pointer. Add paad/security/ to your root
+.gitignore too. The directory is local scratch — git clean -x deletes it.
+Reports from older releases in paad/owasp-reviews/ move under it by hand:
+if git tracks them, git rm -r --cached paad/owasp-reviews/ first, then move
+them and remove the old directory. Bug class: Security entries in
+paad/code-reviews/backlog.md are copied across by /agentic-review; delete
+the committed copies (/backlog clean does it). History keeps what was
+committed either way, so rotate whatever it exposed.
 ```
 
 ---
@@ -139,6 +163,7 @@ Multi-agent architecture analysis. Diagnosis only — finds strengths and
 flaws with evidence but does not propose fixes.
 
 Output: paad/architecture-reviews/
+        paad/security/agentic-architecture-<date>-<repo>.md (security findings, ignored)
 
 Arguments:
   /agentic-architecture                          Full repo
@@ -173,6 +198,9 @@ Guided fixing of architectural flaws from an agentic-architecture report.
 Test-first workflow with developer approval at every step.
 
 Output: Updates the report in paad/architecture-reviews/ with fix status
+        Also loads and updates the matching paad/security/ file, where
+        agentic-architecture puts flaws that would help an attacker; their
+        commit messages never name the flaw or the file
 
 Arguments:
   /fix-architecture                         Find most recent report
@@ -216,6 +244,8 @@ Multi-agent bug-hunting code review of the current branch.
 
 Output:   paad/code-reviews/<branch>-<timestamp>-<short-sha>.md (per-review)
           paad/code-reviews/backlog.md (project-wide, persistent)
+          paad/security/code-review-<branch>-<timestamp>-<sha>.md and
+          paad/security/backlog.md (security findings, ignored)
 
 Arguments:
   /agentic-review                    Diff against the default branch
@@ -254,8 +284,9 @@ What it does:
        Plan Alignment agent)
   3. Verifies findings (reads actual code, filters false positives)
   4. Classifies each finding as in-scope (this branch caused/worsened it),
-     out-of-scope (pre-existing bug — persists to project-wide backlog),
-     or out-of-scope-addition (this branch added it but the spec didn't
+     out-of-scope (pre-existing bug — persists to the project-wide backlog,
+     or the security backlog for Bug class: Security), or
+     out-of-scope-addition (this branch added it but the spec didn't
      promise it — flagged for per-PR user decision)
   5. Writes a report with:
      - In-scope issues ranked: Critical / Important / Suggestion
@@ -267,6 +298,60 @@ What it does:
      - Backlog updates surfaced in metadata
 
 Best used in a fresh session — consumes significant context.
+```
+
+### backlog
+
+```
+/backlog [clean|fix]                   EXPERIMENTAL
+
+EXPERIMENTAL — arguments, modes, and behavior may change or be withdrawn in
+any release, including patch releases.
+
+Work the project-wide out-of-scope bug backlog that /agentic-review writes
+to. Two modes, two flat files. Never commits — it edits files and prints the
+commit command for you to run.
+
+Input/output: paad/code-reviews/backlog.md and paad/security/backlog.md
+              (the files /agentic-review fills; the security one is never
+              committed)
+
+Arguments:
+  /backlog          List the entries, then show the two-option menu
+  /backlog clean    Go straight to Clean mode
+  /backlog fix      Go straight to Fix mode
+
+Requirements:
+  - A populated paad/code-reviews/backlog.md or paad/security/backlog.md.
+    If both are missing or empty, the skill says so and points you at
+    /agentic-review.
+
+Clean mode:
+  1. One skeptical read-only analyst per entry re-verifies it against the
+     current code: STILL-PRESENT / RESOLVED / GONE, each with cited evidence
+  2. Deletes only RESOLVED/GONE entries — any doubt keeps the entry. A
+     renamed or moved symbol is not treated as a fix
+  3. Removes committed copies of entries already copied to the security
+     backlog, then dedupes/merges any duplicate survivors (rare —
+     agentic-review dedupes at mint time)
+  4. Prints a git commit command with the resolution notes when the
+     committed backlog changed; does not run it
+
+Fix mode:
+  1. Ranks entries by severity then age, proposes the top one, you pick
+     (one item per run — no batch-fixing)
+  2. Fixes the bug directly or via /vibe
+  3. Validation gate before removal: an INDEPENDENT read-only analyst must
+     confirm from the code that the bug is gone; project tests run if a
+     command exists. No test command means "validated by inspection only" —
+     never a pass on its own, and your own edit is never the evidence
+  4. Gate passes -> deletes the entry and prints the commit command;
+     gate fails -> keeps the entry and reports what is still wrong
+
+Deleting a backlog entry destroys a record, so the skill leans conservative:
+a wrongly-kept entry is one stale line, a wrongly-deleted one loses a real
+bug (recoverable only from git log on the committed file; a security
+entry is not recoverable at all).
 ```
 
 ### alignment
@@ -355,7 +440,8 @@ or says it is unconditional.
 
 Output: the conversation, plus your spec if you ask for edits.
         Writes paad/pushback-reviews/ only when issues go undiscussed
-        or you ask for a report.
+        or you ask for a report. Security findings in that report go to
+        paad/security/pushback-<date>-<spec>.md (ignored).
 
 Arguments:
   /pushback path/to/spec.md    Review a specific file
@@ -392,13 +478,10 @@ Works within an existing conversation — no fresh session needed.
 ### rethink
 
 ```
-/rethink [what to re-examine]          EXPERIMENTAL
+/rethink [what to re-examine]
 
 Independently verifies the premises under options that are already on
 the table. Reports what it checked, and how it checked it.
-
-Experimental: arguments, verdicts, and output shape may change — or the
-skill may be withdrawn — in any release, including a patch release.
 
 Output: none — it speaks in the conversation and writes no files.
 
@@ -485,6 +568,7 @@ independently evolved implementations. Not a syntactic clone detector.
 
 Output: paad/dedup-reviews/<branch-or-scope>-<timestamp>-<sha>.md
         paad/dedup-reviews/INDEX.md (persistent, newest run on top)
+        paad/security/agentic-dedup-<branch-or-scope>-<timestamp>-<sha>.md (security findings, ignored)
 
 Arguments:
   /agentic-dedup                     Scan the repository
@@ -529,8 +613,11 @@ Multi-agent security review of source code against the OWASP Top 10:2025.
 Reads code. Never starts the app, never sends a request anywhere, never
 writes exploit code, never fixes what it finds.
 
-Output: paad/owasp-reviews/<branch-or-scope>-<timestamp>-<sha>.md
-        paad/owasp-reviews/INDEX.md (persistent, newest run on top)
+Output: paad/security/owasp-<branch-or-scope>-<timestamp>-<sha>.md
+        paad/security/INDEX.md (newest run on top; local scratch, not
+        persistent across git clean -x)
+        paad/security/<report-stem>-proofs/ (if you authorized the proof stage)
+        Everything lands under paad/security/, which ignores itself.
 
 Arguments:
   /agentic-owasp                     Review the repository
@@ -619,9 +706,8 @@ Best used in a fresh session — consumes significant context.
 ```
 /test-roadmap
 
-EXPERIMENTAL — arguments, output paths, and behavior may change or be
-withdrawn in any release, including patch releases. This is the only paad
-skill that writes and commits code.
+This skill writes tests and commits them, one commit per phase.
+/fix-architecture and /vibe also commit; the rest do not.
 
 Builds a test suite that catches real regressions, in phases, across as
 many sessions as it takes. One command on day 1 and on day 90.
@@ -632,6 +718,8 @@ takes 15 invocations. Running it once leaves you with a plan and no
 tests.
 
 Output: paad/test-roadmap/test-roadmap.md (the roadmap, and the memory)
+        paad/test-roadmap/test-roadmap-findings.md (suspected bugs, committed)
+        paad/security/test-roadmap-findings.md (security findings, never committed)
         Tests, committed one phase per commit, on your working branch
 
 Arguments:
@@ -672,13 +760,10 @@ Best used in a fresh session — consumes significant context.
 ### handoff
 
 ```
-/handoff [save|resume]                 EXPERIMENTAL
+/handoff [save|resume]
 
 Writes a handoff.md that lets a FRESH session continue this one's
 work, and reads it back on the other side.
-
-Experimental: arguments, file format, and behavior may change — or the
-skill may be withdrawn — in any release, including a patch release.
 
 Output: handoff.md in the working directory. Suggests you gitignore it.
 

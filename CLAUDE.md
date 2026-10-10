@@ -78,6 +78,11 @@ One thing preview does not cover: `scripts/convert_skills.py` has no preview sta
 
   The test: if you're explaining a mechanism, you're in the wrong file. If a reader would have to scroll to find out whether the release affects them, it's too long. Some past sections run to 200 lines — those are the mistake, not the precedent.
 - **Verification**: `make export && make test` before committing. It regenerates `kiro_and_antigravity/` and `pi/` from the plugin sources, then runs every check — including `claude plugin validate` on the marketplace and the plugin. Never hand-edit anything it generates; if the output is wrong, fix the generator.
+- **README preview**: `scratch/readme-preview.html` is a local, gitignored render of `README.md`. Whenever `README.md` changes and that file exists, regenerate it — it is a snapshot and does not track the README on its own:
+
+  ```
+  sed -E 's#(src="|\]\()images/#\1../images/#g' README.md | pandoc -f gfm -t html5 -s --metadata title="README preview" -c https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css -o scratch/readme-preview.html && sed -i '' -e 's#<body>#<body class="markdown-body" style="max-width:980px;margin:0 auto;padding:32px">#' -e 's#"\.github/star-history#"../.github/star-history#g' scratch/readme-preview.html
+  ```
 - **Announce on invocation**: every `SKILL.md` must begin its body with the line `**On invocation:** announce "Running paad:<skill-name> v<version>", then immediately proceed with the steps below — do not stop after announcing.` so users see which skill ran and which version produced the behavior. The literal version string must match `plugin.json`.
 - **Announce the artifacts on completion**: any skill that writes or updates a file must end its run by listing the **artifacts** it touched — reports, indexes, backlogs, roadmaps, findings logs, and the developer's own spec/plan documents — one line per path marked new or updated, before the summary or next-step advice.
 

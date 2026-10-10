@@ -3,7 +3,11 @@ name: pushback
 description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling. Not for cross-checking a spec against a plan — that's the alignment skill.
 ---
 
-**On invocation:** announce "Running paad:pushback v1.31.0" before anything else.
+**On invocation:** announce "Running paad:pushback v2.0.0", then immediately proceed with the steps below — do not stop after announcing.
+
+**Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/pushback.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
+
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `.reviews/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `.reviews/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files .reviews/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to .reviews/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
 
 # Spec Pushback
 
@@ -81,6 +85,10 @@ digraph scope_critique_resolution {
   "ASK where to write the spec first" [shape=box];
   "ASK before editing after a stop signal" [shape=box];
   "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
+  "Any report finding would help an attacker?" [shape=diamond];
+  "Write those to .reviews/security/pushback-<date>-<spec>.md; count line in the report" [shape=box, style=bold];
+  ".reviews/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "Write nothing under .reviews/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Write .reviews/pushback/<date>-<spec>-pushback.md" [shape=box];
   "Skip the report — conversation and diff carry it" [shape=box];
   "List every file written or updated" [shape=box];
@@ -129,7 +137,13 @@ digraph scope_critique_resolution {
   "Stopped early?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="no"];
   "ASK before editing after a stop signal" -> "Apply agreed changes; leave undiscussed requirements alone";
   "Apply agreed changes; leave undiscussed requirements alone" -> "Unresolved issues, or user asked for a report?";
-  "Unresolved issues, or user asked for a report?" -> "Write .reviews/pushback/<date>-<spec>-pushback.md" [label="yes"];
+  "Unresolved issues, or user asked for a report?" -> "Any report finding would help an attacker?" [label="yes"];
+  "Any report finding would help an attacker?" -> ".reviews/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
+  "Any report finding would help an attacker?" -> "Write .reviews/pushback/<date>-<spec>-pushback.md" [label="no"];
+  "Write those to .reviews/security/pushback-<date>-<spec>.md; count line in the report" -> "Write .reviews/pushback/<date>-<spec>-pushback.md";
+  ".reviews/security/.gitignore holds only * and git tracks nothing there?" -> "Write those to .reviews/security/pushback-<date>-<spec>.md; count line in the report" [label="yes"];
+  ".reviews/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under .reviews/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "Write nothing under .reviews/security/; tell the user, ask: hold or ordinary report" -> "Write .reviews/pushback/<date>-<spec>-pushback.md";
   "Unresolved issues, or user asked for a report?" -> "Skip the report — conversation and diff carry it" [label="no"];
   "Write .reviews/pushback/<date>-<spec>-pushback.md" -> "List every file written or updated";
   "Skip the report — conversation and diff carry it" -> "List every file written or updated";
@@ -300,13 +314,17 @@ Then ask: **"Would you like me to update the spec directly, write a separate pus
 the conversation and the spec diff already carry the outcome — a report restates
 what the user just watched happen. Write one when the user asks for it, or when
 issues went undiscussed. Findings the user stopped before reaching exist nowhere
-else once the session ends; that is what the file is for.
+else once the session ends; that is what the file is for. A routed one survives
+only as long as `.reviews/security/` does — the Security block says so.
 
 ### If updating the spec
 
 - Apply agreed-upon changes to the original file
 - Add/modify requirements based on the user's responses
 - Don't touch requirements that weren't discussed
+- **Write the requirement, never the weakness:** "the export endpoint must
+  filter by tenant", not "the export endpoint currently leaks other tenants'
+  rows". The spec is committed; the finding it answers is not.
 - **After a stop signal, ask before editing.** "Good enough" ends the review,
   not just the current issue. Applying changes the user already agreed to is
   fine — confirm first. Editing a spec the author has stopped reading is how a
@@ -316,62 +334,25 @@ else once the session ends; that is what the file is for.
 
 Write to `.reviews/pushback/<YYYY-MM-DD>-<spec-name>-pushback.md`.
 
+`<spec-name>` is the spec file's name without directory or extension, lowercased, with every run of characters outside `a-z0-9` replaced by one `-` — never a path, never `..`. A spec from conversation history uses the file it was just saved to.
+
 Create the `.reviews/pushback/` directory if it doesn't exist.
 
-**Report template:**
+This rule covers the report only. A finding in the report that meets the
+Security findings paragraph's definition goes to
+`.reviews/security/pushback-<YYYY-MM-DD>-<spec-name>.md` — same template, omitting
+any section that received no routed finding (keep the header block). Before the
+first write under `.reviews/security/` this run, run the Security findings
+paragraph's `.gitignore` check, and write nothing there unless it passes.
+Each report section that lost a finding carries the count-and-pointer line in
+its place, N being that section's count. Resolution does not exempt an entry: a
+resolved issue's Issues Reviewed entry still names the weakness and is routed
+like any other. The Summary counts routed findings in its totals and says
+nothing else about them. A requirement the user agreed to add to their spec — "this endpoint must
+require auth" — is a requirement, not a finding: it is theirs to commit, and the
+spec update above writes it as it always has.
 
-```markdown
-# Pushback Review: <spec name or filename>
-
-- **Date:** YYYY-MM-DD
-- **Spec:** <file path or "conversation history">
-- **Commit:** <current HEAD sha, or "N/A">
-
-## Source Control Conflicts
-
-<conflicts found, or "None — no conflicts with recent changes.">
-
-## Issues Reviewed
-
-### [1] <title>
-- **Category:** <contradictions / feasibility / scope imbalance / omissions / ambiguity / security>
-- **Severity:** <critical / serious / moderate / minor>
-- **Issue:** <what's wrong>
-- **Resolution:** <what the user decided>
-
-(Repeat for each issue discussed.)
-
-## Unresolved Issues
-
-Issues not yet discussed (user stopped early). Listed for future reference.
-
-### [N] <title>
-- **Category:** ...
-- **Severity:** ...
-- **Issue:** ...
-- **Suggested options:** ...
-
-(Omit section if all issues were addressed.)
-
-## Summary
-
-- **Issues found:** N (plus K candidates dropped for lacking a defensible consequence)
-- **Unresolved:** N - M   <!-- omit this line entirely when nothing is unresolved -->
-- **Status:** <one or two sentences: what has to happen before implementation
-  starts, and what can ride along. Not a verdict word.>
-```
-
-### List every file you wrote or updated
-
-End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated and the report if one was written:
-
-```
-Files written or updated:
-  updated  docs/specs/checkout-prd.md
-  new      .reviews/pushback/2026-08-01-checkout-pushback.md
-```
-
-Say it even when only one file changed, and even when the user watched you change it.
+The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for that deliverable.
 
 ## Common Mistakes
 
@@ -393,3 +374,26 @@ These patterns produce pushback that reads well and changes nothing. Avoid them:
 | Manufacturing issues to fill all six categories | Not every spec has security concerns or contradictions. Say a category is clean and move on. |
 | Continuing past "good enough" | That's the stop signal. Keep going and the user stops reading. |
 | Rewriting the spec instead of critiquing it | Present issues and let the user decide. Silent rewrites replace their judgment with yours. |
+
+## Post-Review
+
+End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated, the report if one was written, and the security file if one was written:
+
+```
+Files written or updated:
+  updated  docs/specs/checkout-prd.md
+  new      .reviews/pushback/2026-08-01-checkout-prd-pushback.md
+  new      .reviews/security/pushback-2026-08-01-checkout-prd.md
+```
+
+When any finding was routed, emit the Security block once:
+
+```
+Security: N finding(s) in .reviews/security/<file> (new|updated).
+.reviews/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+Also list .reviews/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+If anything under .reviews/security/ was ever committed, ignoring it now does not remove it from history.
+.reviews/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
+```
+
+Say it even when only one file changed, and even when the user watched you change it.
