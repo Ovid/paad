@@ -29,6 +29,7 @@ digraph preflight {
   "Baseline tests pass?" [shape=diamond];
   "Failing baseline — developer choice?" [shape=diamond];
 
+  "Load the paad/security/ companion if present; warn if its count line points at a missing file" [shape=box];
   "Proceed to Setup" [shape=box];
   "STOP: recommend fresh session" [shape=box, style=bold];
   "STOP: switch to feature branch" [shape=box, style=bold];
@@ -43,7 +44,8 @@ digraph preflight {
   "On default branch?" -> "STOP: switch to feature branch" [label="yes"];
   "On default branch?" -> "Report exists?" [label="no"];
   "Report exists?" -> "STOP: run agentic-architecture first" [label="no"];
-  "Report exists?" -> "Report stale?" [label="yes"];
+  "Report exists?" -> "Load the paad/security/ companion if present; warn if its count line points at a missing file" [label="yes"];
+  "Load the paad/security/ companion if present; warn if its count line points at a missing file" -> "Report stale?";
 
   "Report stale?" -> "Stale — developer choice?" [label="yes (>14 days old)"];
   "Report stale?" -> "Test infrastructure?" [label="no"];
@@ -198,7 +200,9 @@ digraph fix_session {
 
 2. **Branch protection:** Refuse to operate on the default branch (main/master/trunk). Detect via `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null` (local, instant), falling back to branch name matching (`main`/`master`/`trunk`), and only falling back to `git remote show origin` as a last resort if neither works. If on the default branch: "Architecture fixes must be done on a feature branch. Create one and re-run this skill." Stop and wait.
 
-3. **Report exists:** Locate the report from `$ARGUMENTS` or find the most recent file in `paad/architecture-reviews/` by date prefix. If none found: "No architecture report found. Run `/agentic-architecture` first to generate one." Stop and wait.
+3. **Report exists:** Locate the report from `$ARGUMENTS` or find the most recent file in `paad/architecture-reviews/` by date prefix. If `$ARGUMENTS` names a file under `paad/security/`, locate the main report with the same date and repo name instead. If none found: "No architecture report found. Run `/agentic-architecture` first to generate one." Stop and wait.
+
+   **Security flaws:** `/agentic-architecture` writes flaws that would help an attacker to `paad/security/agentic-architecture-<YYYY-MM-DD>-<git-repo-name>.md`, with the main report's date and repo name, and leaves only a count line in the main report. If that file exists, load its flaws too; they are part of this session like any other, marked as security flaws. If the main report has a `security finding(s) written to paad/security/` count line and the file is gone, tell the developer: "N security flaw(s) from this report are no longer on this machine — `paad/security/` is local scratch. Re-run `/agentic-architecture` to recover them." Then continue with the rest. Never `git add -f` anything under `paad/security/`.
 
 4. **Report staleness:** Parse the date from the report. If the report is >14 days old, warn: "This report was generated N days ago. Some findings may be outdated. I'll validate each flaw before fixing, but consider re-running `/agentic-architecture` for a fresh baseline." Ask explicitly: "Proceed anyway? (yes / no / re-run `/agentic-architecture` first)". Do not use commit count as a staleness signal — architectural flaws persist across many commits, and high commit velocity (especially from fix sessions on the same report) does not indicate staleness.
 
@@ -429,6 +433,8 @@ Add status fields inline to the flaw entry in the architecture report:
 
 If status fields don't exist on the entry (report was generated before this skill existed), add them.
 
+A security flaw's status fields go in the `paad/security/` file it came from, never in the main report.
+
 Do this before committing, so auto-commit mode can include the report update in the same commit. **Status commit** is the one field that can only be filled once the commit exists — record it immediately after committing (`git commit --amend` in auto-commit mode, or leave it for the developer in manual mode).
 
 ### Commit
@@ -443,6 +449,8 @@ Resolves architectural flaw F-ID (<flaw label>) identified in
 
 <brief description of what changed>
 ```
+
+For a security flaw, the message names neither the flaw label nor either report's filename, and the description says what the code now does, not the weakness it had — commit history is permanent and public wherever the repo is. Use `fix(architecture): <neutral description>` and a body of what changed. The `paad/security/` file is ignored, so its status update is never part of the commit.
 
 Note: safety-net tests are committed in the Safety Net phase (before any fixes) so they survive if a fix is reverted. That commit already happened regardless of commit mode — nothing here re-commits it.
 
@@ -468,7 +476,7 @@ After the developer stops or the batch is complete:
 
 1. Print summary:
    - Number of flaws fixed, skipped, won't-fixed this session
-   - Remaining unfixed flaws in the report
+   - Remaining unfixed flaws in the report, including the `paad/security/` file's
    - **Every artifact this session wrote or updated**, one line per path, each
      marked new or updated — the report always, since its status fields are the
      record of what happened here and developers routinely miss that it changed.

@@ -198,6 +198,9 @@ Guided fixing of architectural flaws from an agentic-architecture report.
 Test-first workflow with developer approval at every step.
 
 Output: Updates the report in paad/architecture-reviews/ with fix status
+        Also loads and updates the matching paad/security/ file, where
+        agentic-architecture puts flaws that would help an attacker; their
+        commit messages never name the flaw or the file
 
 Arguments:
   /fix-architecture                         Find most recent report

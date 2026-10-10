@@ -45,7 +45,9 @@ PRODUCERS = {
     "agentic-owasp", "agentic-review", "test-roadmap",
     "agentic-architecture", "pushback", "agentic-dedup",
 }
-ALLOWED = PRODUCERS | {"paad-help", "backlog"}
+# Readers may name the path but carry no paragraph: they consume what producers wrote.
+READERS = {"paad-help", "backlog", "fix-architecture"}
+ALLOWED = PRODUCERS | READERS
 MARKER = "**Security findings:**"
 PATH = "paad/security/"
 
