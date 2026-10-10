@@ -653,10 +653,16 @@ help an attacker is written only under `paad/security/`, whatever the skill and
 whatever its ordinary report path. That directory carries its own `.gitignore`
 holding a single `*`, so it ignores itself from the moment it is created, and
 the ordinary report is left with a count and a pointer — no path, severity,
-symbol, or description. The report you commit stays safe to commit; the map of
-live weaknesses never enters git in the first place. Add `paad/security/` to
-your own `.gitignore` as well, and treat it as scratch rather than a record:
-it exists on one machine, `git clean -x` deletes it, and nothing brings it back.
+symbol, or description. The skills never add the map of live weaknesses to
+git, and they stop and ask rather than write there if that `.gitignore` is
+wrong or git already tracks something in the directory. That protection has
+limits. `git add -f`, or deleting the `.gitignore`, bypasses it. Anything
+committed before stays in history, so moving it does not help: `git rm
+--cached` it and rotate what it exposed. `/test-roadmap` is the one exception
+by design: the test that pins a security finding is committed, and its neutral
+name does not stop it reproducing the weakness. Add `paad/security/` to your
+own `.gitignore` as well, and treat it as scratch rather than a record: it
+exists on one machine, `git clean -x` deletes it, and nothing brings it back.
 
 ### Pushback
 
