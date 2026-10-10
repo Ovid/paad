@@ -145,7 +145,59 @@ and you make the calls.
 You stay in the driver's seat. That is the point, and it's also the cost: PAAD
 gives you visibility and control, not autopilot.
 
-### What PAAD can't fix
+## Workflow
+
+There's a lot to take in with PAAD, [so I've written an article to explain how
+to write production-quality code with
+it](https://curtispoe.org/articles/watching-claude-sonnet-outperform-opus).
+
+If you are new to PAAD, start with `/paad-help` to see the available skills and when to use them.
+
+A typical workflow looks like this:
+
+1. Write the spec, using your existing spec-driven development method.
+2. Run `pushback` on the spec. Revise and repeat as needed.
+3. Develop the task list (you or the agent).
+4. Run `pushback` on the task list. Revise and repeat as needed.
+5. Run `alignment` on the task list to check it against the spec, and rewrite
+   it for TDD. Revise and repeat as needed.
+6. Execute the tasks, in a fresh session for each task.
+7. Run `agentic-review` on the result. Fix findings and repeat as needed.
+8. Human PR approval and merge. Repeat for the next feature.
+
+That is the per-feature loop (section 10 of [the
+tutorial](https://curtispoe.org/paad/)). It improves the quality of each feature
+before it gets merged into your primary branch:
+
+<p align="center">
+  <img src="images/pushback.png" alt="PAAD per-feature loop: write the spec, then /pushback on it; develop the task list, then /pushback and /alignment on it; execute the tasks, then /agentic-review the result; human PR approval and merge" width="700">
+</p>
+
+AI is now good enough that, with `pushback` alone, fewer issues surface in the
+rest of the loop. But the loop only minimizes slop in the current task. It
+can't prevent slop across the project as a whole. That takes aggressive
+technical debt management: `agentic-architecture` to find the structural
+problems, `fix-architecture` to work through them, and `agentic-review`
+before the fixes merge.
+
+<p align="center">
+  <img src="images/architecture.png" alt="PAAD aggressive technical debt maintenance: reserve time and choose scope, then /agentic-architecture; prioritise findings on a feature branch, then /fix-architecture; verify the changes, then /agentic-review; human PR approval and merge" width="700">
+</p>
+
+Not sure if the AI is presenting you with the best options? Run `rethink` to
+check whether the premises behind a recommendation actually hold.
+
+Depending on the type of work, I also use (see below for full descriptions):
+
+1. `agentic-a11y` for UI changes and accessibility-sensitive work
+2. `vibe` for small fixes that still benefit from guardrails
+
+Rerun `pushback` and `alignment` whenever the spec or the task list changes.
+
+## What PAAD can't fix
+
+<details>
+<summary>The limits, and who has to cover them</summary>
 
 An engineer has to drive this — including knowing when the tool is wrong.
 
@@ -165,6 +217,8 @@ An engineer has to drive this — including knowing when the tool is wrong.
 If you want the assistant to think for you, PAAD is the wrong tool. It exists
 for engineers who want to stay responsible for the result and need help
 keeping up.
+
+</details>
 
 ## The AI sees all of your code and none of your context
 
@@ -281,60 +335,6 @@ on top of writing it. The bet is that this is cheaper than shipping the wrong
 thing and rebuilding it — a good bet for software you'll maintain for years, a
 bad one for a prototype you'll throw away on Friday. Spend the review on the
 code you'll still be living with next year.
-
-</details>
-
-## Workflow
-
-<details>
-<summary>A typical spec → plan → implement → review loop</summary>
-
-There's a lot to take in with PAAD, [so I've written an article to explain how
-to write production-quality code with
-it](https://curtispoe.org/articles/watching-claude-sonnet-outperform-opus).
-
-If you are new to PAAD, start with `/paad-help` to see the available skills and when to use them.
-
-A typical workflow looks like this:
-
-1. Write the spec, using your existing spec-driven development method.
-2. Run `pushback` on the spec. Revise and repeat as needed.
-3. Develop the task list (you or the agent).
-4. Run `pushback` on the task list. Revise and repeat as needed.
-5. Run `alignment` on the task list to check it against the spec, and rewrite
-   it for TDD. Revise and repeat as needed.
-6. Execute the tasks, in a fresh session for each task.
-7. Run `agentic-review` on the result. Fix findings and repeat as needed.
-8. Human PR approval and merge. Repeat for the next feature.
-
-That is the per-feature loop (section 10 of [the
-tutorial](https://curtispoe.org/paad/)). It improves the quality of each feature
-before it gets merged into your primary branch:
-
-<p align="center">
-  <img src="images/pushback.png" alt="PAAD per-feature loop: write the spec, then /pushback on it; develop the task list, then /pushback and /alignment on it; execute the tasks, then /agentic-review the result; human PR approval and merge" width="700">
-</p>
-
-AI is now good enough that, with `pushback` alone, fewer issues surface in the
-rest of the loop. But the loop only minimizes slop in the current task. It
-can't prevent slop across the project as a whole. That takes aggressive
-technical debt management: `agentic-architecture` to find the structural
-problems, `fix-architecture` to work through them, and `agentic-review`
-before the fixes merge.
-
-<p align="center">
-  <img src="images/architecture.png" alt="PAAD aggressive technical debt maintenance: reserve time and choose scope, then /agentic-architecture; prioritise findings on a feature branch, then /fix-architecture; verify the changes, then /agentic-review; human PR approval and merge" width="700">
-</p>
-
-Not sure if the AI is presenting you with the best options? Run `rethink` to
-check whether the premises behind a recommendation actually hold.
-
-Depending on the type of work, I also use (see below for full descriptions):
-
-1. `agentic-a11y` for UI changes and accessibility-sensitive work
-2. `vibe` for small fixes that still benefit from guardrails
-
-Rerun `pushback` and `alignment` whenever the spec or the task list changes.
 
 </details>
 
