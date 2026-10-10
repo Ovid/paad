@@ -65,6 +65,8 @@ digraph session {
   "Report: no duplication found in scope" [shape=box];
   "Any finding would help an attacker?" [shape=diamond];
   "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" [shape=box, style=bold];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Post-Review: Security block when any finding was routed" [shape=box];
   "Done — do NOT auto-refactor" [shape=doublecircle];
 
@@ -84,11 +86,15 @@ digraph session {
   "Verifier returned on retry?" -> "User says proceed unverified?" [label="no"];
   "User says proceed unverified?" -> "Any finding would help an attacker?" [label="yes"];
   "User says proceed unverified?" -> "STOP: surface verifier failure, write no report" [label="no"];
-  "Any finding would help an attacker?" -> "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" [label="yes, or on the edge"];
+  "Any finding would help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
   "Any finding would help an attacker?" -> "Phase 5: Report (verified findings)" [label="no, verified"];
   "Any finding would help an attacker?" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="no, unverified"];
   "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" -> "Phase 5: Report (verified findings)" [label="if verified"];
   "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="if unverified"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Phase 5: Report (verified findings)" [label="if verified"];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="if unverified"];
   "Report: no duplication found in scope" -> "Post-Review: Security block when any finding was routed";
   "Phase 5: Report (verified findings)" -> "Post-Review: Security block when any finding was routed";
   "Phase 5: Report (Specialist Findings — Unverified banner)" -> "Post-Review: Security block when any finding was routed";

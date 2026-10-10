@@ -89,6 +89,8 @@ digraph scope_critique_resolution {
   "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
   "Any report finding would help an attacker?" [shape=diamond];
   "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" [shape=box, style=bold];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [shape=box];
   "Skip the report — conversation and diff carry it" [shape=box];
   "List every file written or updated" [shape=box];
@@ -138,9 +140,12 @@ digraph scope_critique_resolution {
   "ASK before editing after a stop signal" -> "Apply agreed changes; leave undiscussed requirements alone";
   "Apply agreed changes; leave undiscussed requirements alone" -> "Unresolved issues, or user asked for a report?";
   "Unresolved issues, or user asked for a report?" -> "Any report finding would help an attacker?" [label="yes"];
-  "Any report finding would help an attacker?" -> "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" [label="yes, or on the edge"];
+  "Any report finding would help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
   "Any report finding would help an attacker?" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [label="no"];
   "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md";
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md";
   "Unresolved issues, or user asked for a report?" -> "Skip the report — conversation and diff carry it" [label="no"];
   "Write paad/pushback-reviews/<date>-<spec>-pushback.md" -> "List every file written or updated";
   "Skip the report — conversation and diff carry it" -> "List every file written or updated";

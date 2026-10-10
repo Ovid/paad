@@ -56,6 +56,8 @@ digraph analysis_flow {
   "Keep the finding" [shape=box];
   "Would reading it help an attacker?" [shape=diamond];
   "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [shape=box, style=bold];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Write report to paad/architecture-reviews/" [shape=box];
   "Report location, counts, 3-6 bullet summary" [shape=box];
   "STOP: diagnosis only — do NOT propose fixes" [shape=box, style=bold];
@@ -86,9 +88,12 @@ digraph analysis_flow {
   "Merge duplicates, note the agreeing specialists" -> "Keep the finding";
 
   "Keep the finding" -> "Would reading it help an attacker?";
-  "Would reading it help an attacker?" -> "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [label="yes, or on the edge"];
+  "Would reading it help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
   "Would reading it help an attacker?" -> "Write report to paad/architecture-reviews/" [label="no"];
   "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" -> "Write report to paad/architecture-reviews/";
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Write report to paad/architecture-reviews/";
   "DROP the finding" -> "Write report to paad/architecture-reviews/" [label="counted under Filtered out"];
   "Write report to paad/architecture-reviews/" -> "Report location, counts, 3-6 bullet summary";
   "Report location, counts, 3-6 bullet summary" -> "STOP: diagnosis only — do NOT propose fixes";

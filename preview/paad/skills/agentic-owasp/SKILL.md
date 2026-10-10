@@ -100,6 +100,8 @@ digraph preflight {
 digraph session {
   "Phase 1: Reconnaissance" [shape=box];
   "Ensure paad/security/.gitignore holds * (create if absent, never rewrite)" [shape=box];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "Stop: write nothing, tell the user what was found, ask how to proceed" [shape=box];
   "Live credential seen?" [shape=diamond];
   "STOP: report location, never the value, tell user to rotate" [shape=box, style=bold];
   "Phase 2: Attack Surface Mapping" [shape=box];
@@ -127,7 +129,9 @@ digraph session {
   "Done — do NOT fix" [shape=doublecircle];
 
   "Phase 1: Reconnaissance" -> "Ensure paad/security/.gitignore holds * (create if absent, never rewrite)";
-  "Ensure paad/security/.gitignore holds * (create if absent, never rewrite)" -> "Live credential seen?";
+  "Ensure paad/security/.gitignore holds * (create if absent, never rewrite)" -> "paad/security/.gitignore holds only * and git tracks nothing there?";
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Live credential seen?" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Stop: write nothing, tell the user what was found, ask how to proceed" [label="no"];
   "Live credential seen?" -> "STOP: report location, never the value, tell user to rotate" [label="yes"];
   "STOP: report location, never the value, tell user to rotate" -> "Phase 2: Attack Surface Mapping" [label="after the user is told"];
   "Live credential seen?" -> "Phase 2: Attack Surface Mapping" [label="no"];

@@ -37,6 +37,8 @@ digraph classification {
   "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" [shape=box];
   "Bug class: Security (set by the Verifier)?" [shape=diamond];
   "Write to paad/security/ report and backlog; count-and-pointer line in the main report" [shape=box, style=bold];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Write to paad/code-reviews/ report and backlog" [shape=box];
 
   "Finding from specialist (verified)" -> "Carries [OOSA] sentinel or category: out-of-scope-addition tag?";
@@ -52,12 +54,14 @@ digraph classification {
   "Match in pre-filtered backlog?" -> "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" [label="yes"];
   "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" [label="yes"];
   "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Update last_seen in the entry's source file" [label="no"];
-  "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" -> "Write to paad/security/ report and backlog; count-and-pointer line in the main report";
+  "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" -> "paad/security/.gitignore holds only * and git tracks nothing there?";
   "Match in pre-filtered backlog?" -> "Mint new backlog entry" [label="no"];
   "In-scope" -> "Bug class: Security (set by the Verifier)?";
   "Update last_seen in the entry's source file" -> "Bug class: Security (set by the Verifier)?";
   "Mint new backlog entry" -> "Bug class: Security (set by the Verifier)?";
-  "Bug class: Security (set by the Verifier)?" -> "Write to paad/security/ report and backlog; count-and-pointer line in the main report" [label="yes"];
+  "Bug class: Security (set by the Verifier)?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write to paad/security/ report and backlog; count-and-pointer line in the main report" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
   "Bug class: Security (set by the Verifier)?" -> "Write to paad/code-reviews/ report and backlog" [label="no"];
 }
 ```
