@@ -398,8 +398,8 @@ End the session with the file list, always — this skill edits the developer's 
 ```
 Files written or updated:
   updated  docs/specs/checkout-prd.md
-  new      paad/pushback-reviews/2026-08-01-checkout-pushback.md
-  new      paad/security/pushback-2026-08-01-checkout.md
+  new      paad/pushback-reviews/2026-08-01-checkout-prd-pushback.md
+  new      paad/security/pushback-2026-08-01-checkout-prd.md
 ```
 
 When any finding was routed, emit the Security block once:

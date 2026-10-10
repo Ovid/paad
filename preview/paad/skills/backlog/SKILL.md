@@ -184,4 +184,4 @@ Files written or updated:
 
 Never `git add -f` anything under `paad/security/`.
 
-Then print the **commit command** (never run it) and, in Fix mode, state the validation result — analyst verdict and whether a test command was found and run.
+Then print the **commit command** (never run it) — in Clean mode only when `paad/code-reviews/backlog.md` changed, per *Removal + commit command* and, in Fix mode, state the validation result — analyst verdict and whether a test command was found and run.

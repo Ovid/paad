@@ -14,6 +14,7 @@ what a plugin user sees.
 - **Breaking:** security findings from six skills now go only to `paad/security/`,
   which git ignores; `/agentic-owasp` no longer writes `paad/owasp-reviews/`.
   Add `paad/security/` to `.gitignore` and move old findings by hand — see README.
+- `/fix-architecture` also loads and fixes the flaws `/agentic-architecture` routed to `paad/security/`.
 - **Skills are less likely to stall right after announcing themselves** — the
   on-invocation line now tells the agent to proceed with the skill immediately
   instead of stopping after the announcement.

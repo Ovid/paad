@@ -58,7 +58,7 @@ digraph analysis_flow {
   "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [shape=box, style=bold];
   "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
   "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
-  "Write report to paad/architecture-reviews/" [shape=box];
+  "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" [shape=box];
   "Report location, counts, 3-6 bullet summary" [shape=box];
   "STOP: diagnosis only — do NOT propose fixes" [shape=box, style=bold];
 
@@ -89,13 +89,13 @@ digraph analysis_flow {
 
   "Keep the finding" -> "Would reading it help an attacker?";
   "Would reading it help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
-  "Would reading it help an attacker?" -> "Write report to paad/architecture-reviews/" [label="no"];
-  "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" -> "Write report to paad/architecture-reviews/";
+  "Would reading it help an attacker?" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" [label="no"];
+  "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)";
   "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [label="yes"];
   "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
-  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Write report to paad/architecture-reviews/";
-  "DROP the finding" -> "Write report to paad/architecture-reviews/" [label="counted under Filtered out"];
-  "Write report to paad/architecture-reviews/" -> "Report location, counts, 3-6 bullet summary";
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)";
+  "DROP the finding" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" [label="counted under Filtered out"];
+  "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" -> "Report location, counts, 3-6 bullet summary";
   "Report location, counts, 3-6 bullet summary" -> "STOP: diagnosis only — do NOT propose fixes";
 }
 ```

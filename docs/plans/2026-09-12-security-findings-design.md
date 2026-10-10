@@ -117,7 +117,7 @@ and Pi get `.reviews/security/` with the same ignore file. No generator change.
 
 ## Migration (warn-only)
 
-Nothing is edited automatically. The goal is to keep this change small.
+Nothing is edited automatically by the producing skills. The goal is to keep this change small. `/backlog` Clean is the one exception, below.
 
 - **OWASP reports.** A run that finds `paad/owasp-reviews/` adds one
   Post-Review line: move it under `paad/security/`; a committed copy stays in
@@ -132,8 +132,9 @@ Nothing is edited automatically. The goal is to keep this change small.
   `/backlog` Clean mode finishes the migration: a committed entry whose ID is
   also in the security backlog is a merge-loser it deletes in Pass B.
 - **This repo.** Move the local untracked `paad/owasp-reviews/` under
-  `paad/security/` by hand first, then swap the root `.gitignore`'s single
-  `paad/owasp-reviews/` line for `paad/security/`. In that order: the other order
+  `paad/security/` by hand first, then add `paad/security/` to the root
+  `.gitignore`. Keep the `paad/owasp-reviews/` line until no shipped version
+  writes there. In that order: the other order
   leaves live findings visible to `git add -A` in between.
 - **Nothing else moves.** Non-security reports, the roadmap, the analysis
   file and the ordinary findings log stay where they are and stay
