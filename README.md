@@ -711,9 +711,9 @@ git, and they stop and ask rather than write there if that `.gitignore` is
 wrong or git already tracks something in the directory. That protection has
 limits. `git add -f`, or deleting the `.gitignore`, bypasses it. Anything
 committed before stays in history, so moving it does not help: `git rm
---cached` it and rotate what it exposed. `/test-roadmap` is the one exception
-by design: the test that pins a security finding is committed, and its neutral
-name does not stop it reproducing the weakness. Add `paad/security/` to your
+--cached` it and rotate what it exposed. `/test-roadmap` and `/fix-architecture`
+are the exceptions by design: the tests that pin a security finding are
+committed, and their neutral names do not stop them reproducing the weakness. Add `paad/security/` to your
 own `.gitignore` as well, and treat it as scratch rather than a record: it
 exists on one machine, `git clean -x` deletes it, and nothing brings it back.
 
