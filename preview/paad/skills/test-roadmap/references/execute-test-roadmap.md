@@ -78,14 +78,22 @@ Files written or updated:
   new      tests/integration/billing/test_retry.py
   updated  paad/test-roadmap/test-roadmap.md          (Phase 3 marked done)
   updated  paad/test-roadmap/test-roadmap-findings.md (F4 added)
-  updated  paad/security/test-roadmap-findings.md     (S2 added — never committed)
+  updated  paad/security/test-roadmap-findings.md
 ```
 
 Name the findings log only when this run actually added an entry to it, and say
 what the entry was about in a few words, so a real bug does not sit unread.
 Name the security log the same way, but with no description, only when this run
-added to it, and follow the file list with the Security block from the router's
-`## Post-Review`.
+added to it, and follow the file list with the Security block, once, then the
+router's `## Post-Review` line about the pinning test:
+
+```
+Security: N finding(s) in paad/security/<file> (new|updated).
+paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
+```
 
 Then recompute the counts from the roadmap
 (`references/test-pushback.md § Talking to the developer`) and end the run one
@@ -347,15 +355,9 @@ your own ruling on what is correct; and (3) a clear action. Miss any one and
 drop the observation — never write it down as a vague note. Set the entry's
 `Pinned by:` to this phase's test, and add a one-line pointer on the phase block
 in the roadmap where the finding maps to it. For an entry routed to
-`paad/security/`, the pointer is the count line only — `1 security finding, see
-paad/security/test-roadmap-findings.md` — never the entry's ID, title, or
-symbol, because the roadmap is committed. And the test that pins it is the
-reproduction by design, so name it for the input and the observed outcome in
-neutral terms — what was passed, what came back or was raised — never for the
-class of weakness or the word that names it; the developer decodes it from the
-log entry, an attacker reading the suite does not. That holds for the test's
-name, docstring, comments, and assertion messages alike.
-`test_lookup_with_quoted_id_returns_row`, not `test_sql_injection_in_lookup`.
+`paad/security/`, the roadmap pointer, the phase's title and `Catches:` line,
+and this phase's test are named by the rule in `build-test-roadmap.md § The
+findings log`, and so is what to say when that pointer's file is missing.
 
 Create `paad/test-roadmap/test-roadmap-findings.md` — or
 `paad/security/test-roadmap-findings.md` — if it does not yet exist (build mode

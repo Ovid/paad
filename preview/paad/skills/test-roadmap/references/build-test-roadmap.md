@@ -106,16 +106,8 @@ and this stage does the first one only. Where a wrong-looking behavior clears
 the inclusion gate in *The findings log* (below), it is recorded there — a
 concrete, actionable entry the developer works from later — and the phase that
 pins it carries a one-line pointer to that entry. For an entry routed to
-`paad/security/`, the pointer is the count line only — `1 security finding, see
-paad/security/test-roadmap-findings.md` — never the entry's ID, title, or
-symbol, because the roadmap is committed. And the test that pins it is the
-reproduction by design, so name it for the input and the observed outcome in
-neutral terms — what was passed, what came back or was raised — never for the
-class of weakness or the word that names it; the developer decodes it from the
-log entry, an attacker reading the suite does not. That holds for the test's
-name, docstring, comments, and assertion messages alike.
-`test_lookup_with_quoted_id_returns_row`, not `test_sql_injection_in_lookup`.
-And the same neutral wording holds for that phase's title and `Catches:` line.
+`paad/security/`, the phase's pointer, its title and `Catches:` line, and the
+pinning test follow the naming rule in *The findings log* (below).
 Where it does not clear the gate, it is dropped, not written down as a vague
 note: a findings log of hunches is noise the developer learns to skip, the same
 cry-wolf failure the clean-run rule exists to prevent.
@@ -200,8 +192,16 @@ Files written or updated:
 ```
 
 Name the security log the same way, but with no description, only when this run
-added to it, and follow the file list with the Security block from the router's
-`## Post-Review`.
+added to it, and follow the file list with the Security block, once, then the
+router's `## Post-Review` line about the pinning test:
+
+```
+Security: N finding(s) in paad/security/<file> (new|updated).
+paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
+```
 
 **Then tell the developer the total, in plain words.** Build mode's approach
 menus fire *before* any plan exists, so during them there is no phase total to
@@ -365,6 +365,15 @@ class of weakness or the word that names it; the developer decodes it from the
 log entry, an attacker reading the suite does not. That holds for the test's
 name, docstring, comments, and assertion messages alike.
 `test_lookup_with_quoted_id_returns_row`, not `test_sql_injection_in_lookup`.
+And the same neutral wording holds for that phase's title and `Catches:` line.
+The neutral name keeps the test from being found by searching the suite; it
+does not stop it working. The test is committed and still reproduces the
+weakness, so the run's Post-Review says so (the router's `## Post-Review`).
+
+When a run meets that count line — in the roadmap or the ordinary log — and
+`paad/security/test-roadmap-findings.md` is absent, tell the developer plainly:
+the entry it counts is gone from this machine (`paad/security/` is local
+scratch), and the test that pins it is the only remaining trace. Then continue.
 
 The ordinary log is **append-only and committed with whatever produced it**, so it
 survives a fresh clone like the roadmap does; the security log is append-only

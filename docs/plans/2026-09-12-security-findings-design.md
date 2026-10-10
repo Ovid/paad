@@ -102,7 +102,7 @@ and Pi get `.reviews/security/` with the same ignore file. No generator change.
   `paad/security/test-roadmap-findings.md` instead of the normal findings
   log. The build-mode `git add` list and the execute-mode commit invariant
   gain one sentence: never `git add -f` anything under `paad/security/`.
-  Post-Review names the security log the way it names the findings log. The
+  Post-Review names the security log with no description. The
   roadmap's pointer to a routed entry is a count line only, and the test that
   pins it is named for input and outcome, never for the weakness, since both
   are committed.

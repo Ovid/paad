@@ -719,6 +719,7 @@ takes 15 invocations. Running it once leaves you with a plan and no
 tests.
 
 Output: paad/test-roadmap/test-roadmap.md (the roadmap, and the memory)
+        paad/test-roadmap/test-roadmap-findings.md (suspected bugs, committed)
         paad/security/test-roadmap-findings.md (security findings, never committed)
         Tests, committed one phase per commit, on your working branch
 
