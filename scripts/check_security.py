@@ -7,8 +7,8 @@ include mechanism; this script is what keeps the copies identical. It also
 fails any skill outside the allowlist that names paad/security/, so a new
 skill cannot start writing there without joining the list.
 
-On a tree in which no skill carries the paragraph, the paragraph check is
-skipped: a shipped tree that predates the feature can only acquire it through
+On a tree in which no skill carries the paragraph or names paad/security/,
+the paragraph check is skipped: a shipped tree that predates the feature can only acquire it through
 promotion. Partial adoption fails. The allowlist is enforced regardless: a tree
 that predates paad/security/ cannot name it, so the scan costs nothing.
 """
@@ -58,7 +58,9 @@ def check(skills_dir):
         for d in sorted(skills_dir.iterdir())
         if (d / "SKILL.md").is_file()
     }
-    adopted = any(MARKER in text for text in skill_md.values())
+    # Gate on the path too: stripping the paragraph from every producer must fail,
+    # not skip, while the tree still routes findings to paad/security/.
+    adopted = any(MARKER in text or PATH in text for text in skill_md.values())
 
     problems = []
     if adopted:
@@ -99,7 +101,7 @@ def self_test():
         shutil.rmtree(root / "handoff")
 
         _write_skill(root, "backlog", "---\nname: backlog\n---\nreads paad/security/\n")
-        assert check(root) is None, check(root)
+        assert not any("allowlist" in p for p in check(root)), check(root)
 
         for name in PRODUCERS:
             _write_skill(root, name, good)
@@ -115,6 +117,15 @@ def self_test():
 
         _write_skill(root, "handoff", "---\nname: handoff\n---\nwrites paad/security/handoff.md\n")
         assert check(root) == ["handoff/SKILL.md: names paad/security/ but handoff is not in the allowlist"], check(root)
+        shutil.rmtree(root / "handoff")
+
+        # Stripping the paragraph from every producer at once must fail, not skip:
+        # the tree still names paad/security/, so it has adopted the feature.
+        for name in PRODUCERS:
+            stripped = good.replace(PARAGRAPH, "").replace(BLOCK.splitlines()[0], "")
+            (root / name / "SKILL.md").write_text(stripped + "\nwrites paad/security/x.md\n", encoding="utf-8")
+        result = check(root)
+        assert result is not None and len(result) == 2 * len(PRODUCERS), result
     print("check_security.py: self-tests passed")
 
 
@@ -128,7 +139,7 @@ def main(argv):
     tree = pathlib.Path(argv[1]).parent
     problems = check(argv[1])
     if problems is None:
-        print(f"{tree}: SKIP check-security — no skill carries the Security findings paragraph yet (predates paad/security/).")
+        print(f"{tree}: SKIP check-security — no skill carries the Security findings paragraph or names paad/security/ (predates it).")
         return 0
     for p in problems:
         print(f"FAIL: {p}")
