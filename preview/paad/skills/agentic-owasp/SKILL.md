@@ -1469,9 +1469,10 @@ Say each point once, in your own words, and stop.
    version most likely to be quoted back later. Then one line of your own: a
    committed report ages into a false clearance, true of one commit and more
    authoritative-looking the staler it gets. If `paad/owasp-reviews/` still
-   exists, add: *"Older reports are in `paad/owasp-reviews/`. Copy them under
-   `paad/security/`, then `git rm -r --cached paad/owasp-reviews/` if git tracks
-   them — a committed copy stays in history, so rotate what it exposed."*
+   exists, add: *"Older reports are in `paad/owasp-reviews/`. If git tracks
+   them, run `git rm -r --cached paad/owasp-reviews/` first; then move the
+   directory's contents under `paad/security/` and remove it. A committed copy
+   stays in history, so rotate what it exposed."*
 
    ```
    Security: N finding(s) in paad/security/<file> (new|updated).

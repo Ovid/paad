@@ -109,10 +109,12 @@ Security findings: any finding that would help an attacker is written only
 under paad/security/, which carries its own .gitignore, and the ordinary
 report gets a count and a pointer. Add paad/security/ to your root
 .gitignore too. The directory is local scratch — git clean -x deletes it.
-Reports from older releases in paad/owasp-reviews/, and Bug class: Security
-entries in paad/code-reviews/backlog.md, move under it by hand. If git
-tracked them, git rm --cached the old copies; history keeps what was
-committed, so rotate whatever it exposed.
+Reports from older releases in paad/owasp-reviews/ move under it by hand:
+if git tracks them, git rm -r --cached paad/owasp-reviews/ first, then move
+them and remove the old directory. Bug class: Security entries in
+paad/code-reviews/backlog.md are copied across by /agentic-review; delete
+the committed copies (/backlog clean does it). History keeps what was
+committed either way, so rotate whatever it exposed.
 ```
 
 ---
