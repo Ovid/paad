@@ -6,4 +6,5 @@ handoff.md
 
 # These contain potential zero-days for projects. They must *not* be committed
 paad/security/
+paad/owasp-reviews/
 paad/owasp-llm-reviews/
