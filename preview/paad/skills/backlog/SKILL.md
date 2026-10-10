@@ -43,7 +43,7 @@ digraph backlog {
   "Delete the entry" [shape=box];
 
   "Write each edit back to the file its entry came from; security backlog never in the commit command" [shape=box];
-  "Print the git commit command for the user; NEVER run git commit" [shape=box, style=bold];
+  "Print the git commit command for what changed (none if the committed backlog did not); NEVER run git commit" [shape=box, style=bold];
   "Done" [shape=doublecircle];
 
   "Invoked" -> "Both backlogs missing, or zero entries between them?";
@@ -68,8 +68,8 @@ digraph backlog {
   "Analyst confirms the specific bug is gone?" -> "KEEP entry; report what is still wrong" [label="no"];
   "Delete the entry" -> "Write each edit back to the file its entry came from; security backlog never in the commit command";
   "KEEP entry; report what is still wrong" -> "Done";
-  "Write each edit back to the file its entry came from; security backlog never in the commit command" -> "Print the git commit command for the user; NEVER run git commit";
-  "Print the git commit command for the user; NEVER run git commit" -> "Done";
+  "Write each edit back to the file its entry came from; security backlog never in the commit command" -> "Print the git commit command for what changed (none if the committed backlog did not); NEVER run git commit";
+  "Print the git commit command for what changed (none if the committed backlog did not); NEVER run git commit" -> "Done";
 }
 ```
 
@@ -86,7 +86,7 @@ No flags. Any other argument: show the menu.
 ## On Invocation
 
 1. **Empty check.** If both `paad/code-reviews/backlog.md` and `paad/security/backlog.md` are missing, or together contain zero `## <id>` entries, say: *"Backlog is empty. Run `/agentic-review` to populate it."* and stop.
-2. **Otherwise** read both files and print one line per entry — `id`, severity, `File`, and the one-line description — so the user sees what is in scope. Show which file each entry came from; every edit goes back to the file the entry came from. When both files hold the same `## <id>`, it is one entry whose source is `paad/security/backlog.md`; the committed copy is a legacy entry `/agentic-review` already migrated, so treat it as a merge-loser — delete it from the committed file, no verification gate, and note it in the commit message as `removed <id>`. Never move an unmatched legacy entry between files; `/agentic-review` owns migration.
+2. **Otherwise** read both files and print one line per entry — `id`, severity, `File`, and the one-line description — so the user sees what is in scope. Show which file each entry came from; every edit goes back to the file the entry came from. When both files hold the same `## <id>`, it is one entry whose source is `paad/security/backlog.md`; the committed copy is a legacy entry `/agentic-review` already migrated. List it once. Only Clean mode removes the committed copy (Pass B); listing, Fix mode and an abandoned menu leave both files as they are. Never move an unmatched legacy entry between files; `/agentic-review` owns migration.
 3. **Route.** If `$ARGUMENTS` selected a mode, enter it. Otherwise show the menu and **wait**:
 
    ```
@@ -115,13 +115,13 @@ Prompt each analyst **skeptically**: *"Prove this bug is still present. Default 
 
 ### Pass B — dedupe/merge (over the survivors)
 
-Collapse entries describing the same defect (same file + symbol + bug-class, or semantically equivalent). A merge keeps the oldest `First seen`, the newest `Last seen`, and one description. A merge that drops an entry needs no verification gate — the survivor keeps the description.
+First, every committed entry whose `## <id>` is also in `paad/security/backlog.md` is a merge-loser: delete the committed copy and note it in the commit message as `removed <id>`, ID only. Then collapse entries describing the same defect (same file + symbol + bug-class, or semantically equivalent). A merge keeps the oldest `First seen`, the newest `Last seen`, and one description. A merge that drops an entry needs no verification gate — the survivor carries the same defect and its description, so nothing is lost, which holds in the unarchived security backlog as much as in the committed one.
 
-*`/agentic-review` already dedupes at mint time (stable ID from `file + symbol + bug-class + first-seen-date`), so a duplicate only survives when a file moved or a symbol was renamed on a later day. If no such duplicate is present, say so and skip Pass B.*
+*`/agentic-review` already dedupes at mint time (stable ID from `file + symbol + bug-class + first-seen-date`), so a duplicate only survives when a file moved or a symbol was renamed on a later day. If neither a migrated copy nor such a duplicate is present, say so and skip Pass B.*
 
 ### Removal + commit command
 
-Delete every `RESOLVED`/`GONE` block and every merge-loser from the file each came from. **Do not run `git commit`.** Print the command for the user to run, with the resolution notes in the message:
+Delete every `RESOLVED`/`GONE` block and every merge-loser from the file each came from. **Do not run `git commit`.** If `paad/code-reviews/backlog.md` changed, print the command for the user to run, with the resolution notes in the message; if only the security backlog changed, say *"Committed backlog unchanged — nothing to commit."* instead:
 
 ```
 git commit paad/code-reviews/backlog.md -m "backlog: clean — 3 resolved, 1 obsolete, 2 merged

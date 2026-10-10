@@ -129,6 +129,8 @@ Nothing is edited automatically. The goal is to keep this change small.
   under its original ID, so the ID survives the move. Post-Review says how
   many were copied and tells the developer to delete the committed copies,
   and how many unmatched legacy entries remain to move by hand.
+  `/backlog` Clean mode finishes the migration: a committed entry whose ID is
+  also in the security backlog is a merge-loser it deletes in Pass B.
 - **This repo.** Move the local untracked `paad/owasp-reviews/` under
   `paad/security/` by hand first, then swap the root `.gitignore`'s single
   `paad/owasp-reviews/` line for `paad/security/`. In that order: the other order
