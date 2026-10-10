@@ -32,9 +32,9 @@ digraph classification {
   "In-scope" [shape=box, style=bold];
   "Out-of-scope (bug)" [shape=box, style=bold];
   "Out-of-Scope Addition" [shape=box, style=bold];
-  "Update last_seen in the entry's source file" [shape=box];
+  "Emit update directive: last_seen, written back to the entry's source file at write time" [shape=box];
   "Mint new backlog entry" [shape=box];
-  "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" [shape=box];
+  "Emit migrate directive: copy into paad/security/backlog.md under the same ID at write time, leave the committed file alone" [shape=box];
   "Bug class: Security (set by the Verifier)?" [shape=diamond];
   "Write to paad/security/ report (and backlog, for out-of-scope bugs); count-and-pointer line in the main report" [shape=box, style=bold];
   "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
@@ -53,17 +53,18 @@ digraph classification {
   "Branch causes/worsens this bug?" -> "Out-of-scope (bug)" [label="no"];
   "Out-of-scope (bug)" -> "Match in pre-filtered backlog?";
   "Match in pre-filtered backlog?" -> "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" [label="yes"];
-  "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" [label="yes"];
-  "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Update last_seen in the entry's source file" [label="no"];
-  "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" -> "paad/security/.gitignore holds only * and git tracks nothing there?";
+  "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Emit migrate directive: copy into paad/security/backlog.md under the same ID at write time, leave the committed file alone" [label="yes"];
+  "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Emit update directive: last_seen, written back to the entry's source file at write time" [label="no"];
+  "Emit migrate directive: copy into paad/security/backlog.md under the same ID at write time, leave the committed file alone" -> "paad/security/.gitignore holds only * and git tracks nothing there?";
   "Match in pre-filtered backlog?" -> "Mint new backlog entry" [label="no"];
   "In-scope" -> "Bug class: Security (set by the Verifier)?";
-  "Update last_seen in the entry's source file" -> "Bug class: Security (set by the Verifier)?";
+  "Emit update directive: last_seen, written back to the entry's source file at write time" -> "Bug class: Security (set by the Verifier)?";
   "Mint new backlog entry" -> "Bug class: Security (set by the Verifier)?";
   "Bug class: Security (set by the Verifier)?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes"];
   "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write to paad/security/ report (and backlog, for out-of-scope bugs); count-and-pointer line in the main report" [label="yes"];
   "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
   "Bug class: Security (set by the Verifier)?" -> "Write to paad/code-reviews/ report (and backlog, for out-of-scope bugs)" [label="no"];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Write to paad/code-reviews/ report (and backlog, for out-of-scope bugs)" [label="user chooses the ordinary report"];
 }
 ```
 
@@ -371,7 +372,7 @@ After writing the report:
      - When zero or when Spec Compliance was skipped, say nothing about additions.
      - When greater than zero, say: *"Found K out-of-scope addition(s). Written to the `## Out-of-Scope Additions` section in `<report-path>`. These are decisions for this PR — keep, split into a separate PR, or revert (per item)."*
 4. **Security.** Two parts, each with its own condition.
-   - **Legacy entries** (whenever the whole-file count from the pre-filter is above zero, whether or not this run wrote anything under `paad/security/`): say how many entries in `paad/code-reviews/backlog.md` still belong in the security backlog — `Bug class: Security` entries not yet copied, and copies already migrated but not yet deleted — and that the uncopied ones move by hand.
+   - **Legacy entries** (whenever the whole-file count from the pre-filter is above zero, whether or not this run wrote anything under `paad/security/`): say how many entries in `paad/code-reviews/backlog.md` still belong in the security backlog — `Bug class: Security` entries not yet copied, and copies already migrated but not yet deleted, counting an entry this run's `migrate` directives copied as the latter — and that the uncopied ones move by hand.
    - **Security block** (only when this run wrote anything under `paad/security/`): emit the block below once. Then, if this run copied any legacy entries across via `migrate` directives, say how many and: *"N legacy security entries copied to `paad/security/backlog.md` under their original IDs; delete them from `paad/code-reviews/backlog.md` — a committed copy stays in history. From then on the entry exists only on this machine: if `paad/security/` is lost, a later run re-finds it as new."*
 
    ```
