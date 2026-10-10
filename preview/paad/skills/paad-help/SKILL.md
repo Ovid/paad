@@ -331,9 +331,11 @@ Clean mode:
      current code: STILL-PRESENT / RESOLVED / GONE, each with cited evidence
   2. Deletes only RESOLVED/GONE entries — any doubt keeps the entry. A
      renamed or moved symbol is not treated as a fix
-  3. Dedupes/merges any duplicate survivors (rare — agentic-review dedupes
-     at mint time)
-  4. Prints a git commit command with the resolution notes; does not run it
+  3. Removes committed copies of entries already copied to the security
+     backlog, then dedupes/merges any duplicate survivors (rare —
+     agentic-review dedupes at mint time)
+  4. Prints a git commit command with the resolution notes when the
+     committed backlog changed; does not run it
 
 Fix mode:
   1. Ranks entries by severity then age, proposes the top one, you pick
@@ -348,7 +350,8 @@ Fix mode:
 
 Deleting a backlog entry destroys a record, so the skill leans conservative:
 a wrongly-kept entry is one stale line, a wrongly-deleted one loses a real
-bug (recoverable only from git log on the file).
+bug (recoverable only from git log on the committed file; a security
+entry is not recoverable at all).
 ```
 
 ### alignment
