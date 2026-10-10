@@ -1,6 +1,6 @@
 ---
 name: rethink
-description: EXPERIMENTAL. Use when options, a recommendation, or an already-chosen approach are on the table and the reasoning under them has not been independently checked — especially when the case rests on cited documentation, remembered behavior, or premises nobody verified. Not for generating alternatives, and not for critiquing a spec, which is /pushback.
+description: Use when options, a recommendation, or an already-chosen approach are on the table and the reasoning under them has not been independently checked — especially when the case rests on cited documentation, remembered behavior, or premises nobody verified. Not for generating alternatives, and not for critiquing a spec, which is /pushback.
 metadata:
   internal: true
 ---
@@ -10,8 +10,6 @@ metadata:
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/rethink.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
 # Rethink
-
-**Experimental.** Arguments, verdicts, and output shape may change — or this skill may be withdrawn — in any release, including a patch release. The semver promise the settled skills carry does not apply here. If you build a workflow on it, pin your plugin version and [file what breaks](https://github.com/Ovid/paad/issues).
 
 Checks whether the reasoning under a set of options actually holds. Someone — you, the user, or another skill — laid out choices and picked one. `rethink` goes and verifies the premises that choice rests on, against primary sources, and reports what it found.
 

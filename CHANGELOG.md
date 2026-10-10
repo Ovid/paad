@@ -18,6 +18,8 @@ what a plugin user sees.
 - **Skills are less likely to stall right after announcing themselves** — the
   on-invocation line now tells the agent to proceed with the skill immediately
   instead of stopping after the announcement.
+- **`/rethink`, `/test-roadmap` and `/handoff` are no longer experimental** — their
+  arguments and output now carry the same semver promise as the other skills.
 
 ### Added
 - **Per-project skill configuration — experimental.** Put instructions in

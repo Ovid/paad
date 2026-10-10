@@ -49,6 +49,9 @@ See [Installation](#installation) for the details, including the experimental
 | `/fix-architecture [report]` | Works through those findings one at a time, test-first |
 | `/agentic-a11y [path]` | Accessibility audit against WCAG 2.2 AA, by disability category |
 | `/vibe [task]` | Small fixes, TDD guardrails still on |
+| `/rethink [topic]` | Checks whether the premises under a recommendation hold |
+| `/test-roadmap` | Builds a test suite that catches real regressions |
+| `/handoff [save\|resume]` | Hands this session's work to a fresh one, in writing |
 | `/makefile` | Creates or updates a project `Makefile` |
 | `/paad-help [skill-name]` | Lists the skills, or explains one |
 
@@ -59,13 +62,11 @@ See [Installation](#installation) for the details, including the experimental
 | `/agentic-dedup [scope]` | Finds duplicated *meaning*, not duplicated text — experimental |
 | `/agentic-owasp [scope]` | Reviews code against the OWASP Top 10:2025 — experimental |
 | `/backlog [clean\|fix]` | Clears fixed bugs out of the review backlog, or fixes the next one — experimental |
-| `/rethink [topic]` | Checks whether the premises under a recommendation hold — experimental |
-| `/test-roadmap` | Builds a test suite that catches real regressions — experimental |
-| `/handoff [save\|resume]` | Hands this session's work to a fresh one, in writing — experimental |
 
 Every skill can also be steered per project: drop instructions in
 `paad/config/paad.md` (all skills) or `paad/config/<skill-name>.md` (one skill)
-and the skill reads them on invocation. Experimental — see [CONFIG.md](CONFIG.md).
+and the skill reads them on invocation. Experimental — see
+[Configuring skills per project](#configuring-skills-per-project).
 
 Full descriptions are further down. The rest of this page is why any of it is
 worth your tokens.
@@ -194,6 +195,54 @@ Depending on the type of work, I also use (see below for full descriptions):
 2. `vibe` for small fixes that still benefit from guardrails
 
 Rerun `pushback` and `alignment` whenever the spec or the task list changes.
+
+## Configuring skills per project
+
+> **Experimental.** This may change or be withdrawn in any release, including
+> a patch release. If you build on it, pin your plugin version.
+
+Tired of typing the same extra instructions after every slash command, or of
+writing a wrapper skill just to add them? Put them in a file and every paad
+skill reads it on its own:
+
+| File | Read by |
+|---|---|
+| `paad/config/paad.md` | every paad skill |
+| `paad/config/<skill-name>.md` | that one skill, e.g. `paad/config/agentic-review.md` |
+
+Both are optional, relative to where you run the skill (normally the repo
+root). There is no schema — write plain instructions, as you would have typed
+them. For example, `paad/config/agentic-architecture.md`:
+
+```markdown
+- All output must be in simplified technical English.
+- Add one more subagent that looks for over-engineering.
+- Keep a log in `paad/logs/agentic-architecture.md` of every finding an
+  agent raised that the verifier discarded.
+```
+
+The skill follows it for the whole run and passes the relevant parts to the
+subagents it dispatches. **You know it was read** because the skill's final
+answer opens with a line naming each file it followed:
+
+```
+Config: paad/config/paad.md, paad/config/agentic-architecture.md
+```
+
+No such line means nothing in the run came from your config.
+
+What to watch for:
+
+- **Add, don't subtract.** Config can tell a skill to skip or reorder its own
+  safety gates, and the skill may comply. Use it for additions — an extra
+  agent, an output rule, an artifact, a language.
+- **One thing is refused:** config cannot change a subagent's type or give it
+  write tools. The skill says so and carries on.
+- **It's untrusted input.** A `paad/config/` in a repo you cloned was written
+  by someone else, and a skill will follow it. Read it before you run anything.
+- **Results vary.** If a config line matters, check the output for it.
+
+The full details are in [CONFIG.md](CONFIG.md).
 
 ## What PAAD can't fix
 
@@ -695,6 +744,47 @@ that makes claims about the code, such as an agent steering file (`CLAUDE.md`,
 
 </details>
 
+<details>
+<summary><code>/rethink [what to re-examine]</code> — checks whether the premises under a recommendation hold</summary>
+
+`pushback` argues with a spec. `rethink` argues with an answer — including one
+of `pushback`'s. When options have been laid out and one has been chosen, it
+goes and checks whether the premises under that choice actually hold.
+
+The distinction it exists for: a recommendation can be correct *and* unsound.
+The premises may hold and yet have been taken on faith from a source nobody
+tested. That answer is right today and will stay right until the day it isn't,
+with no one watching. `rethink` reports that case as its own verdict rather
+than waving the recommendation through.
+
+* **Arguments:** `/rethink` (the most recent option set) or
+  `/rethink the caching approach` (when several decisions are live)
+* **Premise extraction** — writes out everything the recommendation depends on,
+  including the unstated assumptions, sorted into checkable now, checkable by
+  experiment, and not checkable at all
+* **Primary sources only** — verifies against the software, not its
+  documentation; a claim sourced from a doc is checked against the thing the
+  doc describes
+* **Five verdicts** — Sound, Lucky (holds but unchecked), Wrong reason (false
+  premise, surviving conclusion), Premise false, and Ungrounded (with the
+  cheapest experiment that would settle it)
+* **Evidence per premise** — every claim names what was checked to reach it
+* **Plain-terms walkthrough** — you probably ran this because you weren't sure
+  about the options, so it re-presents them without jargon or internal names,
+  with pros *and* cons for each, and says what verification changed about where
+  each one stands
+* **A recommendation, with its reason** — and where the call also turns on
+  something it can't see (a deadline, headcount, an unshipped roadmap) it gives
+  you both halves: the option the evidence supports, plus the specific missing
+  input and what it would flip the answer to. It goes silent only when the
+  evidence supports no default at all
+* **No option list** — deliberately unlike `pushback`. It proposes an
+  alternative only when verification exposed a real defect, and then exactly
+  one, tied to that defect
+* **Writes nothing** — no report, no edits. The conversation is the deliverable
+
+</details>
+
 ---
 
 ### Alignment
@@ -868,6 +958,79 @@ platforms, with AAA noted as bonus recommendations.
 
 </details>
 
+<details>
+<summary><code>/test-roadmap</code> — builds a test suite that catches real regressions</summary>
+
+PAAD is risky to use with codebases without a strong test suite. This skill
+builds that suite for you.
+
+High coverage numbers lie. A line can be "covered" by a test that asserts
+nothing — green forever, catching nothing. So when you finally refactor the
+scary part of a legacy codebase, the suite stays quiet and the regression
+ships anyway.
+
+`test-roadmap` builds the suite that does *not* stay quiet. It pins your
+code's **current** behavior, deliberately including the buggy parts, so that
+the day you start changing things the tests break loudly and tell you exactly
+what you changed.
+
+**Run it once to get a roadmap. Then keep running it — one phase of tests per
+run — until the roadmap is done.**
+
+That is the whole usage model, and it is the one thing people get wrong: they
+run `/test-roadmap`, get a plan, and stop with zero tests written. The
+command does something different every time you invoke it, because it looks
+for `paad/test-roadmap/test-roadmap.md` and routes on whether it exists:
+
+| Invocation | What it does |
+| --- | --- |
+| **1st run** — no roadmap yet | Detects your stack, grades the tests you already have, and writes a phased plan to `paad/test-roadmap/test-roadmap.md`. **Writes no tests.** |
+| **2nd run** | Writes Phase 1's tests, proves they catch the bug they claim to, commits them, marks the phase done. |
+| **3rd run** | Phase 2. |
+| **…** | …one phase per run… |
+| **Final run** | The last phase lands and the skill tells you the roadmap is finished. Then you stop. |
+
+So a 14-phase roadmap takes 15 invocations. Each run ends by telling you where
+you are (`Phase 8 of 14 — 7 done, 6 to go`) and whether to run it again. One
+phase per run is deliberate: each phase gets written, verified against a
+deliberately injected bug, and committed on its own, with a clean context.
+
+Sessions don't need to be consecutive, or even the same session — the roadmap
+file is the memory, so you can pick it up tomorrow, on a fresh clone, after a
+squash merge, and it resumes from what has already landed.
+
+* **Arguments:** `/test-roadmap` (no arguments — the presence of the
+  roadmap file selects build mode or execute mode)
+* **Every phase names the bug it would catch** — a phase that cannot answer
+  *"what breakage makes these tests go red?"* is coverage theater, and gets
+  rewritten or dropped
+* **It proves each test actually works** — before a phase counts as done, it
+  injects the very bug the phase claims to catch and confirms the test goes
+  red; a passing command and a covered line are never accepted as proof
+* **Bug injection is disposable** — it happens in a throwaway `git worktree`,
+  never in your working tree, database, or config
+* **It grades the tests you already have** — existing tests are classified
+  against a catalog of test theater (assertion-free, tautological,
+  snapshot-only, over-mocked, happy-path-only) before anything new is planned
+* **It will not call a phase done while the run is noisy** — your whole suite
+  runs normally and again under coverage; it fixes what is its own to fix and
+  surfaces the rest, and never edits your code to quiet a warning
+* **You finish with a bug list you did not start with** — contradictions found
+  while pinning behavior are logged with the test that proves them. It never
+  fixes them; that is your call
+* **Resumable** — across unrelated commits, squash merges, fresh clones, and
+  sessions that remember nothing about the last one
+
+Requires a git checkout and a working branch. Started on `main` (or `master`,
+or `trunk`), it stops and offers to create a branch first, so your primary
+branch never fills up with half-built tests.
+
+**This is the only PAAD skill that writes and commits code.** Every other
+skill reports, advises, or edits documents; this one adds tests and commits
+them, one commit per phase, onto the branch you are on.
+
+</details>
+
 ---
 
 ### Workflow
@@ -906,6 +1069,50 @@ while keeping TDD guardrails in place.
 * **Post-fix summary** — suggests relevant next steps such as `agentic-review`
   for security-sensitive changes, `agentic-a11y` for UI changes, or
   architecture review if the fix was harder than expected
+
+</details>
+
+<details>
+<summary><code>/handoff [save|resume]</code> — hands this session's work to a fresh one, in writing</summary>
+
+Claude Code already has `/compact`, and for most of what you want it is
+enough. The gap `handoff` fills is narrow and specific: `/compact`'s summary is
+written by the machine, lands without being read, and lives inside the
+transcript where you cannot edit it. `handoff` writes the same kind of state to
+a file you can open, correct, and hand to a genuinely fresh session.
+
+That makes the review the point, not a courtesy. A handoff nobody reads is a
+worse `/compact` — same summary, more ceremony — and the skill says so out loud
+rather than letting it slide.
+
+The thing it guards against isn't forgetfulness. An agent writing a handoff
+unaided keeps the expensive material well: the approaches already tried and
+abandoned, the reasons behind them, the constraint you mentioned once an hour
+ago. What it gets wrong is the cheap material — a test's file path, which
+changes are really in the last commit, a line number, who said the sentence
+it's quoting. Those are settleable with a tool in seconds, and they arrive in
+exactly the same confident voice as everything it got right. A fresh session
+has no memory to catch them with.
+
+* **Arguments:** `/handoff` (infers from whether the session has history) or
+  `/handoff save` or `/handoff resume`
+* **Verifies before it writes** — commit, branch, dirty state, file paths, line
+  numbers, test names, and whether the suite actually passes are checked with
+  tools, not recalled. What can't be settled is marked inferred instead of
+  asserted
+* **Weighted toward what a fresh session can't reconstruct** — decisions and
+  their reasons, approaches ruled out and how far they got, constraints that
+  exist nowhere on disk. No architecture tour, no session narrative, nothing
+  `git diff` already shows
+* **Asks for the review that matters** — names the two or three claims it is
+  least sure of, rather than a general disclaimer you'd skim
+* **Checks for drift on the way back in** — compares the recorded commit
+  against HEAD, confirms the files it named still exist, and reports mismatches
+  before acting on anything
+* **Never deletes the handoff** — it's untracked, so git can't restore it. The
+  next save overwrites it
+* **Artifact** — `handoff.md` in the working directory, which it suggests you
+  add to `.gitignore`
 
 </details>
 
@@ -1120,164 +1327,6 @@ pile up long after the bug they describe was fixed, until nobody reads it.
   it came from
 * **Never commits** — prints the commit command for you to run, and never
   includes the security backlog in it
-
-</details>
-
-<details>
-<summary><code>/handoff [save|resume]</code> — hands this session's work to a fresh one, in writing</summary>
-
-Claude Code already has `/compact`, and for most of what you want it is
-enough. The gap `handoff` fills is narrow and specific: `/compact`'s summary is
-written by the machine, lands without being read, and lives inside the
-transcript where you cannot edit it. `handoff` writes the same kind of state to
-a file you can open, correct, and hand to a genuinely fresh session.
-
-That makes the review the point, not a courtesy. A handoff nobody reads is a
-worse `/compact` — same summary, more ceremony — and the skill says so out loud
-rather than letting it slide.
-
-The thing it guards against isn't forgetfulness. An agent writing a handoff
-unaided keeps the expensive material well: the approaches already tried and
-abandoned, the reasons behind them, the constraint you mentioned once an hour
-ago. What it gets wrong is the cheap material — a test's file path, which
-changes are really in the last commit, a line number, who said the sentence
-it's quoting. Those are settleable with a tool in seconds, and they arrive in
-exactly the same confident voice as everything it got right. A fresh session
-has no memory to catch them with.
-
-* **Arguments:** `/handoff` (infers from whether the session has history) or
-  `/handoff save` or `/handoff resume`
-* **Verifies before it writes** — commit, branch, dirty state, file paths, line
-  numbers, test names, and whether the suite actually passes are checked with
-  tools, not recalled. What can't be settled is marked inferred instead of
-  asserted
-* **Weighted toward what a fresh session can't reconstruct** — decisions and
-  their reasons, approaches ruled out and how far they got, constraints that
-  exist nowhere on disk. No architecture tour, no session narrative, nothing
-  `git diff` already shows
-* **Asks for the review that matters** — names the two or three claims it is
-  least sure of, rather than a general disclaimer you'd skim
-* **Checks for drift on the way back in** — compares the recorded commit
-  against HEAD, confirms the files it named still exist, and reports mismatches
-  before acting on anything
-* **Never deletes the handoff** — it's untracked, so git can't restore it. The
-  next save overwrites it
-* **Artifact** — `handoff.md` in the working directory, which it suggests you
-  add to `.gitignore`
-
-</details>
-
-<details>
-<summary><code>/rethink [what to re-examine]</code> — checks whether the premises under a recommendation hold</summary>
-
-`pushback` argues with a spec. `rethink` argues with an answer — including one
-of `pushback`'s. When options have been laid out and one has been chosen, it
-goes and checks whether the premises under that choice actually hold.
-
-The distinction it exists for: a recommendation can be correct *and* unsound.
-The premises may hold and yet have been taken on faith from a source nobody
-tested. That answer is right today and will stay right until the day it isn't,
-with no one watching. `rethink` reports that case as its own verdict rather
-than waving the recommendation through.
-
-* **Arguments:** `/rethink` (the most recent option set) or
-  `/rethink the caching approach` (when several decisions are live)
-* **Premise extraction** — writes out everything the recommendation depends on,
-  including the unstated assumptions, sorted into checkable now, checkable by
-  experiment, and not checkable at all
-* **Primary sources only** — verifies against the software, not its
-  documentation; a claim sourced from a doc is checked against the thing the
-  doc describes
-* **Five verdicts** — Sound, Lucky (holds but unchecked), Wrong reason (false
-  premise, surviving conclusion), Premise false, and Ungrounded (with the
-  cheapest experiment that would settle it)
-* **Evidence per premise** — every claim names what was checked to reach it
-* **Plain-terms walkthrough** — you probably ran this because you weren't sure
-  about the options, so it re-presents them without jargon or internal names,
-  with pros *and* cons for each, and says what verification changed about where
-  each one stands
-* **A recommendation, with its reason** — and where the call also turns on
-  something it can't see (a deadline, headcount, an unshipped roadmap) it gives
-  you both halves: the option the evidence supports, plus the specific missing
-  input and what it would flip the answer to. It goes silent only when the
-  evidence supports no default at all
-* **No option list** — deliberately unlike `pushback`. It proposes an
-  alternative only when verification exposed a real defect, and then exactly
-  one, tied to that defect
-* **Writes nothing** — no report, no edits. The conversation is the deliverable
-
-</details>
-
-<details>
-<summary><code>/test-roadmap</code> — builds a test suite that catches real regressions</summary>
-
-PAAD is risky to use with codebases without a strong test suite. This skill
-builds that suite for you.
-
-High coverage numbers lie. A line can be "covered" by a test that asserts
-nothing — green forever, catching nothing. So when you finally refactor the
-scary part of a legacy codebase, the suite stays quiet and the regression
-ships anyway.
-
-`test-roadmap` builds the suite that does *not* stay quiet. It pins your
-code's **current** behavior, deliberately including the buggy parts, so that
-the day you start changing things the tests break loudly and tell you exactly
-what you changed.
-
-**Run it once to get a roadmap. Then keep running it — one phase of tests per
-run — until the roadmap is done.**
-
-That is the whole usage model, and it is the one thing people get wrong: they
-run `/test-roadmap`, get a plan, and stop with zero tests written. The
-command does something different every time you invoke it, because it looks
-for `paad/test-roadmap/test-roadmap.md` and routes on whether it exists:
-
-| Invocation | What it does |
-| --- | --- |
-| **1st run** — no roadmap yet | Detects your stack, grades the tests you already have, and writes a phased plan to `paad/test-roadmap/test-roadmap.md`. **Writes no tests.** |
-| **2nd run** | Writes Phase 1's tests, proves they catch the bug they claim to, commits them, marks the phase done. |
-| **3rd run** | Phase 2. |
-| **…** | …one phase per run… |
-| **Final run** | The last phase lands and the skill tells you the roadmap is finished. Then you stop. |
-
-So a 14-phase roadmap takes 15 invocations. Each run ends by telling you where
-you are (`Phase 8 of 14 — 7 done, 6 to go`) and whether to run it again. One
-phase per run is deliberate: each phase gets written, verified against a
-deliberately injected bug, and committed on its own, with a clean context.
-
-Sessions don't need to be consecutive, or even the same session — the roadmap
-file is the memory, so you can pick it up tomorrow, on a fresh clone, after a
-squash merge, and it resumes from what has already landed.
-
-* **Arguments:** `/test-roadmap` (no arguments — the presence of the
-  roadmap file selects build mode or execute mode)
-* **Every phase names the bug it would catch** — a phase that cannot answer
-  *"what breakage makes these tests go red?"* is coverage theater, and gets
-  rewritten or dropped
-* **It proves each test actually works** — before a phase counts as done, it
-  injects the very bug the phase claims to catch and confirms the test goes
-  red; a passing command and a covered line are never accepted as proof
-* **Bug injection is disposable** — it happens in a throwaway `git worktree`,
-  never in your working tree, database, or config
-* **It grades the tests you already have** — existing tests are classified
-  against a catalog of test theater (assertion-free, tautological,
-  snapshot-only, over-mocked, happy-path-only) before anything new is planned
-* **It will not call a phase done while the run is noisy** — your whole suite
-  runs normally and again under coverage; it fixes what is its own to fix and
-  surfaces the rest, and never edits your code to quiet a warning
-* **You finish with a bug list you did not start with** — contradictions found
-  while pinning behavior are logged with the test that proves them. It never
-  fixes them; that is your call
-* **Resumable** — across unrelated commits, squash merges, fresh clones, and
-  sessions that remember nothing about the last one
-
-Requires a git checkout and a working branch. Started on `main` (or `master`,
-or `trunk`), it stops and offers to create a branch first, so your primary
-branch never fills up with half-built tests.
-
-**This is the only PAAD skill that writes and commits code.** Every other
-skill reports, advises, or edits documents; this one adds tests and commits
-them, one commit per phase, onto the branch you are on.
 
 </details>
 
