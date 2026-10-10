@@ -84,8 +84,7 @@ Files written or updated:
 Name the findings log only when this run actually added an entry to it, and say
 what the entry was about in a few words, so a real bug does not sit unread.
 Name the security log the same way, but with no description, only when this run
-added to it, and follow the file list with the Security block, once, then the
-router's `## Post-Review` line about the pinning test:
+added to it, and follow the file list with the Security block, once:
 
 ```
 Security: N finding(s) in paad/security/<file> (new|updated).
@@ -94,6 +93,9 @@ Also list paad/security/ in your root .gitignore, or in .git/info/exclude to kee
 If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
 paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
 ```
+
+When a routed finding was pinned by a test this run, add one line after it:
+*"The test that pins each security finding is committed and still reproduces it; its neutral name only keeps it from being searched for."*
 
 Then recompute the counts from the roadmap
 (`references/test-pushback.md § Talking to the developer`) and end the run one
@@ -348,7 +350,9 @@ it clears the inclusion gate, record it in `paad/test-roadmap/test-roadmap-findi
 test (`build-test-roadmap.md § The findings log`).
 
 **The gate and the entry format are defined once in `build-test-roadmap.md § The
-findings log` — use them verbatim.** In short: log an entry only if you can
+findings log` — use them verbatim, and read that section before this phase
+writes its first finding: the naming rule for a test that pins a security
+finding is there too.** In short: log an entry only if you can
 state (1) the demonstrable current behavior, citing the characterization test
 that pins it; (2) a concrete in-repo contradiction it violates — a citation, not
 your own ruling on what is correct; and (3) a clear action. Miss any one and

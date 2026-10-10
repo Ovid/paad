@@ -55,7 +55,7 @@ digraph route {
   "Would reading it help an attacker?" [shape=diamond];
   "Log to paad/security/test-roadmap-findings.md; count line in the ordinary log; never git add -f" [shape=box, style=bold];
   "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
-  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary log" [shape=box];
   "Log to paad/test-roadmap/test-roadmap-findings.md" [shape=box];
   "Drop it, never a vague note" [shape=box];
 
@@ -83,8 +83,9 @@ digraph route {
   "Suspected bug clears the inclusion gate?" -> "Would reading it help an attacker?" [label="yes"];
   "Would reading it help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
   "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Log to paad/security/test-roadmap-findings.md; count line in the ordinary log; never git add -f" [label="yes"];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary log" [label="no"];
   "Would reading it help an attacker?" -> "Log to paad/test-roadmap/test-roadmap-findings.md" [label="no"];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary log" -> "Log to paad/test-roadmap/test-roadmap-findings.md" [label="user chooses the ordinary log"];
 }
 ```
 
