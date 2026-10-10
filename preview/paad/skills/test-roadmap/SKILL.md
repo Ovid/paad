@@ -17,6 +17,8 @@ metadata:
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/test-roadmap.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files paad/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
 > covered by the semver guarantees the other paad skills carry. Unlike every
@@ -49,6 +51,13 @@ digraph route {
   "paad/test-roadmap/test-roadmap.md exists?" [shape=diamond];
   "Load references/build-test-roadmap.md (Detect, Grade, Plan, Critique, Write)" [shape=box];
   "Load references/execute-test-roadmap.md (next phase, break-it-check, commit)" [shape=box];
+  "Suspected bug clears the inclusion gate?" [shape=diamond];
+  "Would reading it help an attacker?" [shape=diamond];
+  "Log to paad/security/test-roadmap-findings.md; count line in the ordinary log; never git add -f" [shape=box, style=bold];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary log" [shape=box];
+  "Log to paad/test-roadmap/test-roadmap-findings.md" [shape=box];
+  "Drop it, never a vague note" [shape=box];
 
   "Inside a git repo?" -> "STOP: needs a git checkout" [label="no"];
   "Inside a git repo?" -> "Detached HEAD?" [label="yes"];
@@ -68,6 +77,15 @@ digraph route {
   "git switch -c <name>" -> "paad/test-roadmap/test-roadmap.md exists?";
   "paad/test-roadmap/test-roadmap.md exists?" -> "Load references/execute-test-roadmap.md (next phase, break-it-check, commit)" [label="yes"];
   "paad/test-roadmap/test-roadmap.md exists?" -> "Load references/build-test-roadmap.md (Detect, Grade, Plan, Critique, Write)" [label="no"];
+  "Load references/execute-test-roadmap.md (next phase, break-it-check, commit)" -> "Suspected bug clears the inclusion gate?" [label="on each suspected bug, mid-run"];
+  "Load references/build-test-roadmap.md (Detect, Grade, Plan, Critique, Write)" -> "Suspected bug clears the inclusion gate?" [label="on each suspected bug, mid-run"];
+  "Suspected bug clears the inclusion gate?" -> "Drop it, never a vague note" [label="no"];
+  "Suspected bug clears the inclusion gate?" -> "Would reading it help an attacker?" [label="yes"];
+  "Would reading it help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Log to paad/security/test-roadmap-findings.md; count line in the ordinary log; never git add -f" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary log" [label="no"];
+  "Would reading it help an attacker?" -> "Log to paad/test-roadmap/test-roadmap-findings.md" [label="no"];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary log" -> "Log to paad/test-roadmap/test-roadmap-findings.md" [label="user chooses the ordinary log"];
 }
 ```
 
@@ -140,7 +158,9 @@ a run after that file was deleted — either way, build it.
 
 If it ever grows a third condition, that is a signal something has been put
 in the wrong place — take it back to `build-test-roadmap.md` or
-`execute-test-roadmap.md`, not to this file.
+`execute-test-roadmap.md`, not to this file. The one exception is `## Post-Review`
+below, which lives here because `make check-security` requires the Security
+block in this file.
 
 This router never loads `references/break-it-check.md`,
 `references/test-pushback.md`, or `references/test-theater.md` directly.
@@ -168,3 +188,17 @@ Load `references/execute-test-roadmap.md` now if `paad/test-roadmap/test-roadmap
 exists. It reads that file's `## Decisions` section once, selects the next
 phase per the completion protocol, and gets on with writing tests — it does
 not re-detect or re-ask anything build mode already settled.
+
+## Post-Review
+
+Both mode files end the run with their own file list (`references/execute-test-roadmap.md § Ending the run`, `references/build-test-roadmap.md § Stage 5`). When the run added to `paad/security/test-roadmap-findings.md`, the mode file's file list is followed by the Security block, once:
+
+```
+Security: N finding(s) in paad/security/<file> (new|updated).
+paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
+```
+
+When a routed finding was pinned by a test this run, add one line after the block: *"The test that pins each security finding is committed and still reproduces it; its neutral name only keeps it from being searched for."*

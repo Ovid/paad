@@ -1,5 +1,13 @@
-- All security related issues should be written to paad/security/ with a
-  strong recommendation that this directory be added to .gitignore.
+- We've been repeatedly copying stuff into multiple skills, so that's a
+  problem. It's easy to accumulate drift, or miss it in one
+    file. We have the same thing with potentiall duplicated skill
+    references/*.md files.
+- A configure skill? paad-configure?
+  - suggests handoff.md and paad/security to .gitignore
+  - Figures out how to specify a different top-level directory. (how do we
+    reliably write to a different directory. Are there files like
+    paad/config/paad.md that need to be referenced only once?
+- https://dev.to/gde/why-ai-keeps-making-the-same-coding-mistakes-and-how-teaching-it-pain-gives-it-wisdom-4a9m
 - Costs
   - Model choice
   - Reducing token counts
@@ -55,3 +63,5 @@
 - Persistent, intermittent bug where we announce the version and then stop. We
   should change it to announcing the version and explicitly telling it to
   continue.
+- All security related issues should be written to paad/security/ with a
+  strong recommendation that this directory be added to .gitignore.

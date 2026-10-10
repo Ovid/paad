@@ -7,7 +7,7 @@ SKILLS_DIR := $(TREE)/skills
 SKILL_DIRS := $(wildcard $(SKILLS_DIR)/*)
 SKILL_NAMES := $(notdir $(SKILL_DIRS))
 
-.PHONY: help test tree-checks validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-config check-export-frontmatter check-export-commands check-export-current check-export-dryrun check-trees bump-version bump-tree promote export release tag
+.PHONY: help test tree-checks validate require-export check-skill-names check-versions check-skill-versions check-digraphs check-help check-readme check-frontmatter check-references check-dispatch-sites check-announce check-config check-security check-export-frontmatter check-export-commands check-export-current check-export-dryrun check-trees bump-version bump-tree promote export release tag
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-22s %s\n", $$1, $$2}'
@@ -20,6 +20,7 @@ self-tests: ## Run the hand-written parsers' own assertions
 	@python3 scripts/check_internal_flag.py --self-test
 	@python3 scripts/promote.py --self-test
 	@python3 scripts/lint_digraphs.py --self-test
+	@python3 scripts/check_security.py --self-test
 
 test: self-tests check-versions check-trees validate check-readme check-export-frontmatter check-export-commands check-export-current ## Run all checks
 	@$(MAKE) --no-print-directory tree-checks TREE=plugins/paad
@@ -28,7 +29,7 @@ test: self-tests check-versions check-trees validate check-readme check-export-f
 
 # The per-skill checks, run once per tree. README documents the shipped set only,
 # so check-readme stays out: a preview-only skill is tolerated there, not required.
-tree-checks: check-skill-names check-skill-versions check-digraphs check-help check-frontmatter check-references check-dispatch-sites check-announce check-config check-export-dryrun ## Run the per-tree checks (usage: make tree-checks TREE=preview/paad)
+tree-checks: check-skill-names check-skill-versions check-digraphs check-help check-frontmatter check-references check-dispatch-sites check-announce check-config check-security check-export-dryrun ## Run the per-tree checks (usage: make tree-checks TREE=preview/paad)
 	@echo "$(TREE): tree checks passed."
 
 validate: ## Validate marketplace and all plugins
@@ -421,6 +422,12 @@ check-config: check-skill-names ## Check every skill carries the paad/config/ pa
 	done; \
 	if [ "$$fail" -eq 1 ]; then exit 1; fi; \
 	echo "$(TREE): all skills read paad/config/."
+
+check-security: check-skill-names ## Check the six security-producing skills carry the shared paragraph verbatim, and no other skill names paad/security/
+# The paragraph, the block, the producer list and the allowlist all live in the
+# script; the Makefile only picks the tree. The paragraph check skips a tree that
+# neither carries the paragraph nor names paad/security/; the allowlist always runs.
+	@python3 scripts/check_security.py $(SKILLS_DIR)
 
 check-export-frontmatter: require-export ## Check every exported SKILL.md kept a usable name and description
 	@fail=0; \

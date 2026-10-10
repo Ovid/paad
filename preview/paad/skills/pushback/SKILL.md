@@ -9,6 +9,8 @@ metadata:
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/pushback.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files paad/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+
 # Spec Pushback
 
 Critically reviews a spec, PRD, requirements document, or design plan before work begins. Checks source control for conflicts with reality, then walks through issues one at a time in severity order so you can fix what matters most.
@@ -85,6 +87,10 @@ digraph scope_critique_resolution {
   "ASK where to write the spec first" [shape=box];
   "ASK before editing after a stop signal" [shape=box];
   "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
+  "Any report finding would help an attacker?" [shape=diamond];
+  "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" [shape=box, style=bold];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [shape=box];
   "Skip the report — conversation and diff carry it" [shape=box];
   "List every file written or updated" [shape=box];
@@ -133,7 +139,13 @@ digraph scope_critique_resolution {
   "Stopped early?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="no"];
   "ASK before editing after a stop signal" -> "Apply agreed changes; leave undiscussed requirements alone";
   "Apply agreed changes; leave undiscussed requirements alone" -> "Unresolved issues, or user asked for a report?";
-  "Unresolved issues, or user asked for a report?" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [label="yes"];
+  "Unresolved issues, or user asked for a report?" -> "Any report finding would help an attacker?" [label="yes"];
+  "Any report finding would help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
+  "Any report finding would help an attacker?" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md" [label="no"];
+  "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md";
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write those to paad/security/pushback-<date>-<spec>.md; count line in the report" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Write paad/pushback-reviews/<date>-<spec>-pushback.md";
   "Unresolved issues, or user asked for a report?" -> "Skip the report — conversation and diff carry it" [label="no"];
   "Write paad/pushback-reviews/<date>-<spec>-pushback.md" -> "List every file written or updated";
   "Skip the report — conversation and diff carry it" -> "List every file written or updated";
@@ -318,13 +330,17 @@ Then ask: **"Would you like me to update the spec directly, write a separate pus
 the conversation and the spec diff already carry the outcome — a report restates
 what the user just watched happen. Write one when the user asks for it, or when
 issues went undiscussed. Findings the user stopped before reaching exist nowhere
-else once the session ends; that is what the file is for.
+else once the session ends; that is what the file is for. A routed one survives
+only as long as `paad/security/` does — the Security block says so.
 
 ### If updating the spec
 
 - Apply agreed-upon changes to the original file
 - Add/modify requirements based on the user's responses
 - Don't touch requirements that weren't discussed
+- **Write the requirement, never the weakness:** "the export endpoint must
+  filter by tenant", not "the export endpoint currently leaks other tenants'
+  rows". The spec is committed; the finding it answers is not.
 - **After a stop signal, ask before editing.** "Good enough" ends the review,
   not just the current issue. Applying changes the user already agreed to is
   fine — confirm first. Editing a spec the author has stopped reading is how a
@@ -334,21 +350,25 @@ else once the session ends; that is what the file is for.
 
 Write to `paad/pushback-reviews/<YYYY-MM-DD>-<spec-name>-pushback.md`.
 
+`<spec-name>` is the spec file's name without directory or extension, lowercased, with every run of characters outside `a-z0-9` replaced by one `-` — never a path, never `..`. A spec from conversation history uses the file it was just saved to.
+
 Create the `paad/pushback-reviews/` directory if it doesn't exist.
 
+This rule covers the report only. A finding in the report that meets the
+Security findings paragraph's definition goes to
+`paad/security/pushback-<YYYY-MM-DD>-<spec-name>.md` — same template, omitting
+any section that received no routed finding (keep the header block). Before the
+first write under `paad/security/` this run, run the Security findings
+paragraph's `.gitignore` check, and write nothing there unless it passes.
+Each report section that lost a finding carries the count-and-pointer line in
+its place, N being that section's count. Resolution does not exempt an entry: a
+resolved issue's Issues Reviewed entry still names the weakness and is routed
+like any other. The Summary counts routed findings in its totals and says
+nothing else about them. A requirement the user agreed to add to their spec — "this endpoint must
+require auth" — is a requirement, not a finding: it is theirs to commit, and the
+spec update above writes it as it always has.
+
 The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for that deliverable.
-
-### List every file you wrote or updated
-
-End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated and the report if one was written:
-
-```
-Files written or updated:
-  updated  docs/specs/checkout-prd.md
-  new      paad/pushback-reviews/2026-08-01-checkout-pushback.md
-```
-
-Say it even when only one file changed, and even when the user watched you change it.
 
 ## Common Mistakes
 
@@ -370,3 +390,26 @@ These patterns produce pushback that reads well and changes nothing. Avoid them:
 | Manufacturing issues to fill all six categories | Not every spec has security concerns or contradictions. Say a category is clean and move on. |
 | Continuing past "good enough" | That's the stop signal. Keep going and the user stops reading. |
 | Rewriting the spec instead of critiquing it | Present issues and let the user decide. Silent rewrites replace their judgment with yours. |
+
+## Post-Review
+
+End the session with the file list, always — this skill edits the developer's own spec, and an edit nobody notices is worse than no edit. One line per path, each marked new or updated, covering the spec if it was updated, the report if one was written, and the security file if one was written:
+
+```
+Files written or updated:
+  updated  docs/specs/checkout-prd.md
+  new      paad/pushback-reviews/2026-08-01-checkout-prd-pushback.md
+  new      paad/security/pushback-2026-08-01-checkout-prd.md
+```
+
+When any finding was routed, emit the Security block once:
+
+```
+Security: N finding(s) in paad/security/<file> (new|updated).
+paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
+```
+
+Say it even when only one file changed, and even when the user watched you change it.
