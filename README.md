@@ -474,7 +474,7 @@ the way you invoke it differs.
 
 **These skills work by splitting one job across several helper agents.**
 `agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`,
-`agentic-owasp`, `test-roadmap` and `rethink` all work this way. If your
+`agentic-owasp`, `test-roadmap`, `rethink` and `backlog` all work this way. If your
 assistant supports helper agents, each helper gets its own separate conversation
 and examines your code from one angle — security, error handling, and so on —
 and they all work at the same time. If your assistant does not support them, a
@@ -498,6 +498,9 @@ runtime:
 * **`test-roadmap` loses a real check.** One of its gates works by asking a
   helper that has not seen the test to try to break it. A single agent holding
   both cannot be blinded, so that gate reports success while verifying nothing.
+* **`backlog fix` loses its independent check.** It removes an entry only after
+  a separate analyst confirms the bug is gone. Without helper agents, the agent
+  that made the fix is the one confirming it.
 
 **Updates track `main`, and there is no pinned form.** Re-run the same command
 to pull the latest; there is no version argument, so the version a skill
@@ -541,7 +544,7 @@ Invoke a skill with `/skill:<name>` or by name.
 #### The multi-agent skills need two more pieces
 
 `agentic-review`, `agentic-architecture`, `agentic-a11y`, `agentic-dedup`,
-`agentic-owasp` and `rethink` split their work across helper agents. Pi does not
+`agentic-owasp`, `rethink` and `backlog` split their work across helper agents. Pi does not
 support helper agents on its own, and a Pi package cannot declare them, so
 neither piece ships inside the package. Without both pieces installed those
 skills still run — a single agent does every pass itself, one after another, in
