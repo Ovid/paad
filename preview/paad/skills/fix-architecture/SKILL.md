@@ -202,7 +202,7 @@ digraph fix_session {
 
 3. **Report exists:** Locate the report from `$ARGUMENTS` or find the most recent file in `paad/architecture-reviews/` by date prefix. If `$ARGUMENTS` names a file under `paad/security/`, locate the main report with the same date and repo name instead. If none found: "No architecture report found. Run `/agentic-architecture` first to generate one." Stop and wait.
 
-   **Security flaws:** `/agentic-architecture` writes flaws that would help an attacker to `paad/security/agentic-architecture-<YYYY-MM-DD>-<git-repo-name>.md`, with the main report's date and repo name, and leaves only a count line in the main report. If that file exists, load its flaws too; they are part of this session like any other, marked as security flaws. If the main report has a `security finding(s) written to paad/security/` count line and the file is gone, tell the developer: "N security flaw(s) from this report are no longer on this machine — `paad/security/` is local scratch. Re-run `/agentic-architecture` to recover them." Then continue with the rest. Never `git add -f` anything under `paad/security/`.
+   **Security flaws:** `/agentic-architecture` writes flaws that would help an attacker to `paad/security/agentic-architecture-<YYYY-MM-DD>-<git-repo-name>.md`, with the main report's date and repo name, and leaves only a count line in the main report. If that file exists, load its flaws too; they are part of this session like any other, marked as security flaws. Both files number from `F-01`, so refer to a security flaw as `S:F-<n>` everywhere in this session — triage table, plan, status updates — and never by its bare F-ID. If the main report has a `security finding(s) written to paad/security/` count line and the file is gone, tell the developer: "N security flaw(s) from this report are no longer on this machine — `paad/security/` is local scratch. Re-run `/agentic-architecture` to recover them." Then continue with the rest. Never `git add -f` anything under `paad/security/`.
 
 4. **Report staleness:** Parse the date from the report. If the report is >14 days old, warn: "This report was generated N days ago. Some findings may be outdated. I'll validate each flaw before fixing, but consider re-running `/agentic-architecture` for a fresh baseline." Ask explicitly: "Proceed anyway? (yes / no / re-run `/agentic-architecture` first)". Do not use commit count as a staleness signal — architectural flaws persist across many commits, and high commit velocity (especially from fix sessions on the same report) does not indicate staleness.
 
@@ -294,7 +294,7 @@ The tests this phase credits as the safety net — written here or existing — 
 
 1. For each flaw in the batch, run Validate the Flaw and Assess Test Coverage
 2. Write all needed safety-net tests
-3. Commit all safety-net tests together (before any fix commits) — **in both commit modes.** Manual-commit mode applies to fix commits, not to this one: staged tests are destroyed by a later revert along with the fix.
+3. Commit all safety-net tests together (before any fix commits) — **in both commit modes.** For a security flaw, the commit message, test names, docstrings, comments and assertion messages describe the inputs and observed behavior in neutral terms, never the weakness or its label — the same rule as the fix commit below. Manual-commit mode applies to fix commits, not to this one: staged tests are destroyed by a later revert along with the fix.
 4. Print the Safety Net Report (below) and show it to the developer
 5. Only then proceed to the Fix Loop (starting at Propose Fix Options for each flaw)
 
@@ -487,8 +487,11 @@ After the developer stops or the batch is complete:
      ```
      Files written or updated:
        updated  paad/architecture-reviews/2026-07-14-myrepo-architecture-report.md
+       updated  paad/security/agentic-architecture-2026-07-14-myrepo.md
        12 source files changed across 3 modules (see git diff)
      ```
+
+     The security line appears only when this session changed that file.
 2. Suggest: "Run `/fix-architecture` again in a fresh session to continue fixing remaining flaws."
 
 ## Status Values
