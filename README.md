@@ -297,27 +297,44 @@ If you are new to PAAD, start with `/paad-help` to see the available skills and 
 
 A typical workflow looks like this:
 
-1. Write your spec.
-2. Run `pushback` to critically review the spec before implementation.
-3. Create your final implementation plan from the spec.
-4. Run `alignment` to verify that requirements, design, and planned work are
-   aligned with decisions.
-5. Implement the change.
-6. Run `agentic-review` on the working branch before merging (often more than
-   once).
+1. Write the spec, using your existing spec-driven development method.
+2. Run `pushback` on the spec. Revise and repeat as needed.
+3. Develop the task list (you or the agent).
+4. Run `pushback` on the task list. Revise and repeat as needed.
+5. Run `alignment` on the task list to check it against the spec, and rewrite
+   it for TDD. Revise and repeat as needed.
+6. Execute the tasks, in a fresh session for each task.
+7. Run `agentic-review` on the result. Fix findings and repeat as needed.
+8. Human PR approval and merge. Repeat for the next feature.
+
+That is the per-feature loop (section 10 of [the
+tutorial](https://curtispoe.org/paad/)). It improves the quality of each feature
+before it gets merged into your primary branch:
+
+<p align="center">
+  <img src="images/pushback.png" alt="PAAD per-feature loop: write the spec, then /pushback on it; develop the task list, then /pushback and /alignment on it; execute the tasks, then /agentic-review the result; human PR approval and merge" width="700">
+</p>
+
+AI is now good enough that, with `pushback` alone, fewer issues surface in the
+rest of the loop. But the loop only minimizes slop in the current task. It
+can't prevent slop across the project as a whole. That takes aggressive
+technical debt management: `agentic-architecture` to find the structural
+problems, `fix-architecture` to work through them, and `agentic-review`
+before the fixes merge.
+
+<p align="center">
+  <img src="images/architecture.png" alt="PAAD aggressive technical debt maintenance: reserve time and choose scope, then /agentic-architecture; prioritise findings on a feature branch, then /fix-architecture; verify the changes, then /agentic-review; human PR approval and merge" width="700">
+</p>
 
 Not sure if the AI is presenting you with the best options? Run `rethink` to
 check whether the premises behind a recommendation actually hold.
 
 Depending on the type of work, I also use (see below for full descriptions):
 
-1. `agentic-architecture` to identify structural issues before they spread
-2. `agentic-a11y` for UI changes and accessibility-sensitive work
-3. `vibe` for small fixes that still benefit from guardrails
+1. `agentic-a11y` for UI changes and accessibility-sensitive work
+2. `vibe` for small fixes that still benefit from guardrails
 
-In practice, `pushback` and `alignment` are often worth running more than
-once. They are especially useful when a spec evolves or when the
-implementation plan changes during execution.
+Rerun `pushback` and `alignment` whenever the spec or the task list changes.
 
 </details>
 
