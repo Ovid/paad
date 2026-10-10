@@ -425,7 +425,8 @@ check-config: check-skill-names ## Check every skill carries the paad/config/ pa
 
 check-security: check-skill-names ## Check the six security-producing skills carry the shared paragraph verbatim, and no other skill names paad/security/
 # The paragraph, the block, the producer list and the allowlist all live in the
-# script; the Makefile only picks the tree. Same skip rule as check-config.
+# script; the Makefile only picks the tree. The paragraph check skips a tree that
+# neither carries the paragraph nor names paad/security/; the allowlist always runs.
 	@python3 scripts/check_security.py $(SKILLS_DIR)
 
 check-export-frontmatter: require-export ## Check every exported SKILL.md kept a usable name and description

@@ -143,9 +143,10 @@ Nothing is edited automatically. The goal is to keep this change small.
 
 - `make check-security` joins the per-tree block: the six skills carry the
   shared paragraph verbatim, and `paad/security/` appears only in an explicit
-  allowlist — the six, `paad-help` (documents it), and `backlog` (consumes
-  it). Any other skill mentioning the path fails. Same skip rule as
-  `check-config` for a shipped tree that predates it.
+  allowlist — the six, plus readers: `paad-help` (documents it), `backlog`
+  and `fix-architecture` (consume it). Any other skill mentioning the path
+  fails. The paragraph check skips a tree that neither carries the paragraph
+  nor names the path; the allowlist scan always runs.
 - `paad-help` gains a short "Security findings" note and updated artifact
   lines for the six skills and `backlog`. README changes land on the release branch.
   Changelog: one `### Changed` entry, three lines, under `[Unreleased]`.
