@@ -36,13 +36,14 @@ digraph classification {
   "Mint new backlog entry" [shape=box];
   "Migrate: copy into paad/security/backlog.md under the same ID, update last_seen there, leave the committed file alone" [shape=box];
   "Bug class: Security (set by the Verifier)?" [shape=diamond];
-  "Write to paad/security/ report and backlog; count-and-pointer line in the main report" [shape=box, style=bold];
+  "Write to paad/security/ report (and backlog, for out-of-scope bugs); count-and-pointer line in the main report" [shape=box, style=bold];
   "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
   "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
-  "Write to paad/code-reviews/ report and backlog" [shape=box];
+  "Write to paad/code-reviews/ report (and backlog, for out-of-scope bugs)" [shape=box];
 
   "Finding from specialist (verified)" -> "Carries [OOSA] sentinel or category: out-of-scope-addition tag?";
   "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" -> "Out-of-Scope Addition" [label="yes (Spec Compliance)"];
+  "Out-of-Scope Addition" -> "Bug class: Security (set by the Verifier)?";
   "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" -> "Anchor line in touched-lines map?" [label="no"];
   "Anchor line in touched-lines map?" -> "Touch is purely cosmetic AND bug is purely pre-existing?" [label="yes"];
   "Anchor line in touched-lines map?" -> "Branch causes/worsens this bug?" [label="no"];
@@ -60,9 +61,9 @@ digraph classification {
   "Update last_seen in the entry's source file" -> "Bug class: Security (set by the Verifier)?";
   "Mint new backlog entry" -> "Bug class: Security (set by the Verifier)?";
   "Bug class: Security (set by the Verifier)?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes"];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write to paad/security/ report and backlog; count-and-pointer line in the main report" [label="yes"];
+  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write to paad/security/ report (and backlog, for out-of-scope bugs); count-and-pointer line in the main report" [label="yes"];
   "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
-  "Bug class: Security (set by the Verifier)?" -> "Write to paad/code-reviews/ report and backlog" [label="no"];
+  "Bug class: Security (set by the Verifier)?" -> "Write to paad/code-reviews/ report (and backlog, for out-of-scope bugs)" [label="no"];
 }
 ```
 
@@ -303,7 +304,7 @@ After all specialists complete, dispatch a single **Verifier** agent using the A
 - **The touched-lines map built in Phase 1 step 10, reproduced verbatim**
 - The file manifest from Phase 1 step 9
 - **The current contents of every file named by a finding**
-- A pre-filtered slice merged from `paad/code-reviews/backlog.md` and `paad/security/backlog.md`, each entry tagged with its `source:` (only entries whose `File (at first sighting)` path matches a file in the current review's manifest). Entries with `Bug class: Security` in the committed backlog are older than this routing; they stay in the slice for dedup, and a match against one comes back as a `migrate` directive (`references/verifier.md` step 7): the orchestrator copies the entry into `paad/security/backlog.md` under its original ID, updates `last_seen` there, and never edits the committed file — see Post-Review. When both files hold the same `id`, drop the committed copy from the slice and count it as already copied, still to delete, for Post-Review item 4 — not as an unmatched legacy entry. The count of `Bug class: Security` entries still in the committed file is taken during this pre-filter, so Post-Review item 4 never re-reads the file for it.
+- A pre-filtered slice merged from `paad/code-reviews/backlog.md` and `paad/security/backlog.md`, each entry tagged with its `source:` (only entries whose `File (at first sighting)` path matches a file in the current review's manifest). Entries with `Bug class: Security` in the committed backlog are older than this routing; they stay in the slice for dedup, and a match against one comes back as a `migrate` directive (`references/verifier.md` step 7): the orchestrator copies the entry into `paad/security/backlog.md` under its original ID, updates `last_seen` there, and never edits the committed file — see Post-Review. When both files hold the same `id`, drop the committed copy from the slice and count it as already copied, still to delete, for Post-Review item 4 — not as an unmatched legacy entry. The count for Post-Review item 4 is taken over the whole committed file, not this slice: every `Bug class: Security` entry still in it, and every entry whose `id` is also in `paad/security/backlog.md` — a migration is finished only when both are zero, whatever this branch touched.
 
 Include the file contents even though the Verifier has its own tools: a Verifier left to fetch its own context under budget pressure pattern-matches the finding text instead, and that output is indistinguishable from a real verification pass.
 
@@ -319,7 +320,7 @@ The Verifier's detailed instructions — its 7-step pipeline (read code, drop fa
 
 Write verified findings to `paad/code-reviews/<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md`. Create the `paad/code-reviews/` directory if it doesn't exist.
 
-**Route by bug class, nothing else.** The Verifier already decided what is security-related. Every finding whose `Bug class:` is `Security`, in scope or out, goes to `paad/security/code-review-<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md`, and its backlog entry to `paad/security/backlog.md`. The main report gets the count-and-pointer line in each section that lost a finding. The count line is the only trace a routed finding leaves in the main report — the Executive Summary, Review Metadata and every other prose field describe it as security-related at most; the weakness, its mechanism and its symbol appear only in the security report. Apply the Security findings paragraph's `.gitignore` rule before the first write under `paad/security/`.
+**Route by bug class, nothing else.** The Verifier already decided what is security-related. Every finding whose `Bug class:` is `Security` — in scope, out of scope, or an out-of-scope addition — goes to `paad/security/code-review-<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md`, and its backlog entry, if it has one, to `paad/security/backlog.md`. The main report gets the count-and-pointer line in each section that lost a finding. The count line is the only trace a routed finding leaves in the main report — the Executive Summary, Review Metadata and every other prose field describe it as security-related at most; the weakness, its mechanism and its symbol appear only in the security report. Apply the Security findings paragraph's `.gitignore` rule before the first write under `paad/security/`.
 
 The full report template, empty-section rules, failure handling, and the project-wide backlog file shape (header, per-entry shape, update/removal rules, ID format, soft-size warning) live at `references/report-template.md`. **Before writing the report or updating the backlog, read that file** — its instructions are binding for the report's structure, the backlog updates, and empty-section behavior.
 
@@ -369,7 +370,9 @@ After writing the report:
    - **Out-of-scope additions** (this branch added them but the spec didn't promise them; ephemeral — no backlog).
      - When zero or when Spec Compliance was skipped, say nothing about additions.
      - When greater than zero, say: *"Found K out-of-scope addition(s). Written to the `## Out-of-Scope Additions` section in `<report-path>`. These are decisions for this PR — keep, split into a separate PR, or revert (per item)."*
-4. **Security block** (only when this run wrote anything under `paad/security/`): emit the block below once. Then, if this run copied any legacy entries across via `migrate` directives, say how many and: *"N legacy security entries copied to `paad/security/backlog.md` under their original IDs; delete them from `paad/code-reviews/backlog.md` — a committed copy stays in history."* If the committed file still holds entries that belong in the security backlog — `Bug class: Security` entries this run did not match, and copies already migrated on an earlier run but not yet deleted, both counted during the pre-filter — say how many remain and that they move by hand the same way.
+4. **Security.** Two parts, each with its own condition.
+   - **Legacy entries** (whenever the whole-file count from the pre-filter is above zero, whether or not this run wrote anything under `paad/security/`): say how many entries in `paad/code-reviews/backlog.md` still belong in the security backlog — `Bug class: Security` entries not yet copied, and copies already migrated but not yet deleted — and that the uncopied ones move by hand.
+   - **Security block** (only when this run wrote anything under `paad/security/`): emit the block below once. Then, if this run copied any legacy entries across via `migrate` directives, say how many and: *"N legacy security entries copied to `paad/security/backlog.md` under their original IDs; delete them from `paad/code-reviews/backlog.md` — a committed copy stays in history. From then on the entry exists only on this machine: if `paad/security/` is lost, a later run re-finds it as new."*
 
    ```
    Security: N finding(s) in paad/security/<file> (new|updated).

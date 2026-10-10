@@ -102,11 +102,11 @@ One-line entries only. If empty, follow the Empty-section rules above.
 - **Scope:** <files reviewed — changed + adjacent. When Phase 1 steps 6-8 traced no adjacent files, write the literal string `no adjacent files traced` rather than listing only the changed files.>
 - **Raw findings:** N (before verification)
 - **Verified findings:** M (after verification)
-- **Filtered out:** N - M <the number only. When a rejected or merged candidate was security-related, or was merged into a routed finding, its reason goes in the security report's copy of this line; the main report says `reasons in the security report`. Otherwise the reasons may follow the number.>
+- **Filtered out:** N - M <the number only. When a rejected or merged candidate was security-related, or was merged into a routed finding, its reason goes in the security report's copy of this line — which writes the security report even with no routed finding — and the main report says `reasons in the security report`. Otherwise the reasons may follow the number.>
 - **Out-of-scope findings:** N (Critical: a, Important: b, Suggestion: c)
 - **Out-of-scope additions:** K
 - **Backlog:** X new entries added, Y re-confirmed (see `paad/code-reviews/backlog.md`)
-- **Security:** N finding(s) written to `paad/security/<file>`; security backlog: X new, Y re-confirmed on this machine
+- **Security:** N finding(s) written to `paad/security/<file>`; security backlog: X new, Y re-confirmed on this machine <omit this line when no security report was written>
 - **Steering files consulted:** <list or "none found">
 - **Intent sources consulted:** <e.g., "PR description", "docs/plans/foo-design.md", "recent commit messages", or "none — Spec Compliance skipped">
 - **Verifier warnings:** <count, or "none". When > 0, render the warnings as a sublist below this line — one bullet per warning, each verbatim from the Verifier's emitted line. Example:>
@@ -122,7 +122,7 @@ Both backlog files are project-wide, append-only, and use **explicit removal onl
 
 **Two backlogs, one shape.** `paad/security/backlog.md` holds every entry whose `Bug class:` is `Security`; `paad/code-reviews/backlog.md` holds the rest. Same header, same per-entry shape, same ID format, same removal rule. The orchestrator creates the security file only on the first Security directive of a run — a header-only security backlog is a file that says "look here" for nothing — and applies the `.gitignore` rule from the parent `SKILL.md`'s Security findings paragraph before the first write. An update directive is written back to the file its `source` names. The security backlog is never committed and never shared across clones: a teammate's run mints its own IDs, `git log` on it shows nothing, and "re-confirmed" there means re-confirmed on this machine.
 
-**The security report** at `paad/security/code-review-<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` uses this same template and the same sections, holding only the `Bug class: Security` findings and their backlog IDs. Its Executive Summary, `Filtered out` reasons and every other prose field may say everything about them — it is the only file that does. Rendered as the security report, the metadata `Backlog:` line names `paad/security/backlog.md` and the `Security:` line is omitted — it would point at itself. In the main report, each tier or Out of Scope section that lost a finding to it carries one line: `N security finding(s) written to paad/security/<file>`. Write the security report only when N > 0. That count line is the only trace a routed finding leaves in the main report: the Executive Summary, Review Metadata and every other prose field describe it as security-related at most; the weakness, its mechanism and its symbol appear only in the security report.
+**The security report** at `paad/security/code-review-<branch>-<YYYY-MM-DD-HH-MM-SS>-<short-sha>.md` uses this same template and the same sections, holding only the `Bug class: Security` findings and their backlog IDs. Its Executive Summary, `Filtered out` reasons and every other prose field may say everything about them — it is the only file that does. Rendered as the security report, the metadata `Backlog:` line names `paad/security/backlog.md` and the `Security:` line is omitted — it would point at itself. In the main report, each tier, Out of Scope or Out-of-Scope Additions section that lost a finding to it carries one line: `N security finding(s) written to paad/security/<file>`. Write the security report only when it has something to hold: a routed finding, or a security-related `Filtered out` reason. That count line is the only trace a routed finding leaves in the main report: the Executive Summary, Review Metadata and every other prose field describe it as security-related at most; the weakness, its mechanism and its symbol appear only in the security report.
 
 **Fixed header (preserved across all updates):**
 
@@ -156,10 +156,10 @@ Both backlog files are project-wide, append-only, and use **explicit removal onl
 
 **Field-encoding when writing entries.** The Verifier is the primary writer and owns field encoding; the rules live in `references/verifier.md`'s "Field-encoding rules" section. Any agent that rewrites an existing entry must defensively re-apply those rules — do not assume an existing entry is well-formed.
 
-**Update rule on re-discovery:** rewrite only the `Last seen` line. Everything else is immutable so the entry remains a stable historical record.
+**Update rule on re-discovery:** rewrite only the `Last seen` line. Everything else is immutable so the entry remains a stable historical record. The one exception is a `migrate` copy, whose `Bug class:` becomes `Security (retagged from <old class>)`; the note keeps its `id` derivable.
 
 **Removal rule:** delete the entire `## <id> — <title>` block. No tombstones, no archive.
 
-**ID format:** 8-char hex of `sha1(file + symbol + bug-class + first-seen-iso-date)`.
+**ID format:** 8-char hex of `sha1(file + symbol + bug-class + first-seen-iso-date)`. For an entry retagged to `Security`, bug-class is the class it was retagged from.
 
 **Soft size warning:** when the active backlog reaches **≥ 200 active entries**, surface a warning in the post-review message so accumulation stays visible.
