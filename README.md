@@ -58,6 +58,7 @@ See [Installation](#installation) for the details, including the experimental
 |---|---|
 | `/agentic-dedup [scope]` | Finds duplicated *meaning*, not duplicated text — experimental |
 | `/agentic-owasp [scope]` | Reviews code against the OWASP Top 10:2025 — experimental |
+| `/backlog [clean\|fix]` | Clears fixed bugs out of the review backlog, or fixes the next one — experimental |
 | `/rethink [topic]` | Checks whether the premises under a recommendation hold — experimental |
 | `/test-roadmap` | Builds a test suite that catches real regressions — experimental |
 | `/handoff [save\|resume]` | Hands this session's work to a fresh one, in writing — experimental |
@@ -775,6 +776,8 @@ multiple sessions.
 * **Status tracking** — records outcomes in the report: Fixed, Won't fix,
   Partially fixed, Skipped, Fixed (pre-existing), Attempted/reverted
 * **Flaw dependency detection** — flags when fixing one flaw resolves others
+* **Security flaws** — also loads the flaws `agentic-architecture` moved to
+  `paad/security/`, and commits fixing them name neither the flaw nor the report
 * **Iterative workflow** — designed to run across multiple sessions against
   the same report
 
@@ -1093,6 +1096,30 @@ rediscovering them.
   left in a committed file but the run's own summary
 
 It never fixes anything. The report is the deliverable.
+
+</details>
+
+<details>
+<summary><code>/backlog [clean|fix]</code> — clears fixed bugs out of the review backlog, or fixes the next one</summary>
+
+`/agentic-review` records pre-existing bugs it finds outside your branch in a
+backlog instead of losing them. Nothing ever empties that backlog: entries
+pile up long after the bug they describe was fixed, until nobody reads it.
+`backlog` is the other half — it keeps the list honest, and works it.
+
+* **Arguments:** `/backlog` (list entries, then choose), `/backlog clean`, or
+  `/backlog fix`
+* **Clean** — one skeptical read-only analyst per entry re-checks it against
+  the current code and deletes it only on cited evidence that the bug is fixed
+  or the code is gone. Any doubt keeps the entry; a renamed symbol is not a fix
+* **Fix** — proposes the most severe, oldest entry (you can pick another), fixes it, and removes it only
+  after an independent analyst confirms from the code that the bug is gone.
+  One entry per run
+* **Both backlogs** — reads `paad/code-reviews/backlog.md` and the
+  uncommitted `paad/security/backlog.md`, and writes each edit back to the file
+  it came from
+* **Never commits** — prints the commit command for you to run, and never
+  includes the security backlog in it
 
 </details>
 
