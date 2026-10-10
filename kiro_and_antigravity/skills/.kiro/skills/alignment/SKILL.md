@@ -3,7 +3,9 @@ name: alignment
 description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents. Needs both documents; not for checking code against a spec.
 ---
 
-**On invocation:** announce "Running paad:alignment v1.31.0" before anything else.
+**On invocation:** announce "Running paad:alignment v2.0.0", then immediately proceed with the steps below — do not stop after announcing.
+
+**Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/alignment.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
 # Alignment Check
 
@@ -231,46 +233,7 @@ Write to `.reviews/alignment/<YYYY-MM-DD>-<topic>-alignment.md`.
 
 Create the `.reviews/alignment/` directory if it doesn't exist.
 
-**Report template:**
-
-```markdown
-# Alignment Review: <topic or project name>
-
-- **Date:** YYYY-MM-DD
-- **Commit:** <current HEAD sha, or "N/A">
-
-## Documents Reviewed
-
-- **Intent:** <file paths or "conversation history">
-- **Action:** <file paths or "conversation history">
-- **Design:** <file paths, or "none">
-
-## Source Control Conflicts
-
-<conflicts found, or "None — no conflicts with recent changes.">
-
-## Issues Reviewed
-
-### [1] <title>
-- **Category:** <missing coverage / out of scope / design gap>
-- **Severity:** <critical / important / minor>
-- **Documents:** <which documents are misaligned>
-- **Issue:** <what's wrong>
-- **Resolution:** <what the user decided>
-
-(Repeat for each issue discussed.)
-
-## Unresolved Issues
-
-(Issues not yet discussed. Omit section if all were addressed.)
-
-## Alignment Summary
-
-- **Requirements:** N total, M covered, K gaps
-- **Tasks:** N total, M in scope, K orphaned
-- **Design items:** N total, M aligned (if applicable)
-- **Status:** <aligned / needs further work>
-```
+The report template lives at `references/report-template.md`. **Before writing the report, read that file** — its report structure is binding for that deliverable.
 
 **If documents came from conversation history:**
 Ask: "The documents aren't saved to files yet. Where should I write them?" Suggest a reasonable path based on project structure.

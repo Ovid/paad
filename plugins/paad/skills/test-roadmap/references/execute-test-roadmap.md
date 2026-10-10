@@ -78,10 +78,24 @@ Files written or updated:
   new      tests/integration/billing/test_retry.py
   updated  paad/test-roadmap/test-roadmap.md          (Phase 3 marked done)
   updated  paad/test-roadmap/test-roadmap-findings.md (F4 added)
+  updated  paad/security/test-roadmap-findings.md
 ```
 
 Name the findings log only when this run actually added an entry to it, and say
 what the entry was about in a few words, so a real bug does not sit unread.
+Name the security log the same way, but with no description, only when this run
+added to it, and follow the file list with the Security block, once:
+
+```
+Security: N finding(s) in paad/security/<file> (new|updated).
+paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
+```
+
+When a routed finding was pinned by a test this run, add one line after it:
+*"The test that pins each security finding is committed and still reproduces it; its neutral name only keeps it from being searched for."*
 
 Then recompute the counts from the roadmap
 (`references/test-pushback.md § Talking to the developer`) and end the run one
@@ -106,7 +120,8 @@ of two ways:
 - **No phases remain** (every phase in the roadmap has a populated `Landed:`)
   — do not ask for another run. Say the roadmap is finished: all N phases are
   done, the tests are committed on this branch, and point at
-  `paad/test-roadmap/test-roadmap-findings.md` if it has entries, since that
+  `paad/test-roadmap/test-roadmap-findings.md` and
+  `paad/security/test-roadmap-findings.md` if either has entries, since that
   bug list is the developer's to act on and this skill never will. Running the
   skill again in this state is a no-op that finds nothing to do, so do not
   invite it.
@@ -330,21 +345,33 @@ Writing a phase's tests means reading the code closely, which is exactly when a
 real bug surfaces — a return that contradicts its own docstring, a check that
 lets through what it claims to reject. Do not fix it (Inviolate #1: pin current
 behavior; the developer fixes later, watching these tests break). Instead, where
-it clears the inclusion gate, record it in `paad/test-roadmap/test-roadmap-findings.md`.
+it clears the inclusion gate, record it in `paad/test-roadmap/test-roadmap-findings.md`
+— or in `paad/security/test-roadmap-findings.md` when it passes the security
+test (`build-test-roadmap.md § The findings log`).
 
-**The gate and the entry format are defined once in `build-test-roadmap.md
-§ The findings log` — use them verbatim.** In short: log an entry only if you can
+**The gate and the entry format are defined once in `build-test-roadmap.md § The
+findings log` — use them verbatim, and read that section before this phase
+writes its first finding: the naming rule for a test that pins a security
+finding is there too.** In short: log an entry only if you can
 state (1) the demonstrable current behavior, citing the characterization test
 that pins it; (2) a concrete in-repo contradiction it violates — a citation, not
-your own ruling on what is correct; and (3) a clear action. Miss any one and drop
-the observation — never write it down as a vague note. Set the entry's `Pinned
-by:` to this phase's test, and add a one-line pointer on the phase block in the
-roadmap where the finding maps to it.
+your own ruling on what is correct; and (3) a clear action. Miss any one and
+drop the observation — never write it down as a vague note. Set the entry's
+`Pinned by:` to this phase's test, and add a one-line pointer on the phase block
+in the roadmap where the finding maps to it. For an entry routed to
+`paad/security/`, the roadmap pointer, the phase's title and `Catches:` line,
+and this phase's test are named by the rule in `build-test-roadmap.md § The
+findings log`, and so is what to say when that pointer's file is missing.
 
-Create `paad/test-roadmap/test-roadmap-findings.md` if it does not yet exist (build mode
-writes it only when its own stages found something); otherwise append. **Commit
-it in the same commit as the phase's tests** (step 6 of the loop), so a finding
-never lands without the test that pins it, and both survive a fresh clone.
+Create `paad/test-roadmap/test-roadmap-findings.md` — or
+`paad/security/test-roadmap-findings.md` — if it does not yet exist (build mode
+writes either only when its own stages found something); otherwise append.
+Before the first write there this run, run the router's Security findings
+paragraph's `.gitignore` check, and write nothing there unless it passes.
+**Commit the ordinary log in the same commit as the phase's tests** (step 6 of
+the loop), so a finding never lands without the test that pins it, and both
+survive a fresh clone; the security log is never committed and never
+`git add -f`'d — the commit invariant in step 6 covers only what git can see.
 
 When the phase lands, tell the developer in plain words how many findings you
 logged and point them at the file — *"I logged 2 concrete bugs I hit while

@@ -102,13 +102,15 @@ Two Stage 1 findings feed this stage:
 code, every assertion it proposes must match what the code *currently does*.
 Behavior that looks wrong is never turned into a different assertion or a code
 fix — characterizing a legacy system and fixing its bugs are two hard problems,
-and this stage does the first one only. Where a wrong-looking behavior clears the
-inclusion gate in *The findings log* (below), it is recorded there — a concrete,
-actionable entry the developer works from later — and the phase that pins it
-carries a one-line pointer to that entry. Where it does not clear the gate, it is
-dropped, not written down as a vague note: a findings log of hunches is noise the
-developer learns to skip, the same cry-wolf failure the clean-run rule exists to
-prevent.
+and this stage does the first one only. Where a wrong-looking behavior clears
+the inclusion gate in *The findings log* (below), it is recorded there — a
+concrete, actionable entry the developer works from later — and the phase that
+pins it carries a one-line pointer to that entry. For an entry routed to
+`paad/security/`, the phase's pointer, its title and `Catches:` line, and the
+pinning test follow the naming rule in *The findings log* (below).
+Where it does not clear the gate, it is dropped, not written down as a vague
+note: a findings log of hunches is noise the developer learns to skip, the same
+cry-wolf failure the clean-run rule exists to prevent.
 
 ## Stage 4 — Critique
 
@@ -140,9 +142,16 @@ any qualifying finding:
   This is the sink for anything unbounded (Stage 2's full list, the ledger in
   full); main context never carries it.
 - **`paad/test-roadmap/test-roadmap-findings.md`** — the findings log (see *The findings
-  log*, below), written only if Stage 3/4 recorded at least one entry. If they
+  log*, below), written only if Stage 3/4 recorded at least one entry — a
+  count line counts as an entry. If they
   recorded none, this file is not created here — execute mode creates it the
   first time a phase surfaces a qualifying finding.
+- **`paad/security/test-roadmap-findings.md`** — the security findings log:
+  entries that pass the inclusion gate *and* the security test in the router's
+  Security findings paragraph (reading it would help an attacker). Same entry
+  format. Created only when there is an entry to write, after the paragraph's
+  `.gitignore` rule. Never committed. IDs are `S1`, `S2`, … — their own
+  sequence.
 
 **These artifacts are read by the developer, so they follow `references/test-pushback.md
 § Talking to the developer`.** In particular the ledger's class names
@@ -164,7 +173,8 @@ else.
 
 **Then commit the artifacts.** `git add paad/test-roadmap/test-roadmap.md
 paad/test-roadmap/test-suite-analysis.md` — and `paad/test-roadmap/test-roadmap-findings.md` if it was
-written — and commit them before build mode ends. This is
+written — and commit them before build mode ends. Never `git add -f` anything
+under `paad/security/` — the security log stays out of every commit. This is
 not optional bookkeeping: the roadmap is the router's resume signal, and
 requirement 2 is resumability across *fresh clones*. An uncommitted roadmap
 does not survive a clone, so the next run finds no `paad/test-roadmap/test-roadmap.md` and
@@ -180,6 +190,20 @@ whole deliverable of build mode and it is easy to miss among the conversation:
 Files written or updated:
   new  paad/test-roadmap/test-roadmap.md  (14 phases)
 ```
+
+Name the security log the same way, but with no description, only when this run
+added to it, and follow the file list with the Security block, once:
+
+```
+Security: N finding(s) in paad/security/<file> (new|updated).
+paad/security/.gitignore keeps the directory out of git. Deleting that file or `git add -f` bypasses it.
+Also list paad/security/ in your root .gitignore, or in .git/info/exclude to keep the rule local and unmentioned.
+If anything under paad/security/ was ever committed, ignoring it now does not remove it from history.
+paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
+```
+
+When a routed finding was pinned by a test this run, add one line after it:
+*"The test that pins each security finding is committed and still reproduces it; its neutral name only keeps it from being searched for."*
 
 **Then tell the developer the total, in plain words.** Build mode's approach
 menus fire *before* any plan exists, so during them there is no phase total to
@@ -271,7 +295,8 @@ return that contradicts its own docstring, a validator that accepts what its nam
 says it rejects. It never fixes these (Inviolate #1: characterize now, fix
 later), but it records the good ones so the developer finishes with a concrete
 to-do list instead of a vague memory that "something looked off." That list is
-`paad/test-roadmap/test-roadmap-findings.md`.
+`paad/test-roadmap/test-roadmap-findings.md` — or `paad/security/test-roadmap-findings.md`
+for the entries the security test below routes there.
 
 This is **not** the "findings" of *Approaches vs findings* below — those are
 test-quality verdicts (a weak test, a mock's class) and go to the ledger. This
@@ -295,6 +320,17 @@ miss any one and the observation is dropped, never downgraded to a vague note
    intact.
 3. **A clear action** — a specific next step, e.g. *"reconcile the docstring at
    `email.py:40` with the return at `email.py:52`."*
+
+**Then the security test.** An entry that clears the gate goes to one of two
+files: if reading it would help an attacker — the router's Security findings
+paragraph gives the definition — it goes to
+`paad/security/test-roadmap-findings.md`; otherwise to
+`paad/test-roadmap/test-roadmap-findings.md`. Before the first write there this
+run, run the router's Security findings paragraph's `.gitignore` check, and
+write nothing there unless it passes. The ordinary log carries one line
+per run, where the first routed entry would have gone, with N the run's count:
+`N security finding(s) written to paad/security/test-roadmap-findings.md`. On
+the edge, route to security.
 
 **Entry format** — one block per finding:
 
@@ -321,10 +357,29 @@ turns that test red; that is the signal to update the test, not a regression.
 finding surfaced *while writing* that phase; for one surfaced at plan time, it
 names the phase that will pin it). It is the line that makes the finding
 actionable *and* ties it to the suite: the developer knows in advance which test
-will go red, and that red is success.
+will go red, and that red is success. For an entry routed to `paad/security/`,
+the pointer is the count line only — `1 security finding, see
+paad/security/test-roadmap-findings.md` — never the entry's ID, title, or
+symbol, because the roadmap is committed. And the test that pins it is the
+reproduction by design, so name it for the input and the observed outcome in
+neutral terms — what was passed, what came back or was raised — never for the
+class of weakness or the word that names it; the developer decodes it from the
+log entry, an attacker reading the suite does not. That holds for the test's
+name, docstring, comments, and assertion messages alike.
+`test_lookup_with_quoted_id_returns_row`, not `test_sql_injection_in_lookup`.
+And the same neutral wording holds for that phase's title and `Catches:` line.
+The neutral name keeps the test from being found by searching the suite; it
+does not stop it working. The test is committed and still reproduces the
+weakness, so the run's Post-Review says so (the router's `## Post-Review`).
 
-The log is **append-only and committed with whatever produced it**, so it
-survives a fresh clone like the roadmap does. The main agent never holds the
+When a run meets that count line — in the roadmap or the ordinary log — and
+`paad/security/test-roadmap-findings.md` is absent, tell the developer plainly:
+the entry it counts is gone from this machine (`paad/security/` is local
+scratch), and the test that pins it is the only remaining trace. Then continue.
+
+The ordinary log is **append-only and committed with whatever produced it**, so it
+survives a fresh clone like the roadmap does; the security log is append-only
+too, and never committed. The main agent never holds the
 whole file in context — it appends entries, it does not re-read the accumulated
 log each run.
 

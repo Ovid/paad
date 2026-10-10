@@ -10,6 +10,8 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-10-10
+
 ### Changed
 - **Breaking:** security findings from six skills now go only to `paad/security/`,
   which git ignores; `/agentic-owasp` no longer writes `paad/owasp-reviews/`.
@@ -730,7 +732,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v1.31.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v2.0.0...HEAD
+[2.0.0]: https://github.com/Ovid/paad/releases/tag/paad--v2.0.0
 [1.31.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.31.0
 [1.30.2]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.2
 [1.30.1]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.1
