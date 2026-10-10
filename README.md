@@ -698,9 +698,12 @@ The assistant will follow the procedures defined in the skill files.
 <details>
 <summary><strong>Every skill in detail</strong> — arguments, behavior, and where each writes its report</summary>
 
-**Security findings go somewhere else.** Any finding a skill produces that would
-help an attacker is written only under `paad/security/`, whatever the skill and
-whatever its ordinary report path. That directory carries its own `.gitignore`
+**Security findings go somewhere else.** In `agentic-review`,
+`agentic-architecture`, `agentic-owasp`, `agentic-dedup`, `pushback` and
+`test-roadmap`, any finding that would help an attacker is written only under
+`paad/security/`, whatever the skill's ordinary report path. No other skill
+routes anything there: an `alignment` report or a `handoff.md` that records a
+weakness lands where that skill always writes. That directory carries its own `.gitignore`
 holding a single `*`, so it ignores itself from the moment it is created, and
 the ordinary report is left with a count and a pointer — no path, severity,
 symbol, or description. The skills never add the map of live weaknesses to
