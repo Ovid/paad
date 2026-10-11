@@ -8,9 +8,9 @@
   <a href="https://github.com/Ovid/paad/releases/latest"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FOvid%2Fpaad%2Fmain%2Fplugins%2Fpaad%2F.claude-plugin%2Fplugin.json&query=%24.version&label=paad" alt="Current paad version"></a>
 </p>
 
-> **paad 2.0.0 is out, and it is a breaking release.** Security findings now go
-> to `paad/security/`, which git ignores, and there are steps to take after
-> upgrading. See the [2.0.0 release notes](https://github.com/Ovid/paad/releases/tag/paad--v2.0.0)
+> **paad 2.0.0 is out.** You can now tailor paad to your own needs with
+> [config files](CONFIG.md), and security findings now stay out of your
+> committed reports. See the [2.0.0 release notes](https://github.com/Ovid/paad/releases/tag/paad--v2.0.0)
 > and the [changelog](CHANGELOG.md).
 <!-- Remove this notice once 2.1 or 2.2 ships. -->
 
