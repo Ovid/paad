@@ -49,6 +49,8 @@ digraph release {
     "Show the diff, get sign-off" [shape=box];
     "Commit, merge to main, push" [shape=box];
     "make tag" [shape=box];
+    "Draft release notes, get sign-off" [shape=box];
+    "gh release create" [shape=box];
     "Hand off in-app verification" [shape=doublecircle];
 
     "Read [Unreleased]" -> "Anything there?";
@@ -70,7 +72,9 @@ digraph release {
     "Read git diff plugins/ — the payload" -> "Show the diff, get sign-off";
     "Show the diff, get sign-off" -> "Commit, merge to main, push";
     "Commit, merge to main, push" -> "make tag";
-    "make tag" -> "Hand off in-app verification";
+    "make tag" -> "Draft release notes, get sign-off";
+    "Draft release notes, get sign-off" -> "gh release create";
+    "gh release create" -> "Hand off in-app verification";
 }
 ```
 
@@ -274,6 +278,22 @@ The tag goes on the merge commit because that is the tree users receive. Never
 move a published tag; if the wrong commit got tagged, ask Ovid before doing
 anything about it.
 
+### Publish the GitHub Release
+
+The README's upgrade notices link to the Release page, so every tag gets one.
+Draft the body from the version's changelog section — or from hand-written
+notes, if Ovid wrote some for a major release — into `scratch/`:
+
+```bash
+awk '/^## \[X.Y.Z\]/{f=1;next} /^## \[/{f=0} f' CHANGELOG.md > scratch/release-notes-X.Y.Z.md
+```
+
+Show it to Ovid. **It is public — publish only after he signs off:**
+
+```bash
+gh release create paad--vX.Y.Z --verify-tag --title "paad X.Y.Z" --notes-file scratch/release-notes-X.Y.Z.md
+```
+
 ## 6. Hand off the verification you cannot do
 
 You cannot run this part — it happens in Ovid's Claude Code session. Tell him to:
@@ -294,8 +314,6 @@ one-line summary of the changelog section.
 
 ## What this skill does not do
 
-- **No GitHub Release.** The tag is the record. Do not run `gh release create`
-  unless Ovid asks.
 - **No `[Unreleased]` housekeeping.** If a change is missing from the changelog,
   that is a separate commit before the release, not a silent addition during it.
 - **No version invention.** Step 2 ends in a question, always.
