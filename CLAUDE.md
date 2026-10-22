@@ -151,6 +151,7 @@ When modifying a skill's flow, check that the digraph still matches. When review
 - Skill files must be named `SKILL.md` (uppercase) inside a folder whose name becomes the skill name
 - Plugin sources in `marketplace.json` use paths relative to the marketplace root (start with `./`)
 - Keep marketplace.json plugin descriptions in sync with plugin.json descriptions
+- The secret-path exclusion lists in `agentic-owasp` and `agentic-dedup` (the `find` prunes and the "Why secret paths are excluded" list) track the [gitleaks defaults](https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml) and the [detect-secrets](https://github.com/Yelp/detect-secrets) baseline. When either adds a pattern, mirror it into both skills. The links live here, not in the skills, because only a maintainer needs them; the agent never does at runtime.
 
 ## Project-local skills under `.claude/skills/`
 
