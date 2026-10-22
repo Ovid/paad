@@ -359,7 +359,7 @@ check-dispatch-sites: check-skill-names require-export ## Check every subagent d
 		echo "$$bad" | sed 's/^/  /'; \
 		fail=1; \
 	fi; \
-	for name in agentic-review agentic-dedup agentic-a11y agentic-architecture agentic-owasp; do \
+	for name in agentic-review agentic-dedup agentic-a11y agentic-architecture agentic-owasp rethink; do \
 		file="$(SKILLS_DIR)/$$name/SKILL.md"; \
 		if [ ! -f "$$file" ]; then \
 			echo "FAIL: $$name has no SKILL.md (it is expected to dispatch analysis subagents)"; \

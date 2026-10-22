@@ -10,6 +10,11 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Fixed
+- **Multi-agent skills outside the Claude Code plugin** (npx installs on Codex, Cursor,
+  Gemini CLI, Kiro and others) no longer ask for a helper agent that doesn't exist there.
+  They fall back to a general helper given the analyst's rules as text, which can't remove its editing tools.
+
 ## [2.0.0] — 2026-10-10
 
 ### Changed

@@ -35,7 +35,7 @@ digraph rethink {
 
   "ASK what to re-examine" [shape=box];
   "State the premises back, confirm the list" [shape=box];
-  "Dispatch paad:paad-analyst to verify" [shape=box];
+  "Dispatch the analyst to verify" [shape=box];
   "UNGROUNDED - name the cheap experiment" [shape=box];
   "SOUND" [shape=box];
   "LUCKY - held, but unchecked" [shape=box];
@@ -58,10 +58,10 @@ digraph rethink {
   "Premises identifiable?" -> "State the premises back, confirm the list" [label="unclear"];
   "State the premises back, confirm the list" -> "Primary source reachable?";
 
-  "Primary source reachable?" -> "Dispatch paad:paad-analyst to verify" [label="yes"];
+  "Primary source reachable?" -> "Dispatch the analyst to verify" [label="yes"];
   "Primary source reachable?" -> "UNGROUNDED - name the cheap experiment" [label="no"];
 
-  "Dispatch paad:paad-analyst to verify" -> "Premises hold?";
+  "Dispatch the analyst to verify" -> "Premises hold?";
   "Premises hold?" -> "Were they checked before deciding?" [label="yes"];
   "Premises hold?" -> "Conclusion survives without them?" [label="no"];
   "Were they checked before deciding?" -> "SOUND" [label="yes"];
@@ -117,6 +117,8 @@ If the premise list is ambiguous, state it back and confirm before spending a su
 ## Phase 2: Verify Against Primary Sources
 
 Dispatch **one** agent using the Agent tool with `subagent_type: paad:paad-analyst` to check the premises.
+
+**If the analyst agent is not available** — any install other than the Claude Code plugin — dispatch a general-purpose subagent instead, and put the full text of `references/paad-analyst.md` at the top of its prompt. This applies to every dispatch in this skill. That file carries the analyst's rules as text only; it cannot take editing tools away from the subagent.
 
 **Verify against the thing itself, not against what describes it.** If a premise came from documentation, check the software the documentation is about. If it came from a README, check the code. If it came from memory, check anything. Documentation is a claim about a system; it is not the system, and it is routinely wrong. A premise sourced from a document that has already been shown unreliable in this same conversation is not verified at all.
 
