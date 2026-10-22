@@ -14,7 +14,7 @@ metadata:
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
 > covered by the semver guarantees the other paad skills carry. Report rough
-> edges at <https://github.com/Ovid/paad/issues>.
+> edges on paad's GitHub issue tracker.
 
 # OWASP Top 10:2025 Code Review
 
@@ -458,9 +458,8 @@ on-disk report. The list covers:
 
 This list is a starting point, not exhaustive. For a more authoritative pattern
 source, treat
-[gitleaks defaults](https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml)
-or [detect-secrets](https://github.com/Yelp/detect-secrets) baseline patterns as
-the canonical reference; mirror new patterns here when they appear there.
+the gitleaks default rules or the detect-secrets baseline patterns as
+the canonical reference.
 
 **The excluded-path list is not a finding suppressor.** Whether those files
 *exist and are tracked by git* is itself an A02/A03 finding, and you determine

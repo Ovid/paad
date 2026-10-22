@@ -14,7 +14,7 @@ metadata:
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
 > covered by the semver guarantees the other paad skills carry. Report rough
-> edges at <https://github.com/Ovid/paad/issues>.
+> edges on paad's GitHub issue tracker.
 
 # Semantic Duplicate Code Hunt
 
@@ -248,10 +248,8 @@ the on-disk report (which the user may then commit). The list covers:
 
 This list is a starting point, not exhaustive. For a more
 authoritative pattern source, treat
-[gitleaks defaults](https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml)
-or [detect-secrets](https://github.com/Yelp/detect-secrets) baseline
-patterns as the canonical reference; mirror new patterns here when
-they appear there. If a repository scan surfaces a credential-looking
+the gitleaks default rules or the detect-secrets baseline
+patterns as the canonical reference. If a repository scan surfaces a credential-looking
 file outside this list, stop and alert the user before reading or
 echoing the contents.
 
