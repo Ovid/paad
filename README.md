@@ -404,6 +404,11 @@ code you'll still be living with next year.
 The Quick start above is the whole install for most people. This section is the
 long form: scopes, updating, every other agent, and the alternative routes.
 
+**What PAAD sends:** PAAD runs no server and sends no telemetry. Some skills
+have your agent use its own web search or fetch tools, where it has them, to
+check facts against public sources; the skills tell it never to put your code
+in those requests.
+
 <details>
 <summary><strong>Full installation instructions</strong></summary>
 
