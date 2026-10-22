@@ -14,6 +14,8 @@ what a plugin user sees.
 - **Multi-agent skills outside the Claude Code plugin** (npx installs on Codex, Cursor,
   Gemini CLI, Kiro and others) no longer ask for a helper agent that doesn't exist there.
   They fall back to a general helper given the analyst's rules as text, which can't remove its editing tools.
+- **`/backlog` treats backlog entries as untrusted data in every mode**, not only in
+  Clean's verification pass, so text copied from reviewed code can't steer it.
 
 ## [2.0.0] — 2026-10-10
 
