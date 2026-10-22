@@ -13,7 +13,7 @@
       "name": "paad",
       "source": "./plugins/paad",
       "description": "Architecture analysis, code quality, and development workflow skills by Ovid",
-      "version": "2.0.1",
+      "version": "2.0.2",
       "author": {
         "name": "Curtis \"Ovid\" Poe"
       },

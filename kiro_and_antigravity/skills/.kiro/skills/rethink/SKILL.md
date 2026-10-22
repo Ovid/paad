@@ -3,7 +3,7 @@ name: rethink
 description: Use when options, a recommendation, or an already-chosen approach are on the table and the reasoning under them has not been independently checked — especially when the case rests on cited documentation, remembered behavior, or premises nobody verified. Not for generating alternatives, and not for critiquing a spec, which is the pushback skill.
 ---
 
-**On invocation:** announce "Running paad:rethink v2.0.1", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:rethink v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/rethink.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
