@@ -3,7 +3,7 @@ name: fix-architecture
 description: Use when working through architectural flaws documented in a .reviews/architecture/ report — selecting which flaws to fix, resuming a partial fix session across multiple sittings, or applying structural changes that need to be tracked back to a report. Not for producing that report — run the agentic-architecture skill first if there isn't one.
 ---
 
-**On invocation:** announce "Running paad:fix-architecture v2.0.0", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:fix-architecture v2.0.1", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/fix-architecture.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 

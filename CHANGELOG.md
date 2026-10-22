@@ -10,6 +10,8 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+## [2.0.1] — 2026-10-22
+
 ### Fixed
 - **Multi-agent skills outside the Claude Code plugin** (npx installs on Codex, Cursor,
   Gemini CLI, Kiro and others) no longer ask for a helper agent that doesn't exist there.
@@ -739,7 +741,8 @@ Version-numbering note: 1.9.0 was never released; 1.8.0 bumped straight to 1.10.
 ### Added
 - Initial release: `paad` plugin marketplace with the `architecture` skill.
 
-[Unreleased]: https://github.com/Ovid/paad/compare/paad--v2.0.0...HEAD
+[Unreleased]: https://github.com/Ovid/paad/compare/paad--v2.0.1...HEAD
+[2.0.1]: https://github.com/Ovid/paad/releases/tag/paad--v2.0.1
 [2.0.0]: https://github.com/Ovid/paad/releases/tag/paad--v2.0.0
 [1.31.0]: https://github.com/Ovid/paad/releases/tag/paad--v1.31.0
 [1.30.2]: https://github.com/Ovid/paad/releases/tag/paad--v1.30.2

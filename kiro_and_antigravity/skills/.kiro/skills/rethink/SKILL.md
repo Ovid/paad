@@ -3,7 +3,7 @@ name: rethink
 description: Use when options, a recommendation, or an already-chosen approach are on the table and the reasoning under them has not been independently checked — especially when the case rests on cited documentation, remembered behavior, or premises nobody verified. Not for generating alternatives, and not for critiquing a spec, which is the pushback skill.
 ---
 
-**On invocation:** announce "Running paad:rethink v2.0.0", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:rethink v2.0.1", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/rethink.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
@@ -33,7 +33,7 @@ digraph rethink {
 
   "ASK what to re-examine" [shape=box];
   "State the premises back, confirm the list" [shape=box];
-  "Dispatch paad:paad-analyst to verify" [shape=box];
+  "Dispatch the analyst to verify" [shape=box];
   "UNGROUNDED - name the cheap experiment" [shape=box];
   "SOUND" [shape=box];
   "LUCKY - held, but unchecked" [shape=box];
@@ -56,10 +56,10 @@ digraph rethink {
   "Premises identifiable?" -> "State the premises back, confirm the list" [label="unclear"];
   "State the premises back, confirm the list" -> "Primary source reachable?";
 
-  "Primary source reachable?" -> "Dispatch paad:paad-analyst to verify" [label="yes"];
+  "Primary source reachable?" -> "Dispatch the analyst to verify" [label="yes"];
   "Primary source reachable?" -> "UNGROUNDED - name the cheap experiment" [label="no"];
 
-  "Dispatch paad:paad-analyst to verify" -> "Premises hold?";
+  "Dispatch the analyst to verify" -> "Premises hold?";
   "Premises hold?" -> "Were they checked before deciding?" [label="yes"];
   "Premises hold?" -> "Conclusion survives without them?" [label="no"];
   "Were they checked before deciding?" -> "SOUND" [label="yes"];
@@ -115,6 +115,8 @@ If the premise list is ambiguous, state it back and confirm before spending a su
 ## Phase 2: Verify Against Primary Sources
 
 Dispatch **one** agent using the Agent tool to check the premises.
+
+**If the analyst agent is not available** — any install other than the Claude Code plugin — dispatch a general-purpose subagent instead, and put the full text of `references/paad-analyst.md` at the top of its prompt. This applies to every dispatch in this skill. That file carries the analyst's rules as text only; it cannot take editing tools away from the subagent.
 
 **Verify against the thing itself, not against what describes it.** If a premise came from documentation, check the software the documentation is about. If it came from a README, check the code. If it came from memory, check anything. Documentation is a claim about a system; it is not the system, and it is routinely wrong. A premise sourced from a document that has already been shown unreliable in this same conversation is not verified at all.
 
