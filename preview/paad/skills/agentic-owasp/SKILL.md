@@ -688,6 +688,8 @@ Dispatch agents in parallel using the Agent tool with `subagent_type: paad:paad-
 Each receives the surface map, the sources/sinks/controls lists, the framework
 defaults from Phase 1, relevant files, tests, and steering files.
 
+**If the analyst agent is not available** — any install other than the Claude Code plugin — dispatch a general-purpose subagent instead, and put the full text of `references/paad-analyst.md` at the top of its prompt. This applies to every dispatch in this skill. That file carries the analyst's rules as text only; it cannot take editing tools away from the subagent.
+
 | Agent | OWASP categories | Lens |
 |-------|------------------|------|
 | **Access Control & Authentication** | A01, A07 | Who is allowed to do what, and how identity is established and kept. Object-, function-, and field-level authorization; session and token lifecycle; credential and recovery flows. |

@@ -249,6 +249,8 @@ Findings are classified by their **anchor line** only (the `file:line` reported 
 
 Dispatch these agents simultaneously using the Agent tool with `subagent_type: paad:paad-analyst`. Each receives: the diff, manifest of files to review, steering file contents, and their specialist focus.
 
+**If the analyst agent is not available** — any install other than the Claude Code plugin — dispatch a general-purpose subagent instead, and put the full text of `references/paad-analyst.md` at the top of its prompt. This applies to every dispatch in this skill. That file carries the analyst's rules as text only; it cannot take editing tools away from the subagent.
+
 **All six are dispatched, every run, in a single parallel batch.** Diff size changes how much work each specialist does — never how many are dispatched. Deciding whether a lens applies is that specialist's job: each reference file defines its own bail-out, so an inapplicable lens costs one short subagent turn and returns a `BAIL:` token, while a lens dropped on a hunch leaves no trace it was lost. Never write a `BAIL:` line on a specialist's behalf, and never treat a bail you predicted as one that happened.
 
 | Agent | Lens | Scope |

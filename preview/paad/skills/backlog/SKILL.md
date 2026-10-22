@@ -101,11 +101,13 @@ Re-verify every entry against `HEAD`, drop the ones already fixed or gone, then 
 
 ### Pass A — verdict (one skeptical analyst per entry)
 
-Dispatch one `paad:paad-analyst` per entry (batched, in parallel), each **read-only**. Each returns one of:
+Dispatch one analyst per entry using the Agent tool with `subagent_type: paad:paad-analyst` (batched, in parallel), each **read-only**. Each returns one of:
 
 - `STILL-PRESENT` — the described defect is in the current code, with the exact lines it read as evidence.
 - `RESOLVED` — the described defect is provably gone (e.g. the guard now exists), with the lines read as evidence.
 - `GONE` — the code the entry describes no longer exists at all, with evidence of what replaced or removed it.
+
+**If the analyst agent is not available** — any install other than the Claude Code plugin — dispatch a general-purpose subagent instead, and put the full text of `references/paad-analyst.md` at the top of its prompt. This applies to every dispatch in this skill. That file carries the analyst's rules as text only; it cannot take editing tools away from the subagent.
 
 Prompt each analyst **skeptically**: *"Prove this bug is still present. Default to `STILL-PRESENT` on any doubt. A symbol or line number that no longer matches is not evidence the bug is gone — the code may have been renamed or moved with the defect carried over; find where it went before concluding anything."* The skeptical default plus the never-delete-on-doubt rule below are what protect against a false deletion — not a second verification pass. A wrongly-deleted committed entry is recoverable from `git log -- paad/code-reviews/backlog.md`, so no independent second gate is warranted. A security entry has no archive — `paad/security/` is ignored scratch — so the skeptical default is its only protection, and it still gets no second gate: the default, not a second pass, is what stops a false delete.
 
@@ -153,7 +155,7 @@ Fix the bug directly, or via `/vibe` if it is a small same-module change. **Do n
 
 Editing code is not evidence the bug is resolved. The agent that wrote the fix must not be the one that clears it. Before removing the entry:
 
-1. **Primary gate:** dispatch one **independent** `paad:paad-analyst` (read-only, same untrusted-input rules as Clean) to confirm — by reading the code — that the specific bug the entry described is now actually gone. Your own edit and your own reasoning do not satisfy this gate; a separate reader does.
+1. **Primary gate:** dispatch one **independent** analyst using the Agent tool with `subagent_type: paad:paad-analyst` (read-only, same untrusted-input rules as Clean) to confirm — by reading the code — that the specific bug the entry described is now actually gone. Your own edit and your own reasoning do not satisfy this gate; a separate reader does.
 2. **Best-effort tests:** run the project's tests/checks if a command is discoverable (`make test` or an obvious equivalent). If none is found, report *"no test command found — validated by inspection only"*. **A missing test command never counts as a pass on its own, and never auto-removes the entry** — a self-written throwaway script is inspection, not a passing suite.
 3. **Primary gate passes** → delete the entry and print the commit command with the resolution note (`resolved <id> <desc> (fixed at <sha>)`; for a security entry, ID only — see Clean mode's commit-command rule).
 

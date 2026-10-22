@@ -9,6 +9,9 @@ lives in the files it names. Two ways that breaks, both silent:
      a file that isn't there.
   2. Orphaned reference — a references/*.md nobody names. Either dead
      weight, or a dispatch line was dropped and the content is now unread.
+  3. Stale analyst copy — references/paad-analyst.md is the fallback for
+     installs that never see agents/ (npx), so it must stay byte-identical
+     to the tree's agents/paad-analyst.md or those installs run old rules.
 
 Mentions are collected across the whole skill directory, not just SKILL.md:
 a mode file legitimately dispatches to its own references (test-roadmap's
@@ -39,6 +42,10 @@ def check(skill_dir):
             problems.append(f"{source} dispatches to references/{name}, which does not exist")
     for name in sorted(on_disk - set(mentioned)):
         problems.append(f"references/{name} exists but nothing in the skill names it")
+    if "paad-analyst.md" in on_disk:
+        agent = skill_dir.parent.parent / "agents" / "paad-analyst.md"
+        if not agent.is_file() or agent.read_bytes() != (refs_dir / "paad-analyst.md").read_bytes():
+            problems.append(f"references/paad-analyst.md differs from {agent} — re-copy it")
     return problems
 
 

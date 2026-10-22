@@ -184,6 +184,8 @@ Files to audit, grouped for specialists, annotated with detected platform(s).
 
 Dispatch these agents simultaneously using the Agent tool with `subagent_type: paad:paad-analyst`. Each receives: the file manifest, detected platform(s), steering file contents, existing a11y tooling notes, and their specialist focus.
 
+**If the analyst agent is not available** — any install other than the Claude Code plugin — dispatch a general-purpose subagent instead, and put the full text of `references/paad-analyst.md` at the top of its prompt. This applies to every dispatch in this skill. That file carries the analyst's rules as text only; it cannot take editing tools away from the subagent.
+
 ### Core specialists (always dispatched)
 
 | Agent | Focus | Who it helps |
