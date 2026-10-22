@@ -337,7 +337,7 @@ The **Pre-flight** digraph above is the authoritative order for this section.
 
 1. **Context window.** Treat the conversation as having substantive history if
    any of these are true: the conversation already includes tool calls beyond
-   invoking this skill; another `/agentic-owasp` pass has already been run
+   invoking this skill; another `/agentic-owasp` run has already happened
    in this session; the user has discussed an unrelated topic earlier in the
    conversation; or transcript length exceeds roughly 20 turns. If any apply,
    tell the user: "This security review consumes significant context. Start a

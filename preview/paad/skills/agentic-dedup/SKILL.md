@@ -169,7 +169,7 @@ The **Pre-flight** digraph above is the authoritative order for this section.
 1. **Context window.** Treat the conversation as having substantive
    history if any of these are true: the conversation already includes
    tool calls beyond invoking this skill; another `/agentic-dedup`
-   pass has already been run in this session; the user has discussed an
+   run has already happened in this session; the user has discussed an
    unrelated topic earlier in the conversation; or transcript length
    exceeds roughly 20 turns. If any apply, tell the user: "This semantic
    duplicate hunt consumes significant context. Start a fresh session
