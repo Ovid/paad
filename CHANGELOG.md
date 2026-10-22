@@ -10,6 +10,10 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Fixed
+- `/agentic-owasp` and `/agentic-dedup` no longer illustrate shell injection with a
+  credential-stealing command, which plugin security scanners flag as the skill's own behavior.
+
 ## [2.0.1] — 2026-10-22
 
 ### Fixed

