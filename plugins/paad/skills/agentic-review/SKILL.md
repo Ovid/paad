@@ -3,7 +3,7 @@ name: agentic-review
 description: Use when reviewing current branch for bugs before pushing or merging, when wanting a thorough multi-agent review of local changes, or when preparing work for human review. Not for codebase structure, not for code style, and not for fixing what it finds.
 ---
 
-**On invocation:** announce "Running paad:agentic-review v2.0.1", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:agentic-review v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-review.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 

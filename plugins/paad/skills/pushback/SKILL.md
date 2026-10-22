@@ -3,7 +3,7 @@ name: pushback
 description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling. Not for cross-checking a spec against a plan — that's /alignment.
 ---
 
-**On invocation:** announce "Running paad:pushback v2.0.1", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:pushback v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/pushback.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 

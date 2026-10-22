@@ -3,7 +3,7 @@ name: backlog
 description: EXPERIMENTAL. Use when working the project-wide out-of-scope backlog at .reviews/code/backlog.md and .reviews/security/backlog.md — cleaning it of entries that are already fixed or gone, or picking the next entry and fixing it end-to-end. Not for producing backlog entries — that is the agentic-review skill — and not for reviewing a branch diff.
 ---
 
-**On invocation:** announce "Running paad:backlog v2.0.1", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:backlog v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/backlog.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
