@@ -3,7 +3,7 @@ name: agentic-owasp
 description: "EXPERIMENTAL. Use when code needs a security review against the OWASP Top 10:2025 — access control, misconfiguration, supply chain, cryptography, injection, insecure design, authentication, integrity, logging and alerting, and mishandled exceptional conditions. Not for penetration testing a running system, not for infrastructure-only scanning, and not for fixing what it finds."
 ---
 
-**On invocation:** announce "Running paad:agentic-owasp v2.0.0", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:agentic-owasp v2.0.1", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-owasp.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
@@ -685,6 +685,8 @@ regardless of the answer.
 Dispatch agents in parallel using the Agent tool.
 Each receives the surface map, the sources/sinks/controls lists, the framework
 defaults from Phase 1, relevant files, tests, and steering files.
+
+**If the analyst agent is not available** — any install other than the Claude Code plugin — dispatch a general-purpose subagent instead, and put the full text of `references/paad-analyst.md` at the top of its prompt. This applies to every dispatch in this skill. That file carries the analyst's rules as text only; it cannot take editing tools away from the subagent.
 
 | Agent | OWASP categories | Lens |
 |-------|------------------|------|

@@ -3,7 +3,7 @@ name: agentic-a11y
 description: Use when auditing a user-facing app — web, mobile (iOS/Android/React Native/Flutter), desktop, CLI, or games — for accessibility barriers or WCAG 2.2 conformance, before shipping UI changes, or in response to concerns about screen-reader, keyboard, low-vision, motor, cognitive, or photosensitive users. Not for general bug hunting or code correctness.
 ---
 
-**On invocation:** announce "Running paad:agentic-a11y v2.0.0", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:agentic-a11y v2.0.1", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-a11y.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
@@ -181,6 +181,8 @@ Files to audit, grouped for specialists, annotated with detected platform(s).
 ## Phase 2: Specialist Audit (Parallel)
 
 Dispatch these agents simultaneously using the Agent tool. Each receives: the file manifest, detected platform(s), steering file contents, existing a11y tooling notes, and their specialist focus.
+
+**If the analyst agent is not available** — any install other than the Claude Code plugin — dispatch a general-purpose subagent instead, and put the full text of `references/paad-analyst.md` at the top of its prompt. This applies to every dispatch in this skill. That file carries the analyst's rules as text only; it cannot take editing tools away from the subagent.
 
 ### Core specialists (always dispatched)
 
