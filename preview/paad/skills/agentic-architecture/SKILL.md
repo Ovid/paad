@@ -76,7 +76,7 @@ digraph analysis_flow {
   "Integration & Data specialist: distributed system?" -> "Mark distributed-specific categories Not applicable" [label="no"];
   "Mark distributed-specific categories Not applicable" -> "Confirmed by reading the actual code?";
 
-  "Confirmed by reading the actual code?" -> "Confidence >= 60?" [label="yes — verifier per finding"];
+  "Confirmed by reading the actual code?" -> "Confidence >= 60?" [label="yes — single verifier, all findings"];
   "Confirmed by reading the actual code?" -> "DROP the finding" [label="no"];
   "Confidence >= 60?" -> "Concrete evidence present?" [label="yes"];
   "Confidence >= 60?" -> "DROP the finding" [label="no"];
