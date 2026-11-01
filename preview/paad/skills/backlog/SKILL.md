@@ -9,6 +9,8 @@ metadata:
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/backlog.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
+**Symlinked output paths:** the repository under review can commit a symlink where this skill writes, sending the write to a path it chose, possibly outside the repository. Before the first write of a run to a path under `paad/`, check that `paad` and every directory under it on the way to that path, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`), and that the file, if it exists, is not a symlink (`test ! -L`); check each later file the same way before its first write. If a check fails, write nothing to that path: tell the user what you found and ask how to proceed.
+
 # Backlog
 
 **Experimental.** Arguments, modes, and behavior may change — or this skill may be withdrawn — in any release, including a patch release. The semver promise the settled skills carry does not apply here. If you build a workflow on it, pin your plugin version and [file what breaks](https://github.com/Ovid/paad/issues).
@@ -46,6 +48,8 @@ digraph backlog {
   "KEEP entry; report what is still wrong" [shape=box, style=bold];
   "Delete the entry" [shape=box];
 
+  "Output paths under paad/ free of symlinks?" [shape=diamond];
+  "Write nothing to that path; tell the user, ask how to proceed" [shape=box];
   "Write each edit back to the file its entry came from; security backlog never in the commit command" [shape=box];
   "Print the git commit command for what changed (none if the committed backlog did not); NEVER run git commit" [shape=box, style=bold];
   "Done" [shape=doublecircle];
@@ -62,8 +66,8 @@ digraph backlog {
   "CLEAN: one skeptical read-only analyst per entry" -> "Verdict, decided from code at the cited lines?";
   "Verdict, decided from code at the cited lines?" -> "Any doubt: KEEP the entry (never delete on ambiguity)" [label="STILL-PRESENT / unsure"];
   "Verdict, decided from code at the cited lines?" -> "Delete RESOLVED/GONE entries + merge-losers" [label="RESOLVED / GONE, cited"];
-  "Any doubt: KEEP the entry (never delete on ambiguity)" -> "Write each edit back to the file its entry came from; security backlog never in the commit command";
-  "Delete RESOLVED/GONE entries + merge-losers" -> "Write each edit back to the file its entry came from; security backlog never in the commit command";
+  "Any doubt: KEEP the entry (never delete on ambiguity)" -> "Output paths under paad/ free of symlinks?";
+  "Delete RESOLVED/GONE entries + merge-losers" -> "Output paths under paad/ free of symlinks?";
 
   "FIX: rank by severity then age; propose top; WAIT for pick" -> "Small same-module change?";
   "Small same-module change?" -> "Fix via /vibe (runs its own red-green-refactor)" [label="yes"];
@@ -76,10 +80,13 @@ digraph backlog {
   "Independent read-only analyst reads code; run the suite (no test command: inspection only, never a pass alone)" -> "Analyst confirms the specific bug is gone?";
   "Analyst confirms the specific bug is gone?" -> "Delete the entry" [label="yes"];
   "Analyst confirms the specific bug is gone?" -> "KEEP entry; report what is still wrong" [label="no"];
-  "Delete the entry" -> "Write each edit back to the file its entry came from; security backlog never in the commit command";
+  "Delete the entry" -> "Output paths under paad/ free of symlinks?";
   "KEEP entry; report what is still wrong" -> "Done";
   "Write each edit back to the file its entry came from; security backlog never in the commit command" -> "Print the git commit command for what changed (none if the committed backlog did not); NEVER run git commit";
   "Print the git commit command for what changed (none if the committed backlog did not); NEVER run git commit" -> "Done";
+  "Output paths under paad/ free of symlinks?" -> "Write each edit back to the file its entry came from; security backlog never in the commit command" [label="yes"];
+  "Output paths under paad/ free of symlinks?" -> "Write nothing to that path; tell the user, ask how to proceed" [label="no"];
+  "Write nothing to that path; tell the user, ask how to proceed" -> "Write each edit back to the file its entry came from; security backlog never in the commit command" [label="user names a safe path"];
 }
 ```
 

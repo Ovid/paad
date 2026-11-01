@@ -32,6 +32,8 @@ digraph handoff_save {
   "Claim survived verification?" [shape=diamond];
   "Write it as fact" [shape=box];
   "Correct it, or mark it inferred" [shape=box];
+  "handoff.md absent, or not a symlink?" [shape=diamond];
+  "Write nothing; tell the user, ask where to save it" [shape=box];
   "Write handoff.md with the Write tool" [shape=box];
   "Name the unverified claims, ask for review" [shape=box];
   "Announce the artifact" [shape=box];
@@ -49,10 +51,13 @@ digraph handoff_save {
   "Verify every checkable claim with tools" -> "Claim survived verification?";
   "Claim survived verification?" -> "Write it as fact" [label="yes"];
   "Claim survived verification?" -> "Correct it, or mark it inferred" [label="no"];
-  "Write it as fact" -> "Write handoff.md with the Write tool";
-  "Correct it, or mark it inferred" -> "Write handoff.md with the Write tool";
+  "Write it as fact" -> "handoff.md absent, or not a symlink?";
+  "Correct it, or mark it inferred" -> "handoff.md absent, or not a symlink?";
   "Write handoff.md with the Write tool" -> "Name the unverified claims, ask for review";
   "Name the unverified claims, ask for review" -> "Announce the artifact";
+  "handoff.md absent, or not a symlink?" -> "Write handoff.md with the Write tool" [label="yes"];
+  "handoff.md absent, or not a symlink?" -> "Write nothing; tell the user, ask where to save it" [label="no"];
+  "Write nothing; tell the user, ask where to save it" -> "Write handoff.md with the Write tool" [label="user names a safe path"];
 }
 ```
 
@@ -120,6 +125,8 @@ This is the step that makes the skill worth running. Every claim below is checka
 If a claim cannot be settled, it does not become a fact. Either drop it or mark it inferred.
 
 ### 3. Write the file
+
+Before writing, check that `handoff.md`, if it exists, is not a symlink (`test ! -L handoff.md`): a repository can commit one to send this session's state to a path it chose. If it is one, write nothing: tell the user and ask where to save it.
 
 Use the **Write tool**, never a shell redirect. Claude Code snapshots files its own file tools touch; a `bash > handoff.md` has no recovery copy anywhere, and neither does git, since the file is ignored.
 
