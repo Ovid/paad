@@ -15,6 +15,9 @@ what a plugin user sees.
   skipping that only when the project has no test command or the bug can't be expressed as a test.
 
 ### Fixed
+- **Security:** every skill that writes under `paad/`, and `/handoff`'s `handoff.md`, now refuses to
+  write through a symlink the reviewed repository committed there, and asks you instead. Upgrade if you
+  run paad on repositories you did not write (GHSA-8j4x-g85h-p87c).
 - **`/vibe` docs no longer claim it commits.** It never did; it edits source and leaves
   the commit to you, as `/backlog fix` does.
 - **`/test-roadmap` states "never change production code" at the top of the roadmap's

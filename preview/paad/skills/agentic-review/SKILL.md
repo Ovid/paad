@@ -9,7 +9,9 @@ metadata:
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-review.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
-**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files paad/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, check that `paad` and `paad/security`, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`); that `paad/security/.gitignore` exists, is a regular file, and contains the single line `*` — create it if absent, never rewrite it if present; and that `git ls-files paad/security` — no trailing slash, which would miss a tracked file or symlink — lists nothing. If any of these checks fails, if that file cannot be written, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+
+**Symlinked output paths:** the repository under review can commit a symlink where this skill writes, sending the write to a path it chose, possibly outside the repository. Before the first write of a run to a path under `paad/`, check that `paad` and every directory under it on the way to that path, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`), and that the file, if it exists, is not a symlink (`test ! -L`); check each later file the same way before its first write. If a check fails, write nothing to that path: tell the user what you found and ask how to proceed.
 
 # Agentic Code Review
 
@@ -35,15 +37,17 @@ digraph classification {
   "Emit update directive: last_seen, written back to the entry's source file at write time" [shape=box];
   "Mint new backlog entry" [shape=box];
   "Emit migrate directive: copy into paad/security/backlog.md under the same ID at write time, leave the committed file alone" [shape=box];
+  "Output paths under paad/ free of symlinks?" [shape=diamond];
+  "Write nothing to that path; tell the user, ask how to proceed" [shape=box];
   "Bug class: Security (set by the Verifier)?" [shape=diamond];
   "Write to paad/security/ report (and backlog, for out-of-scope bugs); count-and-pointer line in the main report" [shape=box, style=bold];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" [shape=diamond];
   "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Write to paad/code-reviews/ report (and backlog, for out-of-scope bugs)" [shape=box];
 
   "Finding from specialist (verified)" -> "Carries [OOSA] sentinel or category: out-of-scope-addition tag?";
   "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" -> "Out-of-Scope Addition" [label="yes (Spec Compliance)"];
-  "Out-of-Scope Addition" -> "Bug class: Security (set by the Verifier)?";
+  "Out-of-Scope Addition" -> "Output paths under paad/ free of symlinks?";
   "Carries [OOSA] sentinel or category: out-of-scope-addition tag?" -> "Anchor line in touched-lines map?" [label="no"];
   "Anchor line in touched-lines map?" -> "Touch is purely cosmetic AND bug is purely pre-existing?" [label="yes"];
   "Anchor line in touched-lines map?" -> "Branch causes/worsens this bug?" [label="no"];
@@ -55,16 +59,19 @@ digraph classification {
   "Match in pre-filtered backlog?" -> "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" [label="yes"];
   "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Emit migrate directive: copy into paad/security/backlog.md under the same ID at write time, leave the committed file alone" [label="yes"];
   "Matched entry is in the committed backlog and either it or the finding is Bug class: Security?" -> "Emit update directive: last_seen, written back to the entry's source file at write time" [label="no"];
-  "Emit migrate directive: copy into paad/security/backlog.md under the same ID at write time, leave the committed file alone" -> "paad/security/.gitignore holds only * and git tracks nothing there?";
+  "Emit migrate directive: copy into paad/security/backlog.md under the same ID at write time, leave the committed file alone" -> "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?";
   "Match in pre-filtered backlog?" -> "Mint new backlog entry" [label="no"];
-  "In-scope" -> "Bug class: Security (set by the Verifier)?";
-  "Emit update directive: last_seen, written back to the entry's source file at write time" -> "Bug class: Security (set by the Verifier)?";
-  "Mint new backlog entry" -> "Bug class: Security (set by the Verifier)?";
-  "Bug class: Security (set by the Verifier)?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes"];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write to paad/security/ report (and backlog, for out-of-scope bugs); count-and-pointer line in the main report" [label="yes"];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "In-scope" -> "Output paths under paad/ free of symlinks?";
+  "Emit update directive: last_seen, written back to the entry's source file at write time" -> "Output paths under paad/ free of symlinks?";
+  "Mint new backlog entry" -> "Output paths under paad/ free of symlinks?";
+  "Bug class: Security (set by the Verifier)?" -> "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" [label="yes"];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Write to paad/security/ report (and backlog, for out-of-scope bugs); count-and-pointer line in the main report" [label="yes"];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
   "Bug class: Security (set by the Verifier)?" -> "Write to paad/code-reviews/ report (and backlog, for out-of-scope bugs)" [label="no"];
   "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Write to paad/code-reviews/ report (and backlog, for out-of-scope bugs)" [label="user chooses the ordinary report"];
+  "Output paths under paad/ free of symlinks?" -> "Bug class: Security (set by the Verifier)?" [label="yes"];
+  "Output paths under paad/ free of symlinks?" -> "Write nothing to that path; tell the user, ask how to proceed" [label="no"];
+  "Write nothing to that path; tell the user, ask how to proceed" -> "Bug class: Security (set by the Verifier)?" [label="user names a safe path"];
 }
 ```
 

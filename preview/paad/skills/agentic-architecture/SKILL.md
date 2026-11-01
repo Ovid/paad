@@ -9,7 +9,9 @@ metadata:
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-architecture.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
-**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files paad/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, check that `paad` and `paad/security`, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`); that `paad/security/.gitignore` exists, is a regular file, and contains the single line `*` — create it if absent, never rewrite it if present; and that `git ls-files paad/security` — no trailing slash, which would miss a tracked file or symlink — lists nothing. If any of these checks fails, if that file cannot be written, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+
+**Symlinked output paths:** the repository under review can commit a symlink where this skill writes, sending the write to a path it chose, possibly outside the repository. Before the first write of a run to a path under `paad/`, check that `paad` and every directory under it on the way to that path, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`), and that the file, if it exists, is not a symlink (`test ! -L`); check each later file the same way before its first write. If a check fails, write nothing to that path: tell the user what you found and ask how to proceed.
 
 # Agentic Architecture Analysis
 
@@ -54,9 +56,11 @@ digraph analysis_flow {
   "Merge duplicates, note the agreeing specialists" [shape=box];
   "DROP the finding" [shape=box];
   "Keep the finding" [shape=box];
+  "Output paths under paad/ free of symlinks?" [shape=diamond];
+  "Write nothing to that path; tell the user, ask how to proceed" [shape=box];
   "Would reading it help an attacker?" [shape=diamond];
   "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [shape=box, style=bold];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" [shape=diamond];
   "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" [shape=box];
   "Report location, counts, 3-6 bullet summary" [shape=box];
@@ -87,16 +91,19 @@ digraph analysis_flow {
   "Reported by multiple specialists?" -> "Keep the finding" [label="no"];
   "Merge duplicates, note the agreeing specialists" -> "Keep the finding";
 
-  "Keep the finding" -> "Would reading it help an attacker?";
-  "Would reading it help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
+  "Keep the finding" -> "Output paths under paad/ free of symlinks?";
+  "Would reading it help an attacker?" -> "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" [label="yes, or on the edge"];
   "Would reading it help an attacker?" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" [label="no"];
   "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)";
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [label="yes"];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Write to paad/security/agentic-architecture-<date>-<repo>.md; count line in the report" [label="yes"];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
   "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)";
   "DROP the finding" -> "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" [label="counted under Filtered out"];
   "Write report to paad/architecture-reviews/ (same-day re-run: replace both files; no routed finding deletes a same-day security file)" -> "Report location, counts, 3-6 bullet summary";
   "Report location, counts, 3-6 bullet summary" -> "STOP: diagnosis only — do NOT propose fixes";
+  "Output paths under paad/ free of symlinks?" -> "Would reading it help an attacker?" [label="yes"];
+  "Output paths under paad/ free of symlinks?" -> "Write nothing to that path; tell the user, ask how to proceed" [label="no"];
+  "Write nothing to that path; tell the user, ask how to proceed" -> "Would reading it help an attacker?" [label="user names a safe path"];
 }
 ```
 
