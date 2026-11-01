@@ -202,8 +202,8 @@ If anything under .reviews/security/ was ever committed, ignoring it now does no
 .reviews/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
 ```
 
-When a routed finding was pinned by a test this run, add one line after it:
-*"The test that pins each security finding is committed and still reproduces it; its neutral name only keeps it from being searched for."*
+When a test this run committed pins a routed finding, the final reply also opens
+with the push warning in `references/execute-test-roadmap.md § Ending the run`.
 
 **Then tell the developer the total, in plain words.** Build mode's approach
 menus fire *before* any plan exists, so during them there is no phase total to
@@ -370,7 +370,8 @@ name, docstring, comments, and assertion messages alike.
 And the same neutral wording holds for that phase's title and `Catches:` line.
 The neutral name keeps the test from being found by searching the suite; it
 does not stop it working. The test is committed and still reproduces the
-weakness, so the run's Post-Review says so (the router's `## Post-Review`).
+weakness, so the run's final reply opens with a push warning
+(`execute-test-roadmap.md § Ending the run`).
 
 When a run meets that count line — in the roadmap or the ordinary log — and
 `.reviews/security/test-roadmap-findings.md` is absent, tell the developer plainly:
@@ -493,8 +494,11 @@ Every recorded default and every approach the developer picked is written to a
 `## Decisions` section at the top of `.reviews/test-roadmap/test-roadmap.md`, before the first
 phase. Execute mode reads this section on every resume and **never re-asks**
 anything recorded there — without it, menus would fire again on every run and
-the resumability requirement fails through the front door. Record at minimum:
-the chosen test framework/runner, the suite strategy, phase ordering, the
+the resumability requirement fails through the front door. Because it is the one
+part every run re-reads, its **first entry is always the production-code rule**,
+verbatim as in the shape below: the skill files state it, but a resumed run that
+only re-reads the roadmap has been seen editing production code anyway. Then
+record at minimum: the chosen test framework/runner, the suite strategy, phase ordering, the
 weak-test rewrite decision (if grading ran), the test-organization default, and
 **the per-tier run + coverage commands** — one line each for unit, integration,
 and e2e — so both execute mode and the developer can run and cover each tier
@@ -502,6 +506,11 @@ independently. A worked shape:
 
 ```markdown
 ## Decisions
+
+**Production code is never changed.** This roadmap only adds or edits tests.
+A test that exposes a bug pins the current behaviour and the bug goes to the
+findings log — it is never fixed here. When the developer later fixes it, that
+test fails, and that failure is the signal.
 
 Tiers (run | coverage):
 - unit:        `pytest tests/unit`            | `pytest --cov=pkg tests/unit`

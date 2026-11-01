@@ -3,7 +3,7 @@ name: handoff
 description: Use when a session is running out of context and the work needs to continue in a fresh one, or when starting a session meant to pick up where an earlier one stopped. Not for compacting in place — that is /compact — and not for specifying work that has not started, which is a plan.
 ---
 
-**On invocation:** announce "Running paad:handoff v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:handoff v2.1.0", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/handoff.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
@@ -30,6 +30,8 @@ digraph handoff_save {
   "Claim survived verification?" [shape=diamond];
   "Write it as fact" [shape=box];
   "Correct it, or mark it inferred" [shape=box];
+  "handoff.md absent, or not a symlink?" [shape=diamond];
+  "Write nothing; tell the user, ask where to save it" [shape=box];
   "Write handoff.md with the Write tool" [shape=box];
   "Name the unverified claims, ask for review" [shape=box];
   "Announce the artifact" [shape=box];
@@ -47,10 +49,13 @@ digraph handoff_save {
   "Verify every checkable claim with tools" -> "Claim survived verification?";
   "Claim survived verification?" -> "Write it as fact" [label="yes"];
   "Claim survived verification?" -> "Correct it, or mark it inferred" [label="no"];
-  "Write it as fact" -> "Write handoff.md with the Write tool";
-  "Correct it, or mark it inferred" -> "Write handoff.md with the Write tool";
+  "Write it as fact" -> "handoff.md absent, or not a symlink?";
+  "Correct it, or mark it inferred" -> "handoff.md absent, or not a symlink?";
   "Write handoff.md with the Write tool" -> "Name the unverified claims, ask for review";
   "Name the unverified claims, ask for review" -> "Announce the artifact";
+  "handoff.md absent, or not a symlink?" -> "Write handoff.md with the Write tool" [label="yes"];
+  "handoff.md absent, or not a symlink?" -> "Write nothing; tell the user, ask where to save it" [label="no"];
+  "Write nothing; tell the user, ask where to save it" -> "Write handoff.md with the Write tool" [label="user names a safe path"];
 }
 ```
 
@@ -118,6 +123,8 @@ This is the step that makes the skill worth running. Every claim below is checka
 If a claim cannot be settled, it does not become a fact. Either drop it or mark it inferred.
 
 ### 3. Write the file
+
+Before writing, check that `handoff.md`, if it exists, is not a symlink (`test ! -L handoff.md`): a repository can commit one to send this session's state to a path it chose. If it is one, write nothing: tell the user and ask where to save it.
 
 Use the **Write tool**, never a shell redirect. Claude Code snapshots files its own file tools touch; a `bash > handoff.md` has no recovery copy anywhere, and neither does git, since the file is ignored.
 

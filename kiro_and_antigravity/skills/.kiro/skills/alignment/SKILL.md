@@ -3,9 +3,11 @@ name: alignment
 description: Use when verifying that requirements/specs/PRDs and their implementation plans match — before starting work, after a spec or plan update, or when suspecting coverage gaps, scope creep, or design drift between intent and action documents. Needs both documents; not for checking code against a spec.
 ---
 
-**On invocation:** announce "Running paad:alignment v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:alignment v2.1.0", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/alignment.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
+
+**Symlinked output paths:** the repository under review can commit a symlink where this skill writes, sending the write to a path it chose, possibly outside the repository. Before the first write of a run to a path under `.reviews/`, check that `paad` and every directory under it on the way to that path, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`), and that the file, if it exists, is not a symlink (`test ! -L`); check each later file the same way before its first write. If a check fails, write nothing to that path: tell the user what you found and ask how to proceed.
 
 # Alignment Check
 
@@ -77,6 +79,8 @@ digraph analysis_and_resolution {
   "Wait for the user's response" [shape=box];
   "Answer it, then re-put this issue's options" [shape=box];
   "Apply agreed changes; leave undiscussed items alone" [shape=box];
+  "Output paths under .reviews/ free of symlinks?" [shape=diamond];
+  "Write nothing to that path; tell the user, ask how to proceed" [shape=box];
   "Write .reviews/alignment/<date>-<topic>-alignment.md" [shape=box];
   "ASK where to write the documents first" [shape=box];
   "SKIP the TDD rewrite" [shape=box];
@@ -108,7 +112,7 @@ digraph analysis_and_resolution {
   "Docs saved to files?" -> "ASK where to write the documents first" [label="no — came from conversation"];
   "ASK where to write the documents first" -> "Update docs or write report?";
   "Update docs or write report?" -> "Apply agreed changes; leave undiscussed items alone" [label="update documents"];
-  "Update docs or write report?" -> "Write .reviews/alignment/<date>-<topic>-alignment.md" [label="write report"];
+  "Update docs or write report?" -> "Output paths under .reviews/ free of symlinks?" [label="write report"];
   "Apply agreed changes; leave undiscussed items alone" -> "Tasks already red/green/refactor, or not code work?";
   "Write .reviews/alignment/<date>-<topic>-alignment.md" -> "Tasks already red/green/refactor, or not code work?";
 
@@ -120,6 +124,9 @@ digraph analysis_and_resolution {
   "Rewrite tasks in the action document" -> "List every file written or updated";
   "Write rewritten tasks to a new file" -> "List every file written or updated";
   "List every file written or updated" -> "Done";
+  "Output paths under .reviews/ free of symlinks?" -> "Write .reviews/alignment/<date>-<topic>-alignment.md" [label="yes"];
+  "Output paths under .reviews/ free of symlinks?" -> "Write nothing to that path; tell the user, ask how to proceed" [label="no"];
+  "Write nothing to that path; tell the user, ask how to proceed" -> "Write .reviews/alignment/<date>-<topic>-alignment.md" [label="user names a safe path"];
 }
 ```
 
@@ -139,7 +146,7 @@ When file paths are provided, the skill classifies each as intent or action and 
 
 Before analyzing document alignment, check whether recent codebase changes conflict with what the documents assume:
 
-1. Run `git log --oneline -50 --since="2 weeks ago"` (whichever limit is reached first)
+1. Run `git log --oneline -50`. Two weeks is the usual span of interest, but the limit is 50 commits, not a date — documents written eight months ago were invalidated by commits from eight months ago, and a date window would report them clean. Widen further if the documents predate what 50 commits covers.
 2. Read commit messages and, for relevant-looking commits, check the actual diffs
 3. Compare against what the documents assume — do they reference code, APIs, schemas, infrastructure, or patterns that have recently been changed, removed, or replaced?
 4. **If conflicts found:** present them upfront before any other analysis. For each conflict:
