@@ -493,8 +493,11 @@ Every recorded default and every approach the developer picked is written to a
 `## Decisions` section at the top of `paad/test-roadmap/test-roadmap.md`, before the first
 phase. Execute mode reads this section on every resume and **never re-asks**
 anything recorded there — without it, menus would fire again on every run and
-the resumability requirement fails through the front door. Record at minimum:
-the chosen test framework/runner, the suite strategy, phase ordering, the
+the resumability requirement fails through the front door. Because it is the one
+part every run re-reads, its **first entry is always the production-code rule**,
+verbatim as in the shape below: the skill files state it, but a resumed run that
+only re-reads the roadmap has been seen editing production code anyway. Then
+record at minimum: the chosen test framework/runner, the suite strategy, phase ordering, the
 weak-test rewrite decision (if grading ran), the test-organization default, and
 **the per-tier run + coverage commands** — one line each for unit, integration,
 and e2e — so both execute mode and the developer can run and cover each tier
@@ -502,6 +505,11 @@ independently. A worked shape:
 
 ```markdown
 ## Decisions
+
+**Production code is never changed.** This roadmap only adds or edits tests.
+A test that exposes a bug pins the current behaviour and the bug goes to the
+findings log — it is never fixed here. When the developer later fixes it, that
+test fails, and that failure is the signal.
 
 Tiers (run | coverage):
 - unit:        `pytest tests/unit`            | `pytest --cov=pkg tests/unit`
