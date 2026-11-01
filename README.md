@@ -217,7 +217,7 @@ Rerun `pushback` and `alignment` whenever the spec or the task list changes.
 ## Configuring skills per project
 
 > **Experimental.** This may change or be withdrawn in any release, including
-> a patch release. If you build on it, pin your plugin version.
+> a patch release. Read the [CHANGELOG](CHANGELOG.md) before you update.
 
 Tired of typing the same extra instructions after every slash command, or of
 writing a wrapper skill just to add them? Put them in a file and every paad
@@ -1163,9 +1163,8 @@ Shows help for all PAAD skills or detailed help for one skill.
 These skills are shipped so they get real use, but they are **not settled**.
 Their arguments, output paths, and behavior may change — or the skill may be
 withdrawn — in **any** release, including a patch release. The semver promise
-the other skills carry does not apply to them. If you build a workflow on one,
-pin your plugin version — on Claude Code and Pi you can; the npx route tracks
-`main` and has no pinned form, so budget for the churn instead. Please [file what
+the other skills carry does not apply to them. Read the
+[CHANGELOG](CHANGELOG.md) before you update. Please [file what
 breaks](https://github.com/Ovid/paad/issues).
 
 <details>
@@ -1212,8 +1211,7 @@ It never refactors anything. The report is the deliverable.
 <summary><code>/agentic-owasp [scope]</code> — reviews code against the OWASP Top 10:2025</summary>
 
 > **Note**: this skill is experimental and may change in any release, including
-> a patch release. If you build a workflow on it, pin your plugin version (not
-> available on the npx route, which tracks `main`).
+> a patch release. Read the [CHANGELOG](CHANGELOG.md) before you update.
 > Further, **it is not a replacement for static security tools or human review.** It
 > is a deeper automated backstop that can catch issues those tools miss, but it
 > is not a guarantee of security. 

@@ -10,6 +10,10 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Changed
+- **`/backlog fix` is now test-first.** It writes a regression test that fails before the fix,
+  skipping that only when the project has no test command or the bug can't be expressed as a test.
+
 ### Fixed
 - **`/vibe` docs no longer claim it commits.** It never did; it edits source and leaves
   the commit to you, as `/backlog fix` does.
