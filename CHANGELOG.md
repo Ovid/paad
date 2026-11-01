@@ -15,6 +15,8 @@ what a plugin user sees.
   `## Decisions`**, the part every run re-reads. Existing roadmaps get the line on their next run.
 - **`/test-roadmap` and `/fix-architecture` now lead with a push warning when they commit a test
   that reproduces a security finding**: on a public remote, hold the push until the hole is fixed.
+- **`/alignment`'s reality check no longer limits `git log` to the last two weeks**, so older commits
+  that invalidate a spec or plan are no longer missed (the same fix `/pushback` got in 1.30.0).
 
 ## [2.0.2] — 2026-10-22
 

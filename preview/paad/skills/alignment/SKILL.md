@@ -163,7 +163,7 @@ Resolve the documents to check in this order:
 
 Before analyzing document alignment, check whether recent codebase changes conflict with what the documents assume:
 
-1. Run `git log --oneline -50 --since="2 weeks ago"` (whichever limit is reached first)
+1. Run `git log --oneline -50`. Two weeks is the usual span of interest, but the limit is 50 commits, not a date — documents written eight months ago were invalidated by commits from eight months ago, and a date window would report them clean. Widen further if the documents predate what 50 commits covers.
 2. Read commit messages and, for relevant-looking commits, check the actual diffs
 3. Compare against what the documents assume — do they reference code, APIs, schemas, infrastructure, or patterns that have recently been changed, removed, or replaced?
 4. **If conflicts found:** present them upfront before any other analysis. For each conflict:
