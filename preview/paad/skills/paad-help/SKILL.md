@@ -342,7 +342,10 @@ Clean mode:
 Fix mode:
   1. Ranks entries by severity then age, proposes the top one, you pick
      (one item per run — no batch-fixing)
-  2. Fixes the bug directly or via /vibe
+  2. Fixes the bug test-first: a regression test that fails before the
+     fix, then the fix, then refactor. Small same-module fixes go via
+     /vibe, which does the same. RED is skipped only with no test command
+     or a bug no test can express, and the report says why
   3. Validation gate before removal: an INDEPENDENT read-only analyst must
      confirm from the code that the bug is gone; project tests run if a
      command exists. No test command means "validated by inspection only" —
