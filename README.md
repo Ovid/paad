@@ -1055,8 +1055,8 @@ or `trunk`), it stops and offers to create a branch first, so your primary
 branch never fills up with half-built tests.
 
 **This skill writes tests and commits them** — one commit per phase, onto the
-branch you are on. `/fix-architecture` and `/vibe` also commit; `/backlog fix`
-edits source and leaves the commit to you. Every other skill reports, advises,
+branch you are on. `/fix-architecture` also commits; `/vibe` and `/backlog fix`
+edit source and leave the commit to you. Every other skill reports, advises,
 or edits documents.
 
 </details>

@@ -11,6 +11,8 @@ what a plugin user sees.
 ## [Unreleased]
 
 ### Fixed
+- **`/vibe` docs no longer claim it commits.** It never did; it edits source and leaves
+  the commit to you, as `/backlog fix` does.
 - **`/test-roadmap` states "never change production code" at the top of the roadmap's
   `## Decisions`**, the part every run re-reads. Existing roadmaps get the line on their next run.
 - **`/test-roadmap` and `/fix-architecture` now lead with a push warning when they commit a test

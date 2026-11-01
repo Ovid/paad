@@ -216,7 +216,7 @@ Every excuse below was produced by an agent working a real timed task under this
 
 ## Step 4: Post-fix Summary
 
-Lead with the file list, always — this skill writes and commits source code, and a change nobody notices is worse than no change. One line per path, each marked new or updated, covering every test file touched in RED, every source file changed in GREEN, and anything REFACTOR moved or renamed:
+Lead with the file list, always — this skill writes source code and leaves the commit to you, and a change nobody notices is worse than no change. One line per path, each marked new or updated, covering every test file touched in RED, every source file changed in GREEN, and anything REFACTOR moved or renamed:
 
 ```
 Files written or updated:
