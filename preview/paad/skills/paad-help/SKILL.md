@@ -709,7 +709,8 @@ Best used in a fresh session — consumes significant context.
 /test-roadmap
 
 This skill writes tests and commits them, one commit per phase.
-/fix-architecture and /vibe also commit; the rest do not.
+/fix-architecture also commits; /vibe and /backlog fix edit source
+but leave the commit to you.
 
 Builds a test suite that catches real regressions, in phases, across as
 many sessions as it takes. One command on day 1 and on day 90.
