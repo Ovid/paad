@@ -202,8 +202,8 @@ If anything under paad/security/ was ever committed, ignoring it now does not re
 paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
 ```
 
-When a routed finding was pinned by a test this run, add one line after it:
-*"The test that pins each security finding is committed and still reproduces it; its neutral name only keeps it from being searched for."*
+When a test this run committed pins a routed finding, the final reply also opens
+with the push warning in `references/execute-test-roadmap.md § Ending the run`.
 
 **Then tell the developer the total, in plain words.** Build mode's approach
 menus fire *before* any plan exists, so during them there is no phase total to
@@ -370,7 +370,8 @@ name, docstring, comments, and assertion messages alike.
 And the same neutral wording holds for that phase's title and `Catches:` line.
 The neutral name keeps the test from being found by searching the suite; it
 does not stop it working. The test is committed and still reproduces the
-weakness, so the run's Post-Review says so (the router's `## Post-Review`).
+weakness, so the run's final reply opens with a push warning
+(`execute-test-roadmap.md § Ending the run`).
 
 When a run meets that count line — in the roadmap or the ordinary log — and
 `paad/security/test-roadmap-findings.md` is absent, tell the developer plainly:

@@ -100,7 +100,7 @@ digraph fix_session {
   "Write safety-net tests for the gap" [shape=box];
   "Developer picks approach: refactor first / e2e tests / no tests / skip flaw" [shape=box];
   "Write and commit the outstanding safety-net tests" [shape=box, style=bold];
-  "Print Safety Net Report; every field filled" [shape=box, style=bold];
+  "Print Safety Net Report; every field filled; push warning first if a security flaw" [shape=box, style=bold];
   "Revert the fix; record status Attempted, reverted" [shape=box];
 
   "Propose fix options, developer chooses" [shape=box];
@@ -114,7 +114,7 @@ digraph fix_session {
   "Leave changes staged, tell developer what changed" [shape=box];
   "Validate and update the affected flaws" [shape=box];
   "STOP: finish current fix, resume in a fresh session" [shape=box, style=bold];
-  "Wrap-Up: summary + suggest re-running fix-architecture" [shape=box];
+  "Wrap-Up: push warning first if a security flaw is still unfixed; summary + suggest re-running fix-architecture" [shape=box];
 
   "Invocation pre-answers or refuses the questions?" -> "Solo or team?" [label="no — full setup conversation"];
   "Invocation pre-answers or refuses the questions?" -> "Dependency scan + complexity assessment" [label="yes — skip only the answered questions, never the scan or Step 4"];
@@ -152,8 +152,8 @@ digraph fix_session {
 
   "ALL safety-net tests written and committed?" -> "Write and commit the outstanding safety-net tests" [label="no — no fix may start yet"];
   "Write and commit the outstanding safety-net tests" -> "ALL safety-net tests written and committed?";
-  "ALL safety-net tests written and committed?" -> "Print Safety Net Report; every field filled" [label="yes, or the developer chose to proceed without tests"];
-  "Print Safety Net Report; every field filled" -> "Propose fix options, developer chooses" [label="Fix Loop begins"];
+  "ALL safety-net tests written and committed?" -> "Print Safety Net Report; every field filled; push warning first if a security flaw" [label="yes, or the developer chose to proceed without tests"];
+  "Print Safety Net Report; every field filled; push warning first if a security flaw" -> "Propose fix options, developer chooses" [label="Fix Loop begins"];
 
   "Propose fix options, developer chooses" -> "Execute red/green/refactor";
   "Execute red/green/refactor" -> "Tests pass after fix?";
@@ -182,8 +182,8 @@ digraph fix_session {
   "Context running low?" -> "STOP: finish current fix, resume in a fresh session" [label="yes"];
   "Context running low?" -> "Flaws left in batch?" [label="no"];
   "Flaws left in batch?" -> "Propose fix options, developer chooses" [label="yes, developer continues"];
-  "Flaws left in batch?" -> "Wrap-Up: summary + suggest re-running fix-architecture" [label="no / developer stops here"];
-  "STOP: finish current fix, resume in a fresh session" -> "Wrap-Up: summary + suggest re-running fix-architecture";
+  "Flaws left in batch?" -> "Wrap-Up: push warning first if a security flaw is still unfixed; summary + suggest re-running fix-architecture" [label="no / developer stops here"];
+  "STOP: finish current fix, resume in a fresh session" -> "Wrap-Up: push warning first if a security flaw is still unfixed; summary + suggest re-running fix-architecture";
 }
 ```
 
@@ -295,7 +295,11 @@ The tests this phase credits as the safety net — written here or existing — 
 1. For each flaw in the batch, run Validate the Flaw and Assess Test Coverage
 2. Write all needed safety-net tests
 3. Commit all safety-net tests together (before any fix commits) — **in both commit modes.** For a security flaw, the commit message, test names, docstrings, comments and assertion messages describe the inputs and observed behavior in neutral terms, never the weakness or its label — the same rule as the fix commit below. Manual-commit mode applies to fix commits, not to this one: staged tests are destroyed by a later revert along with the fix.
-4. Print the Safety Net Report (below) and show it to the developer
+4. Print the Safety Net Report (below) and show it to the developer. **When the batch includes a security flaw, the message that carries the report opens with this warning**, before the report and before any fix options:
+
+   > **Before you push:** commit `<sha>` holds a test that still reproduces a security flaw (details only in `paad/security/<file>`). If this branch goes to a public remote, don't push it until that flaw's fix commit is on top of it.
+
+   Never tell the developer that push is safe: the neutral name hides the test from a search, but the test itself is the reproduction. Don't describe the weakness in the message either.
 5. Only then proceed to the Fix Loop (starting at Propose Fix Options for each flaw)
 
 ### Safety Net Report
@@ -474,7 +478,12 @@ If context usage is approaching limits, recommend stopping after the current fix
 
 After the developer stops or the batch is complete:
 
-1. Print summary:
+1. **If a security flaw's safety-net test was committed but the flaw is not fixed** (skipped, won't-fixed, reverted, or the session stopped first), open the wrap-up with:
+
+   > **Before you push:** commit `<sha>` holds a test that still reproduces an unfixed security flaw (details only in `paad/security/<file>`). If this branch goes to a public remote, don't push it until the hole is fixed. The fix is yours to schedule — in a fresh session, run `/fix-architecture` and pick `S:F-<n>` at triage, or fix it by hand; the safety net is already in place.
+
+   Don't describe the weakness anywhere in the wrap-up — not in the summary, not in the remaining-flaws list. Name the flaw only as `S:F-<n>`; the details stay in `paad/security/`.
+2. Print summary:
    - Number of flaws fixed, skipped, won't-fixed this session
    - Remaining unfixed flaws in the report, including the `paad/security/` file's
    - **Every artifact this session wrote or updated**, one line per path, each
@@ -492,7 +501,7 @@ After the developer stops or the batch is complete:
      ```
 
      The security line appears only when this session changed that file.
-2. Suggest: "Run `/fix-architecture` again in a fresh session to continue fixing remaining flaws."
+3. Suggest: "Run `/fix-architecture` again in a fresh session to continue fixing remaining flaws."
 
 ## Status Values
 

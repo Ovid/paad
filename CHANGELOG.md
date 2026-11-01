@@ -13,6 +13,8 @@ what a plugin user sees.
 ### Fixed
 - **`/test-roadmap` states "never change production code" at the top of the roadmap's
   `## Decisions`**, the part every run re-reads. Existing roadmaps get the line on their next run.
+- **`/test-roadmap` and `/fix-architecture` now lead with a push warning when they commit a test
+  that reproduces a security finding**: on a public remote, hold the push until the hole is fixed.
 
 ## [2.0.2] — 2026-10-22
 

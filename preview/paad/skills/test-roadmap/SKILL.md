@@ -197,4 +197,4 @@ If anything under paad/security/ was ever committed, ignoring it now does not re
 paad/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
 ```
 
-When a routed finding was pinned by a test this run, add one line after the block: *"The test that pins each security finding is committed and still reproduces it; its neutral name only keeps it from being searched for."*
+When a test this run committed pins a routed finding, the final reply also opens with the push warning in `references/execute-test-roadmap.md § Ending the run`.
