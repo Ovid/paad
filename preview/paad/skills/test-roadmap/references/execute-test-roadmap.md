@@ -18,7 +18,11 @@ Eight steps, in order:
    here is not caution, it is the resumability requirement failing through the
    front door. Place the phase's tests according to its `Tier:` and the recorded
    organization, and use the recorded per-tier command when running or covering
-   that tier.
+   that tier. **The section's first entry is the production-code rule** — never
+   change production code; only add or edit tests. If a roadmap written before
+   that entry existed lacks it, add it verbatim from
+   `references/build-test-roadmap.md § ## Decisions` and commit it with this
+   phase.
 2. **Select the candidate phase per the *Completion model* protocol, below.**
    Exactly one phase at a time — the protocol's questioning fires for the
    candidate phase only, never as a batch sweep across every phase in the

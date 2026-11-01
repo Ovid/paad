@@ -10,6 +10,10 @@ what a plugin user sees.
 
 ## [Unreleased]
 
+### Fixed
+- **`/test-roadmap` states "never change production code" at the top of the roadmap's
+  `## Decisions`**, the part every run re-reads. Existing roadmaps get the line on their next run.
+
 ## [2.0.2] — 2026-10-22
 
 ### Fixed
