@@ -30,7 +30,14 @@ In Claude Code:
 /plugin marketplace add Ovid/paad
 ```
 
-And then:
+**In the Claude desktop app**, that command just opens **Settings → Plugins**
+and adds nothing. Add PAAD from there instead: click **+ Add** → **Add
+marketplace** → **Add from a repository**, enter `Ovid/paad`, and click
+**Sync**. PAAD then appears in the list — click **Add to this computer** and
+you're done; skip the steps below. [See this ticket for more
+details](https://github.com/Ovid/paad/issues/25).
+
+In the terminal, follow that with:
 
 ```
 /plugin install paad@paad
