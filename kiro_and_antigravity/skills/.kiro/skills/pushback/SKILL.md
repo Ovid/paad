@@ -3,11 +3,13 @@ name: pushback
 description: Use when reviewing a spec, PRD, requirements doc, or design plan before implementation begins — especially when the doc feels too big, bundles unrelated features, may contradict the current codebase, or seems vague, infeasible, or thin on security and error handling. Not for cross-checking a spec against a plan — that's the alignment skill.
 ---
 
-**On invocation:** announce "Running paad:pushback v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:pushback v2.1.0", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/pushback.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
-**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `.reviews/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `.reviews/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files .reviews/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to .reviews/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `.reviews/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, check that `paad` and `.reviews/security`, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`); that `.reviews/security/.gitignore` exists, is a regular file, and contains the single line `*` — create it if absent, never rewrite it if present; and that `git ls-files .reviews/security` — no trailing slash, which would miss a tracked file or symlink — lists nothing. If any of these checks fails, if that file cannot be written, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to .reviews/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+
+**Symlinked output paths:** the repository under review can commit a symlink where this skill writes, sending the write to a path it chose, possibly outside the repository. Before the first write of a run to a path under `.reviews/`, check that `paad` and every directory under it on the way to that path, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`), and that the file, if it exists, is not a symlink (`test ! -L`); check each later file the same way before its first write. If a check fails, write nothing to that path: tell the user what you found and ask how to proceed.
 
 # Spec Pushback
 
@@ -85,9 +87,11 @@ digraph scope_critique_resolution {
   "ASK where to write the spec first" [shape=box];
   "ASK before editing after a stop signal" [shape=box];
   "Apply agreed changes; leave undiscussed requirements alone" [shape=box];
+  "Output paths under .reviews/ free of symlinks?" [shape=diamond];
+  "Write nothing to that path; tell the user, ask how to proceed" [shape=box];
   "Any report finding would help an attacker?" [shape=diamond];
   "Write those to .reviews/security/pushback-<date>-<spec>.md; count line in the report" [shape=box, style=bold];
-  ".reviews/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "paad and .reviews/security are real directories, .gitignore holds only *, git tracks nothing there?" [shape=diamond];
   "Write nothing under .reviews/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Write .reviews/pushback/<date>-<spec>-pushback.md" [shape=box];
   "Skip the report — conversation and diff carry it" [shape=box];
@@ -137,17 +141,20 @@ digraph scope_critique_resolution {
   "Stopped early?" -> "Apply agreed changes; leave undiscussed requirements alone" [label="no"];
   "ASK before editing after a stop signal" -> "Apply agreed changes; leave undiscussed requirements alone";
   "Apply agreed changes; leave undiscussed requirements alone" -> "Unresolved issues, or user asked for a report?";
-  "Unresolved issues, or user asked for a report?" -> "Any report finding would help an attacker?" [label="yes"];
-  "Any report finding would help an attacker?" -> ".reviews/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
+  "Unresolved issues, or user asked for a report?" -> "Output paths under .reviews/ free of symlinks?" [label="yes"];
+  "Any report finding would help an attacker?" -> "paad and .reviews/security are real directories, .gitignore holds only *, git tracks nothing there?" [label="yes, or on the edge"];
   "Any report finding would help an attacker?" -> "Write .reviews/pushback/<date>-<spec>-pushback.md" [label="no"];
   "Write those to .reviews/security/pushback-<date>-<spec>.md; count line in the report" -> "Write .reviews/pushback/<date>-<spec>-pushback.md";
-  ".reviews/security/.gitignore holds only * and git tracks nothing there?" -> "Write those to .reviews/security/pushback-<date>-<spec>.md; count line in the report" [label="yes"];
-  ".reviews/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under .reviews/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "paad and .reviews/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Write those to .reviews/security/pushback-<date>-<spec>.md; count line in the report" [label="yes"];
+  "paad and .reviews/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Write nothing under .reviews/security/; tell the user, ask: hold or ordinary report" [label="no"];
   "Write nothing under .reviews/security/; tell the user, ask: hold or ordinary report" -> "Write .reviews/pushback/<date>-<spec>-pushback.md";
   "Unresolved issues, or user asked for a report?" -> "Skip the report — conversation and diff carry it" [label="no"];
   "Write .reviews/pushback/<date>-<spec>-pushback.md" -> "List every file written or updated";
   "Skip the report — conversation and diff carry it" -> "List every file written or updated";
   "List every file written or updated" -> "Done";
+  "Output paths under .reviews/ free of symlinks?" -> "Any report finding would help an attacker?" [label="yes"];
+  "Output paths under .reviews/ free of symlinks?" -> "Write nothing to that path; tell the user, ask how to proceed" [label="no"];
+  "Write nothing to that path; tell the user, ask how to proceed" -> "Any report finding would help an attacker?" [label="user names a safe path"];
 }
 ```
 

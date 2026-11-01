@@ -3,16 +3,18 @@ name: agentic-owasp
 description: "EXPERIMENTAL. Use when code needs a security review against the OWASP Top 10:2025 — access control, misconfiguration, supply chain, cryptography, injection, insecure design, authentication, integrity, logging and alerting, and mishandled exceptional conditions. Not for penetration testing a running system, not for infrastructure-only scanning, and not for fixing what it finds."
 ---
 
-**On invocation:** announce "Running paad:agentic-owasp v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:agentic-owasp v2.1.0", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-owasp.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
-**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files paad/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, check that `paad` and `paad/security`, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`); that `paad/security/.gitignore` exists, is a regular file, and contains the single line `*` — create it if absent, never rewrite it if present; and that `git ls-files paad/security` — no trailing slash, which would miss a tracked file or symlink — lists nothing. If any of these checks fails, if that file cannot be written, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+
+**Symlinked output paths:** the repository under review can commit a symlink where this skill writes, sending the write to a path it chose, possibly outside the repository. Before the first write of a run to a path under `paad/`, check that `paad` and every directory under it on the way to that path, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`), and that the file, if it exists, is not a symlink (`test ! -L`); check each later file the same way before its first write. If a check fails, write nothing to that path: tell the user what you found and ask how to proceed.
 
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
 > covered by the semver guarantees the other paad skills carry. Report rough
-> edges at <https://github.com/Ovid/paad/issues>.
+> edges on paad's GitHub issue tracker.
 
 # OWASP Top 10:2025 Code Review
 
@@ -98,7 +100,7 @@ digraph preflight {
 digraph session {
   "Phase 1: Reconnaissance" [shape=box];
   "Ensure paad/security/.gitignore holds * (create if absent, never rewrite)" [shape=box];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" [shape=diamond];
   "Stop: write nothing, tell the user what was found, ask how to proceed" [shape=box];
   "Live credential seen?" [shape=diamond];
   "STOP: report location, never the value, tell user to rotate" [shape=box, style=bold];
@@ -127,9 +129,9 @@ digraph session {
   "Done — do NOT fix" [shape=doublecircle];
 
   "Phase 1: Reconnaissance" -> "Ensure paad/security/.gitignore holds * (create if absent, never rewrite)";
-  "Ensure paad/security/.gitignore holds * (create if absent, never rewrite)" -> "paad/security/.gitignore holds only * and git tracks nothing there?";
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Live credential seen?" [label="yes"];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Stop: write nothing, tell the user what was found, ask how to proceed" [label="no"];
+  "Ensure paad/security/.gitignore holds * (create if absent, never rewrite)" -> "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?";
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Live credential seen?" [label="yes"];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Stop: write nothing, tell the user what was found, ask how to proceed" [label="no"];
   "Live credential seen?" -> "STOP: report location, never the value, tell user to rotate" [label="yes"];
   "STOP: report location, never the value, tell user to rotate" -> "Phase 2: Attack Surface Mapping" [label="after the user is told"];
   "Live credential seen?" -> "Phase 2: Attack Surface Mapping" [label="no"];
@@ -335,7 +337,7 @@ The **Pre-flight** digraph above is the authoritative order for this section.
 
 1. **Context window.** Treat the conversation as having substantive history if
    any of these are true: the conversation already includes tool calls beyond
-   invoking this skill; another `/agentic-owasp` pass has already been run
+   invoking this skill; another `/agentic-owasp` run has already happened
    in this session; the user has discussed an unrelated topic earlier in the
    conversation; or transcript length exceeds roughly 20 turns. If any apply,
    tell the user: "This security review consumes significant context. Start a
@@ -456,9 +458,8 @@ on-disk report. The list covers:
 
 This list is a starting point, not exhaustive. For a more authoritative pattern
 source, treat
-[gitleaks defaults](https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml)
-or [detect-secrets](https://github.com/Yelp/detect-secrets) baseline patterns as
-the canonical reference; mirror new patterns here when they appear there.
+the gitleaks default rules or the detect-secrets baseline patterns as
+the canonical reference.
 
 **The excluded-path list is not a finding suppressor.** Whether those files
 *exist and are tracked by git* is itself an A02/A03 finding, and you determine

@@ -3,7 +3,7 @@ name: paad-help
 description: Use when the user asks which paad skills exist, what a paad skill does, which one fits their situation, or how to invoke one — including "what can paad do", "list the paad skills", "is there a paad skill for X", or a request for the arguments of a named paad skill
 ---
 
-**On invocation:** announce "Running paad:paad-help v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:paad-help v2.1.0", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/paad-help.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
@@ -340,7 +340,10 @@ Clean mode:
 Fix mode:
   1. Ranks entries by severity then age, proposes the top one, you pick
      (one item per run — no batch-fixing)
-  2. Fixes the bug directly or via /vibe
+  2. Fixes the bug test-first: a regression test that fails before the
+     fix, then the fix, then refactor. Small same-module fixes go via
+     /vibe, which does the same. RED is skipped only with no test command
+     or a bug no test can express, and the report says why
   3. Validation gate before removal: an INDEPENDENT read-only analyst must
      confirm from the code that the bug is gone; project tests run if a
      command exists. No test command means "validated by inspection only" —
@@ -707,7 +710,8 @@ Best used in a fresh session — consumes significant context.
 /test-roadmap
 
 This skill writes tests and commits them, one commit per phase.
-/fix-architecture and /vibe also commit; the rest do not.
+/fix-architecture also commits; /vibe and /backlog fix edit source
+but leave the commit to you.
 
 Builds a test suite that catches real regressions, in phases, across as
 many sessions as it takes. One command on day 1 and on day 90.

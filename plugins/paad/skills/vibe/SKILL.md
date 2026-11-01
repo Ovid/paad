@@ -3,7 +3,7 @@ name: vibe
 description: Use when making a small, quick change — a bug fix, typo, minor feature, tweak, or anything the user calls "vibe coding" — that looks like 1-3 files in the same module
 ---
 
-**On invocation:** announce "Running paad:vibe v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:vibe v2.1.0", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/vibe.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
@@ -214,7 +214,7 @@ Every excuse below was produced by an agent working a real timed task under this
 
 ## Step 4: Post-fix Summary
 
-Lead with the file list, always — this skill writes and commits source code, and a change nobody notices is worse than no change. One line per path, each marked new or updated, covering every test file touched in RED, every source file changed in GREEN, and anything REFACTOR moved or renamed:
+Lead with the file list, always — this skill writes source code and leaves the commit to you, and a change nobody notices is worse than no change. One line per path, each marked new or updated, covering every test file touched in RED, every source file changed in GREEN, and anything REFACTOR moved or renamed:
 
 ```
 Files written or updated:

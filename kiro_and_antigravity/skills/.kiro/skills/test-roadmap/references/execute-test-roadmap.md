@@ -18,7 +18,11 @@ Eight steps, in order:
    here is not caution, it is the resumability requirement failing through the
    front door. Place the phase's tests according to its `Tier:` and the recorded
    organization, and use the recorded per-tier command when running or covering
-   that tier.
+   that tier. **The section's first entry is the production-code rule** — never
+   change production code; only add or edit tests. If a roadmap written before
+   that entry existed lacks it, add it verbatim from
+   `references/build-test-roadmap.md § ## Decisions` and commit it with this
+   phase.
 2. **Select the candidate phase per the *Completion model* protocol, below.**
    Exactly one phase at a time — the protocol's questioning fires for the
    candidate phase only, never as a batch sweep across every phase in the
@@ -66,7 +70,23 @@ learn there were thirteen more. Nothing in the phase's output implies "come
 back" unless the run says so, so every run says so — explicitly, as its last
 words.
 
-**First, list every artifact this run wrote or updated.** The test files are
+**When a test this run committed pins a security finding, the final reply opens
+with this warning** — right after any `Config:` line, before the phase summary,
+the file list, or anything else:
+
+> **Before you push:** this phase committed a test that still reproduces an
+> unfixed security finding (details only in `.reviews/security/test-roadmap-findings.md`).
+> If this branch goes to a public remote, don't push it until the hole is fixed.
+> The fix is yours: it is the one deliberate exception to "pin, don't fix", and
+> it is safest once the tests around that code are in place, so a ripple shows
+> up as a red test.
+
+Never tell the developer the push is safe or can wait until "right after": the
+neutral name and the gitignored log hide the finding from a search, but the
+test itself is the reproduction. Don't describe the weakness in the reply
+either; the log is where that lives.
+
+**Then list every artifact this run wrote or updated.** The test files are
 visible in the run instructions, but the roadmap and the findings log are not,
 and a developer who never learns a bug was logged never reads it. One line per
 path, each marked new or updated. Name the test files too when a phase landed
@@ -93,9 +113,6 @@ Also list .reviews/security/ in your root .gitignore, or in .git/info/exclude to
 If anything under .reviews/security/ was ever committed, ignoring it now does not remove it from history.
 .reviews/security/ is scratch, not state: it exists only on this machine, `git clean -x` deletes it, and nothing brings it back.
 ```
-
-When a routed finding was pinned by a test this run, add one line after it:
-*"The test that pins each security finding is committed and still reproduces it; its neutral name only keeps it from being searched for."*
 
 Then recompute the counts from the roadmap
 (`references/test-pushback.md § Talking to the developer`) and end the run one

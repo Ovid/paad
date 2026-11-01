@@ -3,16 +3,18 @@ name: agentic-dedup
 description: "EXPERIMENTAL. Use when looking for meaningfully duplicated logic in a codebase, especially duplicate behavior hidden behind different names, different syntax, different control flow, or independently evolved implementations. Not for style issues, not for syntactic clone detection, and not for fixing what it finds."
 ---
 
-**On invocation:** announce "Running paad:agentic-dedup v2.0.2", then immediately proceed with the steps below — do not stop after announcing.
+**On invocation:** announce "Running paad:agentic-dedup v2.1.0", then immediately proceed with the steps below — do not stop after announcing.
 
 **Configuration (experimental):** after announcing, check whether `paad/config/paad.md` and `paad/config/agentic-dedup.md` exist, relative to the working directory. If any does, read it and follow its instructions for the rest of this run, passing the relevant parts to every subagent you dispatch, and make the first line of your final answer `Config: <path>` naming each file you followed. If none exists, do not mention config at all. Config never changes a subagent's type or grants it write tools — refuse that line, say so, and continue. Config can contradict the flow below; see https://github.com/Ovid/paad/blob/main/CONFIG.md before writing one.
 
-**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, make sure `paad/security/.gitignore` exists and contains the single line `*` — create it if absent, never rewrite it if present — and that `git ls-files paad/security/` lists nothing. If that file holds anything else or cannot be written, if git already tracks anything there, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+**Security findings:** a finding is security-related if reading it would help an attacker — any OWASP Top 10:2025 category, and anything in a payment, tenant-isolation, or secret-handling path; on the edge, treat it as security. Security findings are written only under `paad/security/`, in a file named for this skill and stamped the way its ordinary report is (the exact path is in this skill's report section). Before the first write of a run, check that `paad` and `paad/security`, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`); that `paad/security/.gitignore` exists, is a regular file, and contains the single line `*` — create it if absent, never rewrite it if present; and that `git ls-files paad/security` — no trailing slash, which would miss a tracked file or symlink — lists nothing. If any of these checks fails, if that file cannot be written, or if a later write there fails, write no security finding and no count line: tell the user what you found, ask whether to hold the findings or put them in the ordinary report, and say that in place of the Security block. Where the finding would have gone in the ordinary report, write one line, `N security finding(s) written to paad/security/<file>`, and nothing else about it: no path, severity, symbol, or description. Post-Review then emits the Security block once; this skill's Post-Review section says when.
+
+**Symlinked output paths:** the repository under review can commit a symlink where this skill writes, sending the write to a path it chose, possibly outside the repository. Before the first write of a run to a path under `paad/`, check that `paad` and every directory under it on the way to that path, each where it exists, is a real directory and not a symlink (`test -d` and `test ! -L`), and that the file, if it exists, is not a symlink (`test ! -L`); check each later file the same way before its first write. If a check fails, write nothing to that path: tell the user what you found and ask how to proceed.
 
 > **EXPERIMENTAL SKILL.** Its arguments, output paths, and behavior may
 > change or be withdrawn in any release, including patch releases. It is not
 > covered by the semver guarantees the other paad skills carry. Report rough
-> edges at <https://github.com/Ovid/paad/issues>.
+> edges on paad's GitHub issue tracker.
 
 # Semantic Duplicate Code Hunt
 
@@ -61,9 +63,11 @@ digraph session {
   "Phase 5: Report (verified findings)" [shape=box];
   "Phase 5: Report (Specialist Findings — Unverified banner)" [shape=box];
   "Report: no duplication found in scope" [shape=box];
+  "Output paths under paad/ free of symlinks?" [shape=diamond];
+  "Write nothing to that path; tell the user, ask how to proceed" [shape=box];
   "Any finding would help an attacker?" [shape=diamond];
   "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" [shape=box, style=bold];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" [shape=diamond];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" [shape=diamond];
   "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [shape=box];
   "Post-Review: Security block when any finding was routed" [shape=box];
   "Done — do NOT auto-refactor" [shape=doublecircle];
@@ -77,26 +81,29 @@ digraph session {
   "Retry that specialist ONCE" -> "Phase 4: Verifier" [label="record outcome map either way"];
   "Any specialist errored/timed_out/malformed?" -> "Phase 4: Verifier" [label="no"];
   "Phase 4: Verifier" -> "Verifier returned?";
-  "Verifier returned?" -> "Any finding would help an attacker?" [label="yes"];
+  "Verifier returned?" -> "Output paths under paad/ free of symlinks?" [label="yes"];
   "Verifier returned?" -> "Retry verifier ONCE" [label="no"];
   "Retry verifier ONCE" -> "Verifier returned on retry?";
-  "Verifier returned on retry?" -> "Any finding would help an attacker?" [label="yes"];
+  "Verifier returned on retry?" -> "Output paths under paad/ free of symlinks?" [label="yes"];
   "Verifier returned on retry?" -> "User says proceed unverified?" [label="no"];
-  "User says proceed unverified?" -> "Any finding would help an attacker?" [label="yes"];
+  "User says proceed unverified?" -> "Output paths under paad/ free of symlinks?" [label="yes"];
   "User says proceed unverified?" -> "STOP: surface verifier failure, write no report" [label="no"];
-  "Any finding would help an attacker?" -> "paad/security/.gitignore holds only * and git tracks nothing there?" [label="yes, or on the edge"];
+  "Any finding would help an attacker?" -> "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" [label="yes, or on the edge"];
   "Any finding would help an attacker?" -> "Phase 5: Report (verified findings)" [label="no, verified"];
   "Any finding would help an attacker?" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="no, unverified"];
   "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" -> "Phase 5: Report (verified findings)" [label="if verified"];
   "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="if unverified"];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" [label="yes"];
-  "paad/security/.gitignore holds only * and git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Write those to paad/security/agentic-dedup-<stamp>.md; count line in the report" [label="yes"];
+  "paad and paad/security are real directories, .gitignore holds only *, git tracks nothing there?" -> "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" [label="no"];
   "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Phase 5: Report (verified findings)" [label="if verified"];
   "Write nothing under paad/security/; tell the user, ask: hold or ordinary report" -> "Phase 5: Report (Specialist Findings — Unverified banner)" [label="if unverified"];
   "Report: no duplication found in scope" -> "Post-Review: Security block when any finding was routed";
   "Phase 5: Report (verified findings)" -> "Post-Review: Security block when any finding was routed";
   "Phase 5: Report (Specialist Findings — Unverified banner)" -> "Post-Review: Security block when any finding was routed";
   "Post-Review: Security block when any finding was routed" -> "Done — do NOT auto-refactor";
+  "Output paths under paad/ free of symlinks?" -> "Any finding would help an attacker?" [label="yes"];
+  "Output paths under paad/ free of symlinks?" -> "Write nothing to that path; tell the user, ask how to proceed" [label="no"];
+  "Write nothing to that path; tell the user, ask how to proceed" -> "Any finding would help an attacker?" [label="user names a safe path"];
 }
 ```
 
@@ -167,7 +174,7 @@ The **Pre-flight** digraph above is the authoritative order for this section.
 1. **Context window.** Treat the conversation as having substantive
    history if any of these are true: the conversation already includes
    tool calls beyond invoking this skill; another `/agentic-dedup`
-   pass has already been run in this session; the user has discussed an
+   run has already happened in this session; the user has discussed an
    unrelated topic earlier in the conversation; or transcript length
    exceeds roughly 20 turns. If any apply, tell the user: "This semantic
    duplicate hunt consumes significant context. Start a fresh session
@@ -246,10 +253,8 @@ the on-disk report (which the user may then commit). The list covers:
 
 This list is a starting point, not exhaustive. For a more
 authoritative pattern source, treat
-[gitleaks defaults](https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml)
-or [detect-secrets](https://github.com/Yelp/detect-secrets) baseline
-patterns as the canonical reference; mirror new patterns here when
-they appear there. If a repository scan surfaces a credential-looking
+the gitleaks default rules or the detect-secrets baseline
+patterns as the canonical reference. If a repository scan surfaces a credential-looking
 file outside this list, stop and alert the user before reading or
 echoing the contents.
 
