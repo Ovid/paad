@@ -53,6 +53,9 @@ Cursor, Codex, GitHub Copilot, Gemini CLI, Cline, Zed, Warp, Amp, OpenCode:
 npx skills@latest add Ovid/paad
 ```
 
+`npx` comes with [Node.js](https://nodejs.org/); if `npx --version` says
+"command not found", install Node first.
+
 See [Installation](#installation) for the details, including the experimental
 **Pi** package.
 
@@ -473,6 +476,9 @@ One command, and it covers 70+ agents:
 ```bash
 npx skills@latest add Ovid/paad
 ```
+
+`npx` comes with [Node.js](https://nodejs.org/); if `npx --version` says
+"command not found", install Node first.
 
 It opens a picker. Everything under **Universal (`.agents/skills`)** — Amp,
 Antigravity, Cline, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Warp,
