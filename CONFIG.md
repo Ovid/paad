@@ -1,7 +1,7 @@
 # Configuring paad skills per project
 
 > **EXPERIMENTAL.** This behaviour may change or be withdrawn in any release,
-> including a patch release. If you build on it, pin your plugin version and
+> including a patch release. Read the [CHANGELOG](CHANGELOG.md) before you update, and
 > [file what breaks](https://github.com/Ovid/paad/issues).
 
 People kept writing wrapper skills around paad skills to bolt on their own

@@ -11,7 +11,7 @@ description: EXPERIMENTAL. Use when working the project-wide out-of-scope backlo
 
 # Backlog
 
-**Experimental.** Arguments, modes, and behavior may change — or this skill may be withdrawn — in any release, including a patch release. The semver promise the settled skills carry does not apply here. If you build a workflow on it, pin your plugin version and [file what breaks](https://github.com/Ovid/paad/issues).
+**Experimental.** Arguments, modes, and behavior may change — or this skill may be withdrawn — in any release, including a patch release. The semver promise the settled skills carry does not apply here. Read the [CHANGELOG](https://github.com/Ovid/paad/blob/main/CHANGELOG.md) before you update, and [file what breaks](https://github.com/Ovid/paad/issues).
 
 Work the project-wide bug backlog at `.reviews/code/backlog.md` and `.reviews/security/backlog.md` — the files `agentic-review` writes its out-of-scope findings to. Two modes: **Clean** re-verifies every entry against the current code and drops the ones already fixed or gone; **Fix** picks the next entry and fixes it end-to-end. This is the always-available entry point into that backlog.
 
