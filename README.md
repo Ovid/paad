@@ -511,8 +511,7 @@ single agent does every one of those passes itself, one after another, in one
 conversation. The work still gets done. It is slower, and one conversation has
 to hold everything it reads. Nothing errors and nothing warns you.
 
-Two consequences are worth stating outright, because nothing surfaces them at
-runtime:
+If your agentic coding tool only allows a single agent:
 
 * **Nothing constrains what the helper agents can do to your files.** In Claude
   Code, PAAD's analysis helpers are dispatched through an agent definition that
