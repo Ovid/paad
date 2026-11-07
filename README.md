@@ -207,6 +207,16 @@ before the fixes merge.
   <img src="images/architecture.png" alt="PAAD aggressive technical debt maintenance: reserve time and choose scope, then /agentic-architecture; prioritise findings on a feature branch, then /fix-architecture; verify the changes, then /agentic-review; human PR approval and merge" width="700">
 </p>
 
+Both loops lean on your test suite to catch what breaks. If it is weak or
+missing, build it first with `test-roadmap`: one run writes the roadmap, then
+each phase is its own small feature — a fresh session, one `/test-roadmap`
+run, `/agentic-review` on the result, then a PR that a human reviews and
+merges. Repeat until the roadmap is complete.
+
+<p align="center">
+  <img src="images/test-roadmap.png" alt="PAAD test roadmap: run /test-roadmap to answer questions and get a test roadmap, optionally /pushback on it; then loop: start a new session, /test-roadmap to build the next test phase, /agentic-review and fix findings, push the PR, human review, merge; repeat until the roadmap is complete" width="700">
+</p>
+
 Not sure if the AI is presenting you with the best options? Run `rethink` to
 check whether the premises behind a recommendation actually hold.
 
@@ -511,8 +521,7 @@ single agent does every one of those passes itself, one after another, in one
 conversation. The work still gets done. It is slower, and one conversation has
 to hold everything it reads. Nothing errors and nothing warns you.
 
-Two consequences are worth stating outright, because nothing surfaces them at
-runtime:
+If your agentic coding tool only allows a single agent:
 
 * **Nothing constrains what the helper agents can do to your files.** In Claude
   Code, PAAD's analysis helpers are dispatched through an agent definition that
