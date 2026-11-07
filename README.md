@@ -1034,6 +1034,14 @@ Sessions don't need to be consecutive, or even the same session — the roadmap
 file is the memory, so you can pick it up tomorrow, on a fresh clone, after a
 squash merge, and it resumes from what has already landed.
 
+In practice, treat each phase as its own small feature: a fresh session, one
+`/test-roadmap` run, `/agentic-review` on the result, then a PR that a human
+reviews and merges. Repeat until the roadmap is complete.
+
+<p align="center">
+  <img src="images/test-roadmap.png" alt="PAAD test roadmap: run /test-roadmap to answer questions and get a test roadmap, optionally /pushback on it; then loop: start a new session, /test-roadmap to build the next test phase, /agentic-review and fix findings, push the PR, human review, merge; repeat until the roadmap is complete" width="700">
+</p>
+
 * **Arguments:** `/test-roadmap` (no arguments — the presence of the
   roadmap file selects build mode or execute mode)
 * **Every phase names the bug it would catch** — a phase that cannot answer
