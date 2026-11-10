@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" role="img" aria-label="Star history for Ovid/paad: 151 stars as of 2026-11-09">
-<title>Star history for Ovid/paad: 151 stars as of 2026-11-09</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" role="img" aria-label="Star history for Ovid/paad: 151 stars as of 2026-11-10">
+<title>Star history for Ovid/paad: 151 stars as of 2026-11-10</title>
 <desc>Cumulative GitHub stars for Ovid/paad over time.</desc>
 <rect width="800" height="400" fill="#ffffff"/>
 <line x1="60" y1="350" x2="780" y2="350" stroke="#d0d7de" stroke-width="1"/>
@@ -12,14 +12,14 @@
 <text x="52" y="114" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">150</text>
 <line x1="60" y1="30" x2="780" y2="30" stroke="#d0d7de" stroke-width="1"/>
 <text x="52" y="34" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">200</text>
-<text x="768" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Nov 09</text>
-<text x="695" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Oct 12</text>
-<text x="614" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Sep 15</text>
-<text x="532" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Aug 19</text>
-<text x="450" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Jul 23</text>
+<text x="768" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Nov 10</text>
+<text x="693" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Oct 12</text>
+<text x="611" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Sep 15</text>
+<text x="530" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Aug 19</text>
+<text x="449" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Jul 23</text>
 <text x="60" y="370" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#57606a">Mar 16</text>
-<polyline fill="none" stroke="#e5533d" stroke-width="2" stroke-dasharray="5 4" points="60,348 63,345 66,344 72,342 87,340 96,339 117,337 154,336 160,334 163,332 169,331 238,326 275,324 278,323 293,320 296,315 335,313 359,310 363,304 366,300 381,299 384,297 429,296 438,294 441,291 444,289 447,283 450,268 453,259 456,254"/>
-<polyline fill="none" stroke="#e5533d" stroke-width="2" points="456,254 459,246 462,235 465,228 468,227 471,222 474,220 477,220 481,216 484,214 487,214 490,214 493,211 496,209 499,209 502,204 505,200 508,196 511,196 514,195 517,192 520,192 523,192 526,192 529,190 532,188 535,188 538,185 541,185 544,185 547,185 550,185 553,185 556,184 559,182 562,182 565,182 568,180 571,179 574,176 577,176 580,174 583,174 586,174 589,174 592,172 595,171 598,171 602,171 605,166 608,166 611,166 614,164 617,163 620,161 623,161 626,161 629,161 632,161 635,161 638,155 641,155 644,150 647,148 650,148 653,148 656,148 659,145 662,144 665,144 668,142 671,142 674,142 677,140 680,140 683,140 686,140 689,140 692,140 695,139 698,136 701,136 704,136 707,136 710,129 713,129 716,129 719,128 723,126 726,123 729,123 732,123 735,121 738,120 741,118 744,116 747,116 750,115 753,115 756,115 759,115 762,115 768,112 771,110 774,110 777,110 780,108"/>
+<polyline fill="none" stroke="#e5533d" stroke-width="2" stroke-dasharray="5 4" points="60,348 63,345 66,344 72,342 87,340 96,339 117,337 153,336 159,334 162,332 168,331 238,326 274,324 277,323 292,320 295,315 334,313 358,310 361,304 364,300 379,299 382,297 428,296 437,294 440,291 443,289 446,283 449,268 452,259 455,254"/>
+<polyline fill="none" stroke="#e5533d" stroke-width="2" points="455,254 458,246 461,235 464,228 467,227 470,222 473,220 476,220 479,216 482,214 485,214 488,214 491,211 494,209 497,209 500,204 503,200 506,196 509,196 512,195 515,192 518,192 521,192 524,192 527,190 530,188 533,188 536,185 539,185 542,185 545,185 548,185 551,185 554,184 557,182 560,182 563,182 566,180 569,179 572,176 575,176 578,174 581,174 584,174 587,174 590,172 593,171 596,171 599,171 602,166 605,166 608,166 611,164 614,163 617,161 620,161 623,161 626,161 629,161 632,161 635,155 638,155 641,150 644,148 647,148 650,148 653,148 656,145 659,144 663,144 666,142 669,142 672,142 675,140 678,140 681,140 684,140 687,140 690,140 693,139 696,136 699,136 702,136 705,136 708,129 711,129 714,129 717,128 720,126 723,123 726,123 729,123 732,121 735,120 738,118 741,116 744,116 747,115 750,115 753,115 756,115 759,115 765,112 768,110 771,110 774,110 777,108 780,108"/>
 <circle cx="780" cy="108" r="3.5" fill="#e5533d"/>
 <rect x="60" y="10" width="10" height="10" fill="#e5533d"/>
 <text x="76" y="19" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" fill="#24292f">Ovid/paad — dashed is reconstructed</text>
